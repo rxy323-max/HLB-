@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 
 type AppType = 'Individual' | 'Non-Individual';
 
@@ -37,6 +37,38 @@ function formatMyKad(raw: string): string {
 }
 
 const MYKAD_FAMILY = ['MyKad', 'MyPR', 'MyKas', 'MyKadBrown'];
+
+// ── Mock API layer ────────────────────────────────────────────
+type ApiStatus = 'idle' | 'loading' | 'ok' | 'error' | 'timeout';
+
+interface ApiResult {
+  status: ApiStatus;
+  data?: unknown;
+  error?: string;
+}
+
+interface VerificationResults {
+  cifProfile: ApiResult;
+  wtWhitelist: ApiResult;
+  incomeDB: ApiResult;
+  appHistory: ApiResult;
+  preConsent: ApiResult;
+  hpLine: ApiResult;
+}
+
+const IDLE_RESULTS: VerificationResults = {
+  cifProfile:  { status: 'idle' },
+  wtWhitelist: { status: 'idle' },
+  incomeDB:    { status: 'idle' },
+  appHistory:  { status: 'idle' },
+  preConsent:  { status: 'idle' },
+  hpLine:      { status: 'idle' },
+};
+
+// Each mock call accepts a delay (ms) and optional forced outcome
+function mockCall(delayMs: number, result: ApiResult): Promise<ApiResult> {
+  return new Promise((resolve) => setTimeout(() => resolve(result), delayMs));
+}
 
 export default function ApplicationForm() {
   const [appType, setAppType] = useState<AppType>('Individual');
@@ -94,7 +126,31 @@ export default function ApplicationForm() {
     if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
   }
 
-  // ── Corporate state (placeholder for now) ──────────────────
+  // ── Verification state ─────────────────────────────────────
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verifyResults, setVerifyResults] = useState<VerificationResults>(IDLE_RESULTS);
+
+  async function runVerification() {
+    if (!rawDigits && !displayVal) return;
+    setIsVerifying(true);
+    setVerifyResults(IDLE_RESULTS);
+
+    // Fire all 6 calls concurrently; each returns after its mock delay
+    const [cifProfile, wtWhitelist, incomeDB, appHistory, preConsent, hpLine] =
+      await Promise.all([
+        mockCall(800,  { status: 'ok', data: { cif: 'CIF-001' } }),
+        mockCall(600,  { status: 'ok', data: { whitelisted: true } }),
+        mockCall(1000, { status: 'ok', data: { monthlyIncome: 5000 } }),
+        mockCall(700,  { status: 'ok', data: { history: [] } }),
+        mockCall(500,  { status: 'ok', data: { consented: true } }),
+        mockCall(900,  { status: 'ok', data: { hpLine: 80000 } }),
+      ]);
+
+    setVerifyResults({ cifProfile, wtWhitelist, incomeDB, appHistory, preConsent, hpLine });
+    setIsVerifying(false);
+  }
+
+  // ── Corporate state ────────────────────────────────────────
   const [corpIDType, setCorpIDType] = useState('SSM');
   const [corpIDNumber, setCorpIDNumber] = useState('');
   const [enterpriseType, setEnterpriseType] = useState('');
@@ -209,6 +265,29 @@ export default function ApplicationForm() {
                   <p className="text-xs text-gray-400 mt-1">Formatted: {displayVal}</p>
                 )}
               </div>
+            </div>
+
+            {/* Verify button + loading indicator */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={runVerification}
+                disabled={isVerifying || !rawDigits}
+                className="px-4 py-2 text-sm font-medium rounded bg-[#D0021B] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-red-700 transition-colors"
+              >
+                {isVerifying ? 'Verifying…' : 'Search / Verify'}
+              </button>
+              {isVerifying && (
+                <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <svg className="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                  </svg>
+                  Querying 6 systems…
+                </span>
+              )}
+              {!isVerifying && verifyResults.cifProfile.status === 'ok' && (
+                <span className="text-xs text-green-600 font-medium">Verification complete</span>
+              )}
             </div>
 
             {/* Passport extra fields */}
