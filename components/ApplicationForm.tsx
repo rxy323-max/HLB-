@@ -38,6 +38,68 @@ function formatMyKad(raw: string): string {
 
 const MYKAD_FAMILY = ['MyKad', 'MyPR', 'MyKas', 'MyKadBrown'];
 
+// ── Vehicle mock library (4.11) ───────────────────────────────
+const VEHICLE_MAKES = ['Perodua', 'Proton', 'Toyota', 'Honda', 'BMW'];
+
+const VEHICLE_FAMILIES: Record<string, string[]> = {
+  Perodua: ['Myvi', 'Axia', 'Bezza', 'Alza'],
+  Proton:  ['Saga', 'X50', 'X70', 'S70'],
+  Toyota:  ['Vios', 'Corolla Cross', 'Camry', 'Hilux'],
+  Honda:   ['City', 'Civic', 'HR-V', 'Accord'],
+  BMW:     ['3 Series', '5 Series', 'X3'],
+};
+
+type VehicleModel = {
+  model: string; msrp: number; marketValue?: number;
+  engineType: string; bnmPurpose: string;
+  green: boolean; gpRating: string; greenlane: boolean;
+};
+
+const VEHICLE_MODELS: Record<string, Record<string, VehicleModel[]>> = {
+  'Perodua-Myvi': {
+    '2024': [
+      { model: '1.5 AV CVT', msrp: 59990, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true  },
+      { model: '1.3 H CVT',  msrp: 53990, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'B', greenlane: false },
+    ],
+    '2023': [
+      { model: '1.5 AV CVT', msrp: 58990, marketValue: 51000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true  },
+      { model: '1.3 H CVT',  msrp: 52990, marketValue: 44000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'B', greenlane: false },
+      { model: '1.3 G CVT',  msrp: 49990, marketValue: 41000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'C', greenlane: false },
+    ],
+    '2022': [
+      { model: '1.5 AV CVT', msrp: 55990, marketValue: 46000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: false },
+    ],
+  },
+  'Toyota-Vios': {
+    '2024': [
+      { model: '1.5 G CVT', msrp: 89980, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+      { model: '1.5 E CVT', msrp: 84980, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'C', greenlane: false },
+    ],
+    '2023': [
+      { model: '1.5 G CVT', msrp: 88980, marketValue: 79000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+      { model: '1.5 E CVT', msrp: 83980, marketValue: 73000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'C', greenlane: false },
+    ],
+  },
+  'Honda-City': {
+    '2024': [
+      { model: '1.5 V Sensing CVT', msrp: 111900, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+      { model: '1.5 S CVT',         msrp:  99900, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'C', greenlane: false },
+    ],
+    '2023': [
+      { model: '1.5 V Sensing CVT', msrp: 110900, marketValue: 98000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+    ],
+  },
+  'BMW-3 Series': {
+    '2024': [
+      { model: '320i Sport',       msrp: 264380, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true },
+      { model: '330e M Sport',     msrp: 318380, engineType: 'Hybrid', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true },
+    ],
+    '2023': [
+      { model: '320i Sport',       msrp: 258380, marketValue: 225000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true },
+    ],
+  },
+};
+
 // ── Mock API layer ────────────────────────────────────────────
 type ApiStatus = 'idle' | 'loading' | 'ok' | 'error' | 'timeout';
 
@@ -232,6 +294,27 @@ export default function ApplicationForm() {
     const seq = String(Math.floor(Math.random() * 9999999) + 1).padStart(7, '0');
     setRefNo(`PCJ/${productCode}/${year}/W${seq}`);
   }
+
+  // ── Vehicle state (4.11) ──────────────────────────────────
+  const [vehMake, setVehMake]     = useState('');
+  const [vehFamily, setVehFamily] = useState('');
+  const [vehYear, setVehYear]     = useState('');
+  const [vehModel, setVehModel]   = useState('');
+  const [purchasePrice, setPurchasePrice] = useState('');
+
+  const availableFamilies = vehMake ? (VEHICLE_FAMILIES[vehMake] ?? []) : [];
+  const availableYears    = vehMake && vehFamily
+    ? Object.keys(VEHICLE_MODELS[`${vehMake}-${vehFamily}`] ?? {}).sort((a, b) => Number(b) - Number(a))
+    : [];
+  const availableModels: VehicleModel[] = vehMake && vehFamily && vehYear
+    ? (VEHICLE_MODELS[`${vehMake}-${vehFamily}`]?.[vehYear] ?? [])
+    : [];
+  const selectedModelData = availableModels.find((m) => m.model === vehModel) ?? null;
+  const isUsedVehicle = vehicleType === 'used';
+
+  function handleVehMake(v: string)   { setVehMake(v); setVehFamily(''); setVehYear(''); setVehModel(''); }
+  function handleVehFamily(v: string) { setVehFamily(v); setVehYear(''); setVehModel(''); }
+  function handleVehYear(v: string)   { setVehYear(v); setVehModel(''); }
 
   // ── Corporate state ────────────────────────────────────────
   const [corpIDType, setCorpIDType] = useState('SSM');
@@ -1053,6 +1136,135 @@ export default function ApplicationForm() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* ── 4.11 Vehicle Information ───────────────────────── */}
+        <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span>
+            Vehicle Information
+            {vehicleType && (
+              <span className="ml-auto text-xs font-normal px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 capitalize">
+                {vehicleType}
+              </span>
+            )}
+          </h2>
+
+          {/* Cascading selects: Make → Family → Year → Model */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Make <span className="text-red-500">*</span></label>
+              <select value={vehMake} onChange={(e) => handleVehMake(e.target.value)}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+                <option value="">-- Select Make --</option>
+                {VEHICLE_MAKES.map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Family <span className="text-red-500">*</span></label>
+              <select value={vehFamily} onChange={(e) => handleVehFamily(e.target.value)}
+                disabled={!vehMake}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400 disabled:bg-gray-50 disabled:text-gray-400">
+                <option value="">-- Select Family --</option>
+                {availableFamilies.map((f) => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">
+                {isUsedVehicle ? 'Manufacture Year' : 'Manufacture Year'}
+                <span className="text-red-500"> *</span>
+              </label>
+              {isUsedVehicle ? (
+                <select value={vehYear} onChange={(e) => handleVehYear(e.target.value)}
+                  disabled={!vehFamily}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400 disabled:bg-gray-50 disabled:text-gray-400">
+                  <option value="">-- Select Year --</option>
+                  {availableYears.map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
+              ) : (
+                <input type="number" min={2000} max={new Date().getFullYear() + 1}
+                  value={vehYear} onChange={(e) => handleVehYear(e.target.value)}
+                  disabled={!vehFamily}
+                  placeholder="e.g. 2024"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400 disabled:bg-gray-50 disabled:text-gray-400" />
+              )}
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Model <span className="text-red-500">*</span></label>
+              <select value={vehModel} onChange={(e) => setVehModel(e.target.value)}
+                disabled={!vehYear || availableModels.length === 0}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400 disabled:bg-gray-50 disabled:text-gray-400">
+                <option value="">-- Select Model --</option>
+                {availableModels.map((m) => (
+                  <option key={m.model} value={m.model}>{m.model}</option>
+                ))}
+                {vehYear && availableModels.length === 0 && (
+                  <option disabled>No data for this year</option>
+                )}
+              </select>
+            </div>
+          </div>
+
+          {/* Price fields */}
+          {selectedModelData && (
+            <div className="grid grid-cols-3 gap-4 pt-2 border-t border-gray-100">
+              <div>
+                <p className="text-xs text-gray-400 mb-0.5">MSRP (List Price)</p>
+                <p className="text-sm font-semibold text-gray-800">
+                  RM {selectedModelData.msrp.toLocaleString()}
+                </p>
+              </div>
+              {isUsedVehicle && selectedModelData.marketValue && (
+                <div>
+                  <p className="text-xs text-gray-400 mb-0.5">Market Value</p>
+                  <p className="text-sm font-semibold text-blue-700">
+                    RM {selectedModelData.marketValue.toLocaleString()}
+                  </p>
+                </div>
+              )}
+              <div className={isUsedVehicle ? '' : 'col-span-2'}>
+                <label className="text-xs text-gray-500 block mb-1">
+                  Purchase Price <span className="text-red-500">*</span>
+                </label>
+                <input type="number" value={purchasePrice}
+                  onChange={(e) => setPurchasePrice(e.target.value)}
+                  placeholder="Transaction price"
+                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-blue-400" />
+              </div>
+            </div>
+          )}
+
+          {/* Matrix fields – auto-populated after model selection */}
+          {selectedModelData && (
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Vehicle Matrix (Auto-populated)
+              </p>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-xs">
+                {[
+                  ['Engine Type',      selectedModelData.engineType],
+                  ['BNM Loan Purpose', selectedModelData.bnmPurpose],
+                  ['Green Vehicle',    selectedModelData.green ? 'Yes (Green)' : 'No'],
+                  ['GP Rating',        selectedModelData.gpRating],
+                  ['Greenlane',        selectedModelData.greenlane ? 'Yes' : 'No'],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex justify-between border-b border-gray-100 pb-1">
+                    <span className="text-gray-400">{label}</span>
+                    <span className={`font-medium ${
+                      value === 'Yes (Green)' || value === 'Yes' ? 'text-green-600' : 'text-gray-700'
+                    }`}>{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Dealer/vehicle type mismatch hint */}
+          {vehicleType && selectedModelData && isUsedVehicle && !selectedModelData.marketValue && (
+            <p className="text-xs text-amber-600">
+              ⚠ No market value found in the vehicle library for this model/year combination.
+            </p>
+          )}
         </div>
 
         </div>{/* end flex-1 form column */}
