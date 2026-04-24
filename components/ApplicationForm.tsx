@@ -150,6 +150,7 @@ export default function ApplicationForm() {
   const [demoScenario, setDemoScenario] = useState<DemoScenario>('B');
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyResults, setVerifyResults] = useState<VerificationResults>(IDLE_RESULTS);
+  const [manualCIF, setManualCIF] = useState('');
 
   async function runVerification(scenario: DemoScenario = demoScenario) {
     setIsVerifying(true);
@@ -336,8 +337,8 @@ export default function ApplicationForm() {
                   Querying 6 systems…
                 </span>
               )}
-              {!isVerifying && verifyResults.cifProfile.status === 'ok' && (
-                <span className="text-xs text-green-600 font-medium">Verification complete</span>
+              {!isVerifying && verifyResults.cifProfile.status !== 'idle' && verifyResults.cifProfile.status !== 'timeout' && (
+                <span className="text-xs text-green-600 font-medium">Query complete</span>
               )}
             </div>
 
@@ -397,6 +398,72 @@ export default function ApplicationForm() {
                 </div>
               </div>
             )}
+
+            {/* ── CIF Verification Result ──────────────────────── */}
+            {(() => {
+              const r = verifyResults.cifProfile;
+              if (r.status === 'idle') return null;
+              const d = r.data as Record<string, unknown> | undefined;
+
+              // Scenario A – NTB
+              if (r.status === 'ok' && d?.type === 'NTB') return (
+                <div className="p-3 bg-green-50 rounded-lg border border-green-200 flex items-start gap-2">
+                  <span className="text-green-500 text-lg leading-none mt-0.5">✓</span>
+                  <div>
+                    <p className="text-sm font-medium text-green-700">No Existing Record – New-to-Bank Customer</p>
+                    <p className="text-xs text-green-600 mt-0.5">No active CIF found. Proceed to create new customer profile.</p>
+                  </div>
+                </div>
+              );
+
+              // Scenario B – ETB Single CIF
+              if (r.status === 'ok' && d?.type === 'ETB') return (
+                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-2">
+                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">CIF Profile Found</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">CIF Number</p>
+                      <p className="text-sm font-mono font-semibold text-gray-800">{d.cif as string}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Full Name</p>
+                      <p className="text-sm font-medium text-gray-800">{d.name as string}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">NRIC</p>
+                      <p className="text-sm font-mono text-gray-800">{d.nric as string}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+
+              // Scenario D – Timeout
+              if (r.status === 'timeout') return (
+                <div className="p-3 bg-red-50 rounded-lg border border-red-200 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <span className="text-red-500 text-base leading-none mt-0.5">⚠</span>
+                    <div>
+                      <p className="text-sm font-medium text-red-700">HOST Timeout – CIF Lookup Failed</p>
+                      <p className="text-xs text-red-500 mt-0.5">{r.error}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">
+                      Enter CIF Number Manually <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={manualCIF}
+                      onChange={(e) => setManualCIF(e.target.value)}
+                      placeholder="e.g. CIF-88291"
+                      className="w-full border border-red-300 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-red-400"
+                    />
+                  </div>
+                </div>
+              );
+
+              return null;
+            })()}
           </div>
         )}
 
