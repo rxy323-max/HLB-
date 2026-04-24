@@ -179,8 +179,8 @@ export default function ApplicationForm() {
           { ref: 'HP-2023-001204', product: 'IHP', status: 'Settled',  date: '2023-06-15', amount: 42000 },
           { ref: 'HP-2022-000891', product: 'HP',  status: 'Rejected', date: '2022-03-28', amount: 68000 },
         ]}}),
-        mockCall(500,  { status: 'ok', data: { consented: true } }),
-        mockCall(900,  { status: 'ok', data: { hpLine: 80000 } }),
+        mockCall(500,  { status: 'ok', data: { consented: true, consentDate: '2025-01-15', channel: 'e-Consent Portal' } }),
+        mockCall(900,  { status: 'ok', data: { hpLine: 80000, validUntil: '2026-12-31', source: 'BCB' } }),
       ]);
 
     setVerifyResults({ cifProfile, wtWhitelist, incomeDB, appHistory, preConsent, hpLine });
@@ -678,6 +678,64 @@ export default function ApplicationForm() {
                   ))}
                 </div>
               )}
+            </div>
+          );
+        })()}
+
+        {/* ── HP Line Panel (4.5 – BCB Source) ─────────────────── */}
+        {appType === 'Individual' && verifyResults.hpLine.status === 'ok' && !isVerifying && (() => {
+          type HPData = { hpLine: number; validUntil: string; source: string };
+          const d = verifyResults.hpLine.data as HPData;
+          return (
+            <div className="bg-white rounded-lg shadow-sm p-4 space-y-3">
+              <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">4</span>
+                HP Financing Line
+                <span className="ml-auto text-xs font-normal text-gray-400">Source: {d.source}</span>
+              </h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-400 mb-0.5">Approved HP Line</p>
+                  <p className="text-xl font-bold text-gray-800">RM {d.hpLine.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 mb-0.5">Valid Until</p>
+                  <p className="text-sm text-gray-700">{d.validUntil}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── Pre-Consent Panel (4.5 – e-Consent) ───────────────── */}
+        {appType === 'Individual' && verifyResults.preConsent.status === 'ok' && !isVerifying && (() => {
+          type ConsentData = { consented: boolean; consentDate: string; channel: string };
+          const d = verifyResults.preConsent.data as ConsentData;
+          return (
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-3">
+                <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">5</span>
+                Pre-Consent (e-Consent)
+              </h2>
+              <div className="flex items-center gap-4">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                  d.consented ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                }`}>
+                  {d.consented ? '✓ Signed' : '⚠ Not Signed'}
+                </span>
+                {d.consented && (
+                  <>
+                    <div>
+                      <p className="text-xs text-gray-400">Consent Date</p>
+                      <p className="text-xs font-medium text-gray-700">{d.consentDate}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400">Channel</p>
+                      <p className="text-xs font-medium text-gray-700">{d.channel}</p>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           );
         })()}
