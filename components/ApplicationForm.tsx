@@ -201,6 +201,38 @@ export default function ApplicationForm() {
     setVerifyResults(IDLE_RESULTS);
   }
 
+  // ── Channel Information state (4.7) ──────────────────────
+  const [loanType, setLoanType] = useState<'Conventional' | 'Islamic'>('Conventional');
+  const [productGroup, setProductGroup] = useState<'HP' | 'IHP'>('HP');
+  const [vehicleType, setVehicleType] = useState('');
+  const [specialTags, setSpecialTags] = useState<string[]>([]);
+  const [salesOfficer, setSalesOfficer] = useState('Ahmad Razif · SO-00421');
+  const [closingBranch, setClosingBranch] = useState('Petaling Jaya Branch');
+  const [branchManager, setBranchManager] = useState('Noraini Bt Hassan');
+  const [deliveryChannel, setDeliveryChannel] = useState('');
+  const [source, setSource] = useState('099');
+  const [referralOfficer, setReferralOfficer] = useState('');
+  const [refNo, setRefNo] = useState('');
+
+  const PRODUCT_TYPE_MAP: Record<string, Record<string, string>> = {
+    Conventional: { HP: 'Hire Purchase', IHP: 'Industrial Hire Purchase (IHP)' },
+    Islamic:      { HP: 'AITAB (Islamic Hire Purchase)', IHP: 'Industrial Hire Purchase-i (IHP-i)' },
+  };
+  const productType = PRODUCT_TYPE_MAP[loanType][productGroup];
+
+  function toggleSpecialTag(tag: string) {
+    setSpecialTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  }
+
+  function generateRefNo() {
+    const productCode = productGroup; // 'HP' or 'IHP'
+    const year = new Date().getFullYear();
+    const seq = String(Math.floor(Math.random() * 9999999) + 1).padStart(7, '0');
+    setRefNo(`PCJ/${productCode}/${year}/W${seq}`);
+  }
+
   // ── Corporate state ────────────────────────────────────────
   const [corpIDType, setCorpIDType] = useState('SSM');
   const [corpIDNumber, setCorpIDNumber] = useState('');
@@ -846,6 +878,183 @@ export default function ApplicationForm() {
             </div>
           </div>
         )}
+        {/* ── 4.7 Channel Information ────────────────────────── */}
+        <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>
+            Channel Information
+          </h2>
+
+          {/* Row 1: Loan Type + Product Group */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">
+                Loan / Financing Type <span className="text-red-500">*</span>
+              </label>
+              <div className="inline-flex rounded-md border border-gray-300 overflow-hidden w-full">
+                {(['Conventional', 'Islamic'] as const).map((t) => (
+                  <button key={t} onClick={() => setLoanType(t)}
+                    className={`flex-1 py-2 text-xs font-medium transition-colors ${loanType === t ? 'bg-[#D0021B] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">
+                Product Group <span className="text-red-500">*</span>
+              </label>
+              <div className="inline-flex rounded-md border border-gray-300 overflow-hidden w-full">
+                {(['HP', 'IHP'] as const).map((g) => (
+                  <button key={g} onClick={() => setProductGroup(g)}
+                    className={`flex-1 py-2 text-xs font-medium transition-colors ${productGroup === g ? 'bg-[#D0021B] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Product Type (auto-populated) */}
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">Product Type</label>
+            <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded text-sm text-gray-700 font-medium">
+              {productType}
+            </div>
+          </div>
+
+          {/* Row 2: Vehicle Type + Source */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">
+                Vehicle Type <span className="text-red-500">*</span>
+              </label>
+              <select value={vehicleType} onChange={(e) => setVehicleType(e.target.value)}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+                <option value="">-- Select --</option>
+                {['New', 'Used', 'Recond', 'Others'].map((v) => (
+                  <option key={v} value={v.toLowerCase()}>{v}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">
+                Source <span className="text-red-500">*</span>
+              </label>
+              <select value={source} onChange={(e) => setSource(e.target.value)}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+                <option value="099">099 (Default)</option>
+                <option value="180">180 (Dealer API)</option>
+                <option value="BRNHP">BRNHP (Branch Refer)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Special Tags */}
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">Special Tag</label>
+            <div className="flex flex-wrap gap-2">
+              {['HP Line', 'Fleet Purchase'].map((tag) => (
+                <button key={tag} onClick={() => toggleSpecialTag(tag)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                    specialTags.includes(tag)
+                      ? 'bg-[#D0021B] text-white border-[#D0021B]'
+                      : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+                  }`}>
+                  {specialTags.includes(tag) ? '✓ ' : ''}{tag}
+                </button>
+              ))}
+              <span className="px-3 py-1 rounded-full text-xs text-gray-400 border border-dashed border-gray-300 cursor-not-allowed">
+                Dealer API (auto)
+              </span>
+            </div>
+          </div>
+
+          {/* Officer / Branch row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Attending Officer</label>
+              <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded text-xs text-gray-600 font-mono">
+                Ahmad Razif · SO-00421
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">Cannot be modified</p>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">
+                Sales Officer + ID <span className="text-red-500">*</span>
+              </label>
+              <input value={salesOfficer} onChange={(e) => setSalesOfficer(e.target.value)}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">
+                Closing Branch <span className="text-red-500">*</span>
+              </label>
+              <input value={closingBranch} onChange={(e) => setClosingBranch(e.target.value)}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">
+                Branch Manager <span className="text-red-500">*</span>
+              </label>
+              <input value={branchManager} onChange={(e) => setBranchManager(e.target.value)}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">
+                Delivery Channel <span className="text-red-500">*</span>
+              </label>
+              <select value={deliveryChannel} onChange={(e) => setDeliveryChannel(e.target.value)}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+                <option value="">-- Select --</option>
+                {['Branch Walk-in', 'Dealer Referral', 'Direct Sales', 'Online'].map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Referral Officer</label>
+              <input value={referralOfficer} onChange={(e) => setReferralOfficer(e.target.value)}
+                placeholder="Employee ID (optional)"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400" />
+            </div>
+          </div>
+
+          {/* Syariah Compliance – conditional for Non-Individual + Islamic */}
+          {appType === 'Non-Individual' && loanType === 'Islamic' && (
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <label className="text-xs text-gray-700 font-medium block mb-1">
+                Syariah Compliance Approval Obtained <span className="text-red-500">*</span>
+              </label>
+              <p className="text-xs text-gray-500 mb-2">Required for non-individual Islamic financing. Attach approval email.</p>
+              <input type="file" accept=".pdf,.eml,.msg"
+                className="text-xs text-gray-600 file:mr-2 file:py-1 file:px-3 file:rounded file:border file:border-gray-300 file:text-xs file:bg-white" />
+            </div>
+          )}
+
+          {/* Generate Ref No */}
+          <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+            <button onClick={generateRefNo}
+              className="px-4 py-2 text-sm font-medium rounded bg-gray-800 text-white hover:bg-gray-700 transition-colors">
+              Generate Ref No
+            </button>
+            {refNo && (
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-sm font-semibold text-gray-800 bg-yellow-50 border border-yellow-200 px-3 py-1.5 rounded">
+                  {refNo}
+                </span>
+                <span className="text-xs text-green-600">EF No. generated</span>
+              </div>
+            )}
+          </div>
+        </div>
+
         </div>{/* end flex-1 form column */}
       </div>{/* end flex row */}
 
