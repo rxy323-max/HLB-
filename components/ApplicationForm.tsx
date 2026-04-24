@@ -152,6 +152,7 @@ export default function ApplicationForm() {
   const [verifyResults, setVerifyResults] = useState<VerificationResults>(IDLE_RESULTS);
   const [manualCIF, setManualCIF] = useState('');
   const [selectedCIF, setSelectedCIF] = useState<string | null>(null);
+  const [openMenuRef, setOpenMenuRef] = useState<string | null>(null);
 
   async function runVerification(scenario: DemoScenario = demoScenario) {
     setIsVerifying(true);
@@ -164,7 +165,11 @@ export default function ApplicationForm() {
         mockCall(scenario === 'D' ? 5100 : 800, SCENARIO_CIF[scenario]),
         mockCall(600,  { status: 'ok', data: { whitelisted: true, monthlyIncome: 7200, employer: 'XYZ Corp Bhd', employmentType: 'Fixed' } }),
         mockCall(1000, { status: 'ok', data: { monthlyIncome: 8500, employer: 'ABC Manufacturing Sdn Bhd', employmentType: 'Fixed', verified: true } }),
-        mockCall(700,  { status: 'ok', data: { history: [] } }),
+        mockCall(700,  { status: 'ok', data: { history: [
+          { ref: 'HP-2024-003821', product: 'HP',  status: 'Approved', date: '2024-11-02', amount: 75000 },
+          { ref: 'HP-2023-001204', product: 'IHP', status: 'Settled',  date: '2023-06-15', amount: 42000 },
+          { ref: 'HP-2022-000891', product: 'HP',  status: 'Rejected', date: '2022-03-28', amount: 68000 },
+        ]}}),
         mockCall(500,  { status: 'ok', data: { consented: true } }),
         mockCall(900,  { status: 'ok', data: { hpLine: 80000 } }),
       ]);
@@ -573,6 +578,84 @@ export default function ApplicationForm() {
                   ⚠ Income DB (RM {dbData.monthlyIncome.toLocaleString()}) differs from WT Whitelist
                   (RM {wtData.monthlyIncome.toLocaleString()}). Income DB takes priority.
                 </p>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── App History Panel (4.5.7) ──────────────────────── */}
+        {appType === 'Individual' && verifyResults.appHistory.status === 'ok' && !isVerifying && (() => {
+          type HistoryEntry = { ref: string; product: string; status: string; date: string; amount: number };
+          const entries = (verifyResults.appHistory.data as { history: HistoryEntry[] }).history;
+
+          const STATUS_STYLE: Record<string, string> = {
+            Approved: 'bg-green-100 text-green-700',
+            Settled:  'bg-gray-100  text-gray-600',
+            Rejected: 'bg-red-100   text-red-600',
+          };
+
+          return (
+            <div className="bg-white rounded-lg shadow-sm p-4 space-y-3">
+              <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span>
+                Application History
+                <span className="ml-auto text-xs font-normal text-gray-400">{entries.length} records</span>
+              </h2>
+
+              {entries.length === 0 ? (
+                <p className="text-xs text-gray-400">No previous applications found.</p>
+              ) : (
+                <div className="divide-y divide-gray-100">
+                  {entries.map((e) => (
+                    <div key={e.ref} className="flex items-center gap-3 py-2.5 text-sm">
+                      {/* Ref + Product */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-mono text-xs font-medium text-gray-800">{e.ref}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{e.date}</p>
+                      </div>
+
+                      {/* Product badge */}
+                      <span className="text-xs font-semibold text-gray-500 w-8">{e.product}</span>
+
+                      {/* Amount */}
+                      <span className="text-xs text-gray-600 w-24 text-right">
+                        RM {e.amount.toLocaleString()}
+                      </span>
+
+                      {/* Status badge */}
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full w-20 text-center ${STATUS_STYLE[e.status] ?? 'bg-gray-100 text-gray-500'}`}>
+                        {e.status}
+                      </span>
+
+                      {/* "..." copy menu */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenMenuRef(openMenuRef === e.ref ? null : e.ref)}
+                          className="text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded hover:bg-gray-100 text-base leading-none"
+                        >
+                          ···
+                        </button>
+                        {openMenuRef === e.ref && (
+                          <div className="absolute right-0 top-6 z-10 bg-white border border-gray-200 rounded shadow-md w-48 py-1 text-xs">
+                            {[
+                              'Copy All',
+                              'Copy Customer',
+                              'Copy as Fleet Purchase',
+                            ].map((action) => (
+                              <button
+                                key={action}
+                                onClick={() => { setOpenMenuRef(null); }}
+                                className="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-gray-700"
+                              >
+                                {action}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           );
