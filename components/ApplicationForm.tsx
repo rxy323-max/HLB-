@@ -106,12 +106,21 @@ export default function ApplicationForm() {
   const isMyKadFamily = MYKAD_FAMILY.includes(idType);
   const isPassport = idType === 'Passport';
 
+  // Passport extra fields
+  const [passportCountry, setPassportCountry] = useState('');
+  const [passportAge, setPassportAge] = useState('');
+  const ageNum = passportAge === '' ? null : Number(passportAge);
+  const ageInvalid = ageNum !== null && ageNum < 18;
+  const ageValid   = ageNum !== null && ageNum >= 18;
+
   function handleIDTypeChange(val: string) {
     setIdType(val);
     setRawDigits('');
     setDisplayVal('');
     setShowOldIC(false);
     setOldICNumber('');
+    setPassportCountry('');
+    setPassportAge('');
   }
 
   function handleIDInput(e: React.ChangeEvent<HTMLInputElement>) {
@@ -352,7 +361,7 @@ export default function ApplicationForm() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => runVerification()}
-                disabled={isVerifying || !rawDigits}
+                disabled={isVerifying || !rawDigits || ageInvalid}
                 className="px-4 py-2 text-sm font-medium rounded bg-[#D0021B] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-red-700 transition-colors"
               >
                 {isVerifying ? 'Verifying…' : 'Search / Verify'}
@@ -380,8 +389,10 @@ export default function ApplicationForm() {
                   </label>
                   <input
                     type="text"
+                    value={passportCountry}
+                    onChange={(e) => setPassportCountry(e.target.value)}
                     placeholder="e.g. Singapore"
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
                   />
                 </div>
                 <div>
@@ -390,11 +401,28 @@ export default function ApplicationForm() {
                   </label>
                   <input
                     type="number"
-                    min={18}
+                    min={1}
+                    max={120}
+                    value={passportAge}
+                    onChange={(e) => setPassportAge(e.target.value)}
                     placeholder="Must be ≥ 18"
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                    className={`w-full border rounded px-3 py-2 text-sm focus:outline-none ${
+                      ageInvalid ? 'border-red-400 bg-red-50 focus:border-red-500'
+                      : ageValid  ? 'border-green-400 focus:border-green-500'
+                      : 'border-gray-300 focus:border-blue-400'
+                    }`}
                   />
-                  <p className="text-xs text-orange-500 mt-1">Rule 2: Applicant must be ≥ 18 years old</p>
+                  {ageInvalid && (
+                    <p className="text-xs text-red-600 mt-1 font-medium">
+                      Rule 2: Applicant must be ≥ 18 years old
+                    </p>
+                  )}
+                  {ageValid && (
+                    <p className="text-xs text-green-600 mt-1">Age verified ✓</p>
+                  )}
+                  {passportAge === '' && (
+                    <p className="text-xs text-gray-400 mt-1">Rule 2: must be ≥ 18</p>
+                  )}
                 </div>
               </div>
             )}
