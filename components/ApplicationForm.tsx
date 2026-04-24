@@ -162,8 +162,8 @@ export default function ApplicationForm() {
     const [cifProfile, wtWhitelist, incomeDB, appHistory, preConsent, hpLine] =
       await Promise.all([
         mockCall(scenario === 'D' ? 5100 : 800, SCENARIO_CIF[scenario]),
-        mockCall(600,  { status: 'ok', data: { whitelisted: true } }),
-        mockCall(1000, { status: 'ok', data: { monthlyIncome: 5000 } }),
+        mockCall(600,  { status: 'ok', data: { whitelisted: true, monthlyIncome: 7200, employer: 'XYZ Corp Bhd', employmentType: 'Fixed' } }),
+        mockCall(1000, { status: 'ok', data: { monthlyIncome: 8500, employer: 'ABC Manufacturing Sdn Bhd', employmentType: 'Fixed', verified: true } }),
         mockCall(700,  { status: 'ok', data: { history: [] } }),
         mockCall(500,  { status: 'ok', data: { consented: true } }),
         mockCall(900,  { status: 'ok', data: { hpLine: 80000 } }),
@@ -513,6 +513,70 @@ export default function ApplicationForm() {
             })()}
           </div>
         )}
+
+        {/* ── Income Data Panel (4.5.6) ──────────────────────── */}
+        {appType === 'Individual' && verifyResults.cifProfile.status !== 'idle' && !isVerifying && (() => {
+          type IncomeData = { monthlyIncome?: number; employer?: string; employmentType?: string; verified?: boolean };
+          const dbData  = verifyResults.incomeDB.status  === 'ok' ? verifyResults.incomeDB.data  as IncomeData : null;
+          const wtData  = verifyResults.wtWhitelist.status === 'ok' ? verifyResults.wtWhitelist.data as IncomeData : null;
+
+          // Priority 1: Income DB; Priority 2: WT Whitelist
+          const income  = dbData?.monthlyIncome  ? dbData  : wtData?.monthlyIncome ? wtData  : null;
+          const source  = dbData?.monthlyIncome  ? { label: 'HLB Income DB', priority: 1, color: 'text-green-700 bg-green-50 border-green-200' }
+                        : wtData?.monthlyIncome  ? { label: 'WT Whitelist',  priority: 2, color: 'text-blue-700 bg-blue-50 border-blue-200' }
+                        : null;
+
+          if (!income || !source) return (
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <span className="bg-gray-300 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>
+                Income Data
+              </h2>
+              <p className="text-xs text-gray-400">No income data available from any source.</p>
+            </div>
+          );
+
+          return (
+            <div className="bg-white rounded-lg shadow-sm p-4 space-y-3">
+              <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>
+                Income Data
+              </h2>
+
+              {/* Source badge */}
+              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${source.color}`}>
+                <span>Priority {source.priority}</span>
+                <span className="opacity-40">·</span>
+                <span>{source.label}</span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 pt-1">
+                <div>
+                  <p className="text-xs text-gray-400 mb-0.5">Monthly Gross Income</p>
+                  <p className="text-base font-semibold text-gray-800">
+                    RM {income.monthlyIncome!.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 mb-0.5">Employer</p>
+                  <p className="text-sm text-gray-800">{income.employer ?? '–'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 mb-0.5">Employment Type</p>
+                  <p className="text-sm text-gray-800">{income.employmentType ?? '–'}</p>
+                </div>
+              </div>
+
+              {/* Conflict notice when both sources have data */}
+              {dbData?.monthlyIncome && wtData?.monthlyIncome && dbData.monthlyIncome !== wtData.monthlyIncome && (
+                <p className="text-xs text-amber-600 border-t border-gray-100 pt-2">
+                  ⚠ Income DB (RM {dbData.monthlyIncome.toLocaleString()}) differs from WT Whitelist
+                  (RM {wtData.monthlyIncome.toLocaleString()}). Income DB takes priority.
+                </p>
+              )}
+            </div>
+          );
+        })()}
 
         {/* ── Corporate Section ──────────────────────────────── */}
         {appType === 'Non-Individual' && (
