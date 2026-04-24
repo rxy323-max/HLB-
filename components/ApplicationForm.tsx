@@ -70,6 +70,26 @@ function mockCall(delayMs: number, result: ApiResult): Promise<ApiResult> {
   return new Promise((resolve) => setTimeout(() => resolve(result), delayMs));
 }
 
+type DemoScenario = 'A' | 'B' | 'C' | 'D';
+
+const SCENARIO_LABELS: Record<DemoScenario, string> = {
+  A: 'Scenario A – NTB (No CIF)',
+  B: 'Scenario B – ETB Single CIF',
+  C: 'Scenario C – ETB Multiple CIF',
+  D: 'Scenario D – Timeout',
+};
+
+// Scenario-specific override for cifProfile; other 5 APIs stay "ok"
+const SCENARIO_CIF: Record<DemoScenario, ApiResult> = {
+  A: { status: 'ok', data: { type: 'NTB', cif: null } },
+  B: { status: 'ok', data: { type: 'ETB', cif: 'CIF-88291', name: 'Lim Boon Keong', nric: '761203-10-5981' } },
+  C: { status: 'ok', data: { type: 'ETB_MULTIPLE', cifs: [
+    { cif: 'CIF-88291', name: 'Lim Boon Keong', branch: 'PJ Branch' },
+    { cif: 'CIF-99034', name: 'Lim Boon Keong', branch: 'KL HQ' },
+  ]}},
+  D: { status: 'timeout', error: 'HOST did not respond within 5 s' },
+};
+
 export default function ApplicationForm() {
   const [appType, setAppType] = useState<AppType>('Individual');
 
@@ -126,19 +146,18 @@ export default function ApplicationForm() {
     if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
   }
 
-  // ── Verification state ─────────────────────────────────────
+  // ── Verification + Demo Controls state ───────────────────────
+  const [demoScenario, setDemoScenario] = useState<DemoScenario>('B');
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyResults, setVerifyResults] = useState<VerificationResults>(IDLE_RESULTS);
 
-  async function runVerification() {
-    if (!rawDigits && !displayVal) return;
+  async function runVerification(scenario: DemoScenario = demoScenario) {
     setIsVerifying(true);
     setVerifyResults(IDLE_RESULTS);
 
-    // Fire all 6 calls concurrently; each returns after its mock delay
     const [cifProfile, wtWhitelist, incomeDB, appHistory, preConsent, hpLine] =
       await Promise.all([
-        mockCall(800,  { status: 'ok', data: { cif: 'CIF-001' } }),
+        mockCall(scenario === 'D' ? 5100 : 800, SCENARIO_CIF[scenario]),
         mockCall(600,  { status: 'ok', data: { whitelisted: true } }),
         mockCall(1000, { status: 'ok', data: { monthlyIncome: 5000 } }),
         mockCall(700,  { status: 'ok', data: { history: [] } }),
@@ -148,6 +167,11 @@ export default function ApplicationForm() {
 
     setVerifyResults({ cifProfile, wtWhitelist, incomeDB, appHistory, preConsent, hpLine });
     setIsVerifying(false);
+  }
+
+  function handleDemoScenario(s: DemoScenario) {
+    setDemoScenario(s);
+    setVerifyResults(IDLE_RESULTS);
   }
 
   // ── Corporate state ────────────────────────────────────────
@@ -178,7 +202,34 @@ export default function ApplicationForm() {
         <span className="text-sm opacity-90">Sales Officer · Ahmad Razif</span>
       </header>
 
-      <div className="max-w-3xl mx-auto p-4 space-y-4">
+      <div className="max-w-5xl mx-auto p-4 flex gap-4 items-start">
+        {/* ── Demo Controls sidebar ──────────────────────────── */}
+        <aside className="w-52 shrink-0 bg-white rounded-lg shadow-sm p-3 sticky top-4 space-y-2">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Demo Controls
+          </p>
+          {(Object.keys(SCENARIO_LABELS) as DemoScenario[]).map((s) => (
+            <button
+              key={s}
+              onClick={() => handleDemoScenario(s)}
+              className={`w-full text-left px-3 py-2 rounded text-xs font-medium transition-colors ${
+                demoScenario === s
+                  ? 'bg-[#D0021B] text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {SCENARIO_LABELS[s]}
+            </button>
+          ))}
+          <div className="pt-2 border-t border-gray-100">
+            <p className="text-xs text-gray-400 leading-tight">
+              Select a scenario then click <strong>Search / Verify</strong> on the form.
+            </p>
+          </div>
+        </aside>
+
+        {/* ── Main form column ───────────────────────────────── */}
+        <div className="flex-1 space-y-4">
         {/* Page title */}
         <div className="bg-white rounded-lg shadow-sm p-4">
           <h1 className="text-base font-semibold text-gray-800">New Application</h1>
@@ -270,7 +321,7 @@ export default function ApplicationForm() {
             {/* Verify button + loading indicator */}
             <div className="flex items-center gap-3">
               <button
-                onClick={runVerification}
+                onClick={() => runVerification()}
                 disabled={isVerifying || !rawDigits}
                 className="px-4 py-2 text-sm font-medium rounded bg-[#D0021B] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-red-700 transition-colors"
               >
@@ -427,7 +478,8 @@ export default function ApplicationForm() {
             </div>
           </div>
         )}
-      </div>
+        </div>{/* end flex-1 form column */}
+      </div>{/* end flex row */}
     </div>
   );
 }
