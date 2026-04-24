@@ -154,7 +154,16 @@ export default function ApplicationForm() {
   const [selectedCIF, setSelectedCIF] = useState<string | null>(null);
   const [openMenuRef, setOpenMenuRef] = useState<string | null>(null);
 
+  // Rule 3 – Single Active Check
+  const [rule3Enabled, setRule3Enabled] = useState(false);
+  const [showRule3Modal, setShowRule3Modal] = useState(false);
+
   async function runVerification(scenario: DemoScenario = demoScenario) {
+    // Rule 3: block if an active application already exists
+    if (rule3Enabled) {
+      setShowRule3Modal(true);
+      return;
+    }
     setIsVerifying(true);
     setVerifyResults(IDLE_RESULTS);
     setSelectedCIF(null);
@@ -230,6 +239,18 @@ export default function ApplicationForm() {
               {SCENARIO_LABELS[s]}
             </button>
           ))}
+          <div className="pt-2 border-t border-gray-100 space-y-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Rules</p>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={rule3Enabled}
+                onChange={(e) => { setRule3Enabled(e.target.checked); setVerifyResults(IDLE_RESULTS); }}
+                className="accent-[#D0021B] w-3.5 h-3.5"
+              />
+              <span className="text-xs text-gray-600">Rule 3: Active App Exists</span>
+            </label>
+          </div>
           <div className="pt-2 border-t border-gray-100">
             <p className="text-xs text-gray-400 leading-tight">
               Select a scenario then click <strong>Search / Verify</strong> on the form.
@@ -741,6 +762,59 @@ export default function ApplicationForm() {
         )}
         </div>{/* end flex-1 form column */}
       </div>{/* end flex row */}
+
+      {/* ── Rule 3 Modal ───────────────────────────────────────── */}
+      {showRule3Modal && (
+        <div
+          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowRule3Modal(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3">
+              <span className="text-2xl leading-none">⚠️</span>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800">Active Application Found</h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  An active application already exists for this ID and cannot be submitted again.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg px-4 py-3 space-y-1 text-xs">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Ref ID</span>
+                <span className="font-mono font-semibold text-gray-800">HP-2025-004512</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Status</span>
+                <span className="text-amber-600 font-medium">In Progress – Credit Assessment</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Submitted</span>
+                <span className="text-gray-700">2025-03-18</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => setShowRule3Modal(false)}
+                className="flex-1 px-4 py-2 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setShowRule3Modal(false)}
+                className="flex-1 px-4 py-2 text-sm rounded bg-[#D0021B] text-white font-medium hover:bg-red-700 transition-colors"
+              >
+                View it now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
