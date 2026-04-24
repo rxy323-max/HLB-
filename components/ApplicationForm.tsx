@@ -151,10 +151,13 @@ export default function ApplicationForm() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyResults, setVerifyResults] = useState<VerificationResults>(IDLE_RESULTS);
   const [manualCIF, setManualCIF] = useState('');
+  const [selectedCIF, setSelectedCIF] = useState<string | null>(null);
 
   async function runVerification(scenario: DemoScenario = demoScenario) {
     setIsVerifying(true);
     setVerifyResults(IDLE_RESULTS);
+    setSelectedCIF(null);
+    setManualCIF('');
 
     const [cifProfile, wtWhitelist, incomeDB, appHistory, preConsent, hpLine] =
       await Promise.all([
@@ -436,6 +439,50 @@ export default function ApplicationForm() {
                   </div>
                 </div>
               );
+
+              // Scenario C – ETB Multiple CIFs
+              if (r.status === 'ok' && d?.type === 'ETB_MULTIPLE') {
+                const cifs = d.cifs as Array<{ cif: string; name: string; branch: string }>;
+                return (
+                  <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200 space-y-2">
+                    <p className="text-xs font-semibold text-yellow-700 uppercase tracking-wide">
+                      Multiple CIF Records Found – Please Select
+                    </p>
+                    <p className="text-xs text-yellow-600">
+                      {cifs.length} records matched this ID. Select the correct CIF to proceed.
+                    </p>
+                    <div className="space-y-1.5">
+                      {cifs.map((c) => (
+                        <button
+                          key={c.cif}
+                          onClick={() => setSelectedCIF(c.cif)}
+                          className={`w-full text-left px-3 py-2 rounded border text-sm transition-colors ${
+                            selectedCIF === c.cif
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex gap-6">
+                              <span className="font-mono font-semibold text-gray-800">{c.cif}</span>
+                              <span className="text-gray-700">{c.name}</span>
+                              <span className="text-gray-400">{c.branch}</span>
+                            </div>
+                            {selectedCIF === c.cif && (
+                              <span className="text-blue-600 font-bold text-base leading-none">✓</span>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    {selectedCIF && (
+                      <p className="text-xs text-blue-600 font-medium pt-1">
+                        Selected: {selectedCIF}
+                      </p>
+                    )}
+                  </div>
+                );
+              }
 
               // Scenario D – Timeout
               if (r.status === 'timeout') return (
