@@ -342,6 +342,33 @@ export default function ApplicationForm() {
   const availablePackages = loanProductCode ? (PACKAGE_CODES[loanProductCode] ?? []) : [];
   const selectedCampaign  = CAMPAIGNS.find((c) => c.code === campaignCode) ?? null;
 
+  // EIR / rate back-calculation
+  const [loanAmount, setLoanAmount]   = useState('');
+  const [tenureMonths, setTenureMonths] = useState('');
+  const [eirValue, setEirValue]       = useState('');
+
+  const eirNum      = parseFloat(eirValue) || 0;
+  const isVariable  = selectedProduct?.rateType === 'Variable';
+  const isIslamic   = loanType === 'Islamic';
+  const baseRateNum = parseFloat(selectedProduct?.base?.match(/[\d.]+/)?.[0] ?? '0');
+
+  // Back-calculated rate: Spread for variable; nominal for fixed (÷1.84 approximation)
+  const backCalcRate = eirNum > 0
+    ? isVariable
+      ? Math.max(0, eirNum - baseRateNum).toFixed(2)
+      : (eirNum / 1.84).toFixed(2)
+    : '';
+  const backCalcLabel = isVariable ? 'Spread'
+    : isIslamic ? 'Profit Rate' : 'Interest Rate';
+
+  // Campaign / absolute EIR validation
+  const ABS_MIN = 2.0; const ABS_MAX = 8.0;
+  const eirBelowMin   = eirNum > 0 && eirNum < ABS_MIN;
+  const eirAboveMax   = eirNum > ABS_MAX;
+  const eirOutOfRange = selectedCampaign && eirNum > 0
+    && (eirNum < selectedCampaign.minEIR || eirNum > selectedCampaign.maxEIR);
+  const eirHardBlock  = eirBelowMin || eirAboveMax;
+
   function handleProductCodeChange(code: string) {
     setLoanProductCode(code);
     setLoanPackageCode('');
@@ -1427,9 +1454,99 @@ export default function ApplicationForm() {
                   {selectedCampaign.minEIR.toFixed(2)}% – {selectedCampaign.maxEIR.toFixed(2)}%
                 </span>
               </p>
-              <p className="text-yellow-600 text-xs">
-                EIR outside this range will require price approver review.
-              </p>
+            </div>
+          )}
+
+          {/* ── EIR + Rate back-calculation ─────────────────── */}
+          {selectedProduct && loanPackageCode && (
+            <div className="space-y-4 pt-3 border-t border-gray-100">
+              {/* Loan Amount + Tenure */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">
+                    Loan Amount (RM) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number" value={loanAmount}
+                    onChange={(e) => setLoanAmount(e.target.value)}
+                    placeholder="e.g. 75000"
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-400"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">
+                    Tenure (months) <span className="text-red-500">*</span>
+                  </label>
+                  <select value={tenureMonths} onChange={(e) => setTenureMonths(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+                    <option value="">-- Select --</option>
+                    {[12,24,36,48,60,72,84,96,108].map((m) => (
+                      <option key={m} value={m}>{m} months ({m/12} yr{m > 12 ? 's' : ''})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* EIR input + back-calculated rate */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">
+                    EIR (%) <span className="text-red-500">*</span>
+                    {selectedCampaign && (
+                      <span className="ml-1 text-gray-400 font-normal">
+                        range {selectedCampaign.minEIR.toFixed(2)}–{selectedCampaign.maxEIR.toFixed(2)}%
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    type="number" step="0.01" value={eirValue}
+                    onChange={(e) => setEirValue(e.target.value)}
+                    placeholder="e.g. 3.20"
+                    className={`w-full border rounded px-3 py-2 text-sm font-mono focus:outline-none ${
+                      eirHardBlock    ? 'border-red-500 bg-red-50'
+                      : eirOutOfRange ? 'border-amber-400 bg-amber-50'
+                      : eirNum > 0   ? 'border-green-400'
+                      : 'border-gray-300 focus:border-blue-400'
+                    }`}
+                  />
+                  {/* Validation messages */}
+                  {eirHardBlock && (
+                    <p className="text-xs text-red-600 mt-1 font-medium">
+                      EIR must be between {ABS_MIN}% – {ABS_MAX}%. Cannot submit.
+                    </p>
+                  )}
+                  {!eirHardBlock && eirOutOfRange && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      Outside campaign range. Requires price approver review.
+                    </p>
+                  )}
+                  {!eirHardBlock && !eirOutOfRange && eirNum > 0 && (
+                    <p className="text-xs text-green-600 mt-1">EIR within acceptable range ✓</p>
+                  )}
+                </div>
+
+                {/* Back-calculated field */}
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">
+                    {backCalcLabel} (%) — auto-calculated
+                  </label>
+                  <div className={`px-3 py-2 rounded border text-sm font-mono ${
+                    backCalcRate ? 'bg-gray-50 border-gray-200 text-gray-800' : 'bg-gray-50 border-gray-100 text-gray-300'
+                  }`}>
+                    {backCalcRate ? `${backCalcRate}%` : '—'}
+                  </div>
+                  {isVariable && backCalcRate && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      {selectedProduct.base} + Spread {backCalcRate}%
+                    </p>
+                  )}
+                  {!isVariable && backCalcRate && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Approx. ({isIslamic ? 'Profit' : 'Interest'} Rate = EIR ÷ 1.84)
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>
