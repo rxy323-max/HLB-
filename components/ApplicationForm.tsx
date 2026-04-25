@@ -333,6 +333,41 @@ export default function ApplicationForm() {
     setRefNo(`PCJ/${productCode}/${year}/W${seq}`);
   }
 
+  // ── Other Applicants / Guarantors (4.8) ─────────────────
+  type Guarantor = {
+    gid: string; idType: string; rawId: string;
+    relApp: string; relPrimary: string;
+    status: 'idle' | 'verifying' | 'verified';
+  };
+  const [guarantors, setGuarantors] = useState<Guarantor[]>([]);
+
+  function addGuarantor() {
+    setGuarantors((prev) => [...prev, {
+      gid: `g-${Date.now()}`, idType: 'MyKad', rawId: '',
+      relApp: '', relPrimary: '', status: 'idle',
+    }]);
+  }
+  function removeGuarantor(gid: string) {
+    setGuarantors((prev) => prev.filter((g) => g.gid !== gid));
+  }
+  function updateGuarantor(gid: string, field: keyof Guarantor, val: string) {
+    setGuarantors((prev) => prev.map((g) => g.gid === gid ? { ...g, [field]: val } : g));
+  }
+  async function verifyGuarantor(gid: string) {
+    setGuarantors((prev) => prev.map((g) => g.gid === gid ? { ...g, status: 'verifying' } : g));
+    await new Promise((r) => setTimeout(r, 1000));
+    setGuarantors((prev) => prev.map((g) => g.gid === gid ? { ...g, status: 'verified' } : g));
+  }
+
+  const REL_TO_APP     = ['Guarantor', 'Joint Applicant (Non-Guarantor)'];
+  const REL_TO_PRIMARY = [
+    'Director / Guarantor', 'Guarantor / Director / Shareowner',
+    'Guarantor', 'Guarantor / Shareowner',
+    'Partner of Partnership', 'Sole Proprietorship',
+    'Director', 'Director / Shareowner',
+    'Shareowner', 'Ultimate Beneficial Owner',
+  ];
+
   // ── Loan Program state (4.12) ────────────────────────────
   const [loanProductCode, setLoanProductCode] = useState('');
   const [loanPackageCode, setLoanPackageCode] = useState('');
@@ -962,6 +997,110 @@ export default function ApplicationForm() {
             </div>
           );
         })()}
+
+        {/* ── 4.8 Other Applicants ───────────────────────────── */}
+        {appType === 'Individual' && (
+          <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                  {guarantors.length > 0 ? '✓' : '+'}
+                </span>
+                Other Applicants
+                {guarantors.length > 0 && (
+                  <span className="text-xs font-normal text-gray-400">{guarantors.length} added</span>
+                )}
+              </h2>
+              {guarantors.length < 3 && (
+                <button onClick={addGuarantor}
+                  className="text-xs px-3 py-1.5 rounded border border-[#D0021B] text-[#D0021B] hover:bg-red-50 font-medium transition-colors">
+                  + Add Guarantor
+                </button>
+              )}
+            </div>
+
+            {guarantors.length === 0 && (
+              <p className="text-xs text-gray-400">
+                No guarantors added. Click "+ Add Guarantor" to include joint applicants.
+              </p>
+            )}
+
+            {guarantors.map((g, idx) => (
+              <div key={g.gid} className="border border-gray-200 rounded-lg p-3 space-y-3">
+                {/* Guarantor header */}
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-gray-700">
+                    Guarantor {idx + 1}
+                    {g.status === 'verified' && (
+                      <span className="ml-2 text-green-600">✓ Verified</span>
+                    )}
+                    {g.status === 'verifying' && (
+                      <span className="ml-2 text-gray-400 animate-pulse">Verifying…</span>
+                    )}
+                  </p>
+                  <button onClick={() => removeGuarantor(g.gid)}
+                    className="text-xs text-gray-400 hover:text-red-500 transition-colors px-1">
+                    Remove
+                  </button>
+                </div>
+
+                {/* ID fields */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">ID Type <span className="text-red-500">*</span></label>
+                    <select value={g.idType}
+                      onChange={(e) => updateGuarantor(g.gid, 'idType', e.target.value)}
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-blue-400">
+                      <optgroup label="Group 1 – Standard">
+                        {ID_TYPES_G1.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                      </optgroup>
+                      <optgroup label="Group 2 – Others">
+                        {ID_TYPES_G2.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">ID Number <span className="text-red-500">*</span></label>
+                    <input type="text" value={g.rawId}
+                      onChange={(e) => updateGuarantor(g.gid, 'rawId', e.target.value)}
+                      placeholder="ID number"
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                  </div>
+                </div>
+
+                {/* Relationship fields */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Relationship to Application <span className="text-red-500">*</span></label>
+                    <select value={g.relApp}
+                      onChange={(e) => updateGuarantor(g.gid, 'relApp', e.target.value)}
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-blue-400">
+                      <option value="">-- Select --</option>
+                      {REL_TO_APP.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Relationship to Primary <span className="text-red-500">*</span></label>
+                    <select value={g.relPrimary}
+                      onChange={(e) => updateGuarantor(g.gid, 'relPrimary', e.target.value)}
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-blue-400">
+                      <option value="">-- Select --</option>
+                      {REL_TO_PRIMARY.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Verify button */}
+                <button
+                  onClick={() => verifyGuarantor(g.gid)}
+                  disabled={!g.rawId || g.status === 'verifying' || g.status === 'verified'}
+                  className="text-xs px-3 py-1.5 rounded bg-gray-700 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors">
+                  {g.status === 'verifying' ? 'Verifying…' : g.status === 'verified' ? 'Verified ✓' : 'Search / Verify'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* ── Corporate Section ──────────────────────────────── */}
         {appType === 'Non-Individual' && (
