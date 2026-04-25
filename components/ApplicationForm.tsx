@@ -267,6 +267,12 @@ export default function ApplicationForm() {
   const [rule3Enabled, setRule3Enabled] = useState(false);
   const [showRule3Modal, setShowRule3Modal] = useState(false);
 
+  // Submit modal
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [submittedRefNo] = useState(
+    () => `PCJ/HP/${new Date().getFullYear()}/W${String(Math.floor(Math.random() * 9999999) + 1).padStart(7, '0')}`
+  );
+
   async function runVerification(scenario: DemoScenario = demoScenario) {
     // Rule 3: block if an active application already exists
     if (rule3Enabled) {
@@ -409,6 +415,23 @@ export default function ApplicationForm() {
     setLoanPackageCode('');
     setCampaignCode('');
   }
+
+  // ── Asset Information state (4.10) ──────────────────────
+  const [assets, setAssets] = useState({
+    savingBal: '', currentAccBal: '', fdGia: '',
+    unitTrust: '', cds: '', otherNetworth: '',
+    omvProperty: '', epf1: '', epf2: '',
+  });
+  type AssetKey = keyof typeof assets;
+
+  const totalEPF = (parseFloat(assets.epf1) || 0) + (parseFloat(assets.epf2) || 0);
+  const totalAssets =
+    (parseFloat(assets.savingBal)    || 0) + (parseFloat(assets.currentAccBal) || 0) +
+    (parseFloat(assets.fdGia)        || 0) + (parseFloat(assets.unitTrust)     || 0) +
+    (parseFloat(assets.cds)          || 0) + (parseFloat(assets.otherNetworth) || 0) +
+    (parseFloat(assets.omvProperty)  || 0) + totalEPF;
+  const fmtRM = (n: number) =>
+    n === 0 ? '0.00' : n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   // ── Vehicle state (4.11) ──────────────────────────────────
   const [vehMake, setVehMake]     = useState('');
@@ -1790,6 +1813,102 @@ export default function ApplicationForm() {
           })()}
         </div>
 
+        {/* ── 4.10 Asset Information ─────────────────────────── */}
+        {appType === 'Individual' && (
+          <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+            <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">6</span>
+              Asset Information
+            </h2>
+
+            {/* Current Assets */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Current Assets &amp; Investments
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {([
+                  ['savingBal',     'Saving Account Balance'],
+                  ['currentAccBal', 'Current Account Credit End Balance'],
+                  ['fdGia',         'FD / GIA Receipts Value'],
+                  ['unitTrust',     'Unit Trust / Investment Value'],
+                  ['cds',           'CDS Statement Value'],
+                  ['otherNetworth', 'Other Valid Networth Value'],
+                ] as [AssetKey, string][]).map(([key, label]) => (
+                  <div key={key}>
+                    <label className="text-xs text-gray-500 block mb-1">{label}</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
+                      <input type="number" min={0} step="0.01"
+                        value={assets[key]}
+                        onChange={(e) => setAssets((p) => ({ ...p, [key]: e.target.value }))}
+                        placeholder="0.00"
+                        className="w-full border border-gray-300 rounded pl-9 pr-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-400" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Properties & EPF */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Properties &amp; EPF
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {([
+                  ['omvProperty', 'OMV of Unencumbered Properties'],
+                  ['epf1',        'EPF Account I'],
+                  ['epf2',        'EPF Account II / Account Emas'],
+                ] as [AssetKey, string][]).map(([key, label]) => (
+                  <div key={key}>
+                    <label className="text-xs text-gray-500 block mb-1">{label}</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
+                      <input type="number" min={0} step="0.01"
+                        value={assets[key]}
+                        onChange={(e) => setAssets((p) => ({ ...p, [key]: e.target.value }))}
+                        placeholder="0.00"
+                        className="w-full border border-gray-300 rounded pl-9 pr-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-400" />
+                    </div>
+                  </div>
+                ))}
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Total EPF (auto)</label>
+                  <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded text-sm font-mono text-gray-700">
+                    RM {fmtRM(totalEPF)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Total */}
+            <div className={`flex items-center justify-between px-4 py-3 rounded-lg border ${
+              totalAssets >= 1_000_000 ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'
+            }`}>
+              <span className="text-sm font-semibold text-gray-700">Total Sum of Add-On Assets</span>
+              <span className={`text-base font-bold font-mono ${
+                totalAssets >= 1_000_000 ? 'text-amber-700' : 'text-gray-800'
+              }`}>RM {fmtRM(totalAssets)}</span>
+            </div>
+            {totalAssets >= 1_000_000 && (
+              <p className="text-xs text-amber-600">
+                ⚠ Total ≥ RM 1,000,000 — additional supporting documents (core system screenshots) required.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* ── Submit ─────────────────────────────────────────── */}
+        <div className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
+          <p className="text-xs text-gray-400">Review all sections before submitting.</p>
+          <button
+            onClick={() => setShowSubmitModal(true)}
+            className="px-6 py-2.5 bg-[#D0021B] text-white text-sm font-semibold rounded hover:bg-red-700 transition-colors shadow-sm">
+            Submit Application →
+          </button>
+        </div>
+
         </div>{/* end flex-1 form column */}
       </div>{/* end flex row */}
 
@@ -1840,6 +1959,49 @@ export default function ApplicationForm() {
                 className="flex-1 px-4 py-2 text-sm rounded bg-[#D0021B] text-white font-medium hover:bg-red-700 transition-colors"
               >
                 View it now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Submit Success Modal ────────────────────────────────── */}
+      {showSubmitModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">✅</span>
+              <div>
+                <h3 className="text-base font-semibold text-gray-800">Application Submitted</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Pending AIP assessment by Decision Engine</p>
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-lg px-4 py-3 space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Application No.</span>
+                <span className="font-mono font-semibold text-gray-800">{refNo || submittedRefNo}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Status</span>
+                <span className="text-blue-600 font-medium">Application Input</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Submitted</span>
+                <span className="text-gray-700">{new Date().toLocaleDateString('en-MY')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Officer</span>
+                <span className="text-gray-700">Ahmad Razif · SO-00421</span>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button onClick={() => setShowSubmitModal(false)}
+                className="flex-1 px-4 py-2 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors">
+                Back to Form
+              </button>
+              <button onClick={() => setShowSubmitModal(false)}
+                className="flex-1 px-4 py-2 text-sm rounded bg-[#D0021B] text-white font-medium hover:bg-red-700 transition-colors">
+                View Application List
               </button>
             </div>
           </div>
