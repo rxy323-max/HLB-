@@ -1549,6 +1549,106 @@ export default function ApplicationForm() {
               </div>
             </div>
           )}
+
+          {/* ── Repayment Calculation ──────────────────────── */}
+          {(() => {
+            const P = parseFloat(loanAmount);
+            const N = parseInt(tenureMonths);
+            if (!P || !N || !eirNum || eirHardBlock || !backCalcRate || !selectedProduct) return null;
+
+            const nominalRate = parseFloat(backCalcRate);
+            const calcMethodStr = selectedProduct.calcMode;
+            type Row = { period: number; installment: number; interest: number; principal: number; balance: number };
+            let installment = 0, totalInterest = 0;
+            const schedule: Row[] = [];
+
+            if (calcMethodStr === 'Sum of Digit') {
+              totalInterest = P * (nominalRate / 100) * (N / 12);
+              installment   = (P + totalInterest) / N;
+              const SOD = N * (N + 1) / 2;
+              let bal = P;
+              for (let i = 1; i <= N; i++) {
+                const int  = ((N - i + 1) / SOD) * totalInterest;
+                const prin = installment - int;
+                bal -= prin;
+                schedule.push({ period: i, installment, interest: int, principal: prin, balance: Math.max(0, bal) });
+              }
+            } else {
+              const r = eirNum / 100 / 12;
+              installment = P * r / (1 - Math.pow(1 + r, -N));
+              let bal = P;
+              for (let i = 1; i <= N; i++) {
+                const int  = bal * r;
+                const prin = i < N ? installment - int : bal;
+                totalInterest += int;
+                bal -= prin;
+                schedule.push({ period: i, installment: i < N ? installment : int + prin, interest: int, principal: prin, balance: Math.max(0, bal) });
+              }
+            }
+
+            const fmt = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const displayRows: (Row | null)[] = N <= 5
+              ? schedule
+              : [...schedule.slice(0, 3), null, schedule[N - 1]];
+
+            return (
+              <div className="space-y-3 pt-4 border-t border-gray-100">
+                {/* Summary cards */}
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Repayment Summary
+                </p>
+                <div className="grid grid-cols-3 gap-3">
+                  {([
+                    ['Monthly Installment',     `RM ${fmt(installment)}`],
+                    ['Total Interest / Charges', `RM ${fmt(totalInterest)}`],
+                    ['Total Repayment',          `RM ${fmt(P + totalInterest)}`],
+                  ] as [string, string][]).map(([label, val]) => (
+                    <div key={label} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <p className="text-xs text-gray-400 mb-1">{label}</p>
+                      <p className="text-sm font-semibold text-gray-800">{val}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Amortization table */}
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Repayment Schedule <span className="font-normal normal-case text-gray-400">({calcMethodStr})</span>
+                </p>
+                <div className="overflow-hidden border border-gray-200 rounded-lg">
+                  <table className="w-full text-xs">
+                    <thead className="bg-gray-50 text-gray-400">
+                      <tr>
+                        {['Period', 'Installment (RM)', 'Interest (RM)', 'Principal (RM)', 'Balance (RM)'].map((h) => (
+                          <th key={h} className="px-3 py-2 text-left font-medium">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {displayRows.map((row, idx) =>
+                        row === null ? (
+                          <tr key="ellipsis" className="border-t border-gray-100">
+                            <td colSpan={5} className="text-center text-gray-300 py-1.5 tracking-widest">···</td>
+                          </tr>
+                        ) : (
+                          <tr key={row.period}
+                            className={`border-t border-gray-100 ${row.period === N ? 'bg-blue-50 font-medium' : ''}`}>
+                            <td className="px-3 py-1.5 text-gray-500">{row.period}</td>
+                            <td className="px-3 py-1.5 font-mono">{fmt(row.installment)}</td>
+                            <td className="px-3 py-1.5 font-mono text-red-500">{fmt(row.interest)}</td>
+                            <td className="px-3 py-1.5 font-mono text-green-600">{fmt(row.principal)}</td>
+                            <td className="px-3 py-1.5 font-mono text-gray-600">{fmt(row.balance)}</td>
+                          </tr>
+                        )
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Last row (period {N}) highlighted in blue. Full schedule available post-submission.
+                </p>
+              </div>
+            );
+          })()}
         </div>
 
         </div>{/* end flex-1 form column */}
