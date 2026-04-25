@@ -100,6 +100,44 @@ const VEHICLE_MODELS: Record<string, Record<string, VehicleModel[]>> = {
   },
 };
 
+// ── Loan Program mock data (4.12) ─────────────────────────────
+type ProductCode = {
+  code: string; label: string;
+  rateType: 'Fixed' | 'Variable';
+  calcMode: 'Sum of Digit' | 'Reducing Balance';
+  hpPlus: boolean;
+  base?: string; // only for variable rate
+};
+
+const PRODUCT_CODES: ProductCode[] = [
+  { code: 'F110', label: 'F110 – HP Direct, Used Vehicle',          rateType: 'Fixed',    calcMode: 'Sum of Digit',      hpPlus: false },
+  { code: 'F120', label: 'F120 – HP Direct, New Vehicle (HP+Plus)', rateType: 'Fixed',    calcMode: 'Sum of Digit',      hpPlus: true  },
+  { code: 'I110', label: 'I110 – IHP Direct, Used (Islamic)',       rateType: 'Fixed',    calcMode: 'Reducing Balance',  hpPlus: false },
+  { code: 'V210', label: 'V210 – HP Variable Rate, New Vehicle',    rateType: 'Variable', calcMode: 'Reducing Balance',  hpPlus: false, base: 'BLR 6.85%' },
+];
+
+const PACKAGE_CODES: Record<string, { code: string; label: string }[]> = {
+  F110: [
+    { code: 'PKG-111', label: 'PKG-111 – Standard Monthly' },
+    { code: 'PKG-112', label: 'PKG-112 – Flexi Monthly' },
+  ],
+  F120: [{ code: 'PKG-121', label: 'PKG-121 – New Car Standard' }],
+  I110: [{ code: 'PKG-I11', label: 'PKG-I11 – Islamic Standard' }],
+  V210: [{ code: 'PKG-V21', label: 'PKG-V21 – Variable Monthly' }],
+};
+
+const CAMPAIGNS = [
+  { code: 'CAMP-2025A', label: 'Year-End Promo 2025',       minEIR: 2.80, maxEIR: 3.50, fixed: false },
+  { code: 'CAMP-GREEN', label: 'Green Vehicle Incentive',   minEIR: 2.50, maxEIR: 3.00, fixed: false },
+  { code: 'CAMP-D01',   label: 'Dealer Incentive Q2 2025',  minEIR: 3.00, maxEIR: 4.00, fixed: false },
+];
+
+const HP_PLUS_FEES = [
+  { name: 'Maintenance Fee', frequency: 'Monthly',  amount: 30 },
+  { name: 'Processing Fee',  frequency: 'One-time', amount: 200 },
+  { name: 'Setup Fee',       frequency: 'One-time', amount: 100 },
+];
+
 // ── Mock API layer ────────────────────────────────────────────
 type ApiStatus = 'idle' | 'loading' | 'ok' | 'error' | 'timeout';
 
@@ -293,6 +331,21 @@ export default function ApplicationForm() {
     const year = new Date().getFullYear();
     const seq = String(Math.floor(Math.random() * 9999999) + 1).padStart(7, '0');
     setRefNo(`PCJ/${productCode}/${year}/W${seq}`);
+  }
+
+  // ── Loan Program state (4.12) ────────────────────────────
+  const [loanProductCode, setLoanProductCode] = useState('');
+  const [loanPackageCode, setLoanPackageCode] = useState('');
+  const [campaignCode, setCampaignCode]       = useState('');
+
+  const selectedProduct  = PRODUCT_CODES.find((p) => p.code === loanProductCode) ?? null;
+  const availablePackages = loanProductCode ? (PACKAGE_CODES[loanProductCode] ?? []) : [];
+  const selectedCampaign  = CAMPAIGNS.find((c) => c.code === campaignCode) ?? null;
+
+  function handleProductCodeChange(code: string) {
+    setLoanProductCode(code);
+    setLoanPackageCode('');
+    setCampaignCode('');
   }
 
   // ── Vehicle state (4.11) ──────────────────────────────────
@@ -1264,6 +1317,120 @@ export default function ApplicationForm() {
             <p className="text-xs text-amber-600">
               ⚠ No market value found in the vehicle library for this model/year combination.
             </p>
+          )}
+        </div>
+
+        {/* ── 4.12 Loan Program ──────────────────────────────── */}
+        <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">4</span>
+            Loan Program
+          </h2>
+
+          {/* Product Code */}
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">
+              Product Code <span className="text-red-500">*</span>
+            </label>
+            <select value={loanProductCode} onChange={(e) => handleProductCodeChange(e.target.value)}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+              <option value="">-- Select Product Code --</option>
+              {PRODUCT_CODES.map((p) => (
+                <option key={p.code} value={p.code}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Product attributes row */}
+          {selectedProduct && (
+            <div className="grid grid-cols-3 gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100 text-xs">
+              {[
+                ['Rate Type',        selectedProduct.rateType],
+                ['Calc. Mode',       selectedProduct.calcMode],
+                ['Payment Freq.',    'Monthly'],
+              ].map(([k, v]) => (
+                <div key={k}>
+                  <p className="text-gray-400 mb-0.5">{k}</p>
+                  <p className="font-medium text-gray-700">{v}</p>
+                </div>
+              ))}
+              {selectedProduct.rateType === 'Variable' && (
+                <div className="col-span-3 pt-2 border-t border-gray-200">
+                  <p className="text-gray-400 mb-0.5">Base Rate</p>
+                  <p className="font-medium text-gray-700">{selectedProduct.base}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* HP+ Plus fee table */}
+          {selectedProduct?.hpPlus && (
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 space-y-2">
+              <p className="text-xs font-semibold text-blue-700">HP+ Plus Fees</p>
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-gray-400 border-b border-blue-100">
+                    <th className="text-left pb-1 font-normal">Fee</th>
+                    <th className="text-left pb-1 font-normal">Frequency</th>
+                    <th className="text-right pb-1 font-normal">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {HP_PLUS_FEES.map((f) => (
+                    <tr key={f.name} className="border-b border-blue-100 last:border-0">
+                      <td className="py-1 text-gray-700">{f.name}</td>
+                      <td className="py-1 text-gray-500">{f.frequency}</td>
+                      <td className="py-1 text-right font-medium text-gray-800">RM {f.amount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Package Code */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">
+                Package Code <span className="text-red-500">*</span>
+              </label>
+              <select value={loanPackageCode} onChange={(e) => setLoanPackageCode(e.target.value)}
+                disabled={availablePackages.length === 0}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400 disabled:bg-gray-50 disabled:text-gray-400">
+                <option value="">-- Select Package --</option>
+                {availablePackages.map((p) => (
+                  <option key={p.code} value={p.code}>{p.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Campaign Code */}
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Campaign Code</label>
+              <select value={campaignCode} onChange={(e) => setCampaignCode(e.target.value)}
+                disabled={!loanProductCode}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400 disabled:bg-gray-50 disabled:text-gray-400">
+                <option value="">-- None --</option>
+                {CAMPAIGNS.map((c) => (
+                  <option key={c.code} value={c.code}>{c.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Campaign details */}
+          {selectedCampaign && (
+            <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200 text-xs space-y-1">
+              <p className="font-semibold text-yellow-700">{selectedCampaign.label}</p>
+              <p className="text-yellow-600">
+                EIR Range: <span className="font-mono font-semibold">
+                  {selectedCampaign.minEIR.toFixed(2)}% – {selectedCampaign.maxEIR.toFixed(2)}%
+                </span>
+              </p>
+              <p className="text-yellow-600 text-xs">
+                EIR outside this range will require price approver review.
+              </p>
+            </div>
           )}
         </div>
 
