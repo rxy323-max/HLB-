@@ -182,7 +182,12 @@ const SCENARIO_LABELS: Record<DemoScenario, string> = {
 // Scenario-specific override for cifProfile; other 5 APIs stay "ok"
 const SCENARIO_CIF: Record<DemoScenario, ApiResult> = {
   A: { status: 'ok', data: { type: 'NTB', cif: null } },
-  B: { status: 'ok', data: { type: 'ETB', cif: 'CIF-88291', name: 'Lim Boon Keong', nric: '761203-10-5981' } },
+  B: { status: 'ok', data: {
+    type: 'ETB', cif: 'CIF-88291', name: 'Lim Boon Keong', nric: '761203-10-5981',
+    dob: '1976-12-03', gender: 'Male', nationality: 'Malaysian',
+    segment: 'Retail', mobile: '0122938812', email: 'lbk@gmail.com',
+    address: '12, Jalan Ss 2/64, Ss 2, 47300 Petaling Jaya, Selangor',
+  }},
   C: { status: 'ok', data: { type: 'ETB_MULTIPLE', cifs: [
     { cif: 'CIF-88291', name: 'Lim Boon Keong', branch: 'PJ Branch' },
     { cif: 'CIF-99034', name: 'Lim Boon Keong', branch: 'KL HQ' },
@@ -263,6 +268,15 @@ export default function ApplicationForm() {
   const [selectedCIF, setSelectedCIF] = useState<string | null>(null);
   const [openMenuRef, setOpenMenuRef] = useState<string | null>(null);
 
+  // ── Primary Applicant contact details (editable, pre-filled from CIF for ETB) ──
+  const [applicantName,    setApplicantName]    = useState('');
+  const [applicantDOB,     setApplicantDOB]     = useState('');
+  const [applicantGender,  setApplicantGender]  = useState('');
+  const [applicantMobile,  setApplicantMobile]  = useState('');
+  const [applicantEmail,   setApplicantEmail]   = useState('');
+  const [applicantAddress, setApplicantAddress] = useState('');
+  const [applicantEmailTouched, setApplicantEmailTouched] = useState(false);
+
   // Rule 3 – Single Active Check
   const [rule3Enabled, setRule3Enabled] = useState(false);
   const [showRule3Modal, setShowRule3Modal] = useState(false);
@@ -299,6 +313,20 @@ export default function ApplicationForm() {
       ]);
 
     setVerifyResults({ cifProfile, wtWhitelist, incomeDB, appHistory, preConsent, hpLine });
+
+    // Pre-fill applicant contact fields from ETB CIF data
+    if (cifProfile.status === 'ok') {
+      const d = cifProfile.data as Record<string, string> | undefined;
+      if (d?.type === 'ETB') {
+        if (d.name)    setApplicantName(d.name);
+        if (d.dob)     setApplicantDOB(d.dob);
+        if (d.gender)  setApplicantGender(d.gender);
+        if (d.mobile)  setApplicantMobile(d.mobile);
+        if (d.email)   setApplicantEmail(d.email);
+        if (d.address) setApplicantAddress(d.address);
+      }
+    }
+
     setIsVerifying(false);
   }
 
@@ -790,37 +818,73 @@ export default function ApplicationForm() {
               if (r.status === 'idle') return null;
               const d = r.data as Record<string, unknown> | undefined;
 
-              // Scenario A – NTB
+              // Scenario A – NTB: prompt for manual entry of contact details
               if (r.status === 'ok' && d?.type === 'NTB') return (
-                <div className="p-3 bg-green-50 rounded-lg border border-green-200 flex items-start gap-2">
-                  <span className="text-green-500 text-lg leading-none mt-0.5">✓</span>
-                  <div>
-                    <p className="text-sm font-medium text-green-700">No Existing Record – New-to-Bank Customer</p>
-                    <p className="text-xs text-green-600 mt-0.5">No active CIF found. Proceed to create new customer profile.</p>
+                <div className="space-y-3">
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-200 flex items-start gap-2">
+                    <span className="text-green-500 text-lg leading-none mt-0.5">✓</span>
+                    <div>
+                      <p className="text-sm font-medium text-green-700">No Existing Record – New-to-Bank Customer</p>
+                      <p className="text-xs text-green-600 mt-0.5">No active CIF found. Please enter applicant details below.</p>
+                    </div>
+                  </div>
+                  {/* NTB: manual applicant details */}
+                  <div className="border border-gray-200 rounded-lg p-3 space-y-3 bg-gray-50">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Applicant Details (NTB)</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="col-span-2">
+                        <label className="text-xs text-gray-500 block mb-1">Full Name (as per ID) <span className="text-red-500">*</span></label>
+                        <input value={applicantName} onChange={(e) => setApplicantName(e.target.value)}
+                          placeholder="e.g. Ahmad Bin Razif"
+                          className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">Date of Birth</label>
+                        <input type="date" value={applicantDOB} onChange={(e) => setApplicantDOB(e.target.value)}
+                          className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">Gender</label>
+                        <select value={applicantGender} onChange={(e) => setApplicantGender(e.target.value)}
+                          className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                          <option value="">-- Select --</option>
+                          <option>Male</option><option>Female</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
 
-              // Scenario B – ETB Single CIF
-              if (r.status === 'ok' && d?.type === 'ETB') return (
-                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-2">
-                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">CIF Profile Found</p>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-400 mb-0.5">CIF Number</p>
-                      <p className="text-sm font-mono font-semibold text-gray-800">{d.cif as string}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-0.5">Full Name</p>
-                      <p className="text-sm font-medium text-gray-800">{d.name as string}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-0.5">NRIC</p>
-                      <p className="text-sm font-mono text-gray-800">{d.nric as string}</p>
+              // Scenario B – ETB Single CIF: show full profile + editable contact fields
+              if (r.status === 'ok' && d?.type === 'ETB') {
+                const etb = d as Record<string, string>;
+                return (
+                  <div className="space-y-3">
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">CIF Profile Found</p>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 font-medium">{etb.segment ?? 'Retail'}</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-x-6 gap-y-2 text-xs">
+                        {([
+                          ['CIF Number',   etb.cif,         'font-mono font-semibold'],
+                          ['Full Name',    etb.name,        'font-medium'],
+                          ['NRIC',         etb.nric,        'font-mono'],
+                          ['Date of Birth', etb.dob,        ''],
+                          ['Gender',       etb.gender,      ''],
+                          ['Nationality',  etb.nationality, ''],
+                        ] as [string, string, string][]).map(([label, val, cls]) => (
+                          <div key={label}>
+                            <p className="text-gray-400 mb-0.5">{label}</p>
+                            <p className={`text-gray-800 ${cls}`}>{val ?? '–'}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
+                );
+              }
 
               // Scenario C – ETB Multiple CIFs
               if (r.status === 'ok' && d?.type === 'ETB_MULTIPLE') {
@@ -893,6 +957,50 @@ export default function ApplicationForm() {
 
               return null;
             })()}
+
+            {/* ── Contact Details — shown after any CIF result (ETB auto-filled, NTB manual) ── */}
+            {verifyResults.cifProfile.status !== 'idle' && !isVerifying && (
+              <div className="border border-gray-200 rounded-lg p-3 space-y-3 bg-white">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact Details</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {verifyResults.cifProfile.status === 'ok' &&
+                   (verifyResults.cifProfile.data as Record<string,string>)?.type === 'NTB' ? null : (
+                    <div className="col-span-2">
+                      <label className="text-xs text-gray-500 block mb-1">Full Name</label>
+                      <input value={applicantName} onChange={(e) => setApplicantName(e.target.value)}
+                        className="w-full border border-gray-200 rounded px-3 py-1.5 text-xs bg-gray-50 focus:outline-none focus:border-blue-400" />
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Mobile No. <span className="text-red-500">*</span></label>
+                    <input type="tel" value={applicantMobile} onChange={(e) => setApplicantMobile(e.target.value)}
+                      placeholder="e.g. 0122938812"
+                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Email <span className="text-red-500">*</span></label>
+                    <input type="email" value={applicantEmail}
+                      onChange={(e) => setApplicantEmail(e.target.value)}
+                      onBlur={() => setApplicantEmailTouched(true)}
+                      placeholder="e.g. name@email.com"
+                      className={`w-full border rounded px-3 py-1.5 text-xs focus:outline-none ${
+                        applicantEmailTouched && applicantEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(applicantEmail)
+                          ? 'border-red-400 focus:border-red-400'
+                          : 'border-gray-300 focus:border-blue-400'
+                      }`} />
+                    {applicantEmailTouched && applicantEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(applicantEmail) && (
+                      <p className="text-xs text-red-500 mt-0.5">Invalid email format</p>
+                    )}
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-gray-500 block mb-1">Mailing / Correspondence Address</label>
+                    <input value={applicantAddress} onChange={(e) => setApplicantAddress(e.target.value)}
+                      placeholder="Street, postcode, city, state"
+                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
