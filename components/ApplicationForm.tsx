@@ -562,6 +562,69 @@ export default function ApplicationForm() {
   const [corpIDNumber, setCorpIDNumber] = useState('');
   const [enterpriseType, setEnterpriseType] = useState('');
 
+  type CorpStatus = 'idle' | 'verifying' | 'found' | 'not_found';
+  type CorpDirector = {
+    did: string; name: string; nric: string; role: string; sharesPct: number;
+    cifStatus: 'idle' | 'verifying' | 'verified';
+    cifData: { cif: string; mobile: string; email: string } | null;
+  };
+  type CorpVerifyData = {
+    companyName: string; regStatus: 'Active' | 'Inactive' | 'Struck Off';
+    incorporationDate: string; registeredAddress: string;
+    paidUpCapital: number; businessNature: string;
+    directors: { name: string; nric: string; role: string; sharesPct: number }[];
+  };
+  const MOCK_SSM_DATA: CorpVerifyData = {
+    companyName: 'ABC Manufacturing Sdn Bhd',
+    regStatus: 'Active',
+    incorporationDate: '2008-03-15',
+    registeredAddress: 'Lot 12, Jalan Industri 3, Taman IKS Jaya, 68000 Ampang, Selangor',
+    paidUpCapital: 500000,
+    businessNature: 'Manufacturing of automotive parts and accessories',
+    directors: [
+      { name: 'Ahmad Bin Razif',      nric: '760512-10-4321', role: 'Managing Director',      sharesPct: 60 },
+      { name: 'Lee Wei Chong',        nric: '780224-14-5678', role: 'Executive Director',      sharesPct: 30 },
+      { name: 'Siti Aminah Bt Yusof', nric: '820910-10-3456', role: 'Non-Executive Director',  sharesPct: 10 },
+    ],
+  };
+
+  const [corpStatus,    setCorpStatus]    = useState<CorpStatus>('idle');
+  const [corpVerifyData,setCorpVerifyData]= useState<CorpVerifyData | null>(null);
+  const [corpDirectors, setCorpDirectors] = useState<CorpDirector[]>([]);
+  const [corpPhone,     setCorpPhone]     = useState('');
+  const [corpEmail,     setCorpEmail]     = useState('');
+  const [corpEmailTouched, setCorpEmailTouched] = useState(false);
+  const [corpCorrespondenceAddr, setCorpCorrespondenceAddr] = useState('');
+
+  async function runCorpVerification() {
+    if (!corpIDNumber) return;
+    setCorpStatus('verifying');
+    setCorpVerifyData(null);
+    setCorpDirectors([]);
+    await new Promise((r) => setTimeout(r, 1500));
+    setCorpStatus('found');
+    setCorpVerifyData(MOCK_SSM_DATA);
+    setCorpDirectors(MOCK_SSM_DATA.directors.map((d, i) => ({
+      did: `d-${i}`, ...d, cifStatus: 'idle', cifData: null,
+    })));
+    // Pre-fill correspondence address from registered address
+    setCorpCorrespondenceAddr(MOCK_SSM_DATA.registeredAddress);
+  }
+
+  const MOCK_DIRECTOR_CIF = [
+    { cif: 'CIF-44201', mobile: '0122938812', email: 'ahmad.razif@abcmfg.com.my' },
+    { cif: 'CIF-67534', mobile: '0173826612', email: 'lee.wc@abcmfg.com.my'      },
+    { cif: 'CIF-91028', mobile: '0198837662', email: 'siti.a@abcmfg.com.my'      },
+  ];
+  async function verifyCorpDirector(did: string) {
+    setCorpDirectors((prev) => prev.map((d) => d.did === did ? { ...d, cifStatus: 'verifying' } : d));
+    await new Promise((r) => setTimeout(r, 1000));
+    setCorpDirectors((prev) => prev.map((d, i) => d.did === did
+      ? { ...d, cifStatus: 'verified', cifData: MOCK_DIRECTOR_CIF[i % MOCK_DIRECTOR_CIF.length] }
+      : d
+    ));
+  }
+
   const ENTERPRISE_TYPES = [
     { code: 'A', label: 'Sdn Bhd – Private Limited Company' },
     { code: 'B', label: 'Bhd – Public Limited Company' },
@@ -1662,67 +1725,48 @@ export default function ApplicationForm() {
               Primary Applicant – Corporate
             </h2>
 
+            {/* ── ID entry row ── */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-gray-500 block mb-1">
-                  Corporate ID Type <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={corpIDType}
-                  onChange={(e) => setCorpIDType(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-                >
+                <label className="text-xs text-gray-500 block mb-1">Corporate ID Type <span className="text-red-500">*</span></label>
+                <select value={corpIDType}
+                  onChange={(e) => { setCorpIDType(e.target.value); setCorpStatus('idle'); setCorpVerifyData(null); }}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
                   <option value="SSM">SSM ID (Default)</option>
-                  <option value="BusinessRegistration">Business Registration (ROB)</option>
-                  <option value="CertificateOfIncorporation">Certificate of Incorporation (ROC)</option>
-                  <option value="RegistrationCertificate">Registration Certificate (LLP)</option>
-                  <option value="ForeignBusinessRegistration">Foreign Business Registration</option>
-                  <option value="DummyBusiness">Dummy ID – Business Enterprise</option>
-                  <option value="DummySociety">Dummy ID – Society / Assoc</option>
-                  <option value="GovernmentID">Government &amp; Agencies</option>
+                  <option value="ROB">Business Registration (ROB)</option>
+                  <option value="ROC">Certificate of Incorporation (ROC)</option>
+                  <option value="LLP">Registration Certificate (LLP)</option>
+                  <option value="Foreign">Foreign Business Registration</option>
                 </select>
               </div>
-
               <div>
                 <label className="text-xs text-gray-500 block mb-1">
-                  {corpIDType === 'SSM' ? 'SSM ID' : 'ID Number'}
-                  <span className="text-red-500"> *</span>
-                  {corpIDType === 'SSM' && (
-                    <span className="ml-1 text-gray-300">12 digits</span>
-                  )}
+                  {corpIDType === 'SSM' ? 'SSM ID' : 'ID Number'} <span className="text-red-500">*</span>
+                  {corpIDType === 'SSM' && <span className="ml-1 text-gray-300 font-normal">12 digits</span>}
                 </label>
-                <input
-                  type="text"
-                  value={corpIDNumber}
-                  onChange={(e) => setCorpIDNumber(e.target.value)}
-                  placeholder={
-                    corpIDType === 'SSM' ? '202401012345' : 'ID number'
-                  }
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-400"
-                />
-                {corpIDType === 'SSM' && (
-                  <p className="text-xs text-gray-400 mt-1">
-                    Format: YYYY + entity code (01–06) + serial (6 digits)
-                  </p>
-                )}
+                <div className="flex gap-2">
+                  <input type="text" value={corpIDNumber}
+                    onChange={(e) => { setCorpIDNumber(e.target.value); setCorpStatus('idle'); setCorpVerifyData(null); }}
+                    placeholder={corpIDType === 'SSM' ? '202408012345' : 'ID number'}
+                    className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-400" />
+                  <button
+                    onClick={runCorpVerification}
+                    disabled={!corpIDNumber || corpStatus === 'verifying'}
+                    className="px-3 py-2 text-xs font-medium rounded bg-gray-800 text-white disabled:opacity-40 hover:bg-gray-700 transition-colors whitespace-nowrap">
+                    {corpStatus === 'verifying' ? 'Searching…' : 'Search / Verify'}
+                  </button>
+                </div>
+                {corpIDType === 'SSM' && <p className="text-xs text-gray-400 mt-1">Format: YYYY + entity code (01–06) + serial (6 digits)</p>}
               </div>
             </div>
 
+            {/* Enterprise Type */}
             <div>
-              <label className="text-xs text-gray-500 block mb-1">
-                Enterprise Type <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={enterpriseType}
-                onChange={(e) => setEnterpriseType(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-              >
+              <label className="text-xs text-gray-500 block mb-1">Enterprise Type <span className="text-red-500">*</span></label>
+              <select value={enterpriseType} onChange={(e) => setEnterpriseType(e.target.value)}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
                 <option value="">-- Select Enterprise Type --</option>
-                {ENTERPRISE_TYPES.map((t) => (
-                  <option key={t.code} value={t.code}>
-                    {t.code}. {t.label}
-                  </option>
-                ))}
+                {ENTERPRISE_TYPES.map((t) => <option key={t.code} value={t.code}>{t.code}. {t.label}</option>)}
                 <optgroup label="Inactive for HP">
                   {['I. Dummy – Business Enterprise', 'J. Dummy – Society / Assoc', 'K. Government and Its Agencies'].map((l) => (
                     <option key={l} disabled>{l} (Inactive)</option>
@@ -1730,6 +1774,131 @@ export default function ApplicationForm() {
                 </optgroup>
               </select>
             </div>
+
+            {/* ── Verification result ── */}
+            {corpStatus === 'verifying' && (
+              <div className="flex items-center gap-2 text-xs text-gray-400 animate-pulse py-2">
+                <span className="inline-block w-3 h-3 rounded-full border-2 border-gray-400 border-t-transparent animate-spin" />
+                Querying SSM / CIF…
+              </div>
+            )}
+
+            {corpStatus === 'found' && corpVerifyData && (() => {
+              const d = corpVerifyData;
+              const fmtRM = (n: number) => `RM ${n.toLocaleString('en-MY')}`;
+              return (
+                <div className="space-y-4">
+                  {/* Company profile card */}
+                  <div className="border border-blue-200 rounded-lg bg-blue-50 p-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">SSM / Company Profile</p>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        d.regStatus === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+                      }`}>{d.regStatus}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
+                      {([
+                        ['Company Name',        d.companyName],
+                        ['Incorporation Date',  d.incorporationDate],
+                        ['Paid-up Capital',     fmtRM(d.paidUpCapital)],
+                        ['Business Nature',     d.businessNature],
+                      ] as [string, string][]).map(([k, v]) => (
+                        <div key={k}>
+                          <p className="text-gray-400 mb-0.5">{k}</p>
+                          <p className="font-medium text-gray-800">{v}</p>
+                        </div>
+                      ))}
+                      <div className="col-span-2">
+                        <p className="text-gray-400 mb-0.5">Registered Address</p>
+                        <p className="font-medium text-gray-800">{d.registeredAddress}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Directors / Shareholders */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Directors / Shareholders ({d.directors.length})
+                    </p>
+                    {corpDirectors.map((dir) => (
+                      <div key={dir.did} className="border border-gray-200 rounded-lg p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs">
+                            <span className="font-medium text-gray-800">{dir.name}</span>
+                            <span className="text-gray-400 ml-2">·</span>
+                            <span className="text-gray-500 ml-2">{dir.role}</span>
+                            <span className="text-gray-400 ml-2">·</span>
+                            <span className="text-gray-500 ml-2">{dir.sharesPct}% shares</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {dir.cifStatus === 'verified' && (
+                              <span className="text-xs text-green-600 font-medium">CIF ✓</span>
+                            )}
+                            <button
+                              onClick={() => verifyCorpDirector(dir.did)}
+                              disabled={dir.cifStatus === 'verifying' || dir.cifStatus === 'verified'}
+                              className="text-xs px-2.5 py-1 rounded border border-gray-300 text-gray-600 disabled:opacity-40 hover:bg-gray-50 transition-colors">
+                              {dir.cifStatus === 'verifying' ? 'Searching…'
+                               : dir.cifStatus === 'verified' ? 'Verified'
+                               : 'Search CIF'}
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-xs font-mono text-gray-500">{dir.nric}</p>
+                        {dir.cifStatus === 'verified' && dir.cifData && (
+                          <div className="grid grid-cols-3 gap-3 pt-2 border-t border-gray-100 text-xs">
+                            {([
+                              ['CIF No.',  dir.cifData.cif,    'font-mono font-semibold'],
+                              ['Mobile',   dir.cifData.mobile, ''],
+                              ['Email',    dir.cifData.email,  ''],
+                            ] as [string, string, string][]).map(([k, v, cls]) => (
+                              <div key={k}>
+                                <p className="text-gray-400 mb-0.5">{k}</p>
+                                <p className={`text-gray-700 ${cls}`}>{v}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Company Contact Details */}
+                  <div className="border border-gray-200 rounded-lg p-3 space-y-3 bg-gray-50">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Company Contact Details</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">Company Phone <span className="text-red-500">*</span></label>
+                        <input type="tel" value={corpPhone} onChange={(e) => setCorpPhone(e.target.value)}
+                          placeholder="e.g. 0342801234"
+                          className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">Company Email <span className="text-red-500">*</span></label>
+                        <input type="email" value={corpEmail}
+                          onChange={(e) => setCorpEmail(e.target.value)}
+                          onBlur={() => setCorpEmailTouched(true)}
+                          placeholder="e.g. info@company.com.my"
+                          className={`w-full border rounded px-3 py-1.5 text-xs focus:outline-none ${
+                            corpEmailTouched && corpEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(corpEmail)
+                              ? 'border-red-400 focus:border-red-400'
+                              : 'border-gray-300 focus:border-blue-400'
+                          }`} />
+                        {corpEmailTouched && corpEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(corpEmail) && (
+                          <p className="text-xs text-red-500 mt-0.5">Invalid email format</p>
+                        )}
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-xs text-gray-500 block mb-1">Correspondence Address</label>
+                        <input value={corpCorrespondenceAddr} onChange={(e) => setCorpCorrespondenceAddr(e.target.value)}
+                          placeholder="Mailing address (if different from registered)"
+                          className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
         {/* ── 4.7 Channel Information ────────────────────────── */}
