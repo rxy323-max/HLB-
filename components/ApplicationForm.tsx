@@ -57,6 +57,10 @@ type VehicleModel = {
 
 const VEHICLE_MODELS: Record<string, Record<string, VehicleModel[]>> = {
   'Perodua-Myvi': {
+    '2025': [
+      { model: '1.5 AV CVT', msrp: 61990, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true  },
+      { model: '1.3 H CVT',  msrp: 55990, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'B', greenlane: false },
+    ],
     '2024': [
       { model: '1.5 AV CVT', msrp: 59990, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true  },
       { model: '1.3 H CVT',  msrp: 53990, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'B', greenlane: false },
@@ -70,7 +74,97 @@ const VEHICLE_MODELS: Record<string, Record<string, VehicleModel[]>> = {
       { model: '1.5 AV CVT', msrp: 55990, marketValue: 46000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: false },
     ],
   },
+  'Perodua-Axia': {
+    '2025': [
+      { model: 'E (M)',       msrp: 40990, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'B', greenlane: false },
+      { model: 'G (A)',       msrp: 46990, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'B', greenlane: false },
+    ],
+    '2024': [
+      { model: 'E (M)',       msrp: 39990, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'B', greenlane: false },
+      { model: 'G (A)',       msrp: 45990, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'B', greenlane: false },
+    ],
+    '2023': [
+      { model: 'E (M)',       msrp: 38990, marketValue: 33000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true, gpRating: 'B', greenlane: false },
+    ],
+  },
+  'Perodua-Bezza': {
+    '2025': [
+      { model: '1.0 G (A)',   msrp: 46990, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'B', greenlane: false },
+      { model: '1.3 AV (A)',  msrp: 59990, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true  },
+    ],
+    '2024': [
+      { model: '1.0 G (A)',   msrp: 45490, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'B', greenlane: false },
+      { model: '1.3 AV (A)',  msrp: 58490, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true  },
+    ],
+    '2023': [
+      { model: '1.3 AV (A)',  msrp: 57990, marketValue: 49000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true, gpRating: 'A', greenlane: false },
+    ],
+  },
+  'Perodua-Alza': {
+    '2025': [
+      { model: '1.5 AV H (A)', msrp: 75990, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true  },
+      { model: '1.5 X (A)',    msrp: 68990, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'B', greenlane: false },
+    ],
+    '2024': [
+      { model: '1.5 AV H (A)', msrp: 74990, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true  },
+      { model: '1.5 X (A)',    msrp: 67490, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true,  gpRating: 'B', greenlane: false },
+    ],
+    '2023': [
+      { model: '1.5 AV H (A)', msrp: 73990, marketValue: 63000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: true, gpRating: 'A', greenlane: false },
+    ],
+  },
+  'Proton-Saga': {
+    '2025': [
+      { model: '1.3 Standard MT', msrp: 44800, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'C', greenlane: false },
+      { model: '1.3 Premium AT',  msrp: 50800, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+    ],
+    '2024': [
+      { model: '1.3 Standard MT', msrp: 43800, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'C', greenlane: false },
+      { model: '1.3 Premium AT',  msrp: 49800, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+    ],
+    '2023': [
+      { model: '1.3 Premium AT',  msrp: 48300, marketValue: 40000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+    ],
+  },
+  'Proton-X50': {
+    '2025': [
+      { model: '1.5T Standard CVT', msrp: 79200, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+      { model: '1.5T Premium CVT',  msrp: 89200, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true  },
+    ],
+    '2024': [
+      { model: '1.5T Standard CVT', msrp: 77700, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+      { model: '1.5T Premium CVT',  msrp: 87700, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true  },
+    ],
+    '2023': [
+      { model: '1.5T Standard CVT', msrp: 79200, marketValue: 67000, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+    ],
+  },
+  'Proton-X70': {
+    '2025': [
+      { model: '1.8T Standard 2WD', msrp: 112800, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+      { model: '1.8T Premium AWD',  msrp: 142800, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true  },
+    ],
+    '2024': [
+      { model: '1.8T Standard 2WD', msrp: 109800, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+    ],
+    '2023': [
+      { model: '1.8T Standard 2WD', msrp: 108800, marketValue: 92000, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+    ],
+  },
+  'Proton-S70': {
+    '2025': [
+      { model: '1.5T Executive CVT', msrp: 74800, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+      { model: '1.5T Premium CVT',   msrp: 84800, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true  },
+    ],
+    '2024': [
+      { model: '1.5T Executive CVT', msrp: 73800, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+    ],
+  },
   'Toyota-Vios': {
+    '2025': [
+      { model: '1.5 G CVT', msrp: 91980, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+      { model: '1.5 E CVT', msrp: 86980, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'C', greenlane: false },
+    ],
     '2024': [
       { model: '1.5 G CVT', msrp: 89980, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
       { model: '1.5 E CVT', msrp: 84980, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'C', greenlane: false },
@@ -80,7 +174,35 @@ const VEHICLE_MODELS: Record<string, Record<string, VehicleModel[]>> = {
       { model: '1.5 E CVT', msrp: 83980, marketValue: 73000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'C', greenlane: false },
     ],
   },
+  'Toyota-Corolla Cross': {
+    '2025': [
+      { model: '1.8V CVT',   msrp: 143880, engineType: 'Hybrid', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true  },
+      { model: '1.8G CVT',   msrp: 129880, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+    ],
+    '2024': [
+      { model: '1.8V CVT',   msrp: 140880, engineType: 'Hybrid', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true  },
+      { model: '1.8G CVT',   msrp: 127880, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+    ],
+    '2023': [
+      { model: '1.8V CVT',   msrp: 137880, marketValue: 120000, engineType: 'Hybrid', bnmPurpose: 'Personal Use', green: true, gpRating: 'A', greenlane: false },
+    ],
+  },
+  'Toyota-Camry': {
+    '2025': [
+      { model: '2.5V Hybrid', msrp: 239880, engineType: 'Hybrid', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true  },
+    ],
+    '2024': [
+      { model: '2.5V Hybrid', msrp: 236880, engineType: 'Hybrid', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true  },
+    ],
+    '2023': [
+      { model: '2.5V Hybrid', msrp: 231880, marketValue: 200000, engineType: 'Hybrid', bnmPurpose: 'Personal Use', green: true, gpRating: 'A', greenlane: false },
+    ],
+  },
   'Honda-City': {
+    '2025': [
+      { model: '1.5 V Sensing CVT', msrp: 115900, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+      { model: '1.5 S CVT',         msrp: 101900, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'C', greenlane: false },
+    ],
     '2024': [
       { model: '1.5 V Sensing CVT', msrp: 111900, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
       { model: '1.5 S CVT',         msrp:  99900, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'C', greenlane: false },
@@ -89,13 +211,64 @@ const VEHICLE_MODELS: Record<string, Record<string, VehicleModel[]>> = {
       { model: '1.5 V Sensing CVT', msrp: 110900, marketValue: 98000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
     ],
   },
-  'BMW-3 Series': {
+  'Honda-Civic': {
+    '2025': [
+      { model: '1.5TC Premium CVT', msrp: 168900, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true  },
+      { model: '1.5TC Standard CVT',msrp: 155900, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+    ],
     '2024': [
-      { model: '320i Sport',       msrp: 264380, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true },
-      { model: '330e M Sport',     msrp: 318380, engineType: 'Hybrid', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true },
+      { model: '1.5TC Premium CVT', msrp: 165900, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true  },
     ],
     '2023': [
-      { model: '320i Sport',       msrp: 258380, marketValue: 225000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true },
+      { model: '1.5TC Premium CVT', msrp: 162900, marketValue: 145000, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: false },
+    ],
+  },
+  'Honda-HR-V': {
+    '2025': [
+      { model: '1.5TC V CVT',  msrp: 126800, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+      { model: '1.5TC RS CVT', msrp: 141800, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: false },
+    ],
+    '2024': [
+      { model: '1.5TC V CVT',  msrp: 123800, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+    ],
+    '2023': [
+      { model: '1.5TC V CVT',  msrp: 121800, marketValue: 105000, engineType: 'Petrol Turbo', bnmPurpose: 'Personal Use', green: false, gpRating: 'B', greenlane: false },
+    ],
+  },
+  'BMW-3 Series': {
+    '2025': [
+      { model: '320i Sport',       msrp: 270380, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true  },
+      { model: '330e M Sport',     msrp: 325380, engineType: 'Hybrid', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true  },
+    ],
+    '2024': [
+      { model: '320i Sport',       msrp: 264380, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true  },
+      { model: '330e M Sport',     msrp: 318380, engineType: 'Hybrid', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true  },
+    ],
+    '2023': [
+      { model: '320i Sport',       msrp: 258380, marketValue: 225000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true  },
+    ],
+  },
+  'BMW-5 Series': {
+    '2025': [
+      { model: '520i M Sport',     msrp: 388380, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true  },
+      { model: '530e M Sport',     msrp: 428380, engineType: 'Hybrid', bnmPurpose: 'Personal Use', green: true,  gpRating: 'A', greenlane: true  },
+    ],
+    '2024': [
+      { model: '520i M Sport',     msrp: 378380, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true  },
+    ],
+    '2023': [
+      { model: '520i M Sport',     msrp: 368380, marketValue: 320000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: false },
+    ],
+  },
+  'BMW-X3': {
+    '2025': [
+      { model: 'xDrive30i M Sport',msrp: 418380, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true  },
+    ],
+    '2024': [
+      { model: 'xDrive30i M Sport',msrp: 408380, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: true  },
+    ],
+    '2023': [
+      { model: 'xDrive30i M Sport',msrp: 395380, marketValue: 350000, engineType: 'Petrol', bnmPurpose: 'Personal Use', green: false, gpRating: 'A', greenlane: false },
     ],
   },
 };
