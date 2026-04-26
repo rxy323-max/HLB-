@@ -374,6 +374,44 @@ export default function ApplicationForm() {
     'Shareowner', 'Ultimate Beneficial Owner',
   ];
 
+  // ── Income state (4.9) ───────────────────────────────────
+  const [incomeMode, setIncomeMode] = useState<'api' | 'manual'>('api');
+
+  type EmployerIncome = {
+    eid: string; name: string;
+    empType: 'Fixed' | 'Variable' | 'Self-Employed';
+    gross: string; net: string; commission: string;
+  };
+  const [employers, setEmployers] = useState<EmployerIncome[]>([]);
+
+  type BankStmt = { bid: string; bankName: string; avgNetCredit: string };
+  const [bankStmts, setBankStmts] = useState<BankStmt[]>([]);
+
+  const [epfMonthly, setEpfMonthly]             = useState('');
+  const [existingCommitments, setExistingCommitments] = useState('');
+
+  const totalGross   = employers.reduce((s, e) => s + (parseFloat(e.gross)      || 0), 0);
+  const totalNet     = employers.reduce((s, e) => s + (parseFloat(e.net)        || 0), 0);
+  const totalComm    = employers.filter((e) => e.empType === 'Variable')
+                                .reduce((s, e) => s + (parseFloat(e.commission) || 0), 0);
+  const totalNetIncome = totalNet + totalComm + (parseFloat(epfMonthly) || 0);
+
+  function addEmployer() {
+    setEmployers((p) => [...p, { eid: `e-${Date.now()}`, name: '', empType: 'Fixed', gross: '', net: '', commission: '' }]);
+  }
+  function updateEmployer(eid: string, field: keyof EmployerIncome, val: string) {
+    setEmployers((p) => p.map((e) => e.eid === eid ? { ...e, [field]: val } : e));
+  }
+  function removeEmployer(eid: string) { setEmployers((p) => p.filter((e) => e.eid !== eid)); }
+
+  function addBankStmt() {
+    setBankStmts((p) => [...p, { bid: `b-${Date.now()}`, bankName: '', avgNetCredit: '' }]);
+  }
+  function updateBankStmt(bid: string, field: keyof BankStmt, val: string) {
+    setBankStmts((p) => p.map((b) => b.bid === bid ? { ...b, [field]: val } : b));
+  }
+  function removeBankStmt(bid: string) { setBankStmts((p) => p.filter((b) => b.bid !== bid)); }
+
   // ── Loan Program state (4.12) ────────────────────────────
   const [loanProductCode, setLoanProductCode] = useState('');
   const [loanPackageCode, setLoanPackageCode] = useState('');
@@ -409,6 +447,18 @@ export default function ApplicationForm() {
   const eirOutOfRange = selectedCampaign && eirNum > 0
     && (eirNum < selectedCampaign.minEIR || eirNum > selectedCampaign.maxEIR);
   const eirHardBlock  = eirBelowMin || eirAboveMax;
+
+  // Installment for DSR (mirrors repayment table logic)
+  const loanInstallment = (() => {
+    const P = parseFloat(loanAmount); const N = parseInt(tenureMonths);
+    if (!P || !N || !eirNum || eirHardBlock || !backCalcRate || !selectedProduct) return 0;
+    if (selectedProduct.calcMode === 'Sum of Digit') {
+      const totalInt = P * (parseFloat(backCalcRate) / 100) * (N / 12);
+      return (P + totalInt) / N;
+    }
+    const r = eirNum / 100 / 12;
+    return P * r / (1 - Math.pow(1 + r, -N));
+  })();
 
   function handleProductCodeChange(code: string) {
     setLoanProductCode(code);
@@ -821,65 +871,234 @@ export default function ApplicationForm() {
           </div>
         )}
 
-        {/* ── Income Data Panel (4.5.6) ──────────────────────── */}
+        {/* ── Income Data Panel (4.9) ──────────────────────────── */}
         {appType === 'Individual' && verifyResults.cifProfile.status !== 'idle' && !isVerifying && (() => {
-          type IncomeData = { monthlyIncome?: number; employer?: string; employmentType?: string; verified?: boolean };
-          const dbData  = verifyResults.incomeDB.status  === 'ok' ? verifyResults.incomeDB.data  as IncomeData : null;
-          const wtData  = verifyResults.wtWhitelist.status === 'ok' ? verifyResults.wtWhitelist.data as IncomeData : null;
-
-          // Priority 1: Income DB; Priority 2: WT Whitelist
-          const income  = dbData?.monthlyIncome  ? dbData  : wtData?.monthlyIncome ? wtData  : null;
-          const source  = dbData?.monthlyIncome  ? { label: 'HLB Income DB', priority: 1, color: 'text-green-700 bg-green-50 border-green-200' }
-                        : wtData?.monthlyIncome  ? { label: 'WT Whitelist',  priority: 2, color: 'text-blue-700 bg-blue-50 border-blue-200' }
-                        : null;
-
-          if (!income || !source) return (
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <span className="bg-gray-300 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>
-                Income Data
-              </h2>
-              <p className="text-xs text-gray-400">No income data available from any source.</p>
-            </div>
-          );
+          type IncomeData = { monthlyIncome?: number; employer?: string; employmentType?: string };
+          const dbData = verifyResults.incomeDB.status    === 'ok' ? verifyResults.incomeDB.data    as IncomeData : null;
+          const wtData = verifyResults.wtWhitelist.status === 'ok' ? verifyResults.wtWhitelist.data as IncomeData : null;
+          const apiIncome = dbData?.monthlyIncome ? dbData : wtData?.monthlyIncome ? wtData : null;
+          const apiSource = dbData?.monthlyIncome
+            ? { label: 'HLB Income DB', priority: 1, color: 'text-green-700 bg-green-50 border-green-200' }
+            : wtData?.monthlyIncome
+            ? { label: 'WT Whitelist',  priority: 2, color: 'text-blue-700  bg-blue-50  border-blue-200'  }
+            : null;
+          const fmtR = (n: number) => `RM ${n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          const commitAmt = parseFloat(existingCommitments) || 0;
+          const currentDSR  = totalNetIncome > 0 ? ((commitAmt + loanInstallment) / totalNetIncome * 100).toFixed(1) : null;
+          const internalDSR = totalNetIncome > 0 ? (commitAmt / totalNetIncome * 100).toFixed(1) : null;
+          const minDisposable = totalNetIncome - commitAmt - loanInstallment;
 
           return (
-            <div className="bg-white rounded-lg shadow-sm p-4 space-y-3">
-              <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>
-                Income Data
-              </h2>
-
-              {/* Source badge */}
-              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${source.color}`}>
-                <span>Priority {source.priority}</span>
-                <span className="opacity-40">·</span>
-                <span>{source.label}</span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4 pt-1">
-                <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Monthly Gross Income</p>
-                  <p className="text-base font-semibold text-gray-800">
-                    RM {income.monthlyIncome!.toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Employer</p>
-                  <p className="text-sm text-gray-800">{income.employer ?? '–'}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Employment Type</p>
-                  <p className="text-sm text-gray-800">{income.employmentType ?? '–'}</p>
+            <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+              {/* Header + mode toggle */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>
+                  Income Data
+                </h2>
+                <div className="inline-flex rounded-md border border-gray-300 overflow-hidden text-xs">
+                  {(['api', 'manual'] as const).map((m) => (
+                    <button key={m} onClick={() => setIncomeMode(m)}
+                      className={`px-3 py-1 font-medium transition-colors ${incomeMode === m ? 'bg-[#D0021B] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                      {m === 'api' ? 'Use API Data' : 'Enter Manually'}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Conflict notice when both sources have data */}
-              {dbData?.monthlyIncome && wtData?.monthlyIncome && dbData.monthlyIncome !== wtData.monthlyIncome && (
-                <p className="text-xs text-amber-600 border-t border-gray-100 pt-2">
-                  ⚠ Income DB (RM {dbData.monthlyIncome.toLocaleString()}) differs from WT Whitelist
-                  (RM {wtData.monthlyIncome.toLocaleString()}). Income DB takes priority.
-                </p>
+              {/* ── API mode ── */}
+              {incomeMode === 'api' && (
+                apiIncome && apiSource ? (
+                  <div className="space-y-3">
+                    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${apiSource.color}`}>
+                      <span>Priority {apiSource.priority}</span><span className="opacity-40">·</span><span>{apiSource.label}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-400 mb-0.5">Monthly Gross</p>
+                        <p className="text-base font-semibold text-gray-800">RM {apiIncome.monthlyIncome!.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 mb-0.5">Employer</p>
+                        <p className="text-sm text-gray-800">{apiIncome.employer ?? '–'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 mb-0.5">Employment Type</p>
+                        <p className="text-sm text-gray-800">{apiIncome.employmentType ?? '–'}</p>
+                      </div>
+                    </div>
+                    {dbData?.monthlyIncome && wtData?.monthlyIncome && dbData.monthlyIncome !== wtData.monthlyIncome && (
+                      <p className="text-xs text-amber-600">⚠ Income DB differs from WT Whitelist. Income DB takes priority.</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400">No income data from API. Switch to manual entry.</p>
+                )
+              )}
+
+              {/* ── Manual mode ── */}
+              {incomeMode === 'manual' && (
+                <div className="space-y-4">
+
+                  {/* Employer Income */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Employer Income</p>
+                      <button onClick={addEmployer}
+                        className="text-xs px-2.5 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-50">
+                        + Add Employer
+                      </button>
+                    </div>
+                    {employers.length === 0 && (
+                      <p className="text-xs text-gray-400 italic">No employer added yet.</p>
+                    )}
+                    {employers.map((e, idx) => (
+                      <div key={e.eid} className="border border-gray-200 rounded-lg p-3 space-y-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-medium text-gray-600">Employer {idx + 1}</p>
+                          <button onClick={() => removeEmployer(e.eid)} className="text-xs text-gray-400 hover:text-red-500">Remove</button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="col-span-2">
+                            <label className="text-xs text-gray-500 block mb-1">Employer Name</label>
+                            <input value={e.name} onChange={(ev) => updateEmployer(e.eid, 'name', ev.target.value)}
+                              placeholder="e.g. ABC Sdn Bhd"
+                              className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-1">Employment Type</label>
+                            <select value={e.empType} onChange={(ev) => updateEmployer(e.eid, 'empType', ev.target.value)}
+                              className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                              {(['Fixed', 'Variable', 'Self-Employed'] as const).map((t) => <option key={t}>{t}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-1">Monthly Gross (RM)</label>
+                            <input type="number" value={e.gross} onChange={(ev) => updateEmployer(e.eid, 'gross', ev.target.value)}
+                              placeholder="0.00"
+                              className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-1">Monthly Net (RM)</label>
+                            <input type="number" value={e.net} onChange={(ev) => updateEmployer(e.eid, 'net', ev.target.value)}
+                              placeholder="0.00"
+                              className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                          </div>
+                          {e.empType === 'Variable' && (
+                            <div>
+                              <label className="text-xs text-gray-500 block mb-1">Avg Monthly Commission (RM)</label>
+                              <input type="number" value={e.commission} onChange={(ev) => updateEmployer(e.eid, 'commission', ev.target.value)}
+                                placeholder="0.00"
+                                className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Bank Statements */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Bank Statements</p>
+                      <button onClick={addBankStmt}
+                        className="text-xs px-2.5 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-50">
+                        + Add Account
+                      </button>
+                    </div>
+                    {bankStmts.map((b) => (
+                      <div key={b.bid} className="grid grid-cols-3 gap-2 border border-gray-200 rounded-lg p-3 items-end">
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-1">Bank</label>
+                          <select value={b.bankName} onChange={(ev) => updateBankStmt(b.bid, 'bankName', ev.target.value)}
+                            className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                            <option value="">-- Select --</option>
+                            {['Maybank', 'CIMB', 'Public Bank', 'HLB', 'RHB', 'AmBank', 'Others'].map((bk) => <option key={bk}>{bk}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-1">3-Month Avg Net Credit (RM)</label>
+                          <input type="number" value={b.avgNetCredit} onChange={(ev) => updateBankStmt(b.bid, 'avgNetCredit', ev.target.value)}
+                            placeholder="0.00"
+                            className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                        </div>
+                        <button onClick={() => removeBankStmt(b.bid)} className="text-xs text-gray-400 hover:text-red-500 pb-1.5">Remove</button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* EPF */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">EPF</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-56">
+                        <label className="text-xs text-gray-500 block mb-1">Monthly EPF Contribution (RM)</label>
+                        <input type="number" value={epfMonthly} onChange={(e) => setEpfMonthly(e.target.value)}
+                          placeholder="0.00"
+                          className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Income Summary */}
+                  {totalNetIncome > 0 && (
+                    <div className="border-t border-gray-100 pt-3 space-y-2">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Income Summary</p>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-1.5 text-xs">
+                        {([
+                          ['Monthly Gross Income',  fmtR(totalGross)],
+                          ['Monthly Net Income',    fmtR(totalNet)],
+                          ['Variable / Commission', fmtR(totalComm)],
+                          ['EPF (monthly)',         fmtR(parseFloat(epfMonthly) || 0)],
+                          ['Total Net Verifiable',  fmtR(totalNetIncome)],
+                        ] as [string, string][]).map(([k, v]) => (
+                          <div key={k} className="flex justify-between border-b border-gray-50 pb-1">
+                            <span className="text-gray-400">{k}</span>
+                            <span className="font-mono font-semibold text-gray-800">{v}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* DSR Calculation */}
+                  {totalNetIncome > 0 && (
+                    <div className="border border-blue-100 rounded-lg p-3 bg-blue-50 space-y-3">
+                      <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">DSR / Exposure Summary</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-1">Existing Commitments / Month (RM)</label>
+                          <input type="number" value={existingCommitments}
+                            onChange={(e) => setExistingCommitments(e.target.value)}
+                            placeholder="0.00"
+                            className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono bg-white focus:outline-none focus:border-blue-400" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-1">This Loan Installment (RM)</label>
+                          <div className="px-3 py-1.5 rounded border border-gray-200 text-xs font-mono bg-white text-gray-700">
+                            {loanInstallment > 0 ? fmtR(loanInstallment) : '— (fill Loan Program first)'}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 pt-1">
+                        {([
+                          ['Current DSR',         currentDSR  ? `${currentDSR}%`  : '–', currentDSR  && parseFloat(currentDSR)  > 70 ? 'text-red-600' : 'text-gray-800'],
+                          ['Internal DSR',        internalDSR ? `${internalDSR}%` : '–', 'text-gray-800'],
+                          ['Min Disposable Income', totalNetIncome > 0 ? fmtR(minDisposable) : '–', minDisposable < 0 ? 'text-red-600' : 'text-green-700'],
+                        ] as [string, string, string][]).map(([label, val, cls]) => (
+                          <div key={label} className="bg-white rounded p-2 border border-blue-100">
+                            <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                            <p className={`text-sm font-bold ${cls}`}>{val}</p>
+                          </div>
+                        ))}
+                      </div>
+                      {currentDSR && parseFloat(currentDSR) > 70 && (
+                        <p className="text-xs text-red-600">⚠ DSR exceeds 70% — loan may require additional justification.</p>
+                      )}
+                      <p className="text-xs text-gray-400">Global DSR: Pending CCRIS Retrieval (post-submission)</p>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           );
