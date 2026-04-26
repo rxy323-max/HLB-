@@ -340,29 +340,54 @@ export default function ApplicationForm() {
   }
 
   // ── Other Applicants / Guarantors (4.8) ─────────────────
+  type GuarantorVerifyData = {
+    fullName: string; gender: string; dob: string;
+    employer: string; monthlyIncome: number;
+    ccrisTotal: number; propertyEquity: number;
+  };
   type Guarantor = {
     gid: string; idType: string; rawId: string;
+    name: string; phone: string; email: string;
+    emailTouched: boolean;
     relApp: string; relPrimary: string;
-    status: 'idle' | 'verifying' | 'verified';
+    status: 'idle' | 'verifying' | 'verified' | 'not_found';
+    verifyData: GuarantorVerifyData | null;
   };
   const [guarantors, setGuarantors] = useState<Guarantor[]>([]);
+
+  const MOCK_GUARANTOR_DATA: GuarantorVerifyData[] = [
+    { fullName: 'Lee Chong Wei', gender: 'Male', dob: '1982-10-21',
+      employer: 'Technip Energies Sdn Bhd', monthlyIncome: 9500,
+      ccrisTotal: 2200, propertyEquity: 380000 },
+    { fullName: 'Siti Norzahra Bt Ramli', gender: 'Female', dob: '1990-03-15',
+      employer: 'Universiti Malaya', monthlyIncome: 6800,
+      ccrisTotal: 850, propertyEquity: 0 },
+    { fullName: 'Krishnamurthy A/L Pillai', gender: 'Male', dob: '1975-11-30',
+      employer: 'Self-Employed', monthlyIncome: 12000,
+      ccrisTotal: 5400, propertyEquity: 750000 },
+  ];
 
   function addGuarantor() {
     setGuarantors((prev) => [...prev, {
       gid: `g-${Date.now()}`, idType: 'MyKad', rawId: '',
-      relApp: '', relPrimary: '', status: 'idle',
+      name: '', phone: '', email: '', emailTouched: false,
+      relApp: '', relPrimary: '', status: 'idle', verifyData: null,
     }]);
   }
   function removeGuarantor(gid: string) {
     setGuarantors((prev) => prev.filter((g) => g.gid !== gid));
   }
-  function updateGuarantor(gid: string, field: keyof Guarantor, val: string) {
+  function updateGuarantor(gid: string, field: keyof Guarantor, val: string | boolean) {
     setGuarantors((prev) => prev.map((g) => g.gid === gid ? { ...g, [field]: val } : g));
   }
   async function verifyGuarantor(gid: string) {
-    setGuarantors((prev) => prev.map((g) => g.gid === gid ? { ...g, status: 'verifying' } : g));
-    await new Promise((r) => setTimeout(r, 1000));
-    setGuarantors((prev) => prev.map((g) => g.gid === gid ? { ...g, status: 'verified' } : g));
+    setGuarantors((prev) => prev.map((g) => g.gid === gid ? { ...g, status: 'verifying', verifyData: null } : g));
+    await new Promise((r) => setTimeout(r, 1200));
+    setGuarantors((prev) => prev.map((g, idx) => {
+      if (g.gid !== gid) return g;
+      const data = MOCK_GUARANTOR_DATA[idx % MOCK_GUARANTOR_DATA.length];
+      return { ...g, status: 'verified', verifyData: data };
+    }));
   }
 
   const REL_TO_APP     = ['Guarantor', 'Joint Applicant (Non-Guarantor)'];
@@ -1345,9 +1370,35 @@ export default function ApplicationForm() {
                   <div>
                     <label className="text-xs text-gray-500 block mb-1">ID Number <span className="text-red-500">*</span></label>
                     <input type="text" value={g.rawId}
-                      onChange={(e) => updateGuarantor(g.gid, 'rawId', e.target.value)}
+                      onChange={(e) => { updateGuarantor(g.gid, 'rawId', e.target.value); updateGuarantor(g.gid, 'status', 'idle'); }}
                       placeholder="ID number"
                       className="w-full border border-gray-300 rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                  </div>
+                </div>
+
+                {/* Contact fields */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Mobile No.</label>
+                    <input type="tel" value={g.phone}
+                      onChange={(e) => updateGuarantor(g.gid, 'phone', e.target.value)}
+                      placeholder="e.g. 0123456789"
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Email <span className="text-red-500">*</span></label>
+                    <input type="email" value={g.email}
+                      onChange={(e) => updateGuarantor(g.gid, 'email', e.target.value)}
+                      onBlur={() => updateGuarantor(g.gid, 'emailTouched', true)}
+                      placeholder="e.g. name@example.com"
+                      className={`w-full border rounded px-3 py-2 text-xs focus:outline-none ${
+                        g.emailTouched && g.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email)
+                          ? 'border-red-400 focus:border-red-400'
+                          : 'border-gray-300 focus:border-blue-400'
+                      }`} />
+                    {g.emailTouched && g.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email) && (
+                      <p className="text-xs text-red-500 mt-0.5">Invalid email format</p>
+                    )}
                   </div>
                 </div>
 
@@ -1374,12 +1425,74 @@ export default function ApplicationForm() {
                 </div>
 
                 {/* Verify button */}
-                <button
-                  onClick={() => verifyGuarantor(g.gid)}
-                  disabled={!g.rawId || g.status === 'verifying' || g.status === 'verified'}
-                  className="text-xs px-3 py-1.5 rounded bg-gray-700 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors">
-                  {g.status === 'verifying' ? 'Verifying…' : g.status === 'verified' ? 'Verified ✓' : 'Search / Verify'}
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => verifyGuarantor(g.gid)}
+                    disabled={!g.rawId || g.status === 'verifying' || g.status === 'verified'}
+                    className="text-xs px-3 py-1.5 rounded bg-gray-700 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors">
+                    {g.status === 'verifying' ? 'Verifying…' : g.status === 'verified' ? 'Verified ✓' : 'Search / Verify'}
+                  </button>
+                  {g.status === 'verified' && (
+                    <button onClick={() => setGuarantors((prev) => prev.map((x) => x.gid === g.gid ? { ...x, status: 'idle', verifyData: null } : x))}
+                      className="text-xs text-gray-400 hover:text-gray-600 underline">
+                      Re-verify
+                    </button>
+                  )}
+                </div>
+
+                {/* Verification result panel */}
+                {g.status === 'verified' && g.verifyData && (() => {
+                  const d = g.verifyData;
+                  const fmtR = (n: number) => `RM ${n.toLocaleString('en-MY')}`;
+                  return (
+                    <div className="border border-green-200 rounded-lg bg-green-50 p-3 space-y-3">
+                      {/* CIF result */}
+                      <div>
+                        <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2">CIF Found</p>
+                        <div className="grid grid-cols-3 gap-3 text-xs">
+                          {([
+                            ['Full Name',    d.fullName],
+                            ['Gender',       d.gender],
+                            ['Date of Birth', d.dob],
+                            ['Employer',     d.employer],
+                            ['Monthly Income', fmtR(d.monthlyIncome)],
+                          ] as [string, string][]).map(([label, val]) => (
+                            <div key={label}>
+                              <p className="text-gray-400 mb-0.5">{label}</p>
+                              <p className="font-medium text-gray-800">{val}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* CCRIS / Experian summary */}
+                      <div className="border-t border-green-200 pt-3">
+                        <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2">CCRIS / Experian</p>
+                        <div className="grid grid-cols-3 gap-3 text-xs">
+                          <div>
+                            <p className="text-gray-400 mb-0.5">Monthly CCRIS Commitments</p>
+                            <p className={`font-semibold font-mono ${d.ccrisTotal > 5000 ? 'text-amber-600' : 'text-gray-800'}`}>
+                              {fmtR(d.ccrisTotal)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400 mb-0.5">Unencumbered Property Equity</p>
+                            <p className="font-semibold font-mono text-gray-800">{fmtR(d.propertyEquity)}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400 mb-0.5">Net Income after CCRIS</p>
+                            <p className={`font-semibold font-mono ${d.monthlyIncome - d.ccrisTotal < 1000 ? 'text-red-600' : 'text-green-700'}`}>
+                              {fmtR(d.monthlyIncome - d.ccrisTotal)}
+                            </p>
+                          </div>
+                        </div>
+                        {d.ccrisTotal > d.monthlyIncome * 0.6 && (
+                          <p className="text-xs text-amber-600 mt-2">⚠ CCRIS commitments exceed 60% of monthly income — review required.</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             ))}
           </div>
