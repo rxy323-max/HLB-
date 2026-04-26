@@ -2193,6 +2193,40 @@ export default function ApplicationForm() {
                   ))}
                 </div>
 
+                {/* Margin of Finance (LTV) */}
+                {(() => {
+                  const pp = parseFloat(purchasePrice);
+                  if (!pp || pp <= 0) return null;
+                  const ltv     = (P / pp) * 100;
+                  const deposit = pp - P;
+                  const ltvOk   = ltv <= 90;
+                  return (
+                    <div className={`flex items-center gap-6 px-4 py-2.5 rounded-lg border text-xs ${
+                      ltvOk ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-300'
+                    }`}>
+                      <div>
+                        <span className="text-gray-400">Purchase Price </span>
+                        <span className="font-mono font-semibold text-gray-800">RM {fmt(pp)}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Loan Amount </span>
+                        <span className="font-mono font-semibold text-gray-800">RM {fmt(P)}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Deposit </span>
+                        <span className="font-mono font-semibold text-gray-800">RM {fmt(deposit)}</span>
+                      </div>
+                      <div className="ml-auto">
+                        <span className="text-gray-400">Margin of Finance </span>
+                        <span className={`font-bold font-mono text-base ${ltvOk ? 'text-green-700' : 'text-red-600'}`}>
+                          {ltv.toFixed(1)}%
+                        </span>
+                        {!ltvOk && <span className="ml-1 text-red-500 font-medium">⚠ Exceeds 90%</span>}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Amortization table */}
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Repayment Schedule <span className="font-normal normal-case text-gray-400">({calcMethodStr})</span>
