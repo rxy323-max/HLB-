@@ -109,7 +109,7 @@
   }
   .btn-primary {
     @apply btn bg-hlb text-white hover:bg-hlb-hover active:brightness-90
-           focus:shadow-focusRed;
+           focus:shadow-focusBlue;
   }
   .btn-secondary {
     @apply btn bg-surface-raised border border-border text-ink

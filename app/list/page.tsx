@@ -103,7 +103,7 @@ export default function ApplicationListPage() {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
-      <header className="bg-[#D0021B] text-white px-6 py-3 flex items-center justify-between shadow">
+      <header className="bg-hlb text-white px-6 py-3 flex items-center justify-between shadow">
         <div className="flex items-center gap-3">
           <span className="font-bold text-xl tracking-wide">HLB</span>
           <span className="text-sm opacity-75 border-l border-white/30 pl-3">CrediOS</span>
@@ -145,7 +145,7 @@ export default function ApplicationListPage() {
             {CATEGORIES.map((c) => (
               <button key={c} onClick={() => setCategory(c)}
                 className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                  category === c ? 'bg-[#D0021B] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                  category === c ? 'bg-hlb text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
                 }`}>
                 {c}
               </button>

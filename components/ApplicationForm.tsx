@@ -654,7 +654,7 @@ export default function ApplicationForm() {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
-      <header className="bg-[#D0021B] text-white px-6 py-3 flex items-center justify-between shadow">
+      <header className="bg-hlb text-white px-6 py-3 flex items-center justify-between shadow">
         <div className="flex items-center gap-3">
           <span className="font-bold text-xl tracking-wide">HLB</span>
           <span className="text-sm opacity-75 border-l border-white/30 pl-3">CrediOS</span>
@@ -674,7 +674,7 @@ export default function ApplicationForm() {
               onClick={() => handleDemoScenario(s)}
               className={`w-full text-left px-3 py-2 rounded text-xs font-medium transition-colors ${
                 demoScenario === s
-                  ? 'bg-[#D0021B] text-white'
+                  ? 'bg-hlb text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -688,7 +688,7 @@ export default function ApplicationForm() {
                 type="checkbox"
                 checked={rule3Enabled}
                 onChange={(e) => { setRule3Enabled(e.target.checked); setVerifyResults(IDLE_RESULTS); }}
-                className="accent-[#D0021B] w-3.5 h-3.5"
+                className="accent-hlb w-3.5 h-3.5"
               />
               <span className="text-xs text-gray-600">Rule 3: Active App Exists</span>
             </label>
@@ -720,7 +720,7 @@ export default function ApplicationForm() {
                 onClick={() => setAppType(t)}
                 className={`px-6 py-2 text-sm font-medium transition-colors ${
                   appType === t
-                    ? 'bg-[#D0021B] text-white'
+                    ? 'bg-hlb text-white'
                     : 'bg-white text-gray-600 hover:bg-gray-50'
                 }`}
               >
@@ -734,7 +734,7 @@ export default function ApplicationForm() {
         {appType === 'Individual' && (
           <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
             <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">1</span>
+              <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">1</span>
               Primary Applicant
             </h2>
 
@@ -795,7 +795,7 @@ export default function ApplicationForm() {
               <button
                 onClick={() => runVerification()}
                 disabled={isVerifying || !rawDigits || ageInvalid}
-                className="px-4 py-2 text-sm font-medium rounded bg-[#D0021B] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-red-700 transition-colors"
+                className="px-4 py-2 text-sm font-medium rounded bg-hlb text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-red-700 transition-colors"
               >
                 {isVerifying ? 'Verifying…' : 'Search / Verify'}
               </button>
@@ -1131,13 +1131,13 @@ export default function ApplicationForm() {
               {/* Header + mode toggle */}
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>
+                  <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>
                   Income Data
                 </h2>
                 <div className="inline-flex rounded-md border border-gray-300 overflow-hidden text-xs">
                   {(['api', 'manual'] as const).map((m) => (
                     <button key={m} onClick={() => setIncomeMode(m)}
-                      className={`px-3 py-1 font-medium transition-colors ${incomeMode === m ? 'bg-[#D0021B] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                      className={`px-3 py-1 font-medium transition-colors ${incomeMode === m ? 'bg-hlb text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
                       {m === 'api' ? 'Use API Data' : 'Enter Manually'}
                     </button>
                   ))}
@@ -1417,7 +1417,7 @@ export default function ApplicationForm() {
           return (
             <div className="bg-white rounded-lg shadow-sm p-4 space-y-3">
               <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span>
+                <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span>
                 Application History
                 <span className="ml-auto text-xs font-normal text-gray-400">{entries.length} records</span>
               </h2>
@@ -1488,7 +1488,7 @@ export default function ApplicationForm() {
           return (
             <div className="bg-white rounded-lg shadow-sm p-4 space-y-3">
               <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">4</span>
+                <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">4</span>
                 HP Financing Line
                 <span className="ml-auto text-xs font-normal text-gray-400">Source: {d.source}</span>
               </h2>
@@ -1513,7 +1513,7 @@ export default function ApplicationForm() {
           return (
             <div className="bg-white rounded-lg shadow-sm p-4">
               <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-3">
-                <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">5</span>
+                <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">5</span>
                 Pre-Consent (e-Consent)
               </h2>
               <div className="flex items-center gap-4">
@@ -1544,7 +1544,7 @@ export default function ApplicationForm() {
           <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
                   {guarantors.length > 0 ? '✓' : '+'}
                 </span>
                 Other Applicants
@@ -1554,7 +1554,7 @@ export default function ApplicationForm() {
               </h2>
               {guarantors.length < 3 && (
                 <button onClick={addGuarantor}
-                  className="text-xs px-3 py-1.5 rounded border border-[#D0021B] text-[#D0021B] hover:bg-red-50 font-medium transition-colors">
+                  className="text-xs px-3 py-1.5 rounded border border-hlb text-hlb hover:bg-red-50 font-medium transition-colors">
                   + Add Guarantor
                 </button>
               )}
@@ -1735,7 +1735,7 @@ export default function ApplicationForm() {
         {appType === 'Non-Individual' && (
           <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
             <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">1</span>
+              <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">1</span>
               Primary Applicant – Corporate
             </h2>
 
@@ -1939,7 +1939,7 @@ export default function ApplicationForm() {
         {appType === 'Non-Individual' && corpStatus === 'found' && (
           <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
             <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>
+              <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>
               Business Financials
             </h2>
 
@@ -2044,7 +2044,7 @@ export default function ApplicationForm() {
         {/* ── 4.7 Channel Information ────────────────────────── */}
         <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
           <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-            <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>
+            <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>
             Channel Information
           </h2>
 
@@ -2057,7 +2057,7 @@ export default function ApplicationForm() {
               <div className="inline-flex rounded-md border border-gray-300 overflow-hidden w-full">
                 {(['Conventional', 'Islamic'] as const).map((t) => (
                   <button key={t} onClick={() => setLoanType(t)}
-                    className={`flex-1 py-2 text-xs font-medium transition-colors ${loanType === t ? 'bg-[#D0021B] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                    className={`flex-1 py-2 text-xs font-medium transition-colors ${loanType === t ? 'bg-hlb text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
                     {t}
                   </button>
                 ))}
@@ -2070,7 +2070,7 @@ export default function ApplicationForm() {
               <div className="inline-flex rounded-md border border-gray-300 overflow-hidden w-full">
                 {(['HP', 'IHP'] as const).map((g) => (
                   <button key={g} onClick={() => setProductGroup(g)}
-                    className={`flex-1 py-2 text-xs font-medium transition-colors ${productGroup === g ? 'bg-[#D0021B] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                    className={`flex-1 py-2 text-xs font-medium transition-colors ${productGroup === g ? 'bg-hlb text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
                     {g}
                   </button>
                 ))}
@@ -2121,7 +2121,7 @@ export default function ApplicationForm() {
                 <button key={tag} onClick={() => toggleSpecialTag(tag)}
                   className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                     specialTags.includes(tag)
-                      ? 'bg-[#D0021B] text-white border-[#D0021B]'
+                      ? 'bg-hlb text-white border-hlb'
                       : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
                   }`}>
                   {specialTags.includes(tag) ? '✓ ' : ''}{tag}
@@ -2221,7 +2221,7 @@ export default function ApplicationForm() {
         {/* ── 4.11 Vehicle Information ───────────────────────── */}
         <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
           <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-            <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span>
+            <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span>
             Vehicle Information
             {vehicleType && (
               <span className="ml-auto text-xs font-normal px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 capitalize">
@@ -2350,7 +2350,7 @@ export default function ApplicationForm() {
         {/* ── 4.12 Loan Program ──────────────────────────────── */}
         <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
           <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-            <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">4</span>
+            <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">4</span>
             Loan Program
           </h2>
 
@@ -2689,7 +2689,7 @@ export default function ApplicationForm() {
         {appType === 'Individual' && (
           <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
             <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">6</span>
+              <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">6</span>
               Asset Information
             </h2>
 
@@ -2817,7 +2817,7 @@ export default function ApplicationForm() {
                   disabled={!canSubmit}
                   className={`px-6 py-2.5 text-sm font-semibold rounded transition-colors shadow-sm ${
                     canSubmit
-                      ? 'bg-[#D0021B] text-white hover:bg-red-700'
+                      ? 'bg-hlb text-white hover:bg-red-700'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}>
                   Submit Application →
@@ -2874,7 +2874,7 @@ export default function ApplicationForm() {
               </button>
               <button
                 onClick={() => setShowRule3Modal(false)}
-                className="flex-1 px-4 py-2 text-sm rounded bg-[#D0021B] text-white font-medium hover:bg-red-700 transition-colors"
+                className="flex-1 px-4 py-2 text-sm rounded bg-hlb text-white font-medium hover:bg-red-700 transition-colors"
               >
                 View it now
               </button>
@@ -2918,7 +2918,7 @@ export default function ApplicationForm() {
                 Back to Form
               </button>
               <button onClick={() => setShowSubmitModal(false)}
-                className="flex-1 px-4 py-2 text-sm rounded bg-[#D0021B] text-white font-medium hover:bg-red-700 transition-colors">
+                className="flex-1 px-4 py-2 text-sm rounded bg-hlb text-white font-medium hover:bg-red-700 transition-colors">
                 View Application List
               </button>
             </div>

@@ -10,10 +10,10 @@ const config: Config = {
       // ── Color tokens (Linear density + Apple semantics + Notion surfaces) ──
       colors: {
         hlb: {
-          DEFAULT: '#D0021B',
-          hover:   '#B5001A',
-          light:   '#FFF0F1',
-          muted:   '#F5D0D4',
+          DEFAULT: '#0055B3',
+          hover:   '#00429A',
+          light:   '#EBF2FF',
+          muted:   '#C2D9F5',
         },
         surface: {
           page:    'var(--surface-page)',
@@ -76,8 +76,8 @@ const config: Config = {
         md:   '0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)',
         lg:   '0 8px 24px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)',
         none: 'none',
-        focus:    '0 0 0 3px rgba(10,122,255,0.22)',
-        focusRed: '0 0 0 3px rgba(208,2,27,0.18)',
+        focus:     '0 0 0 3px rgba(10,122,255,0.22)',
+        focusBlue: '0 0 0 3px rgba(0,85,179,0.22)',
       },
 
       transitionDuration: { DEFAULT: '150ms', fast: '100ms', slow: '250ms' },
