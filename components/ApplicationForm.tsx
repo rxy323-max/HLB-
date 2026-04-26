@@ -637,6 +637,20 @@ export default function ApplicationForm() {
     { code: 'L', label: 'East Malaysia Special Enterprise' },
   ];
 
+  // ── Corporate Business Financials state ─────────────────
+  const [bizTurnover,       setBizTurnover]       = useState('');
+  const [bizNetProfit,      setBizNetProfit]       = useState('');
+  const [bizYearsOp,        setBizYearsOp]        = useState('');
+  const [bizAuditYear,      setBizAuditYear]       = useState('');
+  const [bizExistingCredit, setBizExistingCredit] = useState('');
+  const [bizInstallment,    setBizInstallment]    = useState('');
+
+  const bizDSR = (() => {
+    const income = parseFloat(bizNetProfit) / 12 || 0;
+    const commits = (parseFloat(bizExistingCredit) || 0) + (parseFloat(bizInstallment) || 0);
+    return income > 0 ? ((commits / income) * 100).toFixed(1) : null;
+  })();
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
@@ -1842,6 +1856,26 @@ export default function ApplicationForm() {
                                : dir.cifStatus === 'verified' ? 'Verified'
                                : 'Search CIF'}
                             </button>
+                            {dir.cifStatus === 'verified' && (() => {
+                              const alreadyAdded = guarantors.some((g) => g.rawId === dir.nric);
+                              return alreadyAdded
+                                ? <span className="text-xs text-blue-600 font-medium">Guarantor ✓</span>
+                                : (
+                                  <button onClick={() => {
+                                    setGuarantors((prev) => [...prev, {
+                                      gid: `g-${dir.did}`, idType: 'MyKad', rawId: dir.nric,
+                                      name: dir.name, phone: dir.cifData?.mobile ?? '', email: dir.cifData?.email ?? '',
+                                      emailTouched: false, relApp: 'Guarantor',
+                                      relPrimary: dir.role.includes('Managing') ? 'Director / Guarantor' : 'Guarantor / Director / Shareowner',
+                                      status: 'verified',
+                                      verifyData: { fullName: dir.name, gender: '', dob: '', employer: corpVerifyData?.companyName ?? '', monthlyIncome: 0, ccrisTotal: 0, propertyEquity: 0 },
+                                    }]);
+                                  }}
+                                    className="text-xs px-2.5 py-1 rounded border border-blue-300 text-blue-600 hover:bg-blue-50 transition-colors">
+                                    + Guarantor
+                                  </button>
+                                );
+                            })()}
                           </div>
                         </div>
                         <p className="text-xs font-mono text-gray-500">{dir.nric}</p>
@@ -1901,6 +1935,112 @@ export default function ApplicationForm() {
             })()}
           </div>
         )}
+        {/* ── Corporate Business Financials ───────────────────── */}
+        {appType === 'Non-Individual' && corpStatus === 'found' && (
+          <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+            <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <span className="bg-[#D0021B] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>
+              Business Financials
+            </h2>
+
+            {/* Audited figures */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Audited / Management Accounts</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Latest Audited Accounts Year</label>
+                  <select value={bizAuditYear} onChange={(e) => setBizAuditYear(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                    <option value="">-- Select Year --</option>
+                    {[2024, 2023, 2022, 2021, 2020].map((y) => (
+                      <option key={y} value={String(y)}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Years in Operation</label>
+                  <select value={bizYearsOp} onChange={(e) => setBizYearsOp(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                    <option value="">-- Select --</option>
+                    {['< 1 year', '1–2 years', '3–5 years', '6–10 years', '> 10 years'].map((o) => (
+                      <option key={o} value={o}>{o}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Annual Turnover (RM) <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
+                    <input type="number" value={bizTurnover} onChange={(e) => setBizTurnover(e.target.value)}
+                      placeholder="0"
+                      className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Annual Net Profit / (Loss) (RM) <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
+                    <input type="number" value={bizNetProfit} onChange={(e) => setBizNetProfit(e.target.value)}
+                      placeholder="0"
+                      className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                  </div>
+                  {bizNetProfit && parseFloat(bizNetProfit) < 0 && (
+                    <p className="text-xs text-amber-600 mt-0.5">⚠ Net loss — additional justification required</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* DSR equivalent */}
+            {bizNetProfit && bizTurnover && (
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Debt Service Ratio (Business)</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Existing Credit Facilities / Month (RM)</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
+                      <input type="number" value={bizExistingCredit} onChange={(e) => setBizExistingCredit(e.target.value)}
+                        placeholder="0"
+                        className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">This Loan Installment / Month (RM)</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
+                      <input type="number" value={bizInstallment} onChange={(e) => setBizInstallment(e.target.value)}
+                        placeholder="0"
+                        className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {([
+                    ['Monthly Net Profit',   `RM ${(parseFloat(bizNetProfit) / 12).toLocaleString('en-MY', { maximumFractionDigits: 0 })}`],
+                    ['Monthly Turnover',     `RM ${(parseFloat(bizTurnover)  / 12).toLocaleString('en-MY', { maximumFractionDigits: 0 })}`],
+                    ['Business DSR',         bizDSR ? `${bizDSR}%` : '–'],
+                  ] as [string, string][]).map(([label, val]) => (
+                    <div key={label} className={`rounded-lg p-3 border text-xs ${
+                      label === 'Business DSR' && bizDSR && parseFloat(bizDSR) > 70
+                        ? 'bg-red-50 border-red-200'
+                        : 'bg-gray-50 border-gray-100'
+                    }`}>
+                      <p className="text-gray-400 mb-1">{label}</p>
+                      <p className={`font-semibold ${
+                        label === 'Business DSR' && bizDSR && parseFloat(bizDSR) > 70 ? 'text-red-600' : 'text-gray-800'
+                      }`}>{val}</p>
+                    </div>
+                  ))}
+                </div>
+                {bizDSR && parseFloat(bizDSR) > 70 && (
+                  <p className="text-xs text-red-600">⚠ Business DSR exceeds 70% — credit assessment required.</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── 4.7 Channel Information ────────────────────────── */}
         <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
           <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -2638,6 +2778,11 @@ export default function ApplicationForm() {
             if (!rawDigits)         missingFields.push('Applicant ID Number');
             if (!verifyResults.cifProfile || verifyResults.cifProfile.status === 'idle')
                                     missingFields.push('CIF Verification');
+          } else {
+            if (!corpIDNumber)      missingFields.push('Corporate ID Number');
+            if (!enterpriseType)    missingFields.push('Enterprise Type');
+            if (corpStatus !== 'found') missingFields.push('SSM / Company Verification');
+            if (!bizTurnover || !bizNetProfit) missingFields.push('Business Financials (Turnover / Net Profit)');
           }
           if (!loanType)            missingFields.push('Loan / Financing Type');
           if (!productGroup)        missingFields.push('Product Group');
