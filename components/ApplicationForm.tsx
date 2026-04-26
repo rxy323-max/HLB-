@@ -883,10 +883,30 @@ export default function ApplicationForm() {
             ? { label: 'WT Whitelist',  priority: 2, color: 'text-blue-700  bg-blue-50  border-blue-200'  }
             : null;
           const fmtR = (n: number) => `RM ${n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-          const commitAmt = parseFloat(existingCommitments) || 0;
-          const currentDSR  = totalNetIncome > 0 ? ((commitAmt + loanInstallment) / totalNetIncome * 100).toFixed(1) : null;
-          const internalDSR = totalNetIncome > 0 ? (commitAmt / totalNetIncome * 100).toFixed(1) : null;
-          const minDisposable = totalNetIncome - commitAmt - loanInstallment;
+
+          // Effective income base used for DSR — API mode uses the API figure, manual mode uses entered totals
+          const effectiveNetIncome = incomeMode === 'api'
+            ? (apiIncome?.monthlyIncome ?? 0)
+            : totalNetIncome;
+
+          const commitAmt     = parseFloat(existingCommitments) || 0;
+          const currentDSR    = effectiveNetIncome > 0 ? ((commitAmt + loanInstallment) / effectiveNetIncome * 100).toFixed(1) : null;
+          const internalDSR   = effectiveNetIncome > 0 ? (commitAmt / effectiveNetIncome * 100).toFixed(1) : null;
+          const minDisposable = effectiveNetIncome - commitAmt - loanInstallment;
+
+          // Pre-fill manual fields from API data
+          function prefillFromApi() {
+            if (!apiIncome) return;
+            setEmployers([{
+              eid: crypto.randomUUID(),
+              name: apiIncome.employer ?? '',
+              empType: (apiIncome.employmentType as 'Fixed' | 'Variable' | 'Self-Employed') ?? 'Fixed',
+              gross: String(apiIncome.monthlyIncome ?? ''),
+              net:   String(apiIncome.monthlyIncome ?? ''),
+              commission: '',
+            }]);
+            setIncomeMode('manual');
+          }
 
           return (
             <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
@@ -910,8 +930,14 @@ export default function ApplicationForm() {
               {incomeMode === 'api' && (
                 apiIncome && apiSource ? (
                   <div className="space-y-3">
-                    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${apiSource.color}`}>
-                      <span>Priority {apiSource.priority}</span><span className="opacity-40">·</span><span>{apiSource.label}</span>
+                    <div className="flex items-center justify-between">
+                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${apiSource.color}`}>
+                        <span>Priority {apiSource.priority}</span><span className="opacity-40">·</span><span>{apiSource.label}</span>
+                      </div>
+                      <button onClick={prefillFromApi}
+                        className="text-xs px-2.5 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-50">
+                        Pre-fill → Manual
+                      </button>
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
@@ -944,10 +970,18 @@ export default function ApplicationForm() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Employer Income</p>
-                      <button onClick={addEmployer}
-                        className="text-xs px-2.5 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-50">
-                        + Add Employer
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {apiIncome && employers.length === 0 && (
+                          <button onClick={prefillFromApi}
+                            className="text-xs px-2.5 py-1 rounded border border-blue-300 text-blue-600 hover:bg-blue-50">
+                            Pre-fill from API
+                          </button>
+                        )}
+                        <button onClick={addEmployer}
+                          className="text-xs px-2.5 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-50">
+                          + Add Employer
+                        </button>
+                      </div>
                     </div>
                     {employers.length === 0 && (
                       <p className="text-xs text-gray-400 italic">No employer added yet.</p>
@@ -1006,6 +1040,9 @@ export default function ApplicationForm() {
                         + Add Account
                       </button>
                     </div>
+                    {bankStmts.length === 0 && (
+                      <p className="text-xs text-gray-400 italic">No bank account added yet.</p>
+                    )}
                     {bankStmts.map((b) => (
                       <div key={b.bid} className="grid grid-cols-3 gap-2 border border-gray-200 rounded-lg p-3 items-end">
                         <div>
@@ -1030,13 +1067,11 @@ export default function ApplicationForm() {
                   {/* EPF */}
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">EPF</p>
-                    <div className="flex items-center gap-3">
-                      <div className="w-56">
-                        <label className="text-xs text-gray-500 block mb-1">Monthly EPF Contribution (RM)</label>
-                        <input type="number" value={epfMonthly} onChange={(e) => setEpfMonthly(e.target.value)}
-                          placeholder="0.00"
-                          className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
-                      </div>
+                    <div className="w-56">
+                      <label className="text-xs text-gray-500 block mb-1">Monthly EPF Contribution (RM)</label>
+                      <input type="number" value={epfMonthly} onChange={(e) => setEpfMonthly(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
                     </div>
                   </div>
 
@@ -1060,44 +1095,50 @@ export default function ApplicationForm() {
                       </div>
                     </div>
                   )}
+                </div>
+              )}
 
-                  {/* DSR Calculation */}
-                  {totalNetIncome > 0 && (
-                    <div className="border border-blue-100 rounded-lg p-3 bg-blue-50 space-y-3">
-                      <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">DSR / Exposure Summary</p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs text-gray-500 block mb-1">Existing Commitments / Month (RM)</label>
-                          <input type="number" value={existingCommitments}
-                            onChange={(e) => setExistingCommitments(e.target.value)}
-                            placeholder="0.00"
-                            className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono bg-white focus:outline-none focus:border-blue-400" />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-500 block mb-1">This Loan Installment (RM)</label>
-                          <div className="px-3 py-1.5 rounded border border-gray-200 text-xs font-mono bg-white text-gray-700">
-                            {loanInstallment > 0 ? fmtR(loanInstallment) : '— (fill Loan Program first)'}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-3 pt-1">
-                        {([
-                          ['Current DSR',         currentDSR  ? `${currentDSR}%`  : '–', currentDSR  && parseFloat(currentDSR)  > 70 ? 'text-red-600' : 'text-gray-800'],
-                          ['Internal DSR',        internalDSR ? `${internalDSR}%` : '–', 'text-gray-800'],
-                          ['Min Disposable Income', totalNetIncome > 0 ? fmtR(minDisposable) : '–', minDisposable < 0 ? 'text-red-600' : 'text-green-700'],
-                        ] as [string, string, string][]).map(([label, val, cls]) => (
-                          <div key={label} className="bg-white rounded p-2 border border-blue-100">
-                            <p className="text-xs text-gray-400 mb-0.5">{label}</p>
-                            <p className={`text-sm font-bold ${cls}`}>{val}</p>
-                          </div>
-                        ))}
-                      </div>
-                      {currentDSR && parseFloat(currentDSR) > 70 && (
-                        <p className="text-xs text-red-600">⚠ DSR exceeds 70% — loan may require additional justification.</p>
-                      )}
-                      <p className="text-xs text-gray-400">Global DSR: Pending CCRIS Retrieval (post-submission)</p>
-                    </div>
+              {/* ── DSR / Exposure Summary — shown for both modes once income is known ── */}
+              {effectiveNetIncome > 0 && (
+                <div className="border border-blue-100 rounded-lg p-3 bg-blue-50 space-y-3">
+                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">DSR / Exposure Summary</p>
+                  {incomeMode === 'api' && (
+                    <p className="text-xs text-gray-500">
+                      Income base: <span className="font-semibold text-gray-700">{fmtR(effectiveNetIncome)}</span>
+                      <span className="text-gray-400"> / month ({apiSource?.label})</span>
+                    </p>
                   )}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-1">Existing Commitments / Month (RM)</label>
+                      <input type="number" value={existingCommitments}
+                        onChange={(e) => setExistingCommitments(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono bg-white focus:outline-none focus:border-blue-400" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-1">This Loan Installment (RM)</label>
+                      <div className="px-3 py-1.5 rounded border border-gray-200 text-xs font-mono bg-white text-gray-700">
+                        {loanInstallment > 0 ? fmtR(loanInstallment) : '— (fill Loan Program first)'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 pt-1">
+                    {([
+                      ['Current DSR',           currentDSR  ? `${currentDSR}%`  : '–', currentDSR  && parseFloat(currentDSR)  > 70 ? 'text-red-600' : 'text-gray-800'],
+                      ['Internal DSR',          internalDSR ? `${internalDSR}%` : '–', 'text-gray-800'],
+                      ['Min Disposable Income', effectiveNetIncome > 0 ? fmtR(minDisposable) : '–', minDisposable < 0 ? 'text-red-600' : 'text-green-700'],
+                    ] as [string, string, string][]).map(([label, val, cls]) => (
+                      <div key={label} className="bg-white rounded p-2 border border-blue-100">
+                        <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                        <p className={`text-sm font-bold ${cls}`}>{val}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {currentDSR && parseFloat(currentDSR) > 70 && (
+                    <p className="text-xs text-red-600">⚠ DSR exceeds 70% — loan may require additional justification.</p>
+                  )}
+                  <p className="text-xs text-gray-400">Global DSR: Pending CCRIS Retrieval (post-submission)</p>
                 </div>
               )}
             </div>
