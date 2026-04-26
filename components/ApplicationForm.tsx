@@ -914,10 +914,18 @@ export default function ApplicationForm() {
             ? (apiIncome?.monthlyIncome ?? 0)
             : totalNetIncome;
 
-          const commitAmt     = parseFloat(existingCommitments) || 0;
+          // Joint contributions from verified guarantors
+          const verifiedGuarantors = guarantors.filter((g) => g.status === 'verified' && g.verifyData);
+          const gJointIncome   = verifiedGuarantors.reduce((s, g) => s + (g.verifyData?.monthlyIncome ?? 0), 0);
+          const gJointCCRIS    = verifiedGuarantors.reduce((s, g) => s + (g.verifyData?.ccrisTotal   ?? 0), 0);
+          const jointIncome    = effectiveNetIncome + gJointIncome;
+          const commitAmt      = parseFloat(existingCommitments) || 0;
+          const jointCommit    = commitAmt + gJointCCRIS;
+
           const currentDSR    = effectiveNetIncome > 0 ? ((commitAmt + loanInstallment) / effectiveNetIncome * 100).toFixed(1) : null;
           const internalDSR   = effectiveNetIncome > 0 ? (commitAmt / effectiveNetIncome * 100).toFixed(1) : null;
           const minDisposable = effectiveNetIncome - commitAmt - loanInstallment;
+          const jointDSR      = jointIncome > 0 ? ((jointCommit + loanInstallment) / jointIncome * 100).toFixed(1) : null;
 
           // Pre-fill manual fields from API data
           function prefillFromApi() {
@@ -1161,8 +1169,48 @@ export default function ApplicationForm() {
                     ))}
                   </div>
                   {currentDSR && parseFloat(currentDSR) > 70 && (
-                    <p className="text-xs text-red-600">⚠ DSR exceeds 70% — loan may require additional justification.</p>
+                    <p className="text-xs text-red-600">⚠ Primary DSR exceeds 70% — loan may require additional justification.</p>
                   )}
+
+                  {/* Joint DSR — shown only when ≥1 guarantor is verified */}
+                  {verifiedGuarantors.length > 0 && (
+                    <div className="border-t border-blue-200 pt-3 space-y-2">
+                      <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">
+                        Joint DSR ({verifiedGuarantors.length} guarantor{verifiedGuarantors.length > 1 ? 's' : ''} included)
+                      </p>
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                        {([
+                          ['Primary Net Income',          fmtR(effectiveNetIncome)],
+                          ['Guarantor(s) Net Income',     fmtR(gJointIncome)],
+                          ['Guarantor(s) CCRIS Commits',  fmtR(gJointCCRIS)],
+                          ['Joint Total Net Income',      fmtR(jointIncome)],
+                        ] as [string, string][]).map(([k, v]) => (
+                          <div key={k} className="flex justify-between border-b border-blue-100 pb-1">
+                            <span className="text-gray-400">{k}</span>
+                            <span className="font-mono font-semibold text-gray-800">{v}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-3 pt-1">
+                        <div className="bg-white rounded p-2 border border-blue-100 flex-1">
+                          <p className="text-xs text-gray-400 mb-0.5">Joint DSR</p>
+                          <p className={`text-sm font-bold ${jointDSR && parseFloat(jointDSR) > 70 ? 'text-red-600' : 'text-green-700'}`}>
+                            {jointDSR ? `${jointDSR}%` : '–'}
+                          </p>
+                        </div>
+                        <div className="bg-white rounded p-2 border border-blue-100 flex-1">
+                          <p className="text-xs text-gray-400 mb-0.5">Joint Disposable Income</p>
+                          <p className={`text-sm font-bold font-mono ${jointIncome - jointCommit - loanInstallment < 0 ? 'text-red-600' : 'text-green-700'}`}>
+                            {fmtR(jointIncome - jointCommit - loanInstallment)}
+                          </p>
+                        </div>
+                      </div>
+                      {jointDSR && parseFloat(jointDSR) <= 70 && currentDSR && parseFloat(currentDSR) > 70 && (
+                        <p className="text-xs text-green-600">Joint DSR within 70% — guarantor inclusion improves viability.</p>
+                      )}
+                    </div>
+                  )}
+
                   <p className="text-xs text-gray-400">Global DSR: Pending CCRIS Retrieval (post-submission)</p>
                 </div>
               )}
