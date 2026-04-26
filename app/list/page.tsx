@@ -173,7 +173,8 @@ export default function ApplicationListPage() {
             <p className="text-sm text-gray-400 text-center py-12">No applications match your filters.</p>
           )}
           {filtered.map((a) => (
-            <div key={a.ref} className="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
+            <Link key={a.ref} href={`/?ref=${encodeURIComponent(a.ref)}`}
+              className="block px-4 py-3 hover:bg-gray-50 transition-colors">
               <div className="flex items-start gap-4">
                 {/* Left: ref + date */}
                 <div className="w-48 shrink-0">
@@ -215,7 +216,7 @@ export default function ApplicationListPage() {
                   <p className="text-xs text-gray-400 mt-0.5">{a.officer} · {a.branch}</p>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
