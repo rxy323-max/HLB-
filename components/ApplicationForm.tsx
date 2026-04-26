@@ -2355,14 +2355,55 @@ export default function ApplicationForm() {
         )}
 
         {/* ── Submit ─────────────────────────────────────────── */}
-        <div className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
-          <p className="text-xs text-gray-400">Review all sections before submitting.</p>
-          <button
-            onClick={() => setShowSubmitModal(true)}
-            className="px-6 py-2.5 bg-[#D0021B] text-white text-sm font-semibold rounded hover:bg-red-700 transition-colors shadow-sm">
-            Submit Application →
-          </button>
-        </div>
+        {(() => {
+          const missingFields: string[] = [];
+          if (appType === 'Individual') {
+            if (!rawDigits)         missingFields.push('Applicant ID Number');
+            if (!verifyResults.cifProfile || verifyResults.cifProfile.status === 'idle')
+                                    missingFields.push('CIF Verification');
+          }
+          if (!loanType)            missingFields.push('Loan / Financing Type');
+          if (!productGroup)        missingFields.push('Product Group');
+          if (!vehicleType)         missingFields.push('Vehicle Type');
+          if (!vehMake || !vehModel) missingFields.push('Vehicle (Make / Model)');
+          if (!purchasePrice)       missingFields.push('Purchase Price');
+          if (!loanProductCode)     missingFields.push('Loan Product Code');
+          if (!loanAmount)          missingFields.push('Loan Amount');
+          if (!tenureMonths)        missingFields.push('Loan Tenure');
+          if (!eirValue || eirHardBlock) missingFields.push('Valid EIR');
+          if (!refNo)               missingFields.push('Reference Number (Generate Ref No)');
+          const canSubmit = missingFields.length === 0;
+
+          return (
+            <div className="bg-white rounded-lg shadow-sm p-4 space-y-2">
+              {!canSubmit && (
+                <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 space-y-1">
+                  <p className="text-xs font-semibold text-amber-700">Please complete the following before submitting:</p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    {missingFields.map((f) => (
+                      <li key={f} className="text-xs text-amber-600">{f}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-400">
+                  {canSubmit ? 'All required fields complete. Ready to submit.' : `${missingFields.length} item(s) still required.`}
+                </p>
+                <button
+                  onClick={() => { if (canSubmit) setShowSubmitModal(true); }}
+                  disabled={!canSubmit}
+                  className={`px-6 py-2.5 text-sm font-semibold rounded transition-colors shadow-sm ${
+                    canSubmit
+                      ? 'bg-[#D0021B] text-white hover:bg-red-700'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}>
+                  Submit Application →
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
         </div>{/* end flex-1 form column */}
       </div>{/* end flex row */}
