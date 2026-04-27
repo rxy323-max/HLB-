@@ -311,6 +311,276 @@ const HP_PLUS_FEES = [
   { name: 'Setup Fee',       frequency: 'One-time', amount: 100 },
 ];
 
+// ── Entity Type field rules ───────────────────────────────────
+type EntityCode = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'L';
+const ENTITY_FIELD_RULES: Record<EntityCode, {
+  showBoardCategory: boolean;
+  showBNMPass: boolean;
+  showOffshore: boolean;
+  ownerRequired: boolean;
+  placeOfRegRequired: boolean;
+}> = {
+  A: { showBoardCategory: false, showBNMPass: false, showOffshore: false, ownerRequired: false, placeOfRegRequired: false },
+  B: { showBoardCategory: true,  showBNMPass: false, showOffshore: false, ownerRequired: false, placeOfRegRequired: false },
+  C: { showBoardCategory: false, showBNMPass: false, showOffshore: true,  ownerRequired: false, placeOfRegRequired: false },
+  D: { showBoardCategory: false, showBNMPass: false, showOffshore: false, ownerRequired: true,  placeOfRegRequired: true  },
+  E: { showBoardCategory: false, showBNMPass: true,  showOffshore: false, ownerRequired: true,  placeOfRegRequired: false },
+  F: { showBoardCategory: false, showBNMPass: true,  showOffshore: false, ownerRequired: true,  placeOfRegRequired: false },
+  G: { showBoardCategory: false, showBNMPass: true,  showOffshore: true,  ownerRequired: false, placeOfRegRequired: false },
+  H: { showBoardCategory: false, showBNMPass: true,  showOffshore: false, ownerRequired: true,  placeOfRegRequired: false },
+  L: { showBoardCategory: false, showBNMPass: false, showOffshore: false, ownerRequired: false, placeOfRegRequired: false },
+};
+
+// ── Relationship / Role code system ──────────────────────────
+type RelToApp = 'Guarantor' | 'Owner' | 'Non-Guarantor';
+const ROLE_CODES_BY_REL: Record<RelToApp, { value: string; label: string }[]> = {
+  Guarantor: [
+    { value: 'DG', label: 'DG – Director / Guarantor' },
+    { value: 'GD', label: 'GD – Gtr / Dir / Shareholder' },
+    { value: 'GU', label: 'GU – Guarantor' },
+    { value: 'GS', label: 'GS – Guarantor / Shareholder' },
+    { value: 'PP', label: 'PP – Partner of Partnership' },
+    { value: 'CG', label: 'CG – Corporate Guarantor' },
+  ],
+  Owner: [
+    { value: 'PP', label: 'PP – Partner of Partnership' },
+    { value: 'SP', label: 'SP – Sole Proprietorship' },
+  ],
+  'Non-Guarantor': [
+    { value: 'DR', label: 'DR – Director' },
+    { value: 'DD', label: 'DD – Director / Shareholder' },
+    { value: 'CH', label: 'CH – Shareholder' },
+  ],
+};
+
+// ── MSIC Nature of Business cascade ──────────────────────────
+const MSIC_GROUPS = [
+  { code: 'A', name: 'Agriculture, Forestry and Fishing' },
+  { code: 'B', name: 'Mining and Quarrying' },
+  { code: 'C', name: 'Manufacturing' },
+  { code: 'F', name: 'Construction' },
+  { code: 'G', name: 'Wholesale and Retail Trade' },
+  { code: 'H', name: 'Transportation and Storage' },
+  { code: 'I', name: 'Accommodation and Food Service Activities' },
+  { code: 'J', name: 'Information and Communication' },
+  { code: 'K', name: 'Financial and Insurance Activities' },
+  { code: 'L', name: 'Real Estate Activities' },
+  { code: 'M', name: 'Professional, Scientific and Technical Activities' },
+  { code: 'N', name: 'Administrative and Support Service Activities' },
+  { code: 'P', name: 'Education' },
+  { code: 'Q', name: 'Human Health and Social Work Activities' },
+  { code: 'R', name: 'Arts, Entertainment and Recreation' },
+  { code: 'S', name: 'Other Service Activities' },
+];
+
+const MSIC_BY_GROUP: Record<string, { msic: string; name: string }[]> = {
+  A: [
+    { msic: '01120', name: 'Growing of vegetables' },
+    { msic: '01130', name: 'Growing of fruit and nut trees' },
+    { msic: '01292', name: 'Growing of oil palm' },
+    { msic: '01410', name: 'Raising of cattle and buffaloes' },
+    { msic: '01490', name: 'Raising of other animals (poultry/swine)' },
+    { msic: '03110', name: 'Marine fishing' },
+    { msic: '03120', name: 'Freshwater fishing' },
+    { msic: '02100', name: 'Silviculture and other forestry activities' },
+  ],
+  B: [
+    { msic: '06100', name: 'Extraction of crude petroleum' },
+    { msic: '06200', name: 'Extraction of natural gas' },
+    { msic: '08100', name: 'Quarrying of stone, sand and clay' },
+    { msic: '08990', name: 'Other mining and quarrying n.e.c.' },
+  ],
+  C: [
+    { msic: '10110', name: 'Processing and preserving of meat' },
+    { msic: '10200', name: 'Processing and preserving of fish' },
+    { msic: '10710', name: 'Manufacture of bakery products' },
+    { msic: '10800', name: 'Manufacture of other food products' },
+    { msic: '13100', name: 'Spinning, weaving and finishing of textiles' },
+    { msic: '14100', name: 'Manufacture of wearing apparel' },
+    { msic: '20110', name: 'Manufacture of basic chemicals' },
+    { msic: '22110', name: 'Manufacture of rubber tyres and tubes' },
+    { msic: '24100', name: 'Manufacture of basic iron and steel' },
+    { msic: '25110', name: 'Manufacture of metal structures' },
+    { msic: '26200', name: 'Manufacture of computers and peripherals' },
+    { msic: '27100', name: 'Manufacture of electric motors / generators' },
+    { msic: '29100', name: 'Manufacture of motor vehicles' },
+    { msic: '29300', name: 'Manufacture of parts for motor vehicles' },
+    { msic: '31000', name: 'Manufacture of furniture' },
+  ],
+  F: [
+    { msic: '41001', name: 'Construction of residential buildings' },
+    { msic: '41002', name: 'Construction of commercial buildings' },
+    { msic: '42101', name: 'Construction of roads and highways' },
+    { msic: '42201', name: 'Construction of utility projects (water/sewerage)' },
+    { msic: '43210', name: 'Electrical installation' },
+    { msic: '43220', name: 'Plumbing, heat and air-conditioning installation' },
+    { msic: '43300', name: 'Building completion and finishing' },
+  ],
+  G: [
+    { msic: '45100', name: 'Sale of motor vehicles' },
+    { msic: '45200', name: 'Maintenance and repair of motor vehicles' },
+    { msic: '45300', name: 'Sale of motor vehicle parts and accessories' },
+    { msic: '46100', name: 'Wholesale on a fee or contract basis' },
+    { msic: '46310', name: 'Wholesale of food' },
+    { msic: '47110', name: 'Retail in non-specialised stores (supermarket)' },
+    { msic: '47300', name: 'Retail sale of automotive fuel' },
+    { msic: '47410', name: 'Retail of computers and peripherals' },
+    { msic: '47810', name: 'Retail sale via stalls – food' },
+    { msic: '47910', name: 'Retail sale via internet' },
+  ],
+  H: [
+    { msic: '49320', name: 'Taxi operation' },
+    { msic: '49410', name: 'Freight transport by road' },
+    { msic: '50100', name: 'Sea and coastal passenger water transport' },
+    { msic: '51100', name: 'Passenger air transport' },
+    { msic: '51200', name: 'Freight air transport' },
+    { msic: '52100', name: 'Warehousing and storage' },
+  ],
+  I: [
+    { msic: '55100', name: 'Hotels and resorts' },
+    { msic: '55201', name: 'Chalets' },
+    { msic: '56101', name: 'Restaurants' },
+    { msic: '56102', name: 'Fast food outlets' },
+    { msic: '56103', name: 'Cafes and coffeeshops' },
+    { msic: '56210', name: 'Event catering activities' },
+  ],
+  J: [
+    { msic: '58200', name: 'Software publishing' },
+    { msic: '61100', name: 'Wired telecommunications activities' },
+    { msic: '61200', name: 'Wireless telecommunications activities' },
+    { msic: '62010', name: 'Computer programming activities' },
+    { msic: '62020', name: 'Computer consultancy activities' },
+    { msic: '63110', name: 'Data processing, hosting and related activities' },
+    { msic: '63120', name: 'Web portals' },
+  ],
+  K: [
+    { msic: '64190', name: 'Other monetary intermediation (commercial banks)' },
+    { msic: '64910', name: 'Financial leasing' },
+    { msic: '64990', name: 'Other financial service activities n.e.c.' },
+    { msic: '65110', name: 'Life insurance' },
+    { msic: '65120', name: 'Non-life insurance' },
+    { msic: '66190', name: 'Other activities auxiliary to financial services' },
+  ],
+  L: [
+    { msic: '68101', name: 'Buying and selling own real estate' },
+    { msic: '68102', name: 'Real estate development – residential' },
+    { msic: '68103', name: 'Real estate development – non-residential' },
+    { msic: '68201', name: 'Renting and operating of own real estate' },
+    { msic: '68310', name: 'Real estate agencies' },
+    { msic: '68320', name: 'Management of real estate on a fee/contract basis' },
+  ],
+  M: [
+    { msic: '69100', name: 'Legal activities' },
+    { msic: '69200', name: 'Accounting, bookkeeping and auditing' },
+    { msic: '70200', name: 'Management consultancy activities' },
+    { msic: '71110', name: 'Architectural activities' },
+    { msic: '71120', name: 'Engineering activities' },
+    { msic: '73100', name: 'Advertising agencies' },
+    { msic: '74100', name: 'Specialized design activities' },
+    { msic: '74901', name: 'Quantity surveying activities' },
+  ],
+  N: [
+    { msic: '77100', name: 'Renting and leasing of motor vehicles' },
+    { msic: '78100', name: 'Activities of employment placement agencies' },
+    { msic: '80100', name: 'Private security activities' },
+    { msic: '81210', name: 'General cleaning of buildings' },
+    { msic: '82200', name: 'Activities of call centres' },
+    { msic: '82910', name: 'Activities of collection agencies and credit bureaus' },
+  ],
+  P: [
+    { msic: '85200', name: 'Primary education' },
+    { msic: '85310', name: 'General secondary education' },
+    { msic: '85421', name: 'University education' },
+    { msic: '85422', name: 'Polytechnic education' },
+    { msic: '85490', name: 'Other education (private tutoring, driving schools)' },
+  ],
+  Q: [
+    { msic: '86100', name: 'Hospital activities (private hospitals)' },
+    { msic: '86210', name: 'General medical practice activities' },
+    { msic: '86220', name: 'Specialist medical practice activities' },
+    { msic: '86901', name: 'Dental practice activities' },
+    { msic: '86902', name: 'Pharmacy activities' },
+  ],
+  R: [
+    { msic: '90000', name: 'Creative, arts and entertainment activities' },
+    { msic: '93110', name: 'Operation of sports facilities' },
+    { msic: '93120', name: 'Activities of sports clubs' },
+    { msic: '93200', name: 'Amusement and recreation activities' },
+  ],
+  S: [
+    { msic: '95110', name: 'Repair of computers and peripherals' },
+    { msic: '95290', name: 'Repair of personal and household goods n.e.c.' },
+    { msic: '96010', name: 'Washing and dry-cleaning of textile products' },
+    { msic: '96020', name: 'Hairdressing and other beauty treatment' },
+    { msic: '96040', name: 'Physical well-being activities (gym/fitness)' },
+    { msic: '96090', name: 'Other personal service activities n.e.c.' },
+  ],
+};
+
+// ── Nature of Business Code (21-item independent legacy enum) ─
+const BIZ_NATURE_CODES = [
+  { code: '1.0',  name: 'Trading' },
+  { code: '2.0',  name: 'Wholesale' },
+  { code: '3.0',  name: 'Manufacturing' },
+  { code: '4.0',  name: 'Construction' },
+  { code: '5.0',  name: 'Plantation' },
+  { code: '6.0',  name: 'Husbandry' },
+  { code: '7.0',  name: 'Insurance' },
+  { code: '8.0',  name: 'Banking' },
+  { code: '9.0',  name: 'Warehousing' },
+  { code: '10.0', name: 'Transportation' },
+  { code: '11.0', name: 'Agriculture' },
+  { code: '12.0', name: 'Fisheries' },
+  { code: '13.0', name: 'Restaurant / Hotel Operator' },
+  { code: '14.0', name: 'Hawkers / Petty Traders' },
+  { code: '15.0', name: 'Mining / Quarrying' },
+  { code: '16.0', name: 'Franchise' },
+  { code: '17.0', name: 'IT & Telecommunication' },
+  { code: '18.0', name: 'Business Services' },
+  { code: '19.0', name: 'Clinics' },
+  { code: '20.0', name: 'Professional Firms (Accounting)' },
+  { code: '21.0', name: 'Professional Firms (Engineering)' },
+];
+
+// ── Bumiputra Status ──────────────────────────────────────────
+const BUMIPUTRA_OPTIONS = [
+  { value: 'BUM', label: 'BUM – Bumiputra' },
+  { value: 'NBU', label: 'NBU – Non-Bumiputra' },
+  { value: 'NRC', label: 'NRC – Non-Resident Controlled' },
+  { value: 'OTH', label: 'OTH – Others / External' },
+];
+
+// ── Asset Size auto-tier from Annual Sales Turnover ───────────
+function calcAssetSize(turnover: number): { code: string; label: string } | null {
+  if (!turnover || turnover <= 0) return null;
+  if (turnover < 300_000)    return { code: 'A', label: 'A – Less than RM300k' };
+  if (turnover < 3_000_000)  return { code: 'B', label: 'B – RM300k to < RM3.0M' };
+  if (turnover < 15_000_000) return { code: 'C', label: 'C – RM3.0M to < RM15.0M' };
+  if (turnover < 20_000_000) return { code: 'D', label: 'D – RM15.0M to < RM20.0M' };
+  if (turnover < 50_000_000) return { code: 'E', label: 'E – RM20.0M to < RM50.0M' };
+  return                            { code: 'F', label: 'F – More than RM50.0M' };
+}
+
+function smeSizeFromAsset(assetCode: string): 'Micro' | 'Small' | 'Medium' | 'Large' {
+  if (assetCode === 'A') return 'Micro';
+  if (assetCode === 'B') return 'Small';
+  if (assetCode === 'C') return 'Medium';
+  return 'Large';
+}
+
+// ── Customer Sector auto-calc (Bumiputra Status × SME size) ───
+function calcCustomerSector(bumi: string, assetCode: string): string | null {
+  if (!bumi || !assetCode) return null;
+  const size = smeSizeFromAsset(assetCode);
+  const MAP: Record<string, Record<string, string>> = {
+    BUM: { Micro: '41 – Bumi SME Micro', Small: '42 – Bumi SME Small', Medium: '43 – Bumi SME Medium', Large: '61 – Bumiputra DBE' },
+    NBU: { Micro: '44 – Non-Bumi SME Micro', Small: '46 – Non-Bumi SME Small', Medium: '47 – Non-Bumi SME Medium', Large: '62 – Non-Bumiputra DBE' },
+    NRC: { Micro: '48 – Non-Resident SME Micro', Small: '49 – Non-Resident SME Small', Medium: '51 – Non-Resident SME Medium', Large: '63 – Non-Resident DBE' },
+    OTH: { Micro: '76 – Individual', Small: '76 – Individual', Medium: '76 – Individual', Large: '76 – Individual' },
+  };
+  return MAP[bumi]?.[size] ?? null;
+}
+
 // ── Mock API layer ────────────────────────────────────────────
 type ApiStatus = 'idle' | 'loading' | 'ok' | 'error' | 'timeout';
 
@@ -550,7 +820,8 @@ export default function ApplicationForm() {
     gid: string; idType: string; rawId: string;
     name: string; phone: string; email: string;
     emailTouched: boolean;
-    relApp: string; relPrimary: string;
+    relToApp: RelToApp | '';
+    roleCode: string;
     status: 'idle' | 'verifying' | 'verified' | 'not_found';
     verifyData: GuarantorVerifyData | null;
   };
@@ -572,7 +843,7 @@ export default function ApplicationForm() {
     setGuarantors((prev) => [...prev, {
       gid: `g-${Date.now()}`, idType: 'MyKad', rawId: '',
       name: '', phone: '', email: '', emailTouched: false,
-      relApp: '', relPrimary: '', status: 'idle', verifyData: null,
+      relToApp: '', roleCode: '', status: 'idle', verifyData: null,
     }]);
   }
   function removeGuarantor(gid: string) {
@@ -591,14 +862,7 @@ export default function ApplicationForm() {
     }));
   }
 
-  const REL_TO_APP     = ['Guarantor', 'Joint Applicant (Non-Guarantor)'];
-  const REL_TO_PRIMARY = [
-    'Director / Guarantor', 'Guarantor / Director / Shareowner',
-    'Guarantor', 'Guarantor / Shareowner',
-    'Partner of Partnership', 'Sole Proprietorship',
-    'Director', 'Director / Shareowner',
-    'Shareowner', 'Ultimate Beneficial Owner',
-  ];
+  const REL_TO_APP_OPTIONS: RelToApp[] = ['Guarantor', 'Owner', 'Non-Guarantor'];
 
   // ── Income state (4.9) ───────────────────────────────────
   const [incomeMode, setIncomeMode] = useState<'api' | 'manual'>('api');
@@ -810,16 +1074,44 @@ export default function ApplicationForm() {
     { code: 'L', label: 'East Malaysia Special Enterprise' },
   ];
 
+  // ── Corporate Business Classification state ──────────────
+  const [bizNobGroup,       setBizNobGroup]       = useState('');
+  const [bizNobSub,         setBizNobSub]         = useState('');
+  const [bizNobCode,        setBizNobCode]        = useState('');
+  const [bizDescription,    setBizDescription]    = useState('');
+  const [bumiStatus,        setBumiStatus]        = useState('NBU');
+  const [segmentCategory,   setSegmentCategory]   = useState('');
+  const [boardCategory,     setBoardCategory]     = useState('');
+  const [smiStatus,         setSmiStatus]         = useState('');
+  const [offshoreStatus,    setOffshoreStatus]    = useState('');
+  const [residentialStatus, setResidentialStatus] = useState('Resident');
+  const [crossBorderCountries, setCrossBorderCountries] = useState<string[]>([]);
+  const [placeOfReg,        setPlaceOfReg]        = useState('');
+
+  const nobSubOptions = bizNobGroup ? (MSIC_BY_GROUP[bizNobGroup] ?? []) : [];
+  const msicCode = nobSubOptions.find((s) => s.msic === bizNobSub)?.msic ?? '';
+  const entityRules = ENTITY_FIELD_RULES[enterpriseType as EntityCode] ?? null;
+
   // ── Corporate Business Financials state ─────────────────
-  const [bizTurnover,       setBizTurnover]       = useState('');
-  const [bizNetProfit,      setBizNetProfit]       = useState('');
-  const [bizYearsOp,        setBizYearsOp]        = useState('');
-  const [bizAuditYear,      setBizAuditYear]       = useState('');
-  const [bizExistingCredit, setBizExistingCredit] = useState('');
-  const [bizInstallment,    setBizInstallment]    = useState('');
+  const [bizFinYearCurrent,  setBizFinYearCurrent]  = useState(String(new Date().getFullYear()));
+  const [bizFinYearPrev,     setBizFinYearPrev]     = useState(String(new Date().getFullYear() - 1));
+  const [bizTurnoverCurr,    setBizTurnoverCurr]    = useState('');
+  const [bizTurnoverPrev,    setBizTurnoverPrev]    = useState('');
+  const [bizNetProfitCurr,   setBizNetProfitCurr]   = useState('');
+  const [bizNetProfitPrev,   setBizNetProfitPrev]   = useState('');
+  const [bizYearsOp,         setBizYearsOp]         = useState('');
+  const [bizExistingCredit,  setBizExistingCredit]  = useState('');
+  const [bizInstallment,     setBizInstallment]     = useState('');
+
+  // keep old single-value aliases for DSR calc backward compat
+  const bizTurnover   = bizTurnoverCurr;
+  const bizNetProfit  = bizNetProfitCurr;
+
+  const assetSizeTier    = calcAssetSize(parseFloat(bizTurnoverCurr) || 0);
+  const customerSector   = calcCustomerSector(bumiStatus, assetSizeTier?.code ?? '');
 
   const bizDSR = (() => {
-    const income = parseFloat(bizNetProfit) / 12 || 0;
+    const income = parseFloat(bizNetProfitCurr) / 12 || 0;
     const commits = (parseFloat(bizExistingCredit) || 0) + (parseFloat(bizInstallment) || 0);
     return income > 0 ? ((commits / income) * 100).toFixed(1) : null;
   })();
@@ -1812,21 +2104,30 @@ export default function ApplicationForm() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs text-gray-500 block mb-1">Relationship to Application <span className="text-red-500">*</span></label>
-                    <select value={g.relApp}
-                      onChange={(e) => updateGuarantor(g.gid, 'relApp', e.target.value)}
+                    <select value={g.relToApp}
+                      onChange={(e) => {
+                        updateGuarantor(g.gid, 'relToApp', e.target.value);
+                        updateGuarantor(g.gid, 'roleCode', '');
+                      }}
                       className="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-blue-400">
                       <option value="">-- Select --</option>
-                      {REL_TO_APP.map((r) => <option key={r} value={r}>{r}</option>)}
+                      {REL_TO_APP_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 block mb-1">Relationship to Primary <span className="text-red-500">*</span></label>
-                    <select value={g.relPrimary}
-                      onChange={(e) => updateGuarantor(g.gid, 'relPrimary', e.target.value)}
-                      className="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-blue-400">
-                      <option value="">-- Select --</option>
-                      {REL_TO_PRIMARY.map((r) => <option key={r} value={r}>{r}</option>)}
+                    <label className="text-xs text-gray-500 block mb-1">Role Code <span className="text-red-500">*</span></label>
+                    <select value={g.roleCode}
+                      onChange={(e) => updateGuarantor(g.gid, 'roleCode', e.target.value)}
+                      disabled={!g.relToApp}
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-blue-400 disabled:opacity-50">
+                      <option value="">-- Select Role --</option>
+                      {g.relToApp && ROLE_CODES_BY_REL[g.relToApp as RelToApp]?.map((r) => (
+                        <option key={r.value} value={r.value}>{r.label}</option>
+                      ))}
                     </select>
+                    {g.roleCode === 'CG' && (
+                      <p className="text-xs text-amber-600 mt-0.5">Corporate Guarantor — Non-Individual entity only</p>
+                    )}
                   </div>
                 </div>
 
@@ -1947,19 +2248,179 @@ export default function ApplicationForm() {
               </div>
             </div>
 
-            {/* Enterprise Type */}
+            {/* Enterprise Type + Residential Status row */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Enterprise Type <span className="text-red-500">*</span></label>
+                <select value={enterpriseType} onChange={(e) => { setEnterpriseType(e.target.value); setBoardCategory(''); }}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+                  <option value="">-- Select Enterprise Type --</option>
+                  {ENTERPRISE_TYPES.map((t) => <option key={t.code} value={t.code}>{t.code}. {t.label}</option>)}
+                  <optgroup label="Inactive for HP">
+                    {['I. Dummy – Business Enterprise', 'J. Dummy – Society / Assoc', 'K. Government and Its Agencies'].map((l) => (
+                      <option key={l} disabled>{l} (Inactive)</option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Residential Status</label>
+                <select value={residentialStatus} onChange={(e) => setResidentialStatus(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+                  <option value="Resident">Resident</option>
+                  <option value="Non-Resident">Non-Resident</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Entity-type-conditional fields */}
+            {enterpriseType && entityRules && (
+              <div className="grid grid-cols-2 gap-4">
+                {entityRules.showBoardCategory && (
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Board Category <span className="text-red-500">*</span></label>
+                    <select value={boardCategory} onChange={(e) => setBoardCategory(e.target.value)}
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-blue-400">
+                      <option value="">-- Select --</option>
+                      <option value="L01">L01 – Main Board Local</option>
+                      <option value="F03">F03 – Main Board Foreign</option>
+                      <option value="L02">L02 – Second Board Local</option>
+                    </select>
+                  </div>
+                )}
+                {entityRules.placeOfRegRequired && (
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Place of Registration <span className="text-red-500">*</span></label>
+                    <input value={placeOfReg} onChange={(e) => setPlaceOfReg(e.target.value)}
+                      placeholder="e.g. Kuala Lumpur"
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-blue-400" />
+                  </div>
+                )}
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">SMI Status <span className="text-red-500">*</span></label>
+                  <div className="flex gap-4 mt-1">
+                    {['Yes', 'No'].map((v) => (
+                      <label key={v} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                        <input type="radio" name="smiStatus" value={v} checked={smiStatus === v}
+                          onChange={() => setSmiStatus(v)} className="accent-hlb" />
+                        {v}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                {entityRules.showOffshore && (
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Offshore Status</label>
+                    <div className="flex gap-4 mt-1">
+                      {['Yes', 'No'].map((v) => (
+                        <label key={v} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                          <input type="radio" name="offshoreStatus" value={v} checked={offshoreStatus === v}
+                            onChange={() => setOffshoreStatus(v)} className="accent-hlb" />
+                          {v}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Cross-Border Countries (Non-Resident only) */}
+            {residentialStatus === 'Non-Resident' && (
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Cross-Border Countries <span className="text-gray-400 font-normal">(max 4)</span></label>
+                <div className="flex flex-wrap gap-2">
+                  {['Singapore', 'China', 'USA', 'UK', 'Hong Kong', 'Japan', 'Australia', 'Indonesia', 'Thailand', 'India'].map((c) => {
+                    const selected = crossBorderCountries.includes(c);
+                    return (
+                      <button key={c} type="button"
+                        onClick={() => setCrossBorderCountries((prev) =>
+                          selected ? prev.filter((x) => x !== c)
+                          : prev.length < 4 ? [...prev, c] : prev
+                        )}
+                        className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                          selected
+                            ? 'bg-hlb text-white border-hlb'
+                            : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+                        } ${!selected && crossBorderCountries.length >= 4 ? 'opacity-40 cursor-not-allowed' : ''}`}>
+                        {c}
+                      </button>
+                    );
+                  })}
+                </div>
+                {crossBorderCountries.length > 0 && (
+                  <p className="text-xs text-gray-400 mt-1">{crossBorderCountries.length}/4 selected</p>
+                )}
+              </div>
+            )}
+
+            {/* Nature of Business cascade */}
             <div>
-              <label className="text-xs text-gray-500 block mb-1">Enterprise Type <span className="text-red-500">*</span></label>
-              <select value={enterpriseType} onChange={(e) => setEnterpriseType(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
-                <option value="">-- Select Enterprise Type --</option>
-                {ENTERPRISE_TYPES.map((t) => <option key={t.code} value={t.code}>{t.code}. {t.label}</option>)}
-                <optgroup label="Inactive for HP">
-                  {['I. Dummy – Business Enterprise', 'J. Dummy – Society / Assoc', 'K. Government and Its Agencies'].map((l) => (
-                    <option key={l} disabled>{l} (Inactive)</option>
-                  ))}
-                </optgroup>
-              </select>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Nature of Business (MSIC)</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Business Group <span className="text-red-500">*</span></label>
+                  <select value={bizNobGroup} onChange={(e) => { setBizNobGroup(e.target.value); setBizNobSub(''); }}
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                    <option value="">-- Select Group --</option>
+                    {MSIC_GROUPS.map((g) => <option key={g.code} value={g.code}>{g.code} – {g.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Nature of Business <span className="text-red-500">*</span></label>
+                  <select value={bizNobSub} onChange={(e) => setBizNobSub(e.target.value)}
+                    disabled={!bizNobGroup}
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400 disabled:opacity-50">
+                    <option value="">-- Select first --</option>
+                    {nobSubOptions.map((s) => <option key={s.msic} value={s.msic}>{s.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">MSIC Code</label>
+                  <input value={msicCode} readOnly
+                    className="w-full border border-gray-200 rounded px-3 py-1.5 text-xs font-mono bg-gray-50 text-gray-600" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Nature of Business Code <span className="text-red-500">*</span></label>
+                  <select value={bizNobCode} onChange={(e) => setBizNobCode(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                    <option value="">-- Select Code --</option>
+                    {BIZ_NATURE_CODES.map((c) => <option key={c.code} value={c.code}>{c.code} – {c.name}</option>)}
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="text-xs text-gray-500 block mb-1">Business Description</label>
+                  <input value={bizDescription} onChange={(e) => setBizDescription(e.target.value)}
+                    placeholder="Brief description of principal business activities"
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* Bumiputra + Compliance Classification */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Compliance Classification</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Bumiputra Status <span className="text-red-500">*</span></label>
+                  <select value={bumiStatus} onChange={(e) => setBumiStatus(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                    {BUMIPUTRA_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Segment Category</label>
+                  <select value={segmentCategory} onChange={(e) => setSegmentCategory(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                    <option value="">-- None --</option>
+                    <option value="GLC">GLC – Government Link Corporation</option>
+                    <option value="LFI">LFI – Large Firms</option>
+                    <option value="MNC">MNC – Multinational Corporation</option>
+                    <option value="SOE">SOE – State Owned Enterprise</option>
+                    <option value="MKD">MKD – Sykt Menteri Kewangan</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             {/* ── Verification result ── */}
@@ -2038,8 +2499,7 @@ export default function ApplicationForm() {
                                     setGuarantors((prev) => [...prev, {
                                       gid: `g-${dir.did}`, idType: 'MyKad', rawId: dir.nric,
                                       name: dir.name, phone: dir.cifData?.mobile ?? '', email: dir.cifData?.email ?? '',
-                                      emailTouched: false, relApp: 'Guarantor',
-                                      relPrimary: dir.role.includes('Managing') ? 'Director / Guarantor' : 'Guarantor / Director / Shareowner',
+                                      emailTouched: false, relToApp: 'Guarantor', roleCode: 'DG',
                                       status: 'verified',
                                       verifyData: { fullName: dir.name, gender: '', dob: '', employer: corpVerifyData?.companyName ?? '', monthlyIncome: 0, ccrisTotal: 0, propertyEquity: 0 },
                                     }]);
@@ -2116,53 +2576,97 @@ export default function ApplicationForm() {
               Business Financials
             </h2>
 
-            {/* Audited figures */}
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Audited / Management Accounts</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">Latest Audited Accounts Year</label>
-                  <select value={bizAuditYear} onChange={(e) => setBizAuditYear(e.target.value)}
-                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
-                    <option value="">-- Select Year --</option>
-                    {[2024, 2023, 2022, 2021, 2020].map((y) => (
-                      <option key={y} value={String(y)}>{y}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">Years in Operation</label>
-                  <select value={bizYearsOp} onChange={(e) => setBizYearsOp(e.target.value)}
-                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
-                    <option value="">-- Select --</option>
-                    {['< 1 year', '1–2 years', '3–5 years', '6–10 years', '> 10 years'].map((o) => (
-                      <option key={o} value={o}>{o}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">Annual Turnover (RM) <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
-                    <input type="number" value={bizTurnover} onChange={(e) => setBizTurnover(e.target.value)}
-                      placeholder="0"
-                      className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">Annual Net Profit / (Loss) (RM) <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
-                    <input type="number" value={bizNetProfit} onChange={(e) => setBizNetProfit(e.target.value)}
-                      placeholder="0"
-                      className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
-                  </div>
-                  {bizNetProfit && parseFloat(bizNetProfit) < 0 && (
-                    <p className="text-xs text-amber-600 mt-0.5">⚠ Net loss — additional justification required</p>
-                  )}
-                </div>
+            {/* Financial Year + Years in Operation */}
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Current Financial Year <span className="text-red-500">*</span></label>
+                <select value={bizFinYearCurrent} onChange={(e) => setBizFinYearCurrent(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                  {[2026, 2025, 2024, 2023].map((y) => <option key={y} value={String(y)}>{y}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Previous Financial Year</label>
+                <select value={bizFinYearPrev} onChange={(e) => setBizFinYearPrev(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                  {[2025, 2024, 2023, 2022].map((y) => <option key={y} value={String(y)}>{y}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Years in Operation</label>
+                <select value={bizYearsOp} onChange={(e) => setBizYearsOp(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                  <option value="">-- Select --</option>
+                  {['< 1 year', '1–2 years', '3–5 years', '6–10 years', '> 10 years'].map((o) => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
+                </select>
               </div>
             </div>
+
+            {/* Dual-column financial figures */}
+            <div>
+              <div className="grid grid-cols-3 gap-3 mb-1">
+                <div className="text-xs font-medium text-gray-500">Financial Item</div>
+                <div className="text-xs font-medium text-gray-500 text-right">Current Year ({bizFinYearCurrent})</div>
+                <div className="text-xs font-medium text-gray-500 text-right">Previous Year ({bizFinYearPrev})</div>
+              </div>
+
+              {/* Annual Sales Turnover */}
+              <div className="grid grid-cols-3 gap-3 items-center py-2 border-t border-gray-100">
+                <div className="text-xs text-gray-600">Annual Sales Turnover <span className="text-red-500">*</span></div>
+                <div className="relative">
+                  <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
+                  <input type="number" value={bizTurnoverCurr} onChange={(e) => setBizTurnoverCurr(e.target.value)}
+                    placeholder="0"
+                    className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
+                  <input type="number" value={bizTurnoverPrev} onChange={(e) => setBizTurnoverPrev(e.target.value)}
+                    placeholder="0"
+                    className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                </div>
+              </div>
+
+              {/* Net Profit / Loss */}
+              <div className="grid grid-cols-3 gap-3 items-center py-2 border-t border-gray-100">
+                <div className="text-xs text-gray-600">Annual Net Profit / (Loss) <span className="text-red-500">*</span></div>
+                <div className="relative">
+                  <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
+                  <input type="number" value={bizNetProfitCurr} onChange={(e) => setBizNetProfitCurr(e.target.value)}
+                    placeholder="0"
+                    className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
+                  <input type="number" value={bizNetProfitPrev} onChange={(e) => setBizNetProfitPrev(e.target.value)}
+                    placeholder="0"
+                    className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                </div>
+              </div>
+              {bizNetProfitCurr && parseFloat(bizNetProfitCurr) < 0 && (
+                <p className="text-xs text-amber-600 mt-0.5">⚠ Net loss in current year — additional justification required</p>
+              )}
+            </div>
+
+            {/* Asset Size + Customer Sector (auto-calc) */}
+            {bizTurnoverCurr && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Asset Size (Auto-calculated)</label>
+                  <input value={assetSizeTier?.label ?? '–'} readOnly
+                    className="w-full border border-gray-200 rounded px-3 py-1.5 text-xs bg-gray-50 text-gray-700" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Customer Sector (Auto-calculated)</label>
+                  <input value={customerSector ?? '–'} readOnly
+                    className="w-full border border-gray-200 rounded px-3 py-1.5 text-xs bg-gray-50 text-gray-700" />
+                </div>
+              </div>
+            )}
+
+            {/* Audited figures label replaced by inline rows above */}
 
             {/* DSR equivalent */}
             {bizNetProfit && bizTurnover && (
