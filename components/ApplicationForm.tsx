@@ -581,6 +581,39 @@ function calcCustomerSector(bumi: string, assetCode: string): string | null {
   return MAP[bumi]?.[size] ?? null;
 }
 
+// ── Malaysian banks list ──────────────────────────────────────
+const MY_BANKS = [
+  'Hong Leong Bank', 'Maybank', 'CIMB Bank', 'Public Bank', 'RHB Bank',
+  'AmBank', 'Bank Islam', 'Bank Rakyat', 'Affin Bank', 'Alliance Bank',
+  'HSBC Bank Malaysia', 'Standard Chartered Malaysia', 'OCBC Bank Malaysia',
+  'UOB Malaysia', 'BSN (Bank Simpanan Nasional)', 'MBSB Bank',
+  'Agrobank', 'Bank Muamalat', 'Other Financial Institution',
+];
+
+const FACILITY_TYPES_IND = [
+  'Housing Loan / Mortgage',
+  'Hire Purchase (Motor Vehicle)',
+  'Personal Loan',
+  'Credit Card',
+  'Overdraft',
+  'Education Loan (PTPTN/Other)',
+  'Business Term Loan',
+  'Other',
+];
+
+const FACILITY_TYPES_CORP = [
+  'Term Loan',
+  'Revolving Credit',
+  'Overdraft (OD)',
+  'Trade Finance / LC / BG',
+  'Hire Purchase (Vehicle/Machinery)',
+  'Invoice Financing',
+  'Working Capital Loan',
+  'Project Financing',
+  'Leasing',
+  'Other',
+];
+
 // ── Mock API layer ────────────────────────────────────────────
 type ApiStatus = 'idle' | 'loading' | 'ok' | 'error' | 'timeout';
 
@@ -1044,6 +1077,15 @@ export default function ApplicationForm() {
     setCorpDirectors(MOCK_SSM_DATA.directors.map((d, i) => ({
       did: `d-${i}`, ...d, cifStatus: 'idle', cifData: null,
     })));
+    // Pre-fill shareholders from SSM directors who hold shares
+    setShareholders(MOCK_SSM_DATA.directors
+      .filter((d) => d.sharesPct > 0)
+      .map((d, i) => ({
+        uid: `u-ssm-${i}`, name: d.name, idType: 'NRIC' as const, idNo: d.nric,
+        nationality: 'Malaysian', pct: String(d.sharesPct),
+        isCompany: false, beneficialOwner: '', isPEP: false, pepDeclaration: '' as const,
+      }))
+    );
     // Pre-fill correspondence address from registered address
     setCorpCorrespondenceAddr(MOCK_SSM_DATA.registeredAddress);
   }
@@ -1107,12 +1149,100 @@ export default function ApplicationForm() {
   const bizTurnover   = bizTurnoverCurr;
   const bizNetProfit  = bizNetProfitCurr;
 
-  const assetSizeTier    = calcAssetSize(parseFloat(bizTurnoverCurr) || 0);
-  const customerSector   = calcCustomerSector(bumiStatus, assetSizeTier?.code ?? '');
+  const assetSizeTier  = calcAssetSize(parseFloat(bizTurnoverCurr) || 0);
+  const customerSector = calcCustomerSector(bumiStatus, assetSizeTier?.code ?? '');
+
+  // ── UBO / Shareholder Structure state ───────────────────────
+  type UBOShareholder = {
+    uid: string;
+    name: string;
+    idType: 'NRIC' | 'Passport' | 'Company Reg';
+    idNo: string;
+    nationality: string;
+    pct: string;           // % ownership (string for input)
+    isCompany: boolean;
+    beneficialOwner: string; // if isCompany: natural-person UBO name
+    isPEP: boolean;
+    pepDeclaration: 'Yes' | 'No' | '';
+  };
+  const [shareholders, setShareholders] = useState<UBOShareholder[]>([]);
+  const totalSharePct  = shareholders.reduce((s, x) => s + (parseFloat(x.pct) || 0), 0);
+  const uboList        = shareholders.filter((s) => (parseFloat(s.pct) || 0) >= 25);
+  const hasPEPFlag     = shareholders.some((s) => s.isPEP);
+
+  function addShareholder() {
+    setShareholders((p) => [...p, {
+      uid: `u-${Date.now()}`, name: '', idType: 'NRIC', idNo: '',
+      nationality: 'Malaysian', pct: '', isCompany: false,
+      beneficialOwner: '', isPEP: false, pepDeclaration: '',
+    }]);
+  }
+  function updateShareholder<K extends keyof UBOShareholder>(uid: string, field: K, val: UBOShareholder[K]) {
+    setShareholders((p) => p.map((s) => s.uid === uid ? { ...s, [field]: val } : s));
+  }
+  function removeShareholder(uid: string) {
+    setShareholders((p) => p.filter((s) => s.uid !== uid));
+  }
+
+  // ── Facility Schedule (Individual) ──────────────────────────
+  type Facility = {
+    fid: string;
+    bank: string;
+    facilityType: string;
+    limit: string;
+    outstanding: string;
+    monthly: string;
+    status: 'Active' | 'Settled' | 'Written Off';
+    purpose: string;
+  };
+  const [indFacilities, setIndFacilities] = useState<Facility[]>([]);
+  const indFacilityTotal = indFacilities
+    .filter((f) => f.status === 'Active')
+    .reduce((s, f) => s + (parseFloat(f.monthly) || 0), 0);
+
+  function addIndFacility() {
+    setIndFacilities((p) => [...p, {
+      fid: `if-${Date.now()}`, bank: '', facilityType: '',
+      limit: '', outstanding: '', monthly: '', status: 'Active', purpose: '',
+    }]);
+  }
+  function updateIndFacility<K extends keyof Facility>(fid: string, field: K, val: Facility[K]) {
+    setIndFacilities((p) => p.map((f) => f.fid === fid ? { ...f, [field]: val } : f));
+  }
+  function removeIndFacility(fid: string) {
+    setIndFacilities((p) => p.filter((f) => f.fid !== fid));
+  }
+
+  // ── Facility Schedule (Corporate) ───────────────────────────
+  const [corpFacilities, setCorpFacilities] = useState<Facility[]>([]);
+  const corpFacilityTotal = corpFacilities
+    .filter((f) => f.status === 'Active')
+    .reduce((s, f) => s + (parseFloat(f.monthly) || 0), 0);
+
+  function addCorpFacility() {
+    setCorpFacilities((p) => [...p, {
+      fid: `cf-${Date.now()}`, bank: '', facilityType: '',
+      limit: '', outstanding: '', monthly: '', status: 'Active', purpose: '',
+    }]);
+  }
+  function updateCorpFacility<K extends keyof Facility>(fid: string, field: K, val: Facility[K]) {
+    setCorpFacilities((p) => p.map((f) => f.fid === fid ? { ...f, [field]: val } : f));
+  }
+  function removeCorpFacility(fid: string) {
+    setCorpFacilities((p) => p.filter((f) => f.fid !== fid));
+  }
+
+  // ── 3rd financial year ───────────────────────────────────────
+  const [bizFinYear2Ago,    setBizFinYear2Ago]    = useState(String(new Date().getFullYear() - 2));
+  const [bizTurnover2Ago,   setBizTurnover2Ago]   = useState('');
+  const [bizNetProfit2Ago,  setBizNetProfit2Ago]  = useState('');
 
   const bizDSR = (() => {
-    const income = parseFloat(bizNetProfitCurr) / 12 || 0;
-    const commits = (parseFloat(bizExistingCredit) || 0) + (parseFloat(bizInstallment) || 0);
+    const income  = parseFloat(bizNetProfitCurr) / 12 || 0;
+    // Use facility total if available, else fall back to manual field
+    const commits = corpFacilityTotal > 0
+      ? corpFacilityTotal + (parseFloat(bizInstallment) || 0)
+      : (parseFloat(bizExistingCredit) || 0) + (parseFloat(bizInstallment) || 0);
     return income > 0 ? ((commits / income) * 100).toFixed(1) : null;
   })();
 
@@ -1569,7 +1699,8 @@ export default function ApplicationForm() {
           const gJointIncome   = verifiedGuarantors.reduce((s, g) => s + (g.verifyData?.monthlyIncome ?? 0), 0);
           const gJointCCRIS    = verifiedGuarantors.reduce((s, g) => s + (g.verifyData?.ccrisTotal   ?? 0), 0);
           const jointIncome    = effectiveNetIncome + gJointIncome;
-          const commitAmt      = parseFloat(existingCommitments) || 0;
+          // Prefer facility schedule total; fall back to manual field
+          const commitAmt      = indFacilityTotal > 0 ? indFacilityTotal : (parseFloat(existingCommitments) || 0);
           const jointCommit    = commitAmt + gJointCCRIS;
 
           const currentDSR    = effectiveNetIncome > 0 ? ((commitAmt + loanInstallment) / effectiveNetIncome * 100).toFixed(1) : null;
@@ -1781,6 +1912,118 @@ export default function ApplicationForm() {
                 </div>
               )}
 
+              {/* ── Existing Credit Facilities (Individual) ── */}
+              <div className="border border-gray-200 rounded-lg p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Existing Credit Facilities</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Declare all active facilities from ALL banks. Monthly installments feed into DSR calculation.
+                      <br/>CCRIS will be checked during credit assessment — entries should match.
+                    </p>
+                  </div>
+                  <button onClick={addIndFacility}
+                    className="text-xs px-2.5 py-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 whitespace-nowrap">
+                    + Add Facility
+                  </button>
+                </div>
+
+                {indFacilities.length > 0 && (
+                  <>
+                    {/* Column headers */}
+                    <div className="grid grid-cols-12 gap-1.5 text-xs text-gray-400 font-medium px-1">
+                      <div className="col-span-2">Bank</div>
+                      <div className="col-span-2">Facility Type</div>
+                      <div className="col-span-2">Limit (RM)</div>
+                      <div className="col-span-2">Outstanding (RM)</div>
+                      <div className="col-span-1">Mthly (RM)</div>
+                      <div className="col-span-1">Status</div>
+                      <div className="col-span-1">Purpose</div>
+                      <div className="col-span-1"></div>
+                    </div>
+                    {indFacilities.map((f) => {
+                      const outNum  = parseFloat(f.outstanding) || 0;
+                      const limNum  = parseFloat(f.limit) || 0;
+                      const overLimit = outNum > limNum && limNum > 0;
+                      return (
+                        <div key={f.fid} className={`grid grid-cols-12 gap-1.5 items-start border rounded p-2 ${overLimit ? 'border-red-200 bg-red-50' : 'border-gray-100 bg-gray-50'}`}>
+                          <div className="col-span-2">
+                            <select value={f.bank} onChange={(e) => updateIndFacility(f.fid, 'bank', e.target.value)}
+                              className="w-full border border-gray-300 rounded px-1.5 py-1 text-xs focus:outline-none focus:border-blue-400 bg-white">
+                              <option value="">-- Bank --</option>
+                              {MY_BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
+                            </select>
+                          </div>
+                          <div className="col-span-2">
+                            <select value={f.facilityType} onChange={(e) => updateIndFacility(f.fid, 'facilityType', e.target.value)}
+                              className="w-full border border-gray-300 rounded px-1.5 py-1 text-xs focus:outline-none focus:border-blue-400 bg-white">
+                              <option value="">-- Type --</option>
+                              {FACILITY_TYPES_IND.map((t) => <option key={t} value={t}>{t}</option>)}
+                            </select>
+                          </div>
+                          <div className="col-span-2">
+                            <input type="number" value={f.limit} onChange={(e) => updateIndFacility(f.fid, 'limit', e.target.value)}
+                              placeholder="0" className="w-full border border-gray-300 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-400 bg-white" />
+                          </div>
+                          <div className="col-span-2">
+                            <input type="number" value={f.outstanding} onChange={(e) => updateIndFacility(f.fid, 'outstanding', e.target.value)}
+                              placeholder="0"
+                              className={`w-full border rounded px-2 py-1 text-xs font-mono focus:outline-none bg-white ${overLimit ? 'border-red-400 text-red-700' : 'border-gray-300 focus:border-blue-400'}`} />
+                            {overLimit && <p className="text-xs text-red-500 mt-0.5">Exceeds limit</p>}
+                          </div>
+                          <div className="col-span-1">
+                            <input type="number" value={f.monthly} onChange={(e) => updateIndFacility(f.fid, 'monthly', e.target.value)}
+                              placeholder="0"
+                              disabled={f.status !== 'Active'}
+                              className="w-full border border-gray-300 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-400 bg-white disabled:opacity-40" />
+                          </div>
+                          <div className="col-span-1">
+                            <select value={f.status} onChange={(e) => updateIndFacility(f.fid, 'status', e.target.value as Facility['status'])}
+                              className="w-full border border-gray-300 rounded px-1 py-1 text-xs focus:outline-none focus:border-blue-400 bg-white">
+                              <option value="Active">Active</option>
+                              <option value="Settled">Settled</option>
+                              <option value="Written Off">Written Off</option>
+                            </select>
+                          </div>
+                          <div className="col-span-1">
+                            <input value={f.purpose} onChange={(e) => updateIndFacility(f.fid, 'purpose', e.target.value)}
+                              placeholder="e.g. property addr / veh reg"
+                              className="w-full border border-gray-300 rounded px-1.5 py-1 text-xs focus:outline-none focus:border-blue-400 bg-white" />
+                          </div>
+                          <div className="col-span-1 flex justify-end">
+                            <button onClick={() => removeIndFacility(f.fid)}
+                              className="text-xs text-gray-400 hover:text-red-500 p-1 rounded hover:bg-red-50">✕</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {/* Total row */}
+                    <div className="grid grid-cols-12 gap-1.5 text-xs px-1 pt-1 border-t border-gray-200">
+                      <div className="col-span-4 font-semibold text-gray-600">Total (Active facilities)</div>
+                      <div className="col-span-2 font-mono font-semibold text-gray-700">
+                        RM {indFacilities.filter(f=>f.status==='Active').reduce((s,f)=>s+(parseFloat(f.limit)||0),0).toLocaleString('en-MY')}
+                      </div>
+                      <div className="col-span-2 font-mono font-semibold text-gray-700">
+                        RM {indFacilities.filter(f=>f.status==='Active').reduce((s,f)=>s+(parseFloat(f.outstanding)||0),0).toLocaleString('en-MY')}
+                      </div>
+                      <div className="col-span-1 font-mono font-semibold text-blue-700">
+                        RM {indFacilityTotal.toLocaleString('en-MY')}
+                      </div>
+                      <div className="col-span-3 text-blue-600 font-medium">
+                        ← used in DSR
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {indFacilities.length === 0 && (
+                  <div className="text-center py-4 border border-dashed border-gray-200 rounded">
+                    <p className="text-xs text-gray-400">No facilities declared.</p>
+                    <p className="text-xs text-gray-400">If none, the manual "Existing Commitments" field below will be used.</p>
+                  </div>
+                )}
+              </div>
+
               {/* ── DSR / Exposure Summary — shown for both modes once income is known ── */}
               {effectiveNetIncome > 0 && (
                 <div className="border border-blue-100 rounded-lg p-3 bg-blue-50 space-y-3">
@@ -1791,13 +2034,22 @@ export default function ApplicationForm() {
                       <span className="text-gray-400"> / month ({apiSource?.label})</span>
                     </p>
                   )}
+                  {indFacilityTotal > 0 ? (
+                    <p className="text-xs text-blue-600">
+                      Facility Schedule total: <span className="font-semibold">RM {indFacilityTotal.toLocaleString('en-MY')}</span>/month (replacing manual field)
+                    </p>
+                  ) : null}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-gray-500 block mb-1">Existing Commitments / Month (RM)</label>
-                      <input type="number" value={existingCommitments}
-                        onChange={(e) => setExistingCommitments(e.target.value)}
+                      <label className="text-xs text-gray-500 block mb-1">
+                        Existing Commitments / Month (RM)
+                        {indFacilityTotal > 0 && <span className="text-gray-400 ml-1">(overridden by facility schedule)</span>}
+                      </label>
+                      <input type="number" value={indFacilityTotal > 0 ? String(indFacilityTotal) : existingCommitments}
+                        onChange={(e) => { if (indFacilityTotal === 0) setExistingCommitments(e.target.value); }}
+                        readOnly={indFacilityTotal > 0}
                         placeholder="0.00"
-                        className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono bg-white focus:outline-none focus:border-blue-400" />
+                        className={`w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono bg-white focus:outline-none focus:border-blue-400 ${indFacilityTotal > 0 ? 'opacity-60 cursor-not-allowed' : ''}`} />
                     </div>
                     <div>
                       <label className="text-xs text-gray-500 block mb-1">This Loan Installment (RM)</label>
@@ -2530,6 +2782,193 @@ export default function ApplicationForm() {
                     ))}
                   </div>
 
+                  {/* UBO / Shareholder Structure */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                          Shareholding Structure &amp; UBO Declaration
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          BNM AML/CFT requirement — identify all individuals with ≥25% direct/indirect ownership.
+                          Pre-filled from SSM; add or edit as needed.
+                        </p>
+                      </div>
+                      <button onClick={addShareholder}
+                        className="text-xs px-2.5 py-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 whitespace-nowrap">
+                        + Add Shareholder
+                      </button>
+                    </div>
+
+                    {/* Shareholding total warning */}
+                    {totalSharePct > 100 && (
+                      <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+                        ⚠ Total shareholding {totalSharePct.toFixed(1)}% exceeds 100% — please review entries.
+                      </div>
+                    )}
+
+                    {/* Column headers */}
+                    {shareholders.length > 0 && (
+                      <div className="grid grid-cols-12 gap-1.5 text-xs text-gray-400 font-medium px-1">
+                        <div className="col-span-3">Name</div>
+                        <div className="col-span-2">ID Type / No.</div>
+                        <div className="col-span-2">Nationality</div>
+                        <div className="col-span-1 text-center">% Share</div>
+                        <div className="col-span-2 text-center">Type / PEP</div>
+                        <div className="col-span-2"></div>
+                      </div>
+                    )}
+
+                    {shareholders.map((sh) => {
+                      const pctNum = parseFloat(sh.pct) || 0;
+                      const isUBO  = pctNum >= 25;
+                      return (
+                        <div key={sh.uid} className={`border rounded-lg p-3 space-y-2 ${isUBO ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-white'}`}>
+                          {isUBO && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                                UBO — ≥25% Ownership
+                              </span>
+                              <span className="text-xs text-amber-600">Declaration required below</span>
+                            </div>
+                          )}
+                          <div className="grid grid-cols-12 gap-1.5 items-start">
+                            {/* Name */}
+                            <div className="col-span-3">
+                              <input value={sh.name}
+                                onChange={(e) => updateShareholder(sh.uid, 'name', e.target.value)}
+                                placeholder="Full legal name"
+                                className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
+                            </div>
+                            {/* ID type + number */}
+                            <div className="col-span-2 space-y-1">
+                              <select value={sh.idType}
+                                onChange={(e) => updateShareholder(sh.uid, 'idType', e.target.value as UBOShareholder['idType'])}
+                                className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-400">
+                                <option value="NRIC">NRIC</option>
+                                <option value="Passport">Passport</option>
+                                <option value="Company Reg">Co. Reg</option>
+                              </select>
+                              <input value={sh.idNo}
+                                onChange={(e) => updateShareholder(sh.uid, 'idNo', e.target.value)}
+                                placeholder={sh.idType === 'NRIC' ? '######-##-####' : 'ID number'}
+                                className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                            </div>
+                            {/* Nationality */}
+                            <div className="col-span-2">
+                              <select value={sh.nationality}
+                                onChange={(e) => updateShareholder(sh.uid, 'nationality', e.target.value)}
+                                className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                                <option>Malaysian</option>
+                                <option>Singapore</option>
+                                <option>Chinese</option>
+                                <option>British</option>
+                                <option>American</option>
+                                <option>Indonesian</option>
+                                <option>Other</option>
+                              </select>
+                            </div>
+                            {/* % Share */}
+                            <div className="col-span-1">
+                              <div className="relative">
+                                <input type="number" min="0" max="100" value={sh.pct}
+                                  onChange={(e) => updateShareholder(sh.uid, 'pct', e.target.value)}
+                                  placeholder="0"
+                                  className={`w-full border rounded px-2 pr-5 py-1.5 text-xs font-mono focus:outline-none ${isUBO ? 'border-amber-300 focus:border-amber-400' : 'border-gray-300 focus:border-blue-400'}`} />
+                                <span className="absolute right-2 top-2 text-xs text-gray-400">%</span>
+                              </div>
+                            </div>
+                            {/* Type toggle + PEP */}
+                            <div className="col-span-2 space-y-1.5">
+                              <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                                <input type="checkbox" checked={sh.isCompany}
+                                  onChange={(e) => updateShareholder(sh.uid, 'isCompany', e.target.checked)}
+                                  className="accent-hlb" />
+                                <span className="text-gray-600">Corporate shareholder</span>
+                              </label>
+                              <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                                <input type="checkbox" checked={sh.isPEP}
+                                  onChange={(e) => updateShareholder(sh.uid, 'isPEP', e.target.checked)}
+                                  className="accent-amber-500" />
+                                <span className={sh.isPEP ? 'text-amber-700 font-medium' : 'text-gray-600'}>PEP flagged</span>
+                              </label>
+                            </div>
+                            {/* Remove */}
+                            <div className="col-span-2 flex justify-end pt-1">
+                              <button onClick={() => removeShareholder(sh.uid)}
+                                className="text-xs text-gray-400 hover:text-red-500 px-2 py-1 rounded hover:bg-red-50 transition-colors">
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Corporate shareholder → needs beneficial owner */}
+                          {sh.isCompany && (
+                            <div className="pt-2 border-t border-gray-100">
+                              <label className="text-xs text-amber-700 block mb-1">
+                                ⚠ Corporate shareholder — enter name of natural-person UBO (≥25% of this entity):
+                              </label>
+                              <input value={sh.beneficialOwner}
+                                onChange={(e) => updateShareholder(sh.uid, 'beneficialOwner', e.target.value)}
+                                placeholder="Full name of beneficial owner"
+                                className="w-full border border-amber-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-amber-400" />
+                            </div>
+                          )}
+
+                          {/* PEP declaration */}
+                          {sh.isPEP && (
+                            <div className="pt-2 border-t border-amber-200 bg-amber-50/50 rounded px-2 py-2">
+                              <p className="text-xs text-amber-800 font-medium mb-1.5">
+                                PEP Declaration Required — is this individual a current or former government official / politically exposed person?
+                              </p>
+                              <div className="flex gap-4">
+                                {(['Yes', 'No'] as const).map((v) => (
+                                  <label key={v} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                                    <input type="radio" name={`pep-${sh.uid}`} value={v}
+                                      checked={sh.pepDeclaration === v}
+                                      onChange={() => updateShareholder(sh.uid, 'pepDeclaration', v)}
+                                      className="accent-amber-600" />
+                                    <span className={v === 'Yes' ? 'text-amber-700 font-medium' : 'text-gray-600'}>{v}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {/* UBO Summary */}
+                    {uboList.length > 0 && (
+                      <div className="border border-blue-200 rounded-lg bg-blue-50 p-3">
+                        <p className="text-xs font-semibold text-blue-700 mb-2">UBO Summary ({uboList.length} identified)</p>
+                        {uboList.map((u) => (
+                          <div key={u.uid} className="flex items-center justify-between py-1 border-b border-blue-100 last:border-b-0 text-xs">
+                            <div>
+                              <span className="font-medium text-gray-800">{u.name || '(unnamed)'}</span>
+                              <span className="text-gray-500 ml-2">· {u.idNo || 'ID not entered'}</span>
+                              <span className="text-gray-400 ml-2">· {u.nationality}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-semibold text-amber-700">{u.pct}%</span>
+                              {u.isPEP && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">PEP</span>}
+                              {u.pepDeclaration === '' && u.isPEP && <span className="text-xs text-red-500">Declaration pending</span>}
+                            </div>
+                          </div>
+                        ))}
+                        {hasPEPFlag && (
+                          <p className="text-xs text-amber-700 mt-2">⚠ PEP identified — case requires Compliance approval before submission.</p>
+                        )}
+                      </div>
+                    )}
+
+                    {shareholders.length === 0 && (
+                      <p className="text-xs text-gray-400 text-center py-3 border border-dashed border-gray-200 rounded-lg">
+                        Shareholders auto-populated from SSM after verification. Click "+ Add Shareholder" to add manually.
+                      </p>
+                    )}
+                  </div>
+
                   {/* Company Contact Details */}
                   <div className="border border-gray-200 rounded-lg p-3 space-y-3 bg-gray-50">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Company Contact Details</p>
@@ -2576,110 +3015,249 @@ export default function ApplicationForm() {
               Business Financials
             </h2>
 
-            {/* Financial Year + Years in Operation */}
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Current Financial Year <span className="text-red-500">*</span></label>
-                <select value={bizFinYearCurrent} onChange={(e) => setBizFinYearCurrent(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
-                  {[2026, 2025, 2024, 2023].map((y) => <option key={y} value={String(y)}>{y}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Previous Financial Year</label>
-                <select value={bizFinYearPrev} onChange={(e) => setBizFinYearPrev(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
-                  {[2025, 2024, 2023, 2022].map((y) => <option key={y} value={String(y)}>{y}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Years in Operation</label>
-                <select value={bizYearsOp} onChange={(e) => setBizYearsOp(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
-                  <option value="">-- Select --</option>
-                  {['< 1 year', '1–2 years', '3–5 years', '6–10 years', '> 10 years'].map((o) => (
-                    <option key={o} value={o}>{o}</option>
-                  ))}
-                </select>
+            {/* Financial Year row (4 cols: label + 3 years) */}
+            <div>
+              <p className="text-xs text-gray-400 mb-2">
+                Enter 3 years of audited/management accounts. Banks assess trend — growing revenue + stable profit = stronger case.
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                <div className="text-xs font-medium text-gray-500 flex items-end pb-1">Financial Item</div>
+                {[
+                  { label: 'Current Year', year: bizFinYearCurrent, setYear: setBizFinYearCurrent, opts: [2026,2025,2024,2023] },
+                  { label: 'Previous Year', year: bizFinYearPrev,   setYear: setBizFinYearPrev,   opts: [2025,2024,2023,2022] },
+                  { label: '2 Years Ago',  year: bizFinYear2Ago,    setYear: setBizFinYear2Ago,   opts: [2024,2023,2022,2021] },
+                ].map(({ label, year, setYear, opts }) => (
+                  <div key={label}>
+                    <label className="text-xs text-gray-500 block mb-1">{label}</label>
+                    <select value={year} onChange={(e) => setYear(e.target.value)}
+                      className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                      {opts.map((y) => <option key={y} value={String(y)}>{y}</option>)}
+                    </select>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Dual-column financial figures */}
-            <div>
-              <div className="grid grid-cols-3 gap-3 mb-1">
-                <div className="text-xs font-medium text-gray-500">Financial Item</div>
-                <div className="text-xs font-medium text-gray-500 text-right">Current Year ({bizFinYearCurrent})</div>
-                <div className="text-xs font-medium text-gray-500 text-right">Previous Year ({bizFinYearPrev})</div>
+            {/* 3-column financial figure table */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              {/* Header row */}
+              <div className="grid grid-cols-4 gap-0 bg-gray-50 border-b border-gray-200">
+                <div className="text-xs font-medium text-gray-500 px-3 py-2">Item</div>
+                {[bizFinYearCurrent, bizFinYearPrev, bizFinYear2Ago].map((y) => (
+                  <div key={y} className="text-xs font-medium text-gray-500 px-3 py-2 text-right border-l border-gray-200">{y} (RM)</div>
+                ))}
               </div>
 
               {/* Annual Sales Turnover */}
-              <div className="grid grid-cols-3 gap-3 items-center py-2 border-t border-gray-100">
-                <div className="text-xs text-gray-600">Annual Sales Turnover <span className="text-red-500">*</span></div>
-                <div className="relative">
-                  <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
-                  <input type="number" value={bizTurnoverCurr} onChange={(e) => setBizTurnoverCurr(e.target.value)}
-                    placeholder="0"
-                    className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+              {([
+                {
+                  label: 'Annual Sales Turnover',
+                  required: true,
+                  hint: 'Total revenue from all business activities before any deductions.',
+                  vals: [bizTurnoverCurr, bizTurnoverPrev, bizTurnover2Ago],
+                  sets: [setBizTurnoverCurr, setBizTurnoverPrev, setBizTurnover2Ago],
+                },
+                {
+                  label: 'Annual Net Profit / (Loss)',
+                  required: true,
+                  hint: 'Profit after all expenses, depreciation, and tax. Negative = loss (highlighted in amber).',
+                  vals: [bizNetProfitCurr, bizNetProfitPrev, bizNetProfit2Ago],
+                  sets: [setBizNetProfitCurr, setBizNetProfitPrev, setBizNetProfit2Ago],
+                },
+              ] as { label: string; required: boolean; hint: string; vals: string[]; sets: ((v: string) => void)[] }[]).map((row) => (
+                <div key={row.label} className="grid grid-cols-4 gap-0 border-b border-gray-100 last:border-b-0">
+                  <div className="px-3 py-2">
+                    <div className="text-xs text-gray-700 font-medium">
+                      {row.label} {row.required && <span className="text-red-500">*</span>}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-0.5">{row.hint}</div>
+                  </div>
+                  {row.vals.map((v, i) => {
+                    const isLoss = v && parseFloat(v) < 0;
+                    return (
+                      <div key={i} className={`border-l border-gray-200 px-2 py-2 ${isLoss ? 'bg-amber-50' : ''}`}>
+                        <div className="relative">
+                          <span className="absolute left-2 top-1.5 text-xs text-gray-400">RM</span>
+                          <input type="number" value={v}
+                            onChange={(e) => row.sets[i](e.target.value)}
+                            placeholder="0"
+                            className={`w-full border rounded pl-8 pr-2 py-1 text-xs font-mono focus:outline-none ${isLoss ? 'border-amber-300 text-amber-700 focus:border-amber-400' : 'border-gray-300 focus:border-blue-400'}`} />
+                        </div>
+                        {isLoss && <p className="text-xs text-amber-600 mt-0.5">Loss</p>}
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
-                  <input type="number" value={bizTurnoverPrev} onChange={(e) => setBizTurnoverPrev(e.target.value)}
-                    placeholder="0"
-                    className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
-                </div>
-              </div>
+              ))}
 
-              {/* Net Profit / Loss */}
-              <div className="grid grid-cols-3 gap-3 items-center py-2 border-t border-gray-100">
-                <div className="text-xs text-gray-600">Annual Net Profit / (Loss) <span className="text-red-500">*</span></div>
-                <div className="relative">
-                  <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
-                  <input type="number" value={bizNetProfitCurr} onChange={(e) => setBizNetProfitCurr(e.target.value)}
-                    placeholder="0"
-                    className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+              {/* Net Profit Margin row (auto-calc) */}
+              {(bizNetProfitCurr || bizNetProfitPrev || bizNetProfit2Ago) && (
+                <div className="grid grid-cols-4 gap-0 bg-gray-50 border-t border-gray-200">
+                  <div className="px-3 py-2 text-xs text-gray-500 font-medium">Net Profit Margin</div>
+                  {[
+                    [bizNetProfitCurr, bizTurnoverCurr],
+                    [bizNetProfitPrev, bizTurnoverPrev],
+                    [bizNetProfit2Ago, bizTurnover2Ago],
+                  ].map(([p, t], i) => {
+                    const margin = p && t && parseFloat(t) > 0
+                      ? ((parseFloat(p) / parseFloat(t)) * 100).toFixed(1)
+                      : null;
+                    return (
+                      <div key={i} className="border-l border-gray-200 px-3 py-2 text-xs font-mono font-semibold text-right">
+                        {margin ? (
+                          <span className={parseFloat(margin) < 0 ? 'text-red-600' : parseFloat(margin) < 5 ? 'text-amber-600' : 'text-green-700'}>
+                            {margin}%
+                          </span>
+                        ) : '–'}
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
-                  <input type="number" value={bizNetProfitPrev} onChange={(e) => setBizNetProfitPrev(e.target.value)}
-                    placeholder="0"
-                    className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
-                </div>
-              </div>
-              {bizNetProfitCurr && parseFloat(bizNetProfitCurr) < 0 && (
-                <p className="text-xs text-amber-600 mt-0.5">⚠ Net loss in current year — additional justification required</p>
               )}
             </div>
 
-            {/* Asset Size + Customer Sector (auto-calc) */}
+            {/* Asset Size + Customer Sector auto-calc */}
             {bizTurnoverCurr && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-gray-500 block mb-1">Asset Size (Auto-calculated)</label>
+                  <label className="text-xs text-gray-500 block mb-1">
+                    Asset Size <span className="text-gray-400 font-normal">(auto-calculated from current year turnover)</span>
+                  </label>
                   <input value={assetSizeTier?.label ?? '–'} readOnly
                     className="w-full border border-gray-200 rounded px-3 py-1.5 text-xs bg-gray-50 text-gray-700" />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 block mb-1">Customer Sector (Auto-calculated)</label>
+                  <label className="text-xs text-gray-500 block mb-1">
+                    Customer Sector <span className="text-gray-400 font-normal">(Bumiputra Status × SME size)</span>
+                  </label>
                   <input value={customerSector ?? '–'} readOnly
                     className="w-full border border-gray-200 rounded px-3 py-1.5 text-xs bg-gray-50 text-gray-700" />
                 </div>
               </div>
             )}
 
-            {/* Audited figures label replaced by inline rows above */}
+            {/* Corporate Facility Schedule */}
+            <div className="border border-gray-200 rounded-lg p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Existing Banking Facilities</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Declare all active facilities from ALL banks. Monthly commitments feed into Business DSR.
+                    Verified against CCRIS during credit assessment.
+                  </p>
+                </div>
+                <button onClick={addCorpFacility}
+                  className="text-xs px-2.5 py-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 whitespace-nowrap">
+                  + Add Facility
+                </button>
+              </div>
 
-            {/* DSR equivalent */}
+              {corpFacilities.length > 0 && (
+                <>
+                  <div className="grid grid-cols-12 gap-1.5 text-xs text-gray-400 font-medium px-1">
+                    <div className="col-span-2">Bank</div>
+                    <div className="col-span-2">Facility Type</div>
+                    <div className="col-span-2">Limit (RM)</div>
+                    <div className="col-span-2">Outstanding (RM)</div>
+                    <div className="col-span-1">Mthly (RM)</div>
+                    <div className="col-span-1">Status</div>
+                    <div className="col-span-1">Purpose</div>
+                    <div className="col-span-1"></div>
+                  </div>
+                  {corpFacilities.map((f) => {
+                    const overLimit = (parseFloat(f.outstanding)||0) > (parseFloat(f.limit)||0) && parseFloat(f.limit) > 0;
+                    return (
+                      <div key={f.fid} className={`grid grid-cols-12 gap-1.5 items-start border rounded p-2 ${overLimit ? 'border-red-200 bg-red-50' : 'border-gray-100 bg-gray-50'}`}>
+                        <div className="col-span-2">
+                          <select value={f.bank} onChange={(e) => updateCorpFacility(f.fid, 'bank', e.target.value)}
+                            className="w-full border border-gray-300 rounded px-1.5 py-1 text-xs focus:outline-none focus:border-blue-400 bg-white">
+                            <option value="">-- Bank --</option>
+                            {MY_BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
+                          </select>
+                        </div>
+                        <div className="col-span-2">
+                          <select value={f.facilityType} onChange={(e) => updateCorpFacility(f.fid, 'facilityType', e.target.value)}
+                            className="w-full border border-gray-300 rounded px-1.5 py-1 text-xs focus:outline-none focus:border-blue-400 bg-white">
+                            <option value="">-- Type --</option>
+                            {FACILITY_TYPES_CORP.map((t) => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        </div>
+                        <div className="col-span-2">
+                          <input type="number" value={f.limit} onChange={(e) => updateCorpFacility(f.fid, 'limit', e.target.value)}
+                            placeholder="0" className="w-full border border-gray-300 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-400 bg-white" />
+                        </div>
+                        <div className="col-span-2">
+                          <input type="number" value={f.outstanding} onChange={(e) => updateCorpFacility(f.fid, 'outstanding', e.target.value)}
+                            placeholder="0"
+                            className={`w-full border rounded px-2 py-1 text-xs font-mono focus:outline-none bg-white ${overLimit ? 'border-red-400' : 'border-gray-300 focus:border-blue-400'}`} />
+                          {overLimit && <p className="text-xs text-red-500 mt-0.5">Exceeds limit</p>}
+                        </div>
+                        <div className="col-span-1">
+                          <input type="number" value={f.monthly} onChange={(e) => updateCorpFacility(f.fid, 'monthly', e.target.value)}
+                            placeholder="0" disabled={f.status !== 'Active'}
+                            className="w-full border border-gray-300 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-400 bg-white disabled:opacity-40" />
+                        </div>
+                        <div className="col-span-1">
+                          <select value={f.status} onChange={(e) => updateCorpFacility(f.fid, 'status', e.target.value as Facility['status'])}
+                            className="w-full border border-gray-300 rounded px-1 py-1 text-xs focus:outline-none focus:border-blue-400 bg-white">
+                            <option value="Active">Active</option>
+                            <option value="Settled">Settled</option>
+                            <option value="Written Off">W/Off</option>
+                          </select>
+                        </div>
+                        <div className="col-span-1">
+                          <input value={f.purpose} onChange={(e) => updateCorpFacility(f.fid, 'purpose', e.target.value)}
+                            placeholder="purpose"
+                            className="w-full border border-gray-300 rounded px-1.5 py-1 text-xs focus:outline-none focus:border-blue-400 bg-white" />
+                        </div>
+                        <div className="col-span-1 flex justify-end">
+                          <button onClick={() => removeCorpFacility(f.fid)}
+                            className="text-xs text-gray-400 hover:text-red-500 p-1 rounded hover:bg-red-50">✕</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {/* Total row */}
+                  <div className="grid grid-cols-12 gap-1.5 text-xs px-1 pt-1 border-t border-gray-200 font-semibold">
+                    <div className="col-span-4 text-gray-600">Total (Active)</div>
+                    <div className="col-span-2 font-mono text-gray-700">
+                      RM {corpFacilities.filter(f=>f.status==='Active').reduce((s,f)=>s+(parseFloat(f.limit)||0),0).toLocaleString('en-MY')}
+                    </div>
+                    <div className="col-span-2 font-mono text-gray-700">
+                      RM {corpFacilities.filter(f=>f.status==='Active').reduce((s,f)=>s+(parseFloat(f.outstanding)||0),0).toLocaleString('en-MY')}
+                    </div>
+                    <div className="col-span-1 font-mono text-blue-700">
+                      RM {corpFacilityTotal.toLocaleString('en-MY')}
+                    </div>
+                    <div className="col-span-3 text-blue-600">← used in Business DSR</div>
+                  </div>
+                </>
+              )}
+              {corpFacilities.length === 0 && (
+                <div className="text-center py-3 border border-dashed border-gray-200 rounded">
+                  <p className="text-xs text-gray-400">No facilities declared. Use manual fields below if facility schedule not applicable.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Business DSR */}
             {bizNetProfit && bizTurnover && (
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Debt Service Ratio (Business)</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs text-gray-500 block mb-1">Existing Credit Facilities / Month (RM)</label>
+                    <label className="text-xs text-gray-500 block mb-1">
+                      Existing Commitments / Month (RM)
+                      {corpFacilityTotal > 0 && <span className="text-gray-400 ml-1">(overridden by facility schedule)</span>}
+                    </label>
                     <div className="relative">
                       <span className="absolute left-3 top-2 text-xs text-gray-400">RM</span>
-                      <input type="number" value={bizExistingCredit} onChange={(e) => setBizExistingCredit(e.target.value)}
+                      <input type="number"
+                        value={corpFacilityTotal > 0 ? String(corpFacilityTotal) : bizExistingCredit}
+                        onChange={(e) => { if (corpFacilityTotal === 0) setBizExistingCredit(e.target.value); }}
+                        readOnly={corpFacilityTotal > 0}
                         placeholder="0"
-                        className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                        className={`w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400 ${corpFacilityTotal > 0 ? 'opacity-60 cursor-not-allowed' : ''}`} />
                     </div>
                   </div>
                   <div>
@@ -2700,18 +3278,15 @@ export default function ApplicationForm() {
                   ] as [string, string][]).map(([label, val]) => (
                     <div key={label} className={`rounded-lg p-3 border text-xs ${
                       label === 'Business DSR' && bizDSR && parseFloat(bizDSR) > 70
-                        ? 'bg-red-50 border-red-200'
-                        : 'bg-gray-50 border-gray-100'
+                        ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-100'
                     }`}>
                       <p className="text-gray-400 mb-1">{label}</p>
-                      <p className={`font-semibold ${
-                        label === 'Business DSR' && bizDSR && parseFloat(bizDSR) > 70 ? 'text-red-600' : 'text-gray-800'
-                      }`}>{val}</p>
+                      <p className={`font-semibold ${label === 'Business DSR' && bizDSR && parseFloat(bizDSR) > 70 ? 'text-red-600' : 'text-gray-800'}`}>{val}</p>
                     </div>
                   ))}
                 </div>
                 {bizDSR && parseFloat(bizDSR) > 70 && (
-                  <p className="text-xs text-red-600">⚠ Business DSR exceeds 70% — credit assessment required.</p>
+                  <p className="text-xs text-red-600">⚠ Business DSR exceeds 70% — requires credit assessment justification.</p>
                 )}
               </div>
             )}
