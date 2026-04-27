@@ -614,6 +614,62 @@ const FACILITY_TYPES_CORP = [
   'Other',
 ];
 
+// ── E&S / Green Principle mapping (BNM VBI Framework) ────────
+//
+// GP 1 – Climate Change Mitigation   : business actively reduces GHG emissions
+// GP 2 – Climate Change Adaptation   : business builds climate resilience
+// GP 3 – No Significant Harm         : neutral environmental impact
+// GP 4 – Remedial Efforts / Transition: high-impact industry, transition plan required
+//
+type GPCode = 'GP1' | 'GP2' | 'GP3' | 'GP4';
+
+const MSIC_TO_GP: Record<string, { gp: GPCode; label: string; rationale: string }> = {
+  A: { gp: 'GP3', label: 'GP 3 – No Significant Harm',          rationale: 'Sustainable agriculture — standard environmental controls apply.' },
+  B: { gp: 'GP4', label: 'GP 4 – Remedial / Transition',        rationale: 'Mining & quarrying — extractive industry with high environmental impact. Transition plan required.' },
+  C: { gp: 'GP4', label: 'GP 4 – Remedial / Transition',        rationale: 'Manufacturing — assess emissions, effluent, and waste management plan.' },
+  F: { gp: 'GP3', label: 'GP 3 – No Significant Harm',          rationale: 'Construction — standard environmental impact controls apply.' },
+  G: { gp: 'GP3', label: 'GP 3 – No Significant Harm',          rationale: 'Wholesale & retail trade — no material environmental harm.' },
+  H: { gp: 'GP3', label: 'GP 3 – No Significant Harm',          rationale: 'Transportation — assess fleet composition; EV/hybrid fleets may qualify for GP 1.' },
+  I: { gp: 'GP3', label: 'GP 3 – No Significant Harm',          rationale: 'Accommodation & F&B — no material environmental harm.' },
+  J: { gp: 'GP1', label: 'GP 1 – Climate Change Mitigation',    rationale: 'ICT — digital solutions, smart systems, and remote connectivity support decarbonisation.' },
+  K: { gp: 'GP1', label: 'GP 1 – Climate Change Mitigation',    rationale: 'Financial & insurance — green finance, ESG investment, and climate risk management.' },
+  L: { gp: 'GP2', label: 'GP 2 – Climate Change Adaptation',    rationale: 'Real estate — green buildings, energy-efficient design, climate-resilient infrastructure.' },
+  M: { gp: 'GP1', label: 'GP 1 – Climate Change Mitigation',    rationale: 'Professional services — advisory enabling green transition and sustainability reporting.' },
+  N: { gp: 'GP3', label: 'GP 3 – No Significant Harm',          rationale: 'Admin & support services — no material environmental harm.' },
+  P: { gp: 'GP1', label: 'GP 1 – Climate Change Mitigation',    rationale: 'Education — human capital development for sustainable economy.' },
+  Q: { gp: 'GP2', label: 'GP 2 – Climate Change Adaptation',    rationale: 'Human health & social work — climate-resilient health systems.' },
+  R: { gp: 'GP3', label: 'GP 3 – No Significant Harm',          rationale: 'Arts, entertainment & recreation — no material environmental harm.' },
+  S: { gp: 'GP3', label: 'GP 3 – No Significant Harm',          rationale: 'Other services — no material environmental harm.' },
+};
+
+const GP_RISK_PROFILE: Record<GPCode, {
+  esScore: 'Low' | 'Medium' | 'High';
+  scoreBadge: string;
+  action: string;
+  requiresAssessment: boolean;
+}> = {
+  GP1: {
+    esScore: 'Low',    scoreBadge: 'bg-green-100 text-green-700 border-green-200',
+    action: 'No additional E&S assessment required. Green finance eligibility may apply.',
+    requiresAssessment: false,
+  },
+  GP2: {
+    esScore: 'Medium', scoreBadge: 'bg-amber-100 text-amber-700 border-amber-200',
+    action: 'Standard E&S checklist required before disbursement. Climate risk disclosure recommended.',
+    requiresAssessment: true,
+  },
+  GP3: {
+    esScore: 'Low',    scoreBadge: 'bg-green-100 text-green-700 border-green-200',
+    action: 'No additional E&S assessment required.',
+    requiresAssessment: false,
+  },
+  GP4: {
+    esScore: 'High',   scoreBadge: 'bg-red-100 text-red-700 border-red-200',
+    action: 'Full E&S assessment required. Compliance review mandatory before credit approval. Transition plan must be submitted.',
+    requiresAssessment: true,
+  },
+};
+
 // ── Mock API layer ────────────────────────────────────────────
 type ApiStatus = 'idle' | 'loading' | 'ok' | 'error' | 'timeout';
 
@@ -1131,8 +1187,12 @@ export default function ApplicationForm() {
   const [placeOfReg,        setPlaceOfReg]        = useState('');
 
   const nobSubOptions = bizNobGroup ? (MSIC_BY_GROUP[bizNobGroup] ?? []) : [];
-  const msicCode = nobSubOptions.find((s) => s.msic === bizNobSub)?.msic ?? '';
-  const entityRules = ENTITY_FIELD_RULES[enterpriseType as EntityCode] ?? null;
+  const msicCode      = nobSubOptions.find((s) => s.msic === bizNobSub)?.msic ?? '';
+  const entityRules   = ENTITY_FIELD_RULES[enterpriseType as EntityCode] ?? null;
+
+  // E&S / Green Principle — derived from MSIC group selection
+  const corpGPData  = bizNobGroup ? (MSIC_TO_GP[bizNobGroup]              ?? null) : null;
+  const esRiskData  = corpGPData  ? (GP_RISK_PROFILE[corpGPData.gp]        ?? null) : null;
 
   // ── Corporate Business Financials state ─────────────────
   const [bizFinYearCurrent,  setBizFinYearCurrent]  = useState(String(new Date().getFullYear()));
@@ -2650,8 +2710,8 @@ export default function ApplicationForm() {
             </div>
 
             {/* Bumiputra + Compliance Classification */}
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Compliance Classification</p>
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Compliance Classification</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-gray-500 block mb-1">Bumiputra Status <span className="text-red-500">*</span></label>
@@ -2672,6 +2732,94 @@ export default function ApplicationForm() {
                     <option value="MKD">MKD – Sykt Menteri Kewangan</option>
                   </select>
                 </div>
+              </div>
+
+              {/* E&S / Green Principle — auto-mapped from Nature of Business Group */}
+              <div className="border border-gray-200 rounded-lg p-3 space-y-3 bg-gray-50">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-700">E&S Assessment &amp; Green Principle</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      BNM Value-based Intermediation (VBI) framework. Auto-mapped from Nature of Business Group.
+                      Select a Business Group above to see the mapping.
+                    </p>
+                  </div>
+                  <span className="text-xs text-gray-400 whitespace-nowrap">System-mapped · Read-only</span>
+                </div>
+
+                {corpGPData && esRiskData ? (
+                  <div className="space-y-3">
+                    {/* GP Code + Label */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-400 mb-1">Green Principle (GP)</p>
+                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold ${
+                          corpGPData.gp === 'GP1' ? 'bg-green-50 text-green-700 border-green-200'
+                          : corpGPData.gp === 'GP2' ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : corpGPData.gp === 'GP3' ? 'bg-gray-100 text-gray-600 border-gray-300'
+                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                        }`}>
+                          <span className="font-mono">{corpGPData.gp}</span>
+                          <span>·</span>
+                          <span>{corpGPData.label.replace(/^GP \d – /, '')}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 mb-1">E&S Risk Score</p>
+                        <span className={`inline-flex items-center px-2.5 py-1.5 rounded-lg border text-xs font-semibold ${esRiskData.scoreBadge}`}>
+                          {esRiskData.esScore} Risk
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* GP definitions reference */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      {([
+                        ['GP 1', 'Climate Change Mitigation',  'Business reduces GHG / enables decarbonisation',   corpGPData.gp === 'GP1'],
+                        ['GP 2', 'Climate Change Adaptation',  'Business builds resilience to climate impacts',     corpGPData.gp === 'GP2'],
+                        ['GP 3', 'No Significant Harm',        'Neutral environmental impact — no major E&S risk', corpGPData.gp === 'GP3'],
+                        ['GP 4', 'Remedial / Transition',      'High-impact industry — transition plan required',   corpGPData.gp === 'GP4'],
+                      ] as [string, string, string, boolean][]).map(([code, name, desc, active]) => (
+                        <div key={code} className={`rounded px-2 py-1.5 border ${active ? 'border-hlb/30 bg-hlb/5' : 'border-gray-100 bg-white opacity-50'}`}>
+                          <span className="font-mono font-semibold text-gray-700">{code}</span>
+                          <span className="font-medium text-gray-700 ml-1">{name}</span>
+                          <p className="text-gray-400 mt-0.5 text-xs">{desc}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Rationale */}
+                    <div className="text-xs text-gray-600 bg-white rounded border border-gray-200 px-3 py-2">
+                      <span className="font-medium">Rationale: </span>{corpGPData.rationale}
+                    </div>
+
+                    {/* Required action */}
+                    <div className={`text-xs rounded border px-3 py-2 ${
+                      esRiskData.esScore === 'High'   ? 'bg-red-50 border-red-200 text-red-700'
+                      : esRiskData.esScore === 'Medium' ? 'bg-amber-50 border-amber-200 text-amber-700'
+                      : 'bg-green-50 border-green-200 text-green-700'
+                    }`}>
+                      <span className="font-medium">Required action: </span>{esRiskData.action}
+                    </div>
+
+                    {/* High risk — additional flag */}
+                    {esRiskData.requiresAssessment && (
+                      <div className="flex items-start gap-2">
+                        <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                          <input type="checkbox" className="accent-hlb mt-0.5" />
+                          <span className="text-gray-600">
+                            E&S assessment checklist completed and attached
+                            {esRiskData.esScore === 'High' && <span className="text-red-500 ml-1">*</span>}
+                          </span>
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-xs text-gray-400 text-center py-4 border border-dashed border-gray-200 rounded">
+                    Select a <strong>Nature of Business Group</strong> above to auto-generate the GP mapping and E&S risk score.
+                  </div>
+                )}
               </div>
             </div>
 
@@ -3587,6 +3735,24 @@ export default function ApplicationForm() {
                     }`}>{value}</span>
                   </div>
                 ))}
+              </div>
+
+              {/* E&S note for individual — derived from vehicle green status */}
+              <div className={`mt-3 text-xs rounded border px-3 py-2 ${
+                selectedModelData.green
+                  ? 'bg-green-50 border-green-200 text-green-700'
+                  : selectedModelData.gpRating === 'C'
+                    ? 'bg-gray-50 border-gray-200 text-gray-500'
+                    : 'bg-blue-50 border-blue-200 text-blue-700'
+              }`}>
+                <p className="font-medium mb-0.5">E&S / Green Principle (Vehicle)</p>
+                {selectedModelData.green
+                  ? <p>GP 1 – Climate Change Mitigation: This is a green/hybrid vehicle that supports BNM VBI green financing objectives. May qualify for Green Vehicle Incentive campaign rate.</p>
+                  : selectedModelData.gpRating === 'B'
+                    ? <p>GP 3 – No Significant Harm: Standard conventional vehicle. No additional E&S assessment required.</p>
+                    : <p>GP 3 – No Significant Harm: Standard vehicle. No E&S restrictions apply.</p>
+                }
+                <p className="mt-1 text-gray-400">GP Rating {selectedModelData.gpRating} · {selectedModelData.engineType}</p>
               </div>
             </div>
           )}
