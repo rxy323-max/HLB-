@@ -417,6 +417,111 @@ const ENTITY_GUARANTOR_RULES: Record<EntityCode, EntityGuarantorRule> = {
   },
 };
 
+// Auto-mapping: Enterprise Type → Basic Group code
+const ENTITY_TO_BASIC_GROUP: Partial<Record<EntityCode, string>> = {
+  A: '24.0', B: '24.0', C: '24.0', // Companies
+  D: '21.0', L: '21.0',            // Sole Proprietors
+  E: '22.0',                        // Partnerships
+  F: '26.0', G: '26.0', H: '26.0', // LLP
+};
+
+// Auto-mapping: Enterprise Type → Constitution code
+const ENTITY_TO_CONSTITUTION: Partial<Record<EntityCode, string>> = {
+  A: 'R', // Sdn Bhd / Private Ltd
+  B: 'U', // Bhd / Public Ltd Co
+  C: 'O', // Others (Branch)
+  D: 'S', // Sole Proprietor
+  E: 'P', // Partnership
+  F: 'O', // Others (PLT)
+  G: 'O', H: 'O',
+  L: 'S',
+};
+
+const BASIC_GROUP_OPTIONS = [
+  { value: '11.0', label: '11.0 – Individual' },
+  { value: '21.0', label: '21.0 – Sole Proprietors' },
+  { value: '22.0', label: '22.0 – Partnerships' },
+  { value: '23.0', label: '23.0 – Professional Bodies' },
+  { value: '24.0', label: '24.0 – Companies' },
+  { value: '26.0', label: '26.0 – Limited Liability Partnership' },
+  { value: '31.0', label: '31.0 – Federal/Central Government' },
+  { value: '32.0', label: '32.0 – State Government' },
+  { value: '33.0', label: '33.0 – Local Government' },
+  { value: '34.0', label: '34.0 – Statutory Bodies' },
+  { value: '35.0', label: '35.0 – Monetary Authority' },
+  { value: '41.0', label: '41.0 – Trade Union' },
+  { value: '42.0', label: '42.0 – Co-Operatives' },
+  { value: '43.0', label: '43.0 – Societies/Associations' },
+  { value: '91.0', label: '91.0 – Others' },
+];
+
+const CONSTITUTION_OPTIONS = [
+  { value: 'S', label: 'S – Sole Proprietor' },
+  { value: 'R', label: 'R – Sdn Bhd / Private Ltd' },
+  { value: 'U', label: 'U – Bhd / Public Ltd Co' },
+  { value: 'P', label: 'P – Partnership' },
+  { value: 'O', label: 'O – Others' },
+  { value: 'A', label: 'A – Assoc / School / Society' },
+  { value: 'B', label: 'B – Statutory Body' },
+  { value: 'C', label: 'C – Cooperative' },
+  { value: 'G', label: 'G – Government Body' },
+  { value: 'I', label: 'I – Individual' },
+];
+
+const MALAYSIA_STATES = [
+  'Johor','Kedah','Kelantan','Melaka','Negeri Sembilan','Pahang',
+  'Perak','Perlis','Pulau Pinang','Sabah','Sarawak','Selangor',
+  'Terengganu',
+  'W.P. Kuala Lumpur','W.P. Labuan','W.P. Putrajaya',
+];
+
+const TURNOVER_RANGES = [
+  'Less than RM300k',
+  'RM300k to less than RM1M',
+  'RM1M to less than RM3M',
+  'RM3M to less than RM5M',
+  'RM5M to less than RM10M',
+  'RM10M to less than RM20M',
+  'RM20M to less than RM50M',
+  'RM50M and above',
+];
+
+const EMPLOYEE_RANGES = [
+  '1 to 4',
+  '5 to 29',
+  '30 to 74',
+  '75 to 149',
+  '150 to 199',
+  '200 to 499',
+  '500 and above',
+];
+
+const PLACE_OF_REG_OPTIONS = [
+  { value: '1', label: '1 – Business Registration for Professional' },
+  { value: '2', label: '2 – Foreign Business' },
+  { value: '3', label: '3 – Registered Outside KL' },
+  { value: '4', label: '4 – Registered in KL / Labuan' },
+  { value: '5', label: '5 – Registered in Sabah / Sarawak' },
+];
+
+const KL_LABUAN_STATES = [
+  { value: '14', label: '14 – W.P. Kuala Lumpur' },
+  { value: '15', label: '15 – W.P. Labuan' },
+];
+
+const SOURCE_OF_REPAYMENT_OPTIONS = [
+  'Business Income','Rental Income','Investment Returns','Contract Revenue','Export Proceeds','Other',
+];
+
+const PRIMARY_INCOME_DOC_OPTIONS = [
+  'Audited Accounts','Management Accounts','Bank Statement (6 months)','Tax Return (Form B/BE)','Contract/Invoice','Other',
+];
+
+const DESIGNATION_OPTIONS = [
+  'Director','Managing Director','CEO','Executive Director','Non-Executive Director',
+  'Company Secretary','Compliance Officer','Partner','Sole Proprietor','Trustee','Shareholder','Other',
+];
+
 // ── Relationship / Role code system ──────────────────────────
 type RelToApp = 'Guarantor' | 'Owner' | 'Non-Guarantor';
 const ROLE_CODES_BY_REL: Record<RelToApp, { value: string; label: string }[]> = {
@@ -1202,6 +1307,7 @@ export default function ApplicationForm() {
     did: string; name: string; nric: string; role: string; sharesPct: number;
     cifStatus: 'idle' | 'verifying' | 'verified';
     cifData: { cif: string; mobile: string; email: string } | null;
+    designation?: string;
   };
   type CorpVerifyData = {
     companyName: string; regStatus: 'Active' | 'Inactive' | 'Struck Off';
@@ -1251,8 +1357,10 @@ export default function ApplicationForm() {
         isCompany: false, beneficialOwner: '', isPEP: false, pepDeclaration: '' as const,
       }))
     );
-    // Pre-fill correspondence address from registered address
+    // Pre-fill correspondence address and profile fields from SSM data
     setCorpCorrespondenceAddr(MOCK_SSM_DATA.registeredAddress);
+    setCorpEstDate(MOCK_SSM_DATA.incorporationDate);
+    setPaidUpCapital(String(MOCK_SSM_DATA.paidUpCapital));
   }
 
   const MOCK_DIRECTOR_CIF = [
@@ -1294,6 +1402,53 @@ export default function ApplicationForm() {
   const [residentialStatus, setResidentialStatus] = useState('Resident');
   const [crossBorderCountries, setCrossBorderCountries] = useState<string[]>([]);
   const [placeOfReg,        setPlaceOfReg]        = useState('');
+
+  // ── Company Profile enrichment ───────────────────────────
+  const [basicGroup,        setBasicGroup]        = useState('');
+  const [constitution,      setConstitution]      = useState('');
+  const [countryOfIncorp,   setCountryOfIncorp]   = useState('Malaysia');
+  const [bnmAssignedID,     setBnmAssignedID]     = useState('');
+  const [corpEstDate,       setCorpEstDate]       = useState('');
+
+  // Auto-map Basic Group + Constitution when Enterprise Type changes
+  const derivedBasicGroup  = enterpriseType ? (ENTITY_TO_BASIC_GROUP[enterpriseType  as EntityCode] ?? '') : '';
+  const derivedConstitution= enterpriseType ? (ENTITY_TO_CONSTITUTION[enterpriseType as EntityCode] ?? '') : '';
+  const effectiveBasicGroup  = basicGroup   || derivedBasicGroup;
+  const effectiveConstitution= constitution || derivedConstitution;
+
+  // ── Scope & Tax state ─────────────────────────────────────
+  const [countryOfOperation,  setCountryOfOperation]  = useState('Malaysia');
+  const [stateOfOperation,    setStateOfOperation]    = useState('');
+  const [placeOfRegCode,      setPlaceOfRegCode]      = useState('');
+  const [regStateCode,        setRegStateCode]        = useState('');
+  const [corpTIN,             setCorpTIN]             = useState('');
+  const [corpSST,             setCorpSST]             = useState('');
+  const [labuanEntity,        setLabuanEntity]        = useState('No');
+  const [fenResident,         setFenResident]         = useState('Resident');
+
+  // ── Employee & Operational enrichment ─────────────────────
+  const [employeeActual,      setEmployeeActual]      = useState('');
+  const [employeeRange,       setEmployeeRange]       = useState('');
+  const [turnoverRangeVal,    setTurnoverRangeVal]    = useState('');
+  const [authorizedCapital,   setAuthorizedCapital]   = useState('');
+  const [paidUpCapital,       setPaidUpCapital]       = useState('');
+  const [sourceOfRepayment,   setSourceOfRepayment]   = useState('Business Income');
+  const [primaryIncomeDoc,    setPrimaryIncomeDoc]    = useState('');
+
+  // ── Compliance Checks state ───────────────────────────────
+  const [complexStructure,    setComplexStructure]    = useState('');
+  const [hasNomineeShares,    setHasNomineeShares]    = useState('');
+
+  // ── Customer Confirmation state ───────────────────────────
+  const [isFaceToFace,        setIsFaceToFace]        = useState('');
+  const [dateOfContact,       setDateOfContact]       = useState('');
+  const [timeOfContact,       setTimeOfContact]       = useState('');
+  const [modeOfContact,       setModeOfContact]       = useState('');
+  const [contactedBy,         setContactedBy]         = useState('');
+  const [customerConfirmedHP, setCustomerConfirmedHP] = useState('');
+  const [customerAgreedEmail, setCustomerAgreedEmail] = useState('');
+  const [pdsConfirmed,        setPdsConfirmed]        = useState(false);
+  const [marketingConsent,    setMarketingConsent]    = useState('');
 
   const nobSubOptions  = bizNobGroup ? (MSIC_BY_GROUP[bizNobGroup] ?? []) : [];
   const msicCode       = nobSubOptions.find((s) => s.msic === bizNobSub)?.msic ?? '';
@@ -3065,28 +3220,95 @@ export default function ApplicationForm() {
               return (
                 <div className="space-y-4">
                   {/* Company profile card */}
-                  <div className="border border-blue-200 rounded-lg bg-blue-50 p-3 space-y-3">
+                  <div className="border border-blue-200 rounded-lg bg-blue-50 p-3 space-y-4">
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">SSM / Company Profile</p>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         d.regStatus === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
                       }`}>{d.regStatus}</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
-                      {([
-                        ['Company Name',        d.companyName],
-                        ['Incorporation Date',  d.incorporationDate],
-                        ['Paid-up Capital',     fmtRM(d.paidUpCapital)],
-                        ['Business Nature',     d.businessNature],
-                      ] as [string, string][]).map(([k, v]) => (
-                        <div key={k}>
-                          <p className="text-gray-400 mb-0.5">{k}</p>
-                          <p className="font-medium text-gray-800">{v}</p>
-                        </div>
-                      ))}
+
+                    {/* Row 1: read-only from SSM */}
+                    <div className="grid grid-cols-3 gap-x-4 gap-y-2 text-xs">
                       <div className="col-span-2">
+                        <p className="text-gray-400 mb-0.5">Company Name</p>
+                        <p className="font-semibold text-gray-800">{d.companyName}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 mb-0.5">Reg. Status</p>
+                        <p className="font-medium text-gray-800">{d.regStatus}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 mb-0.5">Paid-up Capital</p>
+                        <p className="font-medium text-gray-800">{fmtRM(d.paidUpCapital)}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 mb-0.5">Business Nature</p>
+                        <p className="font-medium text-gray-800">{d.businessNature}</p>
+                      </div>
+                      <div className="col-span-3">
                         <p className="text-gray-400 mb-0.5">Registered Address</p>
                         <p className="font-medium text-gray-800">{d.registeredAddress}</p>
+                      </div>
+                    </div>
+
+                    {/* Row 2: editable enrichment fields */}
+                    <div className="border-t border-blue-200 pt-3 grid grid-cols-3 gap-3">
+                      {/* Establishment Date */}
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">Establishment Date <span className="text-red-500">*</span></label>
+                        <input type="date" value={corpEstDate} onChange={(e) => setCorpEstDate(e.target.value)}
+                          className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-blue-400" />
+                      </div>
+                      {/* Years in Operation (auto-calc) */}
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">Years in Operation</label>
+                        <input readOnly value={
+                          corpEstDate
+                            ? String(new Date().getFullYear() - new Date(corpEstDate).getFullYear())
+                            : '–'
+                        }
+                          className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs bg-gray-50 text-gray-700" />
+                      </div>
+                      {/* BNM Assigned ID */}
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">BNM Assigned ID</label>
+                        <input value={bnmAssignedID} onChange={(e) => setBnmAssignedID(e.target.value)}
+                          placeholder="e.g. BNM-0012345"
+                          className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs bg-white font-mono focus:outline-none focus:border-blue-400" />
+                      </div>
+                      {/* Country of Incorporation */}
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">Country of Incorporation <span className="text-red-500">*</span></label>
+                        <input value={countryOfIncorp} onChange={(e) => setCountryOfIncorp(e.target.value)}
+                          placeholder="Malaysia"
+                          className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-blue-400" />
+                      </div>
+                      {/* Basic Group (auto-mapped, overridable) */}
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">
+                          Basic Group <span className="text-red-500">*</span>
+                          {derivedBasicGroup && !basicGroup && <span className="ml-1 text-blue-500">(auto)</span>}
+                        </label>
+                        <select value={effectiveBasicGroup}
+                          onChange={(e) => setBasicGroup(e.target.value)}
+                          className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-blue-400">
+                          <option value="">-- Select --</option>
+                          {BASIC_GROUP_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
+                      </div>
+                      {/* Constitution (auto-mapped, overridable) */}
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">
+                          Constitution <span className="text-red-500">*</span>
+                          {derivedConstitution && !constitution && <span className="ml-1 text-blue-500">(auto)</span>}
+                        </label>
+                        <select value={effectiveConstitution}
+                          onChange={(e) => setConstitution(e.target.value)}
+                          className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-blue-400">
+                          <option value="">-- Select --</option>
+                          {CONSTITUTION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -3139,7 +3361,17 @@ export default function ApplicationForm() {
                             })()}
                           </div>
                         </div>
-                        <p className="text-xs font-mono text-gray-500">{dir.nric}</p>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <p className="text-xs font-mono text-gray-500">{dir.nric}</p>
+                          {/* Designation */}
+                          <select
+                            value={dir.designation ?? ''}
+                            onChange={(e) => setCorpDirectors((prev) => prev.map((d) => d.did === dir.did ? { ...d, designation: e.target.value } : d))}
+                            className="border border-gray-300 rounded px-2 py-0.5 text-xs focus:outline-none focus:border-blue-400 bg-white">
+                            <option value="">Designation…</option>
+                            {DESIGNATION_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                          </select>
+                        </div>
                         {dir.cifStatus === 'verified' && dir.cifData && (
                           <div className="grid grid-cols-3 gap-3 pt-2 border-t border-gray-100 text-xs">
                             {([
@@ -3772,6 +4004,309 @@ export default function ApplicationForm() {
                 )}
               </div>
             )}
+
+            {/* ── Employee & Capital enrichment ── */}
+            <div className="border-t border-gray-100 pt-4 space-y-4">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Workforce & Capital</p>
+              <div className="grid grid-cols-4 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Employees (Actual) <span className="text-red-500">*</span></label>
+                  <input type="number" min="0" value={employeeActual} onChange={(e) => setEmployeeActual(e.target.value)}
+                    placeholder="e.g. 45"
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Full-time Range <span className="text-red-500">*</span></label>
+                  <select value={employeeRange} onChange={(e) => setEmployeeRange(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                    <option value="">-- Select --</option>
+                    {EMPLOYEE_RANGES.map((r) => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Turnover Range <span className="text-red-500">*</span></label>
+                  <select value={turnoverRangeVal} onChange={(e) => setTurnoverRangeVal(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                    <option value="">-- Select --</option>
+                    {TURNOVER_RANGES.map((r) => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Authorized Capital (RM)</label>
+                  <input type="number" min="0" value={authorizedCapital} onChange={(e) => setAuthorizedCapital(e.target.value)}
+                    placeholder="0"
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Paid-Up Capital (RM)</label>
+                  <input type="number" min="0" value={paidUpCapital} onChange={(e) => setPaidUpCapital(e.target.value)}
+                    placeholder="0"
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Primary Income Doc <span className="text-red-500">*</span></label>
+                  <select value={primaryIncomeDoc} onChange={(e) => setPrimaryIncomeDoc(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                    <option value="">-- Select --</option>
+                    {PRIMARY_INCOME_DOC_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Source of Repayment</label>
+                  <select value={sourceOfRepayment} onChange={(e) => setSourceOfRepayment(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                    {SOURCE_OF_REPAYMENT_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Scope & Tax ─────────────────────────────────────── */}
+        {appType === 'Non-Individual' && corpStatus === 'found' && (
+          <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+            <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span>
+              Scope &amp; Tax
+            </h2>
+
+            <div className="grid grid-cols-3 gap-4">
+              {/* Country of Operation */}
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Country of Operation <span className="text-red-500">*</span></label>
+                <input value={countryOfOperation} onChange={(e) => setCountryOfOperation(e.target.value)}
+                  placeholder="Malaysia"
+                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
+              </div>
+              {/* State of Operation */}
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">State of Operation <span className="text-red-500">*</span></label>
+                <select value={stateOfOperation} onChange={(e) => setStateOfOperation(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                  <option value="">-- Select State --</option>
+                  {MALAYSIA_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              {/* Place of Registration */}
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Place of Registration</label>
+                <select value={placeOfRegCode} onChange={(e) => { setPlaceOfRegCode(e.target.value); setRegStateCode(''); }}
+                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                  <option value="">-- Select --</option>
+                  {PLACE_OF_REG_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              {/* Registered State Code — only for option 4 */}
+              {placeOfRegCode === '4' && (
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Registered State Code <span className="text-red-500">*</span></label>
+                  <select value={regStateCode} onChange={(e) => setRegStateCode(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                    <option value="">-- Select --</option>
+                    {KL_LABUAN_STATES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                  </select>
+                </div>
+              )}
+              {/* TIN */}
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">
+                  Tax Identification No. (TIN) <span className="text-red-500">*</span>
+                </label>
+                <input value={corpTIN} onChange={(e) => setCorpTIN(e.target.value)}
+                  placeholder="e.g. C12345678901"
+                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+              </div>
+              {/* SST */}
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Sales &amp; Service Tax No. (SST)</label>
+                <input value={corpSST} onChange={(e) => setCorpSST(e.target.value)}
+                  placeholder="e.g. W10-1234-12345678"
+                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-400" />
+              </div>
+              {/* FEN Resident Status */}
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">FEN Resident Status <span className="text-red-500">*</span></label>
+                <div className="flex gap-4 mt-2">
+                  {['Resident', 'Non-Resident'].map((v) => (
+                    <label key={v} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <input type="radio" name="fenResident" value={v} checked={fenResident === v}
+                        onChange={() => setFenResident(v)} className="accent-hlb" />
+                      {v}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {/* Labuan Entity */}
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Labuan Entity <span className="text-red-500">*</span></label>
+                <div className="flex gap-4 mt-2">
+                  {['Yes', 'No'].map((v) => (
+                    <label key={v} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <input type="radio" name="labuanEntity" value={v} checked={labuanEntity === v}
+                        onChange={() => setLabuanEntity(v)} className="accent-hlb" />
+                      {v}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {labuanEntity === 'Yes' && (
+              <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded px-3 py-2">
+                <span className="text-blue-500 text-sm leading-none mt-0.5">ℹ</span>
+                <p className="text-xs text-blue-700">Labuan entity — subject to Labuan Business Activity Tax Act 1990. Ensure Labuan FSA licensing status is verified.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Compliance Checks ───────────────────────────────── */}
+        {appType === 'Non-Individual' && corpStatus === 'found' && (
+          <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+            <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">4</span>
+              Compliance Checks
+            </h2>
+            <p className="text-xs text-gray-400">AML/CFT due diligence — all questions mandatory before submission.</p>
+
+            {([
+              {
+                id: 'complexStructure', val: complexStructure, set: setComplexStructure,
+                q: 'Does the customer have a complex ownership structure such that the UBO could not be identified?',
+                warning: complexStructure === 'Yes'
+                  ? 'UBO not identified — escalate to Compliance for Enhanced Due Diligence (EDD) before proceeding.'
+                  : '',
+              },
+              {
+                id: 'nomineeShares', val: hasNomineeShares, set: setHasNomineeShares,
+                q: 'Does the customer have nominee shareholders or issue bearer shares?',
+                warning: hasNomineeShares === 'Yes'
+                  ? 'Nominee shareholders / bearer shares detected — additional Beneficial Ownership Declaration form required.'
+                  : '',
+              },
+            ] as { id: string; val: string; set: (v: string) => void; q: string; warning: string }[]).map(({ id, val, set, q, warning }) => (
+              <div key={id} className="border border-gray-200 rounded-lg p-3 space-y-2">
+                <p className="text-xs font-medium text-gray-700">{q} <span className="text-red-500">*</span></p>
+                <div className="flex gap-6">
+                  {['Yes', 'No'].map((v) => (
+                    <label key={v} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <input type="radio" name={id} value={v} checked={val === v}
+                        onChange={() => set(v)}
+                        className={v === 'Yes' ? 'accent-amber-500' : 'accent-green-600'} />
+                      <span className={val === v && v === 'Yes' ? 'text-amber-700 font-semibold' : 'text-gray-700'}>{v}</span>
+                    </label>
+                  ))}
+                  {!val && <span className="text-xs text-gray-400 italic">Please select</span>}
+                </div>
+                {warning && (
+                  <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded px-3 py-1.5">
+                    <span className="text-amber-500 text-sm leading-none mt-0.5">⚠</span>
+                    <p className="text-xs text-amber-700">{warning}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── Customer Confirmation ───────────────────────────── */}
+        {appType === 'Non-Individual' && corpStatus === 'found' && (
+          <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+            <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">5</span>
+              Customer Confirmation &amp; Consent
+            </h2>
+
+            {/* Contact log */}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact Record</p>
+              <div className="grid grid-cols-4 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Face-to-Face Onboarding? <span className="text-red-500">*</span></label>
+                  <div className="flex gap-4 mt-2">
+                    {['Yes', 'No'].map((v) => (
+                      <label key={v} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                        <input type="radio" name="faceToFace" value={v} checked={isFaceToFace === v}
+                          onChange={() => setIsFaceToFace(v)} className="accent-hlb" />
+                        {v}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Date of Contact <span className="text-red-500">*</span></label>
+                  <input type="date" value={dateOfContact} onChange={(e) => setDateOfContact(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Time (24h) <span className="text-red-500">*</span></label>
+                  <input type="time" value={timeOfContact} onChange={(e) => setTimeOfContact(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Mode of Contact <span className="text-red-500">*</span></label>
+                  <select value={modeOfContact} onChange={(e) => setModeOfContact(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                    <option value="">-- Select --</option>
+                    {['Office Phone','Mobile Phone','Branch Visit','Video Call','Email','Others'].map((m) => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Contacted By (Staff ID / Name) <span className="text-red-500">*</span></label>
+                  <input value={contactedBy} onChange={(e) => setContactedBy(e.target.value)}
+                    placeholder="e.g. 38047 · Ahmad Razif"
+                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* Customer confirmations */}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer Declarations</p>
+              <div className="space-y-2">
+                {([
+                  {
+                    id: 'confirmedHP', val: customerConfirmedHP, set: setCustomerConfirmedHP,
+                    label: 'Customer confirmed intention to proceed with HP application',
+                  },
+                  {
+                    id: 'agreedEmail', val: customerAgreedEmail, set: setCustomerAgreedEmail,
+                    label: 'Customer agreed to receive Agreement & Appendix via email',
+                  },
+                  {
+                    id: 'marketing', val: marketingConsent, set: setMarketingConsent,
+                    label: 'Customer consented to HLB/HLISB marketing communications',
+                  },
+                ] as { id: string; val: string; set: (v: string) => void; label: string }[]).map(({ id, val, set, label }) => (
+                  <div key={id} className="flex items-center justify-between border border-gray-100 rounded px-3 py-2">
+                    <p className="text-xs text-gray-700 flex-1 pr-4">{label} <span className="text-red-500">*</span></p>
+                    <div className="flex gap-4 shrink-0">
+                      {['Yes', 'No'].map((v) => (
+                        <label key={v} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                          <input type="radio" name={id} value={v} checked={val === v}
+                            onChange={() => set(v)} className="accent-hlb" />
+                          <span className={val === v ? (v === 'Yes' ? 'text-green-700 font-medium' : 'text-red-600 font-medium') : 'text-gray-600'}>{v}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                {/* PDS checkbox */}
+                <div className="border border-gray-100 rounded px-3 py-2">
+                  <label className="flex items-start gap-2.5 cursor-pointer">
+                    <input type="checkbox" checked={pdsConfirmed} onChange={(e) => setPdsConfirmed(e.target.checked)}
+                      className="accent-hlb mt-0.5 w-3.5 h-3.5 shrink-0" />
+                    <span className="text-xs text-gray-700">
+                      Product Disclosure Sheet (PDS) has been provided to and acknowledged by the customer. <span className="text-red-500">*</span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -4548,6 +5083,19 @@ export default function ApplicationForm() {
             if (gr?.allPartnersMustSign && guarantors.length === 0) {
               missingFields.push('Partnership：需要列出所有合伙人（共同签署人）');
             }
+            // Scope & Tax
+            if (!corpTIN)               missingFields.push('Tax Identification No. (TIN)');
+            if (!stateOfOperation)      missingFields.push('State of Operation');
+            // Compliance
+            if (!complexStructure)      missingFields.push('Compliance: Complex structure question');
+            if (!hasNomineeShares)      missingFields.push('Compliance: Nominee shareholders question');
+            // Customer Confirmation
+            if (!isFaceToFace)          missingFields.push('Face-to-face onboarding declaration');
+            if (!dateOfContact)         missingFields.push('Date of Contact');
+            if (!modeOfContact)         missingFields.push('Mode of Contact');
+            if (!contactedBy)           missingFields.push('Contacted By (Staff ID)');
+            if (customerConfirmedHP !== 'Yes') missingFields.push('Customer Confirmed HP Application (must be Yes)');
+            if (!pdsConfirmed)          missingFields.push('Product Disclosure Sheet (PDS) confirmed');
           }
           if (!loanType)            missingFields.push('Loan / Financing Type');
           if (!productGroup)        missingFields.push('Product Group');
