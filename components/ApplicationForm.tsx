@@ -813,11 +813,34 @@ export default function ApplicationForm() {
   const [rule3Enabled, setRule3Enabled] = useState(false);
   const [showRule3Modal, setShowRule3Modal] = useState(false);
 
-  // Submit modal
+  // Submit / AIP modal
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submittedRefNo] = useState(
     () => `PCJ/HP/${new Date().getFullYear()}/W${String(Math.floor(Math.random() * 9999999) + 1).padStart(7, '0')}`
   );
+  type AIPOutcome = 'approved' | 'referred' | 'declined';
+  const [aipDemoOutcome, setAipDemoOutcome] = useState<AIPOutcome | 'auto'>('auto');
+  const [showAIPModal, setShowAIPModal]     = useState(false);
+  const [aipLoading,   setAIPLoading]       = useState(false);
+  const [aipResult,    setAIPResult]        = useState<AIPOutcome | null>(null);
+
+  function triggerSubmit(effectiveEIR: number, approvedAmt: number, tenureM: number) {
+    setAIPLoading(true);
+    setShowSubmitModal(true);
+    const outcome: AIPOutcome =
+      aipDemoOutcome !== 'auto'
+        ? aipDemoOutcome
+        : effectiveEIR <= 3.5 && approvedAmt <= 150000
+          ? 'approved'
+          : effectiveEIR <= 5.0 || approvedAmt <= 200000
+            ? 'referred'
+            : 'declined';
+    setTimeout(() => {
+      setAIPLoading(false);
+      setAIPResult(outcome);
+    }, 2200);
+    void tenureM; // used in modal display
+  }
 
   async function runVerification(scenario: DemoScenario = demoScenario) {
     // Rule 3: block if an active application already exists
@@ -1348,6 +1371,25 @@ export default function ApplicationForm() {
               <span className="text-xs text-gray-600">Rule 3: Active App Exists</span>
             </label>
           </div>
+          <div className="pt-2 border-t border-gray-100 space-y-1.5">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">AIP Outcome</p>
+            {(['auto', 'approved', 'referred', 'declined'] as const).map((o) => (
+              <button
+                key={o}
+                onClick={() => setAipDemoOutcome(o)}
+                className={`w-full text-left px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  aipDemoOutcome === o
+                    ? o === 'approved' ? 'bg-green-600 text-white'
+                      : o === 'referred' ? 'bg-amber-500 text-white'
+                      : o === 'declined' ? 'bg-red-600 text-white'
+                      : 'bg-hlb text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {o === 'auto' ? 'Auto (by EIR/Amount)' : o.charAt(0).toUpperCase() + o.slice(1)}
+              </button>
+            ))}
+          </div>
           <div className="pt-2 border-t border-gray-100">
             <p className="text-xs text-gray-400 leading-tight">
               Select a scenario then click <strong>Search / Verify</strong> on the form.
@@ -1688,6 +1730,91 @@ export default function ApplicationForm() {
               );
 
               return null;
+            })()}
+
+            {/* ── 6-Check Verification Summary Strip ──────────────── */}
+            {verifyResults.cifProfile.status !== 'idle' && !isVerifying && (() => {
+              type CheckDef = { label: string; status: 'ok' | 'warn' | 'error' | 'na'; detail: string };
+              const r = verifyResults;
+              const cifType = r.cifProfile.status === 'ok'
+                ? (r.cifProfile.data as Record<string,string>)?.type
+                : null;
+              const checks: CheckDef[] = [
+                {
+                  label: 'CIF Lookup',
+                  status: r.cifProfile.status === 'ok' ? 'ok' : r.cifProfile.status === 'timeout' ? 'error' : 'warn',
+                  detail: r.cifProfile.status === 'ok'
+                    ? cifType === 'ETB' ? 'ETB — CIF found'
+                    : cifType === 'ETB_MULTIPLE' ? 'Multiple CIFs — select one'
+                    : 'NTB — new customer'
+                    : 'HOST timeout',
+                },
+                {
+                  label: 'WT Whitelist',
+                  status: r.wtWhitelist.status === 'ok' ? 'ok' : 'warn',
+                  detail: r.wtWhitelist.status === 'ok'
+                    ? `Whitelisted · RM ${((r.wtWhitelist.data as {monthlyIncome?:number})?.monthlyIncome ?? 0).toLocaleString()}/mo`
+                    : 'Not whitelisted',
+                },
+                {
+                  label: 'Income DB',
+                  status: r.incomeDB.status === 'ok' ? 'ok' : 'warn',
+                  detail: r.incomeDB.status === 'ok'
+                    ? `Verified · RM ${((r.incomeDB.data as {monthlyIncome?:number})?.monthlyIncome ?? 0).toLocaleString()}/mo`
+                    : 'No record',
+                },
+                {
+                  label: 'App History',
+                  status: r.appHistory.status === 'ok' ? 'ok' : 'warn',
+                  detail: r.appHistory.status === 'ok'
+                    ? `${((r.appHistory.data as {history?:unknown[]})?.history?.length ?? 0)} previous application(s)`
+                    : 'No history',
+                },
+                {
+                  label: 'e-Consent',
+                  status: r.preConsent.status === 'ok'
+                    ? ((r.preConsent.data as {consented?:boolean})?.consented ? 'ok' : 'warn')
+                    : 'warn',
+                  detail: r.preConsent.status === 'ok'
+                    ? ((r.preConsent.data as {consented?:boolean})?.consented ? 'Signed' : 'Not signed')
+                    : 'Unknown',
+                },
+                {
+                  label: 'HP Line',
+                  status: r.hpLine.status === 'ok' ? 'ok' : 'warn',
+                  detail: r.hpLine.status === 'ok'
+                    ? `RM ${((r.hpLine.data as {hpLine?:number})?.hpLine ?? 0).toLocaleString()} (${(r.hpLine.data as {source?:string})?.source ?? ''})`
+                    : 'No line found',
+                },
+              ];
+              const ICON: Record<string, string> = { ok: '✓', warn: '⚠', error: '✗', na: '–' };
+              const COLOR: Record<string, string> = {
+                ok:    'bg-green-50  border-green-200  text-green-700',
+                warn:  'bg-amber-50  border-amber-200  text-amber-700',
+                error: 'bg-red-50    border-red-200    text-red-600',
+                na:    'bg-gray-50   border-gray-200   text-gray-400',
+              };
+              const ICON_COLOR: Record<string, string> = {
+                ok: 'text-green-500', warn: 'text-amber-500', error: 'text-red-500', na: 'text-gray-300',
+              };
+              return (
+                <div className="rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="px-3 py-2 bg-gray-50 border-b border-gray-200">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Verification Summary</p>
+                  </div>
+                  <div className="grid grid-cols-3 divide-x divide-y divide-gray-100">
+                    {checks.map((c) => (
+                      <div key={c.label} className={`px-3 py-2 flex items-start gap-2 ${COLOR[c.status]}`}>
+                        <span className={`text-sm font-bold leading-none mt-0.5 shrink-0 ${ICON_COLOR[c.status]}`}>{ICON[c.status]}</span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold">{c.label}</p>
+                          <p className="text-xs opacity-80 mt-0.5 leading-tight truncate">{c.detail}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
             })()}
 
             {/* ── Contact Details — shown after any CIF result (ETB auto-filled, NTB manual) ── */}
@@ -4212,11 +4339,22 @@ export default function ApplicationForm() {
           if (!tenureMonths)        missingFields.push('Loan Tenure');
           if (!eirValue || eirHardBlock) missingFields.push('Valid EIR');
           if (!refNo)               missingFields.push('Reference Number (Generate Ref No)');
-          const canSubmit = missingFields.length === 0;
+          const canSubmit = missingFields.length === 0 && !rule3Enabled;
 
           return (
             <div className="bg-white rounded-lg shadow-sm p-4 space-y-2">
-              {!canSubmit && (
+              {rule3Enabled && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 flex items-start gap-2">
+                  <span className="text-red-500 text-base leading-none mt-0.5">⊘</span>
+                  <div>
+                    <p className="text-xs font-semibold text-red-700">Rule 3 – Duplicate Application Blocked</p>
+                    <p className="text-xs text-red-500 mt-0.5">
+                      An active application (HP-2025-004512) is already in progress for this customer. Submission is blocked until the existing case is closed or withdrawn.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {!rule3Enabled && !canSubmit && (
                 <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 space-y-1">
                   <p className="text-xs font-semibold text-amber-700">Please complete the following before submitting:</p>
                   <ul className="list-disc list-inside space-y-0.5">
@@ -4228,10 +4366,19 @@ export default function ApplicationForm() {
               )}
               <div className="flex items-center justify-between">
                 <p className="text-xs text-gray-400">
-                  {canSubmit ? 'All required fields complete. Ready to submit.' : `${missingFields.length} item(s) still required.`}
+                  {rule3Enabled
+                    ? 'Submission blocked — resolve Rule 3 to proceed.'
+                    : canSubmit
+                      ? 'All required fields complete. Ready to submit.'
+                      : `${missingFields.length} item(s) still required.`}
                 </p>
                 <button
-                  onClick={() => { if (canSubmit) setShowSubmitModal(true); }}
+                  onClick={() => {
+                    if (canSubmit) {
+                      setAIPResult(null);
+                      triggerSubmit(parseFloat(eirValue) || 0, parseFloat(loanAmount) || 0, parseInt(tenureMonths) || 0);
+                    }
+                  }}
                   disabled={!canSubmit}
                   className={`px-6 py-2.5 text-sm font-semibold rounded transition-colors shadow-sm ${
                     canSubmit
@@ -4301,48 +4448,175 @@ export default function ApplicationForm() {
         </div>
       )}
 
-      {/* ── Submit Success Modal ────────────────────────────────── */}
-      {showSubmitModal && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">✅</span>
-              <div>
-                <h3 className="text-base font-semibold text-gray-800">Application Submitted</h3>
-                <p className="text-xs text-gray-500 mt-0.5">Pending AIP assessment by Decision Engine</p>
+      {/* ── AIP / Submit Modal ─────────────────────────────────── */}
+      {showSubmitModal && (() => {
+        const appNo = refNo || submittedRefNo;
+        const today = new Date().toLocaleDateString('en-MY');
+
+        /* ── Loading state ── */
+        if (aipLoading) return (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-8 flex flex-col items-center gap-5">
+              <div className="w-10 h-10 border-4 border-hlb border-t-transparent rounded-full animate-spin" />
+              <div className="text-center space-y-1">
+                <p className="text-sm font-semibold text-gray-800">Submitting to Decision Engine…</p>
+                <p className="text-xs text-gray-400">Running credit rules and AIP scoring</p>
               </div>
-            </div>
-            <div className="bg-gray-50 rounded-lg px-4 py-3 space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Application No.</span>
-                <span className="font-mono font-semibold text-gray-800">{refNo || submittedRefNo}</span>
+              <div className="w-full space-y-1.5 text-xs text-gray-400">
+                {[
+                  'CCRIS bureau check',
+                  'DSR validation',
+                  'Blacklist screening',
+                  'AIP scoring model',
+                ].map((step, i) => (
+                  <div key={step} className="flex items-center gap-2">
+                    <span className={`w-3 h-3 rounded-full border-2 ${i < 2 ? 'bg-green-500 border-green-500' : 'border-gray-300 animate-pulse'}`} />
+                    {step}
+                  </div>
+                ))}
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Status</span>
-                <span className="text-blue-600 font-medium">Application Input</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Submitted</span>
-                <span className="text-gray-700">{new Date().toLocaleDateString('en-MY')}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Officer</span>
-                <span className="text-gray-700">Ahmad Razif · SO-00421</span>
-              </div>
-            </div>
-            <div className="flex gap-2 pt-1">
-              <button onClick={() => setShowSubmitModal(false)}
-                className="flex-1 px-4 py-2 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors">
-                Back to Form
-              </button>
-              <button onClick={() => setShowSubmitModal(false)}
-                className="flex-1 px-4 py-2 text-sm rounded bg-hlb text-white font-medium hover:bg-red-700 transition-colors">
-                View Application List
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        );
+
+        /* ── Result state ── */
+        const OUTCOME_CONFIG = {
+          approved: {
+            icon: '✅',
+            badgeClass: 'bg-green-100 text-green-700 border-green-200',
+            headerClass: 'border-green-200 bg-green-50',
+            label: 'Conditionally Approved',
+            statusText: 'AIP – Approved (Conditional)',
+            statusClass: 'text-green-700 font-semibold',
+            desc: 'The application has passed initial credit scoring. Proceed to document collection and full credit assessment.',
+            conditions: [
+              'Valid road tax & insurance to be submitted before disbursement',
+              'Customer to sign Hire Purchase Agreement (HPA) at branch',
+              'Income documents (3-month payslip + EA form) required',
+            ],
+            nextLabel: 'Proceed to Doc Collection',
+          },
+          referred: {
+            icon: '⚠️',
+            badgeClass: 'bg-amber-100 text-amber-700 border-amber-200',
+            headerClass: 'border-amber-200 bg-amber-50',
+            label: 'Referred to Credit',
+            statusText: 'AIP – Referred',
+            statusClass: 'text-amber-700 font-semibold',
+            desc: 'Application requires manual review by a Credit Analyst. Decision may take 1–2 business days.',
+            conditions: [
+              'DSR between 60%–70% — credit analyst discretion required',
+              'Customer has an existing HP facility nearing maturity',
+              'Employer not on WT whitelist — manual income verification needed',
+            ],
+            nextLabel: 'Escalate to Credit Analyst',
+          },
+          declined: {
+            icon: '❌',
+            badgeClass: 'bg-red-100 text-red-700 border-red-200',
+            headerClass: 'border-red-200 bg-red-50',
+            label: 'Declined',
+            statusText: 'AIP – Declined',
+            statusClass: 'text-red-600 font-semibold',
+            desc: 'The application did not meet the minimum credit criteria. Please inform the customer of the decision.',
+            conditions: [
+              'DSR exceeds 70% threshold after including proposed installment',
+              'Adverse CCRIS history: 3+ months overdue in last 12 months',
+              'Blacklist match — refer to Compliance before re-application',
+            ],
+            nextLabel: 'Notify Customer',
+          },
+        };
+
+        const cfg = aipResult ? OUTCOME_CONFIG[aipResult] : null;
+        if (!cfg) return null;
+
+        return (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg space-y-0 overflow-hidden">
+
+              {/* Header band */}
+              <div className={`px-6 py-4 border-b flex items-center gap-3 ${cfg.headerClass}`}>
+                <span className="text-2xl leading-none">{cfg.icon}</span>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-gray-800">AIP Decision Result</p>
+                  <p className={`text-xs mt-0.5 ${cfg.statusClass}`}>{cfg.label}</p>
+                </div>
+                <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${cfg.badgeClass}`}>
+                  {cfg.statusText}
+                </span>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {/* Application summary row */}
+                <div className="grid grid-cols-4 gap-3 text-xs bg-gray-50 rounded-lg px-4 py-3">
+                  {([
+                    ['App No.', appNo, 'font-mono font-semibold text-gray-800'],
+                    ['Amount',  `RM ${parseFloat(loanAmount || '0').toLocaleString()}`, 'font-semibold text-gray-800'],
+                    ['Rate',    `${eirValue || '–'}% EIR`, 'text-gray-700'],
+                    ['Tenure',  tenureMonths ? `${tenureMonths} mths` : '–', 'text-gray-700'],
+                  ] as [string, string, string][]).map(([k, v, cls]) => (
+                    <div key={k}>
+                      <p className="text-gray-400 mb-0.5">{k}</p>
+                      <p className={cls}>{v}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Description */}
+                <p className="text-xs text-gray-600 leading-relaxed">{cfg.desc}</p>
+
+                {/* Conditions / reasons */}
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    {aipResult === 'approved' ? 'Conditions' : aipResult === 'referred' ? 'Referral Reasons' : 'Decline Reasons'}
+                  </p>
+                  <ul className="space-y-1">
+                    {cfg.conditions.map((c) => (
+                      <li key={c} className="flex items-start gap-2 text-xs text-gray-600">
+                        <span className="mt-0.5 shrink-0 text-gray-400">•</span>
+                        {c}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Meta row */}
+                <div className="grid grid-cols-3 gap-3 text-xs border-t border-gray-100 pt-3">
+                  {([
+                    ['Submitted', today],
+                    ['Officer',   'Ahmad Razif · SO-00421'],
+                    ['Branch',    closingBranch || 'Petaling Jaya Branch'],
+                  ] as [string, string][]).map(([k, v]) => (
+                    <div key={k}>
+                      <p className="text-gray-400 mb-0.5">{k}</p>
+                      <p className="text-gray-700">{v}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Footer buttons */}
+              <div className="px-6 pb-6 flex gap-2">
+                <button
+                  onClick={() => { setShowSubmitModal(false); setAIPResult(null); }}
+                  className="flex-1 px-4 py-2 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors">
+                  Back to Form
+                </button>
+                <button
+                  onClick={() => { setShowSubmitModal(false); setAIPResult(null); }}
+                  className={`flex-1 px-4 py-2 text-sm rounded font-medium transition-colors text-white ${
+                    aipResult === 'approved' ? 'bg-green-600 hover:bg-green-700'
+                    : aipResult === 'referred' ? 'bg-amber-500 hover:bg-amber-600'
+                    : 'bg-red-600 hover:bg-red-700'
+                  }`}>
+                  {cfg.nextLabel}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
