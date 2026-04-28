@@ -331,6 +331,92 @@ const ENTITY_FIELD_RULES: Record<EntityCode, {
   L: { showBoardCategory: false, showBNMPass: false, showOffshore: false, ownerRequired: false, placeOfRegRequired: false },
 };
 
+type GuarantorRequirement = 'PG' | 'CG' | 'PG_or_CG' | 'none';
+type EntityGuarantorRule = {
+  guarantorType: GuarantorRequirement;
+  mandatory: boolean;
+  waivable: boolean;         // true = waivable by credit discretion
+  allPartnersMustSign: boolean;
+  guarantorDesc: string;
+  signingEntity: string;
+  signatories: string;
+  defaultRoleCode: string;   // default role code when adding guarantor from this entity
+  notes?: string;
+};
+const ENTITY_GUARANTOR_RULES: Record<EntityCode, EntityGuarantorRule> = {
+  A: {
+    guarantorType: 'PG', mandatory: true, waivable: false, allPartnersMustSign: false,
+    guarantorDesc: '1–2 名董事个人担保 (Personal Guarantee)',
+    signingEntity: '公司 (Company)',
+    signatories: '董事会决议 (BR) 授权董事',
+    defaultRoleCode: 'DG',
+  },
+  B: {
+    guarantorType: 'PG', mandatory: false, waivable: true, allPartnersMustSign: false,
+    guarantorDesc: '上市公司通常豁免 PG；小型 Bhd 仍需董事个人担保',
+    signingEntity: '公司 (Company)',
+    signatories: '董事会决议 (BR) 授权高管',
+    defaultRoleCode: 'DG',
+    notes: '豁免须信贷评估明确确认，写入备注。',
+  },
+  C: {
+    guarantorType: 'CG', mandatory: true, waivable: false, allPartnersMustSign: false,
+    guarantorDesc: '必须由海外母公司提供企业担保 (Corporate Guarantee)',
+    signingEntity: '分行（代表母公司）',
+    signatories: '本地授权代表',
+    defaultRoleCode: 'CG',
+    notes: '非独立法人；海外母公司承担无限责任兜底。',
+  },
+  D: {
+    guarantorType: 'none', mandatory: false, waivable: false, allPartnersMustSign: false,
+    guarantorDesc: '无需担保人 — 老板个人已承担无限责任',
+    signingEntity: '老板个人',
+    signatories: '老板本人',
+    defaultRoleCode: 'SP',
+    notes: '签约主体为自然人，无须 BR 董事会决议。',
+  },
+  E: {
+    guarantorType: 'none', mandatory: false, waivable: false, allPartnersMustSign: true,
+    guarantorDesc: '无需额外担保人 — 全体合伙人连带无限责任',
+    signingEntity: '合伙企业',
+    signatories: '⚠ 全体合伙人必须共同签署',
+    defaultRoleCode: 'PP',
+    notes: '任何单一合伙人签字不足以构成有效授权，缺一不可。',
+  },
+  F: {
+    guarantorType: 'PG', mandatory: true, waivable: false, allPartnersMustSign: false,
+    guarantorDesc: '强制要求核心合伙人个人担保 (PG)',
+    signingEntity: 'PLT 企业',
+    signatories: '合规官 (Compliance Officer) 或授权合伙人',
+    defaultRoleCode: 'GU',
+    notes: '须确认合规官身份有效；合规官是 PLT 法定必要职位。',
+  },
+  G: {
+    guarantorType: 'PG_or_CG', mandatory: true, waivable: false, allPartnersMustSign: false,
+    guarantorDesc: '海外合伙人 PG 或海外母体 CG（二选一）',
+    signingEntity: '外国 PLT 本地分支',
+    signatories: '授权本地代表',
+    defaultRoleCode: 'CG',
+    notes: '需提供跨国担保文件，须经总行法律审查。',
+  },
+  H: {
+    guarantorType: 'PG', mandatory: true, waivable: false, allPartnersMustSign: false,
+    guarantorDesc: '核心专业合伙人个人担保 (PG) — 须为持有效执照专业人士',
+    signingEntity: '专业 PLT 实体',
+    signatories: '授权执业合伙人',
+    defaultRoleCode: 'GU',
+    notes: '⛔ 执业证过期 → 一票否决，拒绝进件。',
+  },
+  L: {
+    guarantorType: 'none', mandatory: false, waivable: false, allPartnersMustSign: false,
+    guarantorDesc: '无需担保人 — 同独资企业，老板个人无限责任',
+    signingEntity: '老板个人',
+    signatories: '老板本人',
+    defaultRoleCode: 'SP',
+    notes: '东马 Trading License 管辖，非 SSM；人工核查执照有效期。',
+  },
+};
+
 // ── Relationship / Role code system ──────────────────────────
 type RelToApp = 'Guarantor' | 'Owner' | 'Non-Guarantor';
 const ROLE_CODES_BY_REL: Record<RelToApp, { value: string; label: string }[]> = {
@@ -1209,9 +1295,10 @@ export default function ApplicationForm() {
   const [crossBorderCountries, setCrossBorderCountries] = useState<string[]>([]);
   const [placeOfReg,        setPlaceOfReg]        = useState('');
 
-  const nobSubOptions = bizNobGroup ? (MSIC_BY_GROUP[bizNobGroup] ?? []) : [];
-  const msicCode      = nobSubOptions.find((s) => s.msic === bizNobSub)?.msic ?? '';
-  const entityRules   = ENTITY_FIELD_RULES[enterpriseType as EntityCode] ?? null;
+  const nobSubOptions  = bizNobGroup ? (MSIC_BY_GROUP[bizNobGroup] ?? []) : [];
+  const msicCode       = nobSubOptions.find((s) => s.msic === bizNobSub)?.msic ?? '';
+  const entityRules    = ENTITY_FIELD_RULES[enterpriseType as EntityCode] ?? null;
+  const guarantorRules = ENTITY_GUARANTOR_RULES[enterpriseType as EntityCode] ?? null;
 
   // E&S / Green Principle — derived from MSIC group selection
   const corpGPData  = bizNobGroup ? (MSIC_TO_GP[bizNobGroup]              ?? null) : null;
@@ -2443,20 +2530,30 @@ export default function ApplicationForm() {
           );
         })()}
 
-        {/* ── 4.8 Other Applicants ───────────────────────────── */}
-        {appType === 'Individual' && (
+        {/* ── 4.8 Other Applicants / Guarantors ─────────────────── */}
+        {(appType === 'Individual' || (appType === 'Non-Individual' && corpStatus === 'found')) && (
           <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <span className="bg-hlb text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
                   {guarantors.length > 0 ? '✓' : '+'}
                 </span>
-                Other Applicants
+                {appType === 'Non-Individual' ? 'Guarantors / Signing Parties' : 'Other Applicants'}
                 {guarantors.length > 0 && (
                   <span className="text-xs font-normal text-gray-400">{guarantors.length} added</span>
                 )}
+                {appType === 'Non-Individual' && guarantorRules && (
+                  <span className={`ml-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                    guarantorRules.guarantorType === 'none'
+                      ? 'bg-green-50 text-green-700 border-green-200'
+                      : 'bg-blue-50 text-blue-700 border-blue-200'
+                  }`}>
+                    {guarantorRules.guarantorType === 'none' ? '无需担保' : guarantorRules.mandatory ? '强制' : '可选'}
+                    {' · '}{guarantorRules.guarantorType === 'none' ? '' : guarantorRules.guarantorType === 'PG_or_CG' ? 'PG/CG' : guarantorRules.guarantorType}
+                  </span>
+                )}
               </h2>
-              {guarantors.length < 3 && (
+              {guarantors.length < (appType === 'Non-Individual' ? 10 : 3) && (
                 <button onClick={addGuarantor}
                   className="text-xs px-3 py-1.5 rounded border border-hlb text-hlb hover:bg-red-50 font-medium transition-colors">
                   + Add Guarantor
@@ -2466,7 +2563,11 @@ export default function ApplicationForm() {
 
             {guarantors.length === 0 && (
               <p className="text-xs text-gray-400">
-                No guarantors added. Click "+ Add Guarantor" to include joint applicants.
+                {appType === 'Non-Individual'
+                  ? guarantorRules?.guarantorType === 'none'
+                    ? `无需担保人 (${guarantorRules.signingEntity})。签字人：${guarantorRules.signatories}。`
+                    : `请添加必要担保人 (${guarantorRules?.guarantorDesc ?? ''})。`
+                  : 'No guarantors added. Click "+ Add Guarantor" to include joint applicants.'}
               </p>
             )}
 
@@ -3277,6 +3378,112 @@ export default function ApplicationForm() {
                       </div>
                     </div>
                   </div>
+
+                  {/* ── Guarantor & Signatory Requirements ── */}
+                  {guarantorRules && (() => {
+                    const gr = guarantorRules;
+                    const BAND: Record<string, string> = {
+                      PG:        'border-blue-200  bg-blue-50',
+                      CG:        'border-purple-200 bg-purple-50',
+                      PG_or_CG:  'border-indigo-200 bg-indigo-50',
+                      none:      'border-green-200  bg-green-50',
+                    };
+                    const BADGE: Record<string, string> = {
+                      PG:        'bg-blue-100   text-blue-700   border-blue-200',
+                      CG:        'bg-purple-100 text-purple-700 border-purple-200',
+                      PG_or_CG:  'bg-indigo-100 text-indigo-700 border-indigo-200',
+                      none:      'bg-green-100  text-green-700  border-green-200',
+                    };
+                    const BADGE_LABEL: Record<string, string> = {
+                      PG:       'PG – 个人担保',
+                      CG:       'CG – 企业担保',
+                      PG_or_CG: 'PG 或 CG',
+                      none:     '无需担保',
+                    };
+                    const corpGuarantors = guarantors.filter((g) => g.status === 'verified' || g.status === 'idle');
+                    const needsGuarantor = gr.mandatory && corpGuarantors.length === 0;
+                    return (
+                      <div className={`border rounded-lg p-3 space-y-3 ${BAND[gr.guarantorType]}`}>
+                        {/* Header row */}
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-semibold text-gray-700">担保 &amp; 签约要求</p>
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${BADGE[gr.guarantorType]}`}>
+                              {BADGE_LABEL[gr.guarantorType]}
+                            </span>
+                            {gr.mandatory && (
+                              <span className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                                强制
+                              </span>
+                            )}
+                            {gr.waivable && (
+                              <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                                可豁免（需信贷批准）
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            Entity {enterpriseType} · {ENTERPRISE_TYPES.find(t=>t.code===enterpriseType)?.label.split('–')[0].trim() ?? ''}
+                          </p>
+                        </div>
+
+                        {/* Guarantor description */}
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <p className="text-gray-400 mb-0.5">担保人要求</p>
+                            <p className="text-gray-800 font-medium">{gr.guarantorDesc}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400 mb-0.5">签约主体</p>
+                            <p className="text-gray-800 font-medium">{gr.signingEntity}</p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-gray-400 mb-0.5">签字人要求</p>
+                            <p className={`font-medium ${gr.allPartnersMustSign ? 'text-amber-700' : 'text-gray-800'}`}>
+                              {gr.signatories}
+                            </p>
+                          </div>
+                          {gr.notes && (
+                            <div className="col-span-2 text-gray-500 italic">{gr.notes}</div>
+                          )}
+                        </div>
+
+                        {/* Partnership all-must-sign alert */}
+                        {gr.allPartnersMustSign && (
+                          <div className="flex items-start gap-2 bg-amber-50 border border-amber-300 rounded px-3 py-2">
+                            <span className="text-amber-500 text-base leading-none mt-0.5">⚠</span>
+                            <p className="text-xs text-amber-800 font-medium">
+                              合伙企业（E类）：全体合伙人必须共同到场签署——缺少任何一名合伙人签字即构成无效授权，贷款协议不受法律保护。请在进件前确认所有合伙人名单。
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Mandatory PG/CG missing warning */}
+                        {needsGuarantor && (
+                          <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded px-3 py-2">
+                            <span className="text-red-500 text-base leading-none mt-0.5">⊘</span>
+                            <div>
+                              <p className="text-xs text-red-700 font-semibold">尚未添加担保人</p>
+                              <p className="text-xs text-red-600 mt-0.5">
+                                {gr.guarantorType === 'CG'
+                                  ? '请在下方"其他申请人"中添加企业担保人 (Corporate Guarantor，Role Code: CG)。'
+                                  : gr.guarantorType === 'PG_or_CG'
+                                    ? '请添加海外合伙人 PG 或海外母体 CG（任选其一）。'
+                                    : '请在下方"其他申请人"中添加个人担保人并完成 CIF 搜索。'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Guarantors added count */}
+                        {corpGuarantors.length > 0 && (
+                          <div className="text-xs text-green-700 font-medium">
+                            ✓ 已添加 {corpGuarantors.length} 名担保人
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })()}
@@ -4328,6 +4535,19 @@ export default function ApplicationForm() {
             if (!enterpriseType)    missingFields.push('Enterprise Type');
             if (corpStatus !== 'found') missingFields.push('SSM / Company Verification');
             if (!bizTurnover || !bizNetProfit) missingFields.push('Business Financials (Turnover / Net Profit)');
+            // Guarantor validation by entity type
+            const gr = guarantorRules;
+            if (gr?.mandatory && guarantors.length === 0) {
+              const grLabel =
+                gr.guarantorType === 'PG'       ? `担保人 (${gr.guarantorDesc.slice(0,20)}…)`
+                : gr.guarantorType === 'CG'     ? '企业担保人 (Corporate Guarantee)'
+                : gr.guarantorType === 'PG_or_CG' ? '担保人 PG 或 CG（必须选一）'
+                : '';
+              if (grLabel) missingFields.push(grLabel);
+            }
+            if (gr?.allPartnersMustSign && guarantors.length === 0) {
+              missingFields.push('Partnership：需要列出所有合伙人（共同签署人）');
+            }
           }
           if (!loanType)            missingFields.push('Loan / Financing Type');
           if (!productGroup)        missingFields.push('Product Group');
