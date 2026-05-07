@@ -185,10 +185,13 @@ function SubSection({ title, children }: { title:string; children:React.ReactNod
   );
 }
 
-function Field2({ label, required, children }: { label:string; required?:boolean; children:React.ReactNode }) {
+function Field2({ label, required, source, children }: { label:string; required?:boolean; source?:DataSource; children:React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs text-gray-500 mb-1">{label}{required && <span className="text-red-500 ml-0.5">*</span>}</label>
+      <label className="block text-xs text-gray-500 mb-1 flex items-center">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+        {source && <SourceTag src={source}/>}
+      </label>
       {children}
     </div>
   );
@@ -228,6 +231,22 @@ function Badge({ label, color='gray' }: { label:string; color?:'gray'|'green'|'b
     amber:'bg-amber-100 text-amber-700', purple:'bg-purple-100 text-purple-700',
   };
   return <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${cls[color]}`}>{label}</span>;
+}
+
+type DataSource = 'SSM'|'Experian'|'OCR'|'Manual'|'System';
+const SOURCE_TAG_STYLES: Record<DataSource, string> = {
+  SSM:      'bg-green-100 text-green-700 border-green-200',
+  Experian: 'bg-blue-100 text-blue-700 border-blue-200',
+  OCR:      'bg-purple-100 text-purple-700 border-purple-200',
+  Manual:   'bg-gray-100 text-gray-500 border-gray-200',
+  System:   'bg-amber-100 text-amber-700 border-amber-200',
+};
+function SourceTag({ src }: { src: DataSource }) {
+  return (
+    <span className={`ml-1.5 inline-block px-1.5 py-px rounded border text-[10px] font-semibold leading-tight ${SOURCE_TAG_STYLES[src]}`}>
+      {src}
+    </span>
+  );
 }
 
 function ApiRow({ label, status }: { label:string; status:'idle'|'loading'|'ok'|'error' }) {
@@ -410,6 +429,7 @@ export default function ApplicationForm() {
   const [experianLoading,    setExperianLoading]    = useState(false);
   const [showDrillDown,      setShowDrillDown]      = useState(false);
   const [drillTarget,        setDrillTarget]        = useState<Director|null>(null);
+  const [drilledDirectors,   setDrilledDirectors]   = useState<Set<string>>(new Set());
 
   // ── Guarantor
   const [guarantors,   setGuarantors]   = useState<Guarantor[]>([]);
@@ -447,30 +467,71 @@ export default function ApplicationForm() {
   const effConstitution = constitution || derivedConstitution;
   const effBasicGroup   = basicGroup   || derivedBasicGroup;
 
-  // UBO auto-bind for D (Sole Prop), E (Partnership), L (East MY SE)
+  // Signatory, drill-down, guarantor checks
+  const hasSignatory = directors.some(d => d.isSignatory);
+  const drillRequiredEntities: EntityCode[] = ['A','C','F','G','H'];
+  const needsDrillDown = et && drillRequiredEntities.includes(et);
+  const corpDirs = directors.filter(d => d.isCorporate);
+  const drillComplete = !needsDrillDown || corpDirs.length === 0 || corpDirs.every(d => drilledDirectors.has(d.id));
+  const mandatoryGuarSatisfied = !gr?.mandatory || guarantors.length > 0;
+
+  // Four readiness flags
+  const riskReady        = corpLocked && !!enterpriseType && !!corpTIN && !!loanAmount && !!vehicleMake;
+  const cedReady         = directors.length > 0 && ubos.length > 0 && !!sourceOfRepayment && drillComplete;
+  const bnmReady         = !!effConstitution && !!effBasicGroup && !!corpTIN && ubos.length > 0;
+  const disbursementReady = hasSignatory && !!vehicleMake && !!loanAmount && mandatoryGuarSatisfied;
+
+  // UBO auto-bind: D/E/L → auto; A/C/F/G/H → manual drill-down; B → exempt
   useEffect(() => {
-    if (!enterpriseType || !directors.length) return;
+    if (!enterpriseType) return;
     const rule = UBO_RULES[enterpriseType as EntityCode];
-    if (rule?.mode !== 'auto') return;
-    // Mark all natural persons as UBO and Signatory (for E, all partners co-sign)
-    const isPartnership = enterpriseType === 'E';
-    setDirectors(ds => ds.map(d => ({
-      ...d,
-      isUBO: d.isCorporate ? false : true,
-      isSignatory: isPartnership ? !d.isCorporate : d.isSignatory,
-    })));
-    setUbos(prev => {
-      const naturalPersons = directors.filter(d => !d.isCorporate);
-      const autoIds = new Set(naturalPersons.map(d => d.id));
-      const manualUbos = prev.filter(u => !autoIds.has(u.id));
-      return [
-        ...manualUbos,
-        ...naturalPersons.map(d => ({
-          id: d.id, name: d.name, icNo: d.icNo, nationality: d.nationality,
-          sharePercent: d.sharePercent, source: 'Auto (Entity Type)',
-        })),
-      ];
-    });
+    if (!directors.length && rule?.mode !== 'exempt') return;
+
+    if (rule?.mode === 'auto') {
+      const isPartnership = enterpriseType === 'E';
+      // D/E/L: mark all natural persons as UBO; for E also force Signatory + Guarantor
+      setDirectors(ds => ds.map(d => ({
+        ...d,
+        isUBO:       !d.isCorporate,
+        isSignatory: isPartnership ? !d.isCorporate : d.isSignatory,
+        isGuarantor: isPartnership ? !d.isCorporate : d.isGuarantor,
+      })));
+      setUbos(prev => {
+        const naturalPersons = directors.filter(d => !d.isCorporate);
+        const autoIds = new Set(naturalPersons.map(d => d.id));
+        const manualUbos = prev.filter(u => !autoIds.has(u.id));
+        return [
+          ...manualUbos,
+          ...naturalPersons.map(d => ({
+            id: d.id, name: d.name, icNo: d.icNo, nationality: d.nationality,
+            sharePercent: d.sharePercent, source: 'Auto (Entity Type)',
+          })),
+        ];
+      });
+      // E (Partnership): auto-add all natural-person partners as guarantors
+      if (isPartnership) {
+        setGuarantors(prev => {
+          const existingIds = new Set(prev.map(g => g.id));
+          const newGuars = directors
+            .filter(d => !d.isCorporate && !existingIds.has(d.id))
+            .map(d => ({
+              id: d.id, name: d.name, icNo: d.icNo, nationality: d.nationality,
+              relationship: 'Partner of Partnership', cifStatus: 'ok', income: 0,
+            }));
+          return [...prev, ...newGuars];
+        });
+      }
+    } else if (rule?.mode === 'exempt') {
+      // B (Listed Berhad): apply UBO exemption automatically
+      setUbos([{
+        id: 'exempt', name: 'EXEMPTED (Listed Company)', icNo: '—', nationality: '—',
+        sharePercent: 0, source: 'Exemption', exemptReason: 'Listed Berhad – Top 5 simplified exemption',
+      }]);
+    }
+    // A/C/F/G/H (manual): clear auto-bound UBOs so officer must drill-down or add manually
+    else if (rule?.mode === 'manual') {
+      setUbos(prev => prev.filter(u => u.source === 'Manual' || u.source.startsWith('Drill-down')));
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enterpriseType]);
 
@@ -692,12 +753,12 @@ export default function ApplicationForm() {
           {/* Readiness indicators */}
           <div className="mt-4 grid grid-cols-4 gap-3">
             {[
-              { label:'Risk Ready',    ok: corpLocked && !!enterpriseType && !!corpTIN && !!loanAmount && !!vehicleMake },
-              { label:'CED Ready',     ok: directors.length>0 && ubos.length>0 && !!sourceOfRepayment },
-              { label:'BNM Ready',     ok: !!effConstitution && !!effBasicGroup && !!corpTIN && ubos.length>0 },
-              { label:'Disbursement Ready', ok: directors.some(d=>d.isSignatory) && !!vehicleMake && !!loanAmount },
+              { label:'Risk Ready',         ok: riskReady,         tip: 'Company locked + Entity Type + TIN + Loan Amount + Vehicle' },
+              { label:'CED Ready',          ok: cedReady,          tip: 'Directors + UBO confirmed + Source of Repayment + Drill-down complete' },
+              { label:'BNM Ready',          ok: bnmReady,          tip: 'Constitution + Basic Group + TIN + UBO confirmed' },
+              { label:'Disbursement Ready', ok: disbursementReady, tip: 'Signatory + Vehicle + Loan Amount + Mandatory Guarantor satisfied' },
             ].map(r=>(
-              <div key={r.label} className={`rounded p-2 text-xs border ${r.ok?'border-green-200 bg-green-50 text-green-700':'border-gray-200 bg-gray-50 text-gray-500'}`}>
+              <div key={r.label} title={r.tip} className={`rounded p-2 text-xs border ${r.ok?'border-green-200 bg-green-50 text-green-700':'border-gray-200 bg-gray-50 text-gray-500'}`}>
                 <span className="mr-1">{r.ok?'✓':'○'}</span>{r.label}
               </div>
             ))}
@@ -867,34 +928,34 @@ export default function ApplicationForm() {
         <SubSection title="Company Basic Information —">
           <div id="companyBasic" className="scroll-mt-4">
             <div className="grid grid-cols-2 gap-4">
-              <Field2 label="ID Type 1" required>
+              <Field2 label="ID Type 1" required source="SSM">
                 <Input value={idType1} readOnly/>
               </Field2>
-              <Field2 label="Registration / ID Number" required>
+              <Field2 label="Registration / ID Number" required source="SSM">
                 <div className="flex items-center gap-2">
                   <Input value={idNo1} readOnly/>
                   {corpLocked && <Badge label="🔒" color="gray"/>}
                 </div>
               </Field2>
-              <Field2 label="Company Name">
+              <Field2 label="Company Name" source="SSM">
                 <Input value={companyName} readOnly/>
               </Field2>
-              <Field2 label="Enterprise Type" required>
+              <Field2 label="Enterprise Type" required source="SSM">
                 <Select value={enterpriseType} onChange={v=>setEnterpriseType(v as EntityCode)} options={ENTITY_TYPES} placeholder="— Select —"/>
               </Field2>
-              <Field2 label="CIF No.">
+              <Field2 label="CIF No." source="System">
                 <div className="flex items-center gap-2">
                   <Input value={cifNo||'—'} readOnly/>
                   <Badge label={etbStatus||'NTB'} color={etbStatus==='ETB'?'green':'blue'}/>
                 </div>
               </Field2>
-              <Field2 label="Establishment Date" required>
+              <Field2 label="Establishment Date" required source="SSM">
                 <Input value={corpEstDate} onChange={setCorpEstDate} placeholder="YYYY-MM-DD"/>
               </Field2>
-              <Field2 label="Database Income">
+              <Field2 label="Database Income" source="System">
                 <Badge label="No Record" color="red"/>
               </Field2>
-              <Field2 label="HP Line">
+              <Field2 label="HP Line" source="System">
                 <Badge label={hpLineStatus==='ok'?'HP Line Hit':'No HP Line'} color={hpLineStatus==='ok'?'amber':'gray'}/>
               </Field2>
             </div>
@@ -905,38 +966,38 @@ export default function ApplicationForm() {
         <SubSection title="Company Profile">
           <div id="companyProfile" className="scroll-mt-4">
             <div className="grid grid-cols-2 gap-4">
-              <Field2 label="Basic Group" required>
+              <Field2 label="Basic Group" required source="System">
                 <div className="flex gap-2 items-center">
                   <Select value={effBasicGroup} onChange={setBasicGroup} options={BASIC_GROUP_OPTIONS} placeholder="— Select —"/>
                   {derivedBasicGroup && basicGroup==='' && <Badge label="Auto-mapped" color="blue"/>}
                 </div>
               </Field2>
-              <Field2 label="Constitution" required>
+              <Field2 label="Constitution" required source="System">
                 <div className="flex gap-2 items-center">
                   <Select value={effConstitution} onChange={setConstitution} options={CONSTITUTION_OPTIONS} placeholder="— Select —"/>
                   {derivedConstitution && constitution==='' && <Badge label="Auto-mapped" color="blue"/>}
                 </div>
               </Field2>
-              <Field2 label="Nature of Business Group" required>
+              <Field2 label="Nature of Business Group" required source="Manual">
                 <Select value={msicGroup} onChange={setMsicGroup} options={MSIC_GROUPS} placeholder="— Select group —"/>
               </Field2>
-              <Field2 label="Nature of Business Code">
+              <Field2 label="Nature of Business Code" source="Manual">
                 <Input value={msicCode} onChange={setMsicCode} placeholder="e.g. 46510"/>
               </Field2>
-              <Field2 label="Bumiputera Status" required>
+              <Field2 label="Bumiputera Status" required source="Manual">
                 <RadioGroup value={bumiStatus} onChange={setBumiStatus} options={['Yes','No']}/>
               </Field2>
-              <Field2 label="Paid Up Capital (RM)">
+              <Field2 label="Paid Up Capital (RM)" source="SSM">
                 <Input value={paidUpCapital} onChange={setPaidUpCapital} placeholder="e.g. 500000"/>
               </Field2>
-              <Field2 label="Authorized Capital (RM)">
+              <Field2 label="Authorized Capital (RM)" source="SSM">
                 <Input value={authorizedCapital} onChange={setAuthorizedCapital} placeholder="e.g. 1000000"/>
               </Field2>
             </div>
             {/* Scope & Tax */}
             <p className="text-xs font-semibold text-gray-600 mt-4 mb-2">Scope & Tax</p>
             <div className="grid grid-cols-2 gap-4">
-              <Field2 label="TIN (Tax Identification No.)" required>
+              <Field2 label="TIN (Tax Identification No.)" required source="Manual">
                 <div className="relative">
                   <Input value={corpTIN} onChange={v=>{ setCorpTIN(v); setTinValid(null); }}
                     onBlur={()=>setTinValid(validateTIN(corpTIN))}
@@ -946,7 +1007,7 @@ export default function ApplicationForm() {
                 </div>
                 {tinValid===false && <p className="text-xs text-red-500 mt-1">Invalid format. Expected: 1-2 letters + 7-12 digits</p>}
               </Field2>
-              <Field2 label="SST Registration No.">
+              <Field2 label="SST Registration No." source="Manual">
                 <Input value={corpSST} onChange={setCorpSST} placeholder="Optional"/>
               </Field2>
               <Field2 label="Country of Operation" required>
@@ -965,22 +1026,22 @@ export default function ApplicationForm() {
             {/* Workforce & Financials */}
             <p className="text-xs font-semibold text-gray-600 mt-4 mb-2">Workforce & Financials</p>
             <div className="grid grid-cols-2 gap-4">
-              <Field2 label="Annual Turnover (Actual, RM)">
+              <Field2 label="Annual Turnover (Actual, RM)" source="Manual">
                 <Input value={turnoverActual} onChange={setTurnoverActual} placeholder="e.g. 2500000"/>
               </Field2>
-              <Field2 label="Annual Turnover Range" required>
+              <Field2 label="Annual Turnover Range" required source="Manual">
                 <Select value={turnoverRange} onChange={setTurnoverRange} options={TURNOVER_RANGES.map(r=>({value:r,label:r}))} placeholder="— Select —"/>
               </Field2>
-              <Field2 label="No. of Employees (Actual)">
+              <Field2 label="No. of Employees (Actual)" source="Manual">
                 <Input value={employeeActual} onChange={setEmployeeActual} placeholder="e.g. 25"/>
               </Field2>
-              <Field2 label="Employee Range">
+              <Field2 label="Employee Range" source="Manual">
                 <Select value={employeeRange} onChange={setEmployeeRange} options={EMPLOYEE_RANGES.map(r=>({value:r,label:r}))} placeholder="— Select —"/>
               </Field2>
-              <Field2 label="Source of Repayment" required>
+              <Field2 label="Source of Repayment" required source="Manual">
                 <Select value={sourceOfRepayment} onChange={setSourceOfRepayment} options={['Business Income','Rental Income','Investment Returns','Contract Revenue','Other'].map(r=>({value:r,label:r}))} placeholder="— Select —"/>
               </Field2>
-              <Field2 label="Primary Income Document">
+              <Field2 label="Primary Income Document" source="OCR">
                 <Select value={primaryIncomeDoc} onChange={setPrimaryIncomeDoc} options={['Audited Financial Statement','Management Accounts','Bank Statements (6 months)','Form B / BE','Form C (Company Tax)'].map(r=>({value:r,label:r}))} placeholder="— Select —"/>
               </Field2>
             </div>
@@ -1018,15 +1079,15 @@ export default function ApplicationForm() {
           <div id="addressReg" className="scroll-mt-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <Field2 label="Registered Address Line 1" required>
+                <Field2 label="Registered Address Line 1" required source="SSM">
                   <Input value={regAddr1} onChange={setRegAddr1} placeholder="Street address from SSM" readOnly={corpLocked && !!regAddr1}/>
                 </Field2>
               </div>
-              <Field2 label="City" required><Input value={regCity} onChange={setRegCity} placeholder="e.g. Kuala Lumpur"/></Field2>
-              <Field2 label="State" required>
+              <Field2 label="City" required source="SSM"><Input value={regCity} onChange={setRegCity} placeholder="e.g. Kuala Lumpur"/></Field2>
+              <Field2 label="State" required source="SSM">
                 <Select value={regState} onChange={setRegState} options={MY_STATES.map(s=>({value:s,label:s}))} placeholder="— Select —"/>
               </Field2>
-              <Field2 label="Postcode" required><Input value={regPostal} onChange={setRegPostal} placeholder="e.g. 50100"/></Field2>
+              <Field2 label="Postcode" required source="SSM"><Input value={regPostal} onChange={setRegPostal} placeholder="e.g. 50100"/></Field2>
             </div>
           </div>
         </SubSection>
@@ -1124,7 +1185,10 @@ export default function ApplicationForm() {
               </div>
             )}
             <div className="flex justify-between items-center mb-3">
-              <span className="text-xs text-gray-500">{expertianFetched?`${directors.length} record(s) from Experian/SSM`:'Not yet fetched'}</span>
+              <span className="text-xs text-gray-500 flex items-center gap-1">
+                {expertianFetched ? `${directors.length} record(s)` : 'Not yet fetched'}
+                {expertianFetched && <SourceTag src="Experian"/>}
+              </span>
               <div className="flex gap-2">
                 {!expertianFetched && corpLocked && (
                   <button onClick={fetchExperian} disabled={experianLoading} className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 disabled:opacity-50">
@@ -1134,6 +1198,20 @@ export default function ApplicationForm() {
                 <button onClick={()=>{ const id='m'+Date.now(); setDirectors(ds=>[...ds,{ id, name:'', icNo:'', nationality:'Malaysia', sharePercent:0, isCorporate:false, roles:['Director'], isUBO:false, isSignatory:false, isGuarantor:false }]); }} className="px-3 py-1.5 border border-gray-300 text-xs rounded hover:bg-gray-50">+ Add Manual</button>
               </div>
             </div>
+
+            {/* Drill-down requirement notice for A/C/F/G/H */}
+            {needsDrillDown && corpDirs.length > 0 && !drillComplete && (
+              <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-start gap-1.5">
+                <span className="flex-shrink-0">🔴</span>
+                <span><strong>UBO Penetration Required (Entity {et}):</strong> Corporate shareholder(s) must be drilled-down to natural person(s) with &gt;25% effective shareholding or actual control. Click <strong>⊕ Drill-down</strong> for each corporate row.</span>
+              </div>
+            )}
+            {!hasSignatory && directors.length > 0 && (
+              <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700 flex items-start gap-1.5">
+                <span>⚠</span>
+                <span><strong>Signatory Required:</strong> At least one person must be designated as Signatory before submission. {et==='E'?'All Partners must co-sign for Partnership.':''}</span>
+              </div>
+            )}
 
             {directors.length>0 && (
               <div className="overflow-x-auto">
@@ -1151,7 +1229,7 @@ export default function ApplicationForm() {
                   </thead>
                   <tbody>
                     {directors.map(d=>(
-                      <tr key={d.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <tr key={d.id} className={`border-b border-gray-100 hover:bg-gray-50 ${needsDrillDown && d.isCorporate && !drilledDirectors.has(d.id) ? 'bg-red-50' : ''}`}>
                         <td className="py-2 px-2">
                           {d.isCorporate
                             ? <span className="text-purple-700 font-medium">{d.name||'(name)'}</span>
@@ -1159,6 +1237,7 @@ export default function ApplicationForm() {
                           }
                           <div className="text-gray-400">{d.icNo}</div>
                           {d.isCorporate && <Badge label="Corporate" color="purple"/>}
+                          {d.isCorporate && drilledDirectors.has(d.id) && <Badge label="✓ Drilled" color="green"/>}
                         </td>
                         <td className="py-2 px-2">{d.roles.join(', ')}</td>
                         <td className="py-2 px-2 text-center">
@@ -1171,17 +1250,25 @@ export default function ApplicationForm() {
                           }
                         </td>
                         <td className="py-2 px-2 text-center">
-                          <input type="checkbox" checked={d.isSignatory} onChange={()=>toggleSignatory(d.id)} className="cursor-pointer"/>
+                          {et === 'E'
+                            ? <input type="checkbox" checked={d.isSignatory} readOnly className="cursor-not-allowed opacity-70" title="All Partners must co-sign"/>
+                            : <input type="checkbox" checked={d.isSignatory} onChange={()=>toggleSignatory(d.id)} className="cursor-pointer"/>
+                          }
                         </td>
                         <td className="py-2 px-2 text-center">
                           {d.isCorporate
                             ? <span className="text-gray-300">—</span>
-                            : <input type="checkbox" checked={d.isGuarantor} onChange={()=>toggleGuarantorFromDir(d.id)} className="cursor-pointer"/>
+                            : et === 'E'
+                              ? <input type="checkbox" checked={d.isGuarantor} readOnly className="cursor-not-allowed opacity-70" title="All Partners are guarantors for Partnership"/>
+                              : <input type="checkbox" checked={d.isGuarantor} onChange={()=>toggleGuarantorFromDir(d.id)} className="cursor-pointer"/>
                           }
                         </td>
                         <td className="py-2 px-2">
                           {d.isCorporate && (
-                            <button onClick={()=>{ setDrillTarget(d); setShowDrillDown(true); }} className="text-blue-600 hover:underline text-xs">⊕ Drill-down</button>
+                            <button onClick={()=>{ setDrillTarget(d); setShowDrillDown(true); }}
+                              className={`text-xs hover:underline ${needsDrillDown && !drilledDirectors.has(d.id) ? 'text-red-600 font-semibold' : 'text-blue-600'}`}>
+                              ⊕ Drill-down{needsDrillDown && !drilledDirectors.has(d.id) ? ' ⚠' : ''}
+                            </button>
                           )}
                         </td>
                       </tr>
@@ -1229,7 +1316,10 @@ export default function ApplicationForm() {
         {/* Applicant Income */}
         <SubSection title="Applicant Income">
           <div id="applicantIncome" className="scroll-mt-4">
-            <p className="text-xs text-gray-400 mb-3">Enterprise income — used in DSR/DSCR calculation with Guarantor(s) income</p>
+            <div className="flex items-center gap-2 mb-3">
+              <p className="text-xs text-gray-400">Enterprise income — used in DSR/DSCR calculation with Guarantor(s) income only</p>
+              <SourceTag src="OCR"/>
+            </div>
             <div className="overflow-x-auto mb-4">
               <table className="w-full text-xs border border-gray-200 rounded">
                 <thead className="bg-gray-50">
@@ -1255,7 +1345,7 @@ export default function ApplicationForm() {
               </table>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <Field2 label="Monthly Net Declared Income (RM)" required>
+              <Field2 label="Monthly Net Declared Income (RM)" required source="Manual">
                 <Input value={bizNetIncome} onChange={setBizNetIncome} placeholder="System-calculated or manual"/>
               </Field2>
             </div>
@@ -1317,17 +1407,25 @@ export default function ApplicationForm() {
   function IncomeSummarySection() {
     return (
       <SectionPanel id="incomeSummary" icon="💰" title="Income Summary">
+        {/* Income aggregation rule notice */}
+        <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700 flex items-start gap-1.5">
+          <span>ℹ</span>
+          <span><strong>Aggregation scope:</strong> DSR base = Main Applicant (Enterprise) + Guarantor(s) income only. UBO, Director (non-guarantor), and Shareholder income are <strong>excluded</strong>.</span>
+        </div>
         <div className="mt-3 grid grid-cols-3 gap-4">
           <div className="bg-gray-50 rounded p-3 text-center">
-            <p className="text-xs text-gray-400 mb-1">Enterprise Monthly Net Income</p>
+            <p className="text-xs text-gray-400 mb-1">Main Applicant (Enterprise)</p>
+            <p className="text-xs text-gray-300 mb-1">Monthly Net Income</p>
             <p className="text-lg font-bold text-gray-800">RM {corpIncome.toLocaleString()}</p>
           </div>
           <div className="bg-gray-50 rounded p-3 text-center">
-            <p className="text-xs text-gray-400 mb-1">Guarantor(s) Total Income</p>
+            <p className="text-xs text-gray-400 mb-1">Guarantor(s) Combined</p>
+            <p className="text-xs text-gray-300 mb-1">{guarantors.length} guarantor(s)</p>
             <p className="text-lg font-bold text-gray-800">RM {gIncome.toLocaleString()}</p>
           </div>
-          <div className="bg-gray-50 rounded p-3 text-center">
-            <p className="text-xs text-gray-400 mb-1">Combined Income (DSR Base)</p>
+          <div className="bg-blue-50 rounded p-3 text-center border border-blue-200">
+            <p className="text-xs text-blue-500 mb-1">DSR Base (Combined)</p>
+            <p className="text-xs text-blue-300 mb-1">Main Applicant + Guarantors</p>
             <p className="text-lg font-bold text-blue-700">RM {totalIncome.toLocaleString()}</p>
           </div>
         </div>
@@ -1346,7 +1444,6 @@ export default function ApplicationForm() {
           </div>
           <Badge label={dsr===0?'—':dsr<=60?'Pass':'Fail'} color={dsr===0?'gray':dsr<=60?'green':'red'}/>
         </div>
-        <p className="text-xs text-gray-400 mt-2">Note: UBO, Director (non-guarantor), Shareholder income is NOT included in DSR calculation.</p>
       </SectionPanel>
     );
   }
@@ -1400,7 +1497,7 @@ export default function ApplicationForm() {
               <Field2 label="Year of Manufacture" required>
                 <Select value={vehicleYear} onChange={setVehicleYear} options={yearOptions} placeholder="— Year —"/>
               </Field2>
-              <Field2 label="Indicative Price / MSRP (RM)">
+              <Field2 label="Indicative Price / MSRP (RM)" source="System">
                 <Input value={vehicleMSRP} onChange={setVehicleMSRP} placeholder="Auto-filled from FIS"/>
               </Field2>
               <Field2 label="VIN / Chassis No.">
@@ -1603,20 +1700,30 @@ export default function ApplicationForm() {
             <div className="border border-green-200 bg-green-50 rounded p-3">
               <p className="text-xs text-green-700 font-semibold mb-2">✓ Next-level shareholders found:</p>
               <div className="text-xs text-gray-600">
-                <div className="flex items-center justify-between py-1 border-b border-green-100">
-                  <span>CHAN WEI KIAT — 70%</span>
-                  <div className="flex gap-2">
+                {[
+                  { name:'CHAN WEI KIAT', icNo:'810301-14-9999', pct:0.70 },
+                  { name:'LIM AH KOW',   icNo:'850615-07-1234', pct:0.30 },
+                ].map(person=>(
+                  <div key={person.name} className="flex items-center justify-between py-1 border-b border-green-100 last:border-0">
+                    <span>{person.name} — {Math.round(drillTarget.sharePercent * person.pct)}%</span>
                     <button onClick={()=>{
-                      const id='ubo_dd'+Date.now();
-                      setUbos(prev=>[...prev,{ id, name:'CHAN WEI KIAT', icNo:'810301-14-9999', nationality:'Malaysia', sharePercent:drillTarget.sharePercent*0.7, source:'Drill-down via '+drillTarget.name }]);
+                      const id = 'ubo_dd'+Date.now();
+                      setUbos(prev=>[...prev,{
+                        id, name:person.name, icNo:person.icNo, nationality:'Malaysia',
+                        sharePercent: Math.round(drillTarget.sharePercent * person.pct),
+                        source: 'Drill-down via '+drillTarget.name,
+                      }]);
+                      setDrilledDirectors(prev=>{ const n=new Set(prev); n.add(drillTarget.id); return n; });
                       setShowDrillDown(false); setDrillTarget(null);
                     }} className="text-blue-600 hover:underline">Set as UBO</button>
                   </div>
-                </div>
-                <div className="flex items-center justify-between py-1">
-                  <span>LIM AH KOW — 30%</span>
-                  <button className="text-gray-400 text-xs">Set as UBO</button>
-                </div>
+                ))}
+                <button onClick={()=>{
+                  setDrilledDirectors(prev=>{ const n=new Set(prev); n.add(drillTarget.id); return n; });
+                  setShowDrillDown(false); setDrillTarget(null);
+                }} className="mt-2 w-full text-center text-xs text-green-700 font-semibold hover:underline">
+                  ✓ Mark drill-down complete (no additional UBO)
+                </button>
               </div>
             </div>
           )}
@@ -1632,7 +1739,7 @@ export default function ApplicationForm() {
   // (using JSX inline above works; extended version if needed)
 
   // ─── Render ────────────────────────────────────────────────────────────────
-  const canSubmit = corpLocked && !!enterpriseType && !!loanAmount && !!tenureMonths && !!vehicleMake;
+  const canSubmit = corpLocked && !!enterpriseType && !!loanAmount && !!tenureMonths && !!vehicleMake && hasSignatory && mandatoryGuarSatisfied;
   const missingList = [
     !corpLocked && 'Company not locked',
     !enterpriseType && 'Enterprise Type',
@@ -1640,6 +1747,9 @@ export default function ApplicationForm() {
     !loanAmount && 'Loan Amount',
     !tenureMonths && 'Tenure',
     !vehicleMake && 'Vehicle',
+    (!!enterpriseType && !hasSignatory) && 'At least 1 Signatory required',
+    gr?.mandatory && guarantors.length === 0 && `${gr.type} Guarantor required (${gr.desc.split(' ')[0]})`,
+    (needsDrillDown && !drillComplete) && 'UBO Drill-down incomplete for corporate shareholder(s)',
   ].filter(Boolean) as string[];
 
   return (
