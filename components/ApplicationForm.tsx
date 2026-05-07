@@ -447,6 +447,33 @@ export default function ApplicationForm() {
   const effConstitution = constitution || derivedConstitution;
   const effBasicGroup   = basicGroup   || derivedBasicGroup;
 
+  // UBO auto-bind for D (Sole Prop), E (Partnership), L (East MY SE)
+  useEffect(() => {
+    if (!enterpriseType || !directors.length) return;
+    const rule = UBO_RULES[enterpriseType as EntityCode];
+    if (rule?.mode !== 'auto') return;
+    // Mark all natural persons as UBO and Signatory (for E, all partners co-sign)
+    const isPartnership = enterpriseType === 'E';
+    setDirectors(ds => ds.map(d => ({
+      ...d,
+      isUBO: d.isCorporate ? false : true,
+      isSignatory: isPartnership ? !d.isCorporate : d.isSignatory,
+    })));
+    setUbos(prev => {
+      const naturalPersons = directors.filter(d => !d.isCorporate);
+      const autoIds = new Set(naturalPersons.map(d => d.id));
+      const manualUbos = prev.filter(u => !autoIds.has(u.id));
+      return [
+        ...manualUbos,
+        ...naturalPersons.map(d => ({
+          id: d.id, name: d.name, icNo: d.icNo, nationality: d.nationality,
+          sharePercent: d.sharePercent, source: 'Auto (Entity Type)',
+        })),
+      ];
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enterpriseType]);
+
   // Monthly instalment
   const principal = parseFloat(loanAmount)||0;
   const months    = parseInt(tenureMonths)||1;
@@ -655,13 +682,20 @@ export default function ApplicationForm() {
             <div><span className="text-gray-400 block text-xs">Vehicle</span><span className="font-medium">{vehicleMake&&vehicleModel?`${vehicleMake} ${vehicleModel}`:'—'}</span></div>
             <div><span className="text-gray-400 block text-xs">Approved Tenure</span><span className="font-medium">{tenureMonths?`${tenureMonths} Months`:'—'}</span></div>
           </div>
+          {/* Non-Individual: no E-Consent notice */}
+          {appType==='Non-Individual' && (
+            <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700 flex items-start gap-2">
+              <span>⚠</span>
+              <span><strong>Non-Individual:</strong> E-Consent / E-Acceptance does NOT apply. All agreements must be executed via manual offline paper signing by the authorised Signatory.</span>
+            </div>
+          )}
           {/* Readiness indicators */}
           <div className="mt-4 grid grid-cols-4 gap-3">
             {[
-              { label:'Risk Ready', ok: corpLocked && !!enterpriseType && !!corpTIN },
-              { label:'CED Ready',  ok: directors.length>0 && ubos.length>0 },
-              { label:'BNM Ready',  ok: !!effConstitution && !!effBasicGroup && !!corpTIN },
-              { label:'Disbursement Awareness', ok: !!vehicleMake && !!loanAmount },
+              { label:'Risk Ready',    ok: corpLocked && !!enterpriseType && !!corpTIN && !!loanAmount && !!vehicleMake },
+              { label:'CED Ready',     ok: directors.length>0 && ubos.length>0 && !!sourceOfRepayment },
+              { label:'BNM Ready',     ok: !!effConstitution && !!effBasicGroup && !!corpTIN && ubos.length>0 },
+              { label:'Disbursement Ready', ok: directors.some(d=>d.isSignatory) && !!vehicleMake && !!loanAmount },
             ].map(r=>(
               <div key={r.label} className={`rounded p-2 text-xs border ${r.ok?'border-green-200 bg-green-50 text-green-700':'border-gray-200 bg-gray-50 text-gray-500'}`}>
                 <span className="mr-1">{r.ok?'✓':'○'}</span>{r.label}
@@ -1526,6 +1560,14 @@ export default function ApplicationForm() {
             <button onClick={()=>{ setShowAddGuar(false); setNewGuar({}); }} className="px-4 py-2 border border-gray-300 rounded text-sm">Cancel</button>
             <button onClick={()=>{
               if (newGuar.name && newGuar.icNo) {
+                // Age check from IC (format: YYMMDD-PP-XXXX)
+                const ic = (newGuar.icNo||'').replace(/[-\s]/g,'');
+                const yymmdd = ic.substring(0,6);
+                if (yymmdd.length===6) {
+                  const yy=parseInt(yymmdd.substring(0,2)); const yr=yy<=26?2000+yy:1900+yy;
+                  const age=new Date().getFullYear()-yr;
+                  if (age<18||age>75) { alert(`Guarantor age (${age}) must be between 18 and 75.`); return; }
+                }
                 const id='g'+Date.now();
                 setGuarantors(gs=>[...gs,{ id, name:newGuar.name!, icNo:newGuar.icNo!, nationality:'Malaysia', relationship:newGuar.relationship||'Guarantor', cifStatus:'ok', income:newGuar.income||0 }]);
                 setShowAddGuar(false); setNewGuar({});
@@ -1604,7 +1646,7 @@ export default function ApplicationForm() {
     <div className="flex h-screen bg-gray-100 text-gray-800 text-sm font-sans overflow-hidden">
       {/* ── Left Navigation ── */}
       <div className="w-[260px] flex-shrink-0 bg-white border-r border-gray-200 overflow-y-auto">
-        <NavSidebar/>
+        {NavSidebar()}
       </div>
 
       {/* ── Main Content ── */}
@@ -1617,16 +1659,16 @@ export default function ApplicationForm() {
 
         {/* Scrollable sections */}
         <div className="flex-1 overflow-y-auto p-4">
-          <ProcessSummarySection/>
-          <IdentitySection/>
-          <AppDetailsSection/>
-          {appType==='Non-Individual' && <ApplicantInfoSection/>}
-          <GuarantorSection/>
-          <IncomeSummarySection/>
-          <AssetSection/>
-          <CollateralSection/>
-          <FacilitySection/>
-          <RiskSection/>
+          {ProcessSummarySection()}
+          {IdentitySection()}
+          {AppDetailsSection()}
+          {appType==='Non-Individual' && ApplicantInfoSection()}
+          {GuarantorSection()}
+          {IncomeSummarySection()}
+          {AssetSection()}
+          {CollateralSection()}
+          {FacilitySection()}
+          {RiskSection()}
         </div>
 
         {/* ── Bottom Action Bar ── */}
@@ -1648,12 +1690,12 @@ export default function ApplicationForm() {
 
       {/* ── Right Panel ── */}
       <div className="w-[280px] flex-shrink-0 bg-white border-l border-gray-200 overflow-y-auto">
-        <RightPanel/>
+        {RightPanel()}
       </div>
 
       {/* Modals */}
-      <AddGuarantorModal/>
-      <DrillDownModal/>
+      {AddGuarantorModal()}
+      {DrillDownModal()}
     </div>
   );
 }
