@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AppType = 'Individual' | 'Non-Individual';
-type EntityCode = 'A'|'B'|'C'|'D'|'E'|'F'|'G'|'H'|'L';
+type EntityCode = 'A'|'B'|'C'|'D'|'E'|'F'|'G'|'H'|'J'|'K'|'L';
 type StepStatus = 'idle'|'active'|'complete'|'error';
 type UBOMode = 'auto'|'manual'|'exempt';
 type GuarantorRequirement = 'PG'|'CG'|'PG_or_CG'|'none';
@@ -30,44 +30,55 @@ interface Guarantor {
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ENTITY_TYPES = [
   { value:'A', label:'A – Sdn Bhd (Private Limited)' },
-  { value:'B', label:'B – Berhad (Public Limited)' },
+  { value:'B', label:'B – Berhad (Public Listed)' },
   { value:'C', label:'C – Branch of Foreign Company' },
   { value:'D', label:'D – Sole Proprietorship' },
   { value:'E', label:'E – Partnership' },
   { value:'F', label:'F – Local PLT (LLP)' },
   { value:'G', label:'G – Foreign LLP' },
   { value:'H', label:'H – Professional LLP' },
+  { value:'J', label:'J – Society / Association / Club' },
+  { value:'K', label:'K – Government / Statutory Body' },
   { value:'L', label:'L – East Malaysia Special Enterprise' },
 ];
 
 const ENTITY_TO_CONSTITUTION: Record<EntityCode,string> = {
-  A:'R', B:'U', C:'O', D:'S', E:'P', F:'O', G:'O', H:'O', L:'S',
+  A:'R', B:'U', C:'O', D:'S', E:'P', F:'O', G:'O', H:'O', J:'A', K:'G', L:'S',
 };
+// J→ 'A' (Assoc/School/Society); K→ 'G' (Government Body)
 const ENTITY_TO_BASIC_GROUP: Record<EntityCode,string> = {
   A:'24.0', B:'24.0', C:'24.0', D:'21.0', E:'22.0',
-  F:'26.0', G:'26.0', H:'26.0', L:'21.0',
+  F:'26.0', G:'26.0', H:'26.0', J:'43.0', K:'31.0', L:'21.0',
 };
+// J→ 43.0 (Societies/Associations); K→ 31.0 (Federal Government) — may be 34.0 for Statutory Bodies, pending backend config
+// [⚠ PENDING CONFIRMATION] A类 1-2 directors PG mandatory rule is still under business confirmation per V3 §17.
+// [NOTE] E类 changed to mandatory:true per V3 Step 11.1 "全体 Partner/Owner 必须录入" and 06_角色体系 (all Partners = Guarantors).
 const ENTITY_GUARANTOR: Record<EntityCode,{ type:GuarantorRequirement; mandatory:boolean; desc:string; signatories:string }> = {
-  A:{ type:'PG', mandatory:true,  desc:'1–2 director(s) Personal Guarantee', signatories:'BR-authorised Director(s)' },
+  A:{ type:'PG', mandatory:true,  desc:'1–2 director(s) Personal Guarantee (pending final business confirmation)', signatories:'BR-authorised Director(s)' },
   B:{ type:'PG', mandatory:false, desc:'Usually waived for listed Bhd; required for smaller Bhd', signatories:'BR-authorised Senior Officer' },
-  C:{ type:'CG', mandatory:true,  desc:'Overseas parent Corporate Guarantee required', signatories:'Local authorised representative' },
-  D:{ type:'none', mandatory:false, desc:'No guarantor — Owner bears unlimited liability', signatories:'Owner (natural person)' },
-  E:{ type:'none', mandatory:false, desc:'No extra guarantor — all Partners joint & several liability', signatories:'All Partners must co-sign' },
-  F:{ type:'PG', mandatory:true,  desc:'Core Partners Personal Guarantee', signatories:'Compliance Officer or authorised Partner' },
-  G:{ type:'PG_or_CG', mandatory:true, desc:'Overseas Partner PG or Parent CG (either)', signatories:'Local authorised representative' },
-  H:{ type:'PG', mandatory:true,  desc:'Core Professional Partners PG (valid practising cert required)', signatories:'Authorised practising Partner' },
-  L:{ type:'none', mandatory:false, desc:'No guarantor — Licensee bears unlimited liability', signatories:'Licensee (natural person)' },
+  C:{ type:'CG', mandatory:true,  desc:'Overseas parent Corporate Guarantee or local authorised representative PG', signatories:'Local authorised representative' },
+  D:{ type:'none', mandatory:false, desc:'No additional guarantor — Owner bears unlimited personal liability', signatories:'Owner (natural person)' },
+  E:{ type:'PG', mandatory:true,  desc:'All Partners must provide Personal Guarantee (joint & several unlimited liability)', signatories:'All Partners must co-sign' },
+  F:{ type:'PG', mandatory:true,  desc:'Core Partners Personal Guarantee (>25% profit distribution right)', signatories:'Compliance Officer or authorised Partner' },
+  G:{ type:'PG_or_CG', mandatory:true, desc:'Overseas Partner PG or Overseas Parent Corporate Guarantee (either accepted)', signatories:'Local authorised representative' },
+  H:{ type:'PG', mandatory:true,  desc:'Core Professional Partners PG (valid practising certificate required)', signatories:'Authorised practising Partner' },
+  J:{ type:'PG', mandatory:true,  desc:'Key committee members Personal Guarantee', signatories:'Committee-authorised member' },
+  K:{ type:'none', mandatory:false, desc:'No guarantor — Government / Statutory Body exempted', signatories:'Ministry of Finance authorised officer' },
+  L:{ type:'none', mandatory:false, desc:'No additional guarantor — Licensee bears unlimited personal liability', signatories:'Licensee (natural person)' },
 };
+// J uses 'manual' mode but is committee-position confirmation, not shareholding drill-down.
 const UBO_RULES: Record<EntityCode,{ mode:UBOMode; desc:string }> = {
-  A:{ mode:'manual', desc:'Penetrate to natural person >25% shareholding or actual control' },
-  B:{ mode:'exempt', desc:'Listed – Top 5 simplified / exemption applicable' },
-  C:{ mode:'manual', desc:'Cross-border penetration to overseas parent natural person' },
-  D:{ mode:'auto',   desc:'Owner auto-tagged as UBO (unlimited liability)' },
-  E:{ mode:'auto',   desc:'All Partners auto-tagged as UBO' },
-  F:{ mode:'manual', desc:'Penetrate to Partner >25% profit distribution right' },
-  G:{ mode:'manual', desc:'Cross-border penetration to overseas parent' },
-  H:{ mode:'manual', desc:'Practising Partner >25%' },
-  L:{ mode:'auto',   desc:'Licensee auto-tagged as UBO' },
+  A:{ mode:'manual', desc:'Mandatory penetration to natural person(s) with >25% shareholding or actual control' },
+  B:{ mode:'exempt', desc:'Listed Berhad – Top 5 simplified or full exemption applicable (pending AML/compliance confirmation)' },
+  C:{ mode:'manual', desc:'Cross-border penetration required to overseas parent natural person / controller' },
+  D:{ mode:'auto',   desc:'Owner auto-tagged as UBO — unlimited personal liability (no manual action needed)' },
+  E:{ mode:'auto',   desc:'All Partners auto-tagged as UBO — unlimited joint liability (no manual action needed)' },
+  F:{ mode:'manual', desc:'Penetrate to Partner(s) with >25% profit distribution right' },
+  G:{ mode:'manual', desc:'Cross-border penetration to overseas parent natural person / controller' },
+  H:{ mode:'manual', desc:'Penetrate to practising Partner(s) with >25% profit distribution' },
+  J:{ mode:'manual', desc:'Committee position confirmation: select UBO from committee member list (Society class)' },
+  K:{ mode:'exempt', desc:'Government / Statutory Body — UBO penetration fully exempted' },
+  L:{ mode:'auto',   desc:'Licensee auto-tagged as UBO — unlimited personal liability (no manual action needed)' },
 };
 
 const CONSTITUTION_OPTIONS = [
@@ -272,8 +283,8 @@ const NAV_ITEMS: NavItem[] = [
       { id:'companyBasic',    label:'Company Basic Information' },
       { id:'companyProfile',  label:'Company Profile' },
       { id:'classification',  label:'Customer Classification' },
-      { id:'addressReg',      label:'Address Information' },
-      { id:'addressBiz',      label:'Address Information' },
+      { id:'addressReg',      label:'Registered Address' },
+      { id:'addressBiz',      label:'Business Address' },
       { id:'email',           label:'Email information' },
       { id:'contact',         label:'Contact Person' },
       { id:'confirmation',    label:'Confirmation' },
@@ -411,7 +422,9 @@ export default function ApplicationForm() {
   const [contactPhone, setContactPhone] = useState('');
   const [contactEmail, setContactEmail] = useState('');
 
-  // ── Confirmation / AML
+  // ── Confirmation / AML (V3 Step 3 合规确认: PEP, RCA, complex structure, nominee, face-to-face)
+  const [pepFlag,            setPepFlag]            = useState('');
+  const [rcaToPep,           setRcaToPep]           = useState('');
   const [complexStructure,   setComplexStructure]   = useState('');
   const [nomineeShares,      setNomineeShares]      = useState('');
   const [isFaceToFace,       setIsFaceToFace]       = useState('');
@@ -467,6 +480,11 @@ export default function ApplicationForm() {
   const effConstitution = constitution || derivedConstitution;
   const effBasicGroup   = basicGroup   || derivedBasicGroup;
 
+  // Years in Operation — auto-calculated from establishment date
+  const yearsInOperation = corpEstDate
+    ? Math.floor((Date.now() - new Date(corpEstDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    : null;
+
   // Signatory, drill-down, guarantor checks
   const hasSignatory = directors.some(d => d.isSignatory);
   const drillRequiredEntities: EntityCode[] = ['A','C','F','G','H'];
@@ -488,13 +506,16 @@ export default function ApplicationForm() {
     if (!directors.length && rule?.mode !== 'exempt') return;
 
     if (rule?.mode === 'auto') {
-      const isPartnership = enterpriseType === 'E';
-      // D/E/L: mark all natural persons as UBO; for E also force Signatory + Guarantor
+      const isE = enterpriseType === 'E';
+      // D: Owner is Signatory (unlimited liability, sole owner = sole signatory)
+      // E: All Partners are UBO + Signatory + Guarantor (joint & several unlimited liability)
+      // L: Licensee is Signatory (East MY special enterprise)
+      const autoSignatory = (et: string) => et === 'D' || et === 'E' || et === 'L';
       setDirectors(ds => ds.map(d => ({
         ...d,
         isUBO:       !d.isCorporate,
-        isSignatory: isPartnership ? !d.isCorporate : d.isSignatory,
-        isGuarantor: isPartnership ? !d.isCorporate : d.isGuarantor,
+        isSignatory: autoSignatory(enterpriseType) ? !d.isCorporate : d.isSignatory,
+        isGuarantor: isE ? !d.isCorporate : d.isGuarantor,
       })));
       setUbos(prev => {
         const naturalPersons = directors.filter(d => !d.isCorporate);
@@ -812,13 +833,18 @@ export default function ApplicationForm() {
               )}
             </div>
           </Field2>
-          {(appType==='Non-Individual'||idType2) && (
+          {appType==='Non-Individual' && (
             <>
-              <Field2 label="ID Type 2">
-                <Select value={idType2} onChange={setIdType2} options={[{value:'',label:'— Select —'},{value:'OldBR',label:'Old BR No.'},{value:'FormerIC',label:'Former IC No.'}]}/>
+              <Field2 label="ID Type 2 (Old / Previous)">
+                <Select value={idType2} onChange={setIdType2} options={[
+                  {value:'',      label:'— Not applicable —'},
+                  {value:'OldBR', label:'Old Business Registration No.'},
+                  {value:'OldIC', label:'Old Registration Certificate No.'},
+                  {value:'FR',    label:'Form of Registration (FR)'},
+                ]}/>
               </Field2>
-              <Field2 label="ID Number 2">
-                <Input value={idNo2} onChange={setIdNo2} placeholder="Old registration number" readOnly={corpLocked}/>
+              <Field2 label="Old / Previous Reg. No.">
+                <Input value={idNo2} onChange={setIdNo2} placeholder="e.g. old SSM / BR number" readOnly={corpLocked}/>
               </Field2>
             </>
           )}
@@ -950,8 +976,16 @@ export default function ApplicationForm() {
                 </div>
               </Field2>
               <Field2 label="Establishment Date" required source="SSM">
-                <Input value={corpEstDate} onChange={setCorpEstDate} placeholder="YYYY-MM-DD"/>
+                <Input value={corpEstDate} onChange={setCorpEstDate} placeholder="YYYY-MM-DD" readOnly={corpLocked && !!corpEstDate}/>
               </Field2>
+              <Field2 label="Years in Operation" source="System">
+                <Input value={yearsInOperation !== null ? `${yearsInOperation} year(s)` : '—'} readOnly/>
+              </Field2>
+              {idNo2 && (
+                <Field2 label="Old / Previous Reg. No." source="SSM">
+                  <Input value={idNo2} readOnly/>
+                </Field2>
+              )}
               <Field2 label="Database Income" source="System">
                 <Badge label="No Record" color="red"/>
               </Field2>
@@ -1128,25 +1162,51 @@ export default function ApplicationForm() {
           </div>
         </SubSection>
 
-        {/* Confirmation / AML Compliance */}
-        <SubSection title="Confirmation">
+        {/* Confirmation / AML Compliance — V3 Step 3 合规确认 */}
+        <SubSection title="Compliance & AML Confirmation">
           <div id="confirmation" className="scroll-mt-4">
+            <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+              ℹ AML/CDD scope covers all related natural persons: Directors, UBOs, Guarantors and their associates.
+            </div>
             <div className="space-y-4">
+              {/* PEP */}
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-1">1. Does the customer have complex ownership/control structure?</p>
+                <p className="text-sm font-medium text-gray-700 mb-1">1. Is any director, UBO, guarantor or key controller a <strong>Politically Exposed Person (PEP)</strong>?</p>
+                <RadioGroup value={pepFlag} onChange={setPepFlag} options={['Yes','No','Unknown']}/>
+                {pepFlag==='Yes' && (
+                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                    🚫 PEP identified — Enhanced Due Diligence (EDD) is mandatory. Senior Compliance approval required before submission.
+                  </div>
+                )}
+              </div>
+              {/* RCA to PEP */}
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-1">2. Is any related person a <strong>Related / Connected Associate to PEP (RCA)</strong>?</p>
+                <RadioGroup value={rcaToPep} onChange={setRcaToPep} options={['Yes','No','Unknown']}/>
+                {rcaToPep==='Yes' && (
+                  <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
+                    ⚠ RCA to PEP identified — additional risk assessment and documentation required.
+                  </div>
+                )}
+              </div>
+              {/* Complex Structure */}
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-1">3. Does the company have a complex ownership / control structure?</p>
                 <RadioGroup value={complexStructure} onChange={setComplexStructure} options={['Yes','No']}/>
-                {complexStructure==='Yes' && <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">⚠ Complex structure detected — Enhanced Due Diligence (EDD) required. Document all beneficial ownership layers.</div>}
+                {complexStructure==='Yes' && <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">⚠ Complex structure — document all beneficial ownership layers for EDD.</div>}
               </div>
+              {/* Nominee / Bearer Shares */}
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-1">2. Does the company have nominee / bearer shares?</p>
+                <p className="text-sm font-medium text-gray-700 mb-1">4. Does the company have nominee / bearer shares?</p>
                 <RadioGroup value={nomineeShares} onChange={setNomineeShares} options={['Yes','No']}/>
-                {nomineeShares==='Yes' && <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">🚫 High-risk indicator — Nominee/bearer shares require additional AML assessment and senior approval.</div>}
+                {nomineeShares==='Yes' && <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">🚫 High-risk indicator — nominee/bearer shares require additional AML assessment and senior approval.</div>}
               </div>
+              {/* Face-to-Face */}
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">3. Customer Identification — Face-to-Face?</p>
+                <p className="text-sm font-medium text-gray-700 mb-2">5. Customer identification conducted face-to-face?</p>
                 <RadioGroup value={isFaceToFace} onChange={setIsFaceToFace} options={['Yes','No']}/>
               </div>
-              {isFaceToFace && (
+              {isFaceToFace==='Yes' && (
                 <div className="grid grid-cols-2 gap-4 pl-4 border-l-2 border-blue-200">
                   <Field2 label="Date of Contact" required><Input value={dateOfContact} onChange={setDateOfContact} placeholder="YYYY-MM-DD"/></Field2>
                   <Field2 label="Mode of Contact" required>
@@ -1155,8 +1215,9 @@ export default function ApplicationForm() {
                   <Field2 label="Contacted By" required><Input value={contactedBy} onChange={setContactedBy} placeholder="Officer name"/></Field2>
                 </div>
               )}
+              {/* HP Intent Confirmation */}
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-1">4. Customer confirms intent to apply for HP financing?</p>
+                <p className="text-sm font-medium text-gray-700 mb-1">6. Customer confirms intent to apply for HP financing?</p>
                 <RadioGroup value={customerConfirmHP} onChange={setCustomerConfirmHP} options={['Yes','No']}/>
               </div>
               <div className="space-y-2 pt-2 border-t border-gray-100">
@@ -1176,12 +1237,33 @@ export default function ApplicationForm() {
         {/* Management & Shareholder */}
         <SubSection title="Management & Shareholder">
           <div id="management" className="scroll-mt-4">
-            {/* Guarantor rule banner */}
-            {gr && (
-              <div className={`mb-4 p-3 rounded border text-sm ${gr.mandatory?'bg-amber-50 border-amber-200 text-amber-800':'bg-blue-50 border-blue-200 text-blue-800'}`}>
-                <p className="font-semibold">{gr.mandatory?'⚠ Guarantor Required':'ℹ Guarantor Note'}: {gr.desc}</p>
-                <p className="text-xs mt-1">Signing Entity: {ENTITY_GUARANTOR[et]?.signatories}</p>
-                {et==='E' && <p className="text-xs mt-1 font-bold text-amber-700">⚠ Partnership: ALL Partners must co-sign — incomplete signing is legally void.</p>}
+            {/* Entity-specific person rules banner — per V3 Step 4–5 and 06_角色体系 */}
+            {et && (
+              <div className="mb-4 space-y-2">
+                {/* Who to record in this section */}
+                <div className="p-3 rounded border bg-blue-50 border-blue-200 text-xs text-blue-800">
+                  <p className="font-semibold mb-1">
+                    {et==='A'&&'Entity A (Sdn Bhd): Record Directors + Shareholders. Drill-down any corporate shareholder >25%.'}
+                    {et==='B'&&'Entity B (Berhad): Record Directors + Top Shareholders. UBO exempted (listed company).'}
+                    {et==='C'&&'Entity C (Foreign Branch): Record local authorised representative + overseas parent directors.'}
+                    {et==='D'&&'Entity D (Sole Prop): Record Owner only — Owner is automatically UBO + Signatory.'}
+                    {et==='E'&&'Entity E (Partnership): Record ALL Partners — each Partner is automatically UBO + Signatory + Guarantor (joint & several liability).'}
+                    {(et==='F'||et==='G'||et==='H')&&`Entity ${et} (PLT): Record all Partners. Partners with >25% profit distribution right will be flagged as UBO candidates.`}
+                    {et==='J'&&'Entity J (Society): Record key committee members (Chairman, Secretary, Treasurer, etc.). Select UBO from this list.'}
+                    {et==='K'&&'Entity K (Government): Record authorised officer(s). No UBO penetration required.'}
+                    {et==='L'&&'Entity L (East MY SE): Record Licensee — Licensee is automatically UBO + Signatory.'}
+                  </p>
+                  <p className="text-blue-600">Authorised Signatories: <strong>{ENTITY_GUARANTOR[et]?.signatories}</strong></p>
+                </div>
+                {/* Guarantor requirement */}
+                {gr && (
+                  <div className={`p-2 rounded border text-xs ${gr.mandatory?'bg-amber-50 border-amber-200 text-amber-700':'bg-gray-50 border-gray-200 text-gray-500'}`}>
+                    {gr.mandatory
+                      ? <span>⚠ <strong>Guarantor required:</strong> {gr.desc}. Add Guarantor from the person list below or via Guarantor Information section.</span>
+                      : <span>ℹ {gr.desc}</span>
+                    }
+                  </div>
+                )}
               </div>
             )}
             <div className="flex justify-between items-center mb-3">
@@ -1280,36 +1362,72 @@ export default function ApplicationForm() {
           </div>
         </SubSection>
 
-        {/* UBO Identification */}
+        {/* UBO Identification — display varies by entity type mode */}
         <SubSection title="UBO Identification">
           <div id="ubo" className="scroll-mt-4">
-            {uboRule && (
-              <div className={`mb-3 p-2 rounded text-xs border ${uboRule.mode==='exempt'?'bg-green-50 border-green-200 text-green-700':'bg-blue-50 border-blue-200 text-blue-700'}`}>
-                <span className="font-semibold">Rule ({uboRule.mode}): </span>{uboRule.desc}
+            {/* Mode: AUTO (D/E/L) — UBOs are auto-bound from Management, no manual action needed */}
+            {uboRule?.mode==='auto' && (
+              <div className="mb-3 p-3 rounded border bg-green-50 border-green-200 text-xs text-green-800">
+                <p className="font-semibold mb-1">✓ Auto-bound — UBO identified from Management & Shareholder</p>
+                <p>{uboRule.desc}</p>
+                <p className="mt-1 text-green-600">UBO list is automatically maintained. No manual entry required.</p>
               </div>
             )}
-            {ubos.length===0 && (
-              <p className="text-xs text-gray-400 italic">No UBO confirmed yet. Check boxes in Management table above, or add manually below.</p>
+            {/* Mode: EXEMPT (B/K) — no UBO penetration needed */}
+            {uboRule?.mode==='exempt' && (
+              <div className="mb-3 p-3 rounded border bg-gray-50 border-gray-200 text-xs text-gray-600">
+                <p className="font-semibold mb-1">○ UBO Penetration Exempted</p>
+                <p>{uboRule.desc}</p>
+                {ubos.filter(u=>u.source==='Exemption').length===0 && (
+                  <button onClick={()=>setUbos([{ id:'exempt', name:'EXEMPTED', icNo:'—', nationality:'—', sharePercent:0, source:'Exemption', exemptReason: et==='K'?'Government/Statutory Body exemption':'Listed Company – Top 5 simplified exemption' }])}
+                    className="mt-2 text-xs px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100">
+                    ✓ Record Exemption
+                  </button>
+                )}
+              </div>
+            )}
+            {/* Mode: MANUAL (A/C/F/G/H) — drill-down required */}
+            {uboRule?.mode==='manual' && et!=='J' && (
+              <div className="mb-3 p-2 rounded border bg-blue-50 border-blue-200 text-xs text-blue-800">
+                <p className="font-semibold">⊕ Manual UBO Penetration Required</p>
+                <p>{uboRule.desc}</p>
+                <p className="mt-1 text-blue-600">Use <strong>⊕ Drill-down</strong> on corporate shareholders above, then click <strong>Set as UBO</strong> for natural persons ≥25%.</p>
+              </div>
+            )}
+            {/* Mode: MANUAL (J — Society) — committee position selection */}
+            {uboRule?.mode==='manual' && et==='J' && (
+              <div className="mb-3 p-2 rounded border bg-blue-50 border-blue-200 text-xs text-blue-800">
+                <p className="font-semibold">Committee Position Confirmation (Society)</p>
+                <p>Select UBO(s) from the committee member list above by ticking the UBO checkbox. Typically: Chairman, Secretary, and Treasurer.</p>
+              </div>
+            )}
+            {/* UBO list */}
+            {ubos.length===0 && uboRule?.mode==='manual' && (
+              <p className="text-xs text-gray-400 italic mb-3">No UBO confirmed yet. Mark UBO from Management table above, or add manually below.</p>
             )}
             {ubos.map(u=>(
               <div key={u.id} className="flex items-center justify-between py-2 border-b border-gray-100 text-sm">
                 <div>
                   <span className="font-medium">{u.name}</span>
-                  <span className="text-gray-400 ml-2 text-xs">{u.icNo}</span>
-                  <span className="ml-2 text-xs text-gray-400">{u.sharePercent}% shareholding</span>
+                  {u.icNo && u.icNo!=='—' && <span className="text-gray-400 ml-2 text-xs">{u.icNo}</span>}
+                  {u.sharePercent>0 && <span className="ml-2 text-xs text-gray-400">{u.sharePercent}% effective shareholding</span>}
+                  {u.exemptReason && <span className="ml-2 text-xs text-green-600 italic">{u.exemptReason}</span>}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge label={u.source} color="blue"/>
-                  <button onClick={()=>setUbos(prev=>prev.filter(x=>x.id!==u.id))} className="text-red-400 hover:text-red-600 text-xs">✕</button>
+                  <Badge label={u.source} color={u.source==='Exemption'?'green':u.source.startsWith('Auto')?'amber':'blue'}/>
+                  {uboRule?.mode!=='auto' && (
+                    <button onClick={()=>setUbos(prev=>prev.filter(x=>x.id!==u.id))} className="text-red-400 hover:text-red-600 text-xs">✕</button>
+                  )}
                 </div>
               </div>
             ))}
-            <div className="flex gap-2 mt-3">
-              <button onClick={()=>{ const id='ubo'+Date.now(); setUbos(prev=>[...prev,{ id, name:'', icNo:'', nationality:'Malaysia', sharePercent:0, source:'Manual' }]); }} className="text-xs px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50">+ Add UBO Manually</button>
-              {uboRule?.mode==='exempt' && (
-                <button onClick={()=>setUbos([{ id:'exempt', name:'EXEMPTED', icNo:'—', nationality:'—', sharePercent:0, source:'Exemption', exemptReason:'Listed Company / Government Entity' }])} className="text-xs px-3 py-1.5 border border-green-300 text-green-600 rounded hover:bg-green-50">✓ Apply Exemption</button>
-              )}
-            </div>
+            {/* Add manual UBO button — only for manual mode */}
+            {uboRule?.mode==='manual' && (
+              <div className="flex gap-2 mt-3">
+                <button onClick={()=>{ const id='ubo'+Date.now(); setUbos(prev=>[...prev,{ id, name:'', icNo:'', nationality:'Malaysia', sharePercent:0, source:'Manual' }]); }}
+                  className="text-xs px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50">+ Add UBO Manually</button>
+              </div>
+            )}
           </div>
         </SubSection>
 
