@@ -345,10 +345,17 @@ export default function ApplicationForm() {
   function markError(id: string) {
     setStepStatus(s => ({ ...s, [id]: 'error' }));
   }
+  const scrollRef = useRef<HTMLDivElement>(null);
   function goTo(id: string) {
     setActiveSection(id);
     setStepStatus(s => ({ ...s, [id]: 'active' }));
-    document.getElementById(id)?.scrollIntoView({ behavior:'smooth', block:'start' });
+    const el = document.getElementById(id);
+    if (el && scrollRef.current) {
+      const container = scrollRef.current;
+      container.scrollTo({ top: el.offsetTop - container.offsetTop - 8, behavior: 'smooth' });
+    } else {
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   // ── Identity / Company Lock
@@ -582,6 +589,36 @@ export default function ApplicationForm() {
   // TIN validation
   function validateTIN(tin: string): boolean {
     return /^[A-Z]{1,2}[0-9]{7,12}$/.test(tin.replace(/-/g,''));
+  }
+
+  // CIF lookup (reverse search by CIF No.)
+  function doCIFLookup() {
+    if (!cifNo.trim()) return;
+    setLookupStatus('loading');
+    setCifStatus('loading');
+    setHpLineStatus('loading');
+    setTimeout(()=>{
+      if (cifNo === 'CIF-00123456') {
+        setCompanyName('GLOBAL TECH SDN BHD');
+        setIdNo1('202301234567');
+        setIdType1('SSM ID');
+        setCorpEstDate('2018-03-15');
+        setPaidUpCapital('500000');
+        const data = MOCK_SSM['202301234567'];
+        if (data) setDirectors(data.directors);
+        setRegAddr1('Level 12, Menara HLB, 94 Jalan Bangsar, 59100 KL');
+        setEtbStatus('ETB');
+        setEnterpriseType('A');
+        setExpertianFetched(true);
+        setLookupStatus('found');
+        setCifStatus('ok');
+        setTimeout(()=>setHpLineStatus('error'),400);
+      } else {
+        setLookupStatus('notfound');
+        setCifStatus('error');
+        setTimeout(()=>setHpLineStatus('error'),400);
+      }
+    }, 1500);
   }
 
   // SSM lookup
@@ -825,46 +862,82 @@ export default function ApplicationForm() {
             </div>
           </Field2>
         </div>
-        <div className="grid grid-cols-2 gap-4 mt-4">
-          <Field2 label="ID Type 1" required>
-            {appType==='Non-Individual'
-              ? <Select value={idType1} onChange={setIdType1} options={corpIdTypes}/>
-              : <Select value={idType1} onChange={setIdType1} options={[{value:'MyKad',label:'MyKad (Blue)'},{value:'Passport',label:'Passport'},{value:'MyPR',label:'MyPR (Red)'}]}/>
-            }
-          </Field2>
-          <Field2 label={appType==='Non-Individual'?'Registration Number *':'ID Number *'} required>
-            <div className="flex gap-2">
-              <Input value={idNo1} onChange={setIdNo1} placeholder={appType==='Non-Individual'?'e.g. 202301234567':'e.g. 980101-14-1234'} readOnly={corpLocked}/>
-              {!corpLocked && (
-                <button onClick={doSSMLookup} disabled={!idNo1||lookupStatus==='loading'} className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap">
-                  {lookupStatus==='loading'?'...':(appType==='Non-Individual'?'Check':'Search')}
-                </button>
-              )}
-            </div>
-          </Field2>
-          {appType==='Non-Individual' && (
-            <>
-              <Field2 label="ID Type 2 (Old / Previous)">
-                <Select value={idType2} onChange={setIdType2} options={[
-                  {value:'',      label:'— Not applicable —'},
-                  {value:'OldBR', label:'Old Business Registration No.'},
-                  {value:'OldIC', label:'Old Registration Certificate No.'},
-                  {value:'FR',    label:'Form of Registration (FR)'},
-                ]}/>
-              </Field2>
-              <Field2 label="Old / Previous Reg. No.">
-                <Input value={idNo2} onChange={setIdNo2} placeholder="e.g. old SSM / BR number" readOnly={corpLocked}/>
-              </Field2>
-            </>
-          )}
-        </div>
+        {/* ── CIF No. search mode ── */}
+        {searchBy === 'CIF No.' ? (
+          <div className="mt-4">
+            <Field2 label="CIF No." required>
+              <div className="flex gap-2">
+                <Input
+                  value={cifNo}
+                  onChange={setCifNo}
+                  placeholder="e.g. CIF-00123456"
+                  readOnly={corpLocked}
+                />
+                {!corpLocked && (
+                  <button
+                    onClick={doCIFLookup}
+                    disabled={!cifNo || lookupStatus==='loading'}
+                    className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {lookupStatus==='loading' ? '...' : 'CIF Lookup'}
+                  </button>
+                )}
+              </div>
+            </Field2>
+            <p className="mt-1 text-xs text-gray-400">Reverse lookup by CIF number — system will populate registration number and company details.</p>
+          </div>
+        ) : (
+          /* ── ID Number search mode ── */
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <Field2 label="ID Type 1" required>
+              {appType==='Non-Individual'
+                ? <Select value={idType1} onChange={setIdType1} options={corpIdTypes}/>
+                : <Select value={idType1} onChange={setIdType1} options={[{value:'MyKad',label:'MyKad (Blue)'},{value:'Passport',label:'Passport'},{value:'MyPR',label:'MyPR (Red)'}]}/>
+              }
+            </Field2>
+            <Field2 label={appType==='Non-Individual' ? 'Registration Number' : 'ID Number'} required>
+              <div className="flex gap-2">
+                <Input
+                  value={idNo1}
+                  onChange={setIdNo1}
+                  placeholder={appType==='Non-Individual' ? 'e.g. 202301234567' : 'e.g. 980101-14-1234'}
+                  readOnly={corpLocked}
+                />
+                {!corpLocked && (
+                  <button
+                    onClick={doSSMLookup}
+                    disabled={!idNo1 || lookupStatus==='loading'}
+                    className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {lookupStatus==='loading' ? '...' : (appType==='Non-Individual' ? 'Check' : 'Search')}
+                  </button>
+                )}
+              </div>
+            </Field2>
+            {appType==='Non-Individual' && (
+              <>
+                <Field2 label="ID Type 2 (Old / Previous)">
+                  <Select value={idType2} onChange={setIdType2} options={[
+                    {value:'',      label:'— Not applicable —'},
+                    {value:'OldBR', label:'Old Business Registration No.'},
+                    {value:'OldIC', label:'Old Registration Certificate No.'},
+                    {value:'FR',    label:'Form of Registration (FR)'},
+                  ]}/>
+                </Field2>
+                <Field2 label="Old / Previous Reg. No.">
+                  <Input value={idNo2} onChange={setIdNo2} placeholder="e.g. old SSM / BR number" readOnly={corpLocked}/>
+                </Field2>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Lookup results */}
         {lookupStatus!=='idle' && (
           <div className="mt-4 border border-gray-200 rounded p-3">
             <p className="text-xs font-semibold text-gray-600 mb-2">System Check Results</p>
             <ApiRow label="CIF / HOST"    status={cifStatus}/>
-            <ApiRow label="Experian / SSM" status={lookupStatus==='loading'?'loading':lookupStatus==='found'?'ok':'error'}/>
+            <ApiRow label={searchBy==='CIF No.' ? 'SSM / Experian (from CIF)' : 'Experian / SSM'} status={lookupStatus==='loading'?'loading':lookupStatus==='found'?'ok':'error'}/>
             <ApiRow label="HP Line Check" status={hpLineStatus}/>
           </div>
         )}
@@ -1999,11 +2072,20 @@ export default function ApplicationForm() {
         </div>
 
         {/* Scrollable sections */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
           {ProcessSummarySection()}
           {IdentitySection()}
           {AppDetailsSection()}
-          {appType==='Non-Individual' && ApplicantInfoSection()}
+          {appType==='Non-Individual'
+            ? ApplicantInfoSection()
+            : (
+              <SectionPanel id="applicant" icon="🏢" title="Applicant Information">
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
+                  ℹ Switch Customer Type to <strong>Non-Individual</strong> in Identity Verification to enter corporate applicant information.
+                </div>
+              </SectionPanel>
+            )
+          }
           {GuarantorSection()}
           {IncomeSummarySection()}
           {AssetSection()}
