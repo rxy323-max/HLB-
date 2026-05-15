@@ -4,14 +4,11 @@ import { useState, useRef, useEffect } from 'react';
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AppType = 'Individual' | 'Non-Individual';
 type EntityCode = 'A'|'B'|'C'|'D'|'E'|'F'|'G'|'H'|'I'|'J'|'K'|'L';
-type StepStatus = 'idle'|'active'|'complete'|'error';
+type ModuleStatus = 'locked' | 'active' | 'complete';
 type UBOMode = 'auto'|'manual'|'exempt';
 type GuarantorRequirement = 'PG'|'CG'|'PG_or_CG'|'none';
 
-interface NavItem {
-  id: string; label: string; sub?: NavItem[];
-}
-interface StepState { [key: string]: StepStatus }
+interface NavItem { id: string; label: string; }
 interface Director {
   id: string; name: string; icNo: string; nationality: string;
   sharePercent: number; isCorporate: boolean; roles: string[];
@@ -171,11 +168,6 @@ const MOCK_SSM: Record<string,{ name:string; address:string; estDate:string; pai
 };
 
 // ─── UI Helpers ───────────────────────────────────────────────────────────────
-function StatusIcon({ s }: { s: StepStatus }) {
-  if (s === 'complete') return <span className="ml-auto w-4 h-4 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0"><svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg></span>;
-  if (s === 'error')    return <span className="ml-auto w-4 h-4 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">✕</span>;
-  return null;
-}
 
 function SectionPanel({ id, icon, title, children, badge }: { id:string; icon:string; title:string; children:React.ReactNode; badge?:React.ReactNode }) {
   const [open, setOpen] = useState(true);
@@ -280,83 +272,115 @@ function ApiRow({ label, status }: { label:string; status:'idle'|'loading'|'ok'|
   );
 }
 
+// ─── ModuleCard ───────────────────────────────────────────────────────────────
+function ModuleCard({ n, id, icon, title, status, onEdit, summary, children }: {
+  n: number; id: string; icon: string; title: string;
+  status: ModuleStatus; onEdit?: () => void;
+  summary?: string; children?: React.ReactNode;
+}) {
+  if (status === 'locked') {
+    return (
+      <div id={id} className="bg-white border border-gray-200 rounded mb-3">
+        <div className="flex items-center gap-2 px-4 py-3 opacity-50">
+          <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500 flex-shrink-0">{n}</span>
+          <span className="text-base leading-none">{icon}</span>
+          <span className="font-semibold text-sm text-gray-500">{title}</span>
+          <span className="ml-auto text-xs text-gray-400">🔒 完成上一步后解锁</span>
+        </div>
+      </div>
+    );
+  }
+  if (status === 'complete') {
+    return (
+      <div id={id} className="bg-white border border-green-200 rounded mb-3">
+        <div className="flex items-center gap-2 px-4 py-3">
+          <span className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
+          </span>
+          <span className="text-base leading-none">{icon}</span>
+          <span className="font-semibold text-sm text-gray-700">{title}</span>
+          {summary && <span className="ml-2 text-xs text-gray-400 truncate flex-1">{summary}</span>}
+          <button onClick={onEdit} className="ml-auto text-xs text-blue-600 hover:underline flex-shrink-0 px-1">编辑</button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div id={id} className="bg-white border border-blue-300 rounded mb-3 shadow-sm">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+        <span className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">{n}</span>
+        <span className="text-base leading-none">{icon}</span>
+        <span className="font-semibold text-sm text-gray-800">{title}</span>
+        <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700">进行中</span>
+      </div>
+      <div className="px-4 pb-4 pt-3">{children}</div>
+    </div>
+  );
+}
+
 // ─── Navigation config ────────────────────────────────────────────────────────
-const NAV_ITEMS: NavItem[] = [
-  { id:'processSummary', label:'Process Summary' },
-  { id:'identity',       label:'Identity Verification' },
-  { id:'appDetails',     label:'Application Details' },
-  {
-    id:'applicant', label:'Applicant Information',
-    sub:[
-      { id:'companyBasic',    label:'Company Basic Information' },
-      { id:'companyProfile',  label:'Company Profile' },
-      { id:'classification',  label:'Customer Classification' },
-      { id:'addressReg',      label:'Registered Address' },
-      { id:'addressBiz',      label:'Business Address' },
-      { id:'email',           label:'Email information' },
-      { id:'contact',         label:'Contact Person' },
-      { id:'confirmation',    label:'Confirmation' },
-      { id:'management',      label:'Management & Shareholder' },
-      { id:'ubo',             label:'UBO Identification' },
-      { id:'applicantIncome', label:'Applicant Income' },
-    ],
-  },
-  { id:'guarantor',      label:'Guarantor Information' },
-  { id:'incomeSummary',  label:'Income Summary' },
-  { id:'asset',          label:'Asset Information', sub:[
-    { id:'investments', label:'Investments & Savings' },
-    { id:'properties',  label:'Properties & EPF' },
-  ]},
-  { id:'collateral',     label:'Collateral & Seller', sub:[
-    { id:'purchase',  label:'Purchase Detail' },
-    { id:'vehicle',   label:'Vehicle Detail' },
-    { id:'dealer',    label:'Dealer Info' },
-    { id:'insurance', label:'Insurance' },
-  ]},
-  { id:'facility',       label:'Facility/Financing', sub:[
-    { id:'repayment', label:'Repayment Schedule' },
-  ]},
+const MODULE_NAV: { id: string; label: string }[] = [
+  { id:'m0', label:'0 · 渠道信息录入' },
+  { id:'m1', label:'1 · 申请角色选择' },
+  { id:'m2', label:'2 · 企业身份概况' },
+  { id:'m3', label:'3 · 业务运营详情' },
+  { id:'m4', label:'4 · 财务与经营数据' },
+  { id:'m5', label:'5 · 地域与税务' },
+  { id:'m6', label:'6 · 合规审查' },
+  { id:'m7', label:'7 · 关联方信息' },
+  { id:'m8', label:'8 · 地址与联系信息' },
+  { id:'m9', label:'9 · 业务确认与同意' },
 ];
-const RISK_ITEMS: NavItem[] = [
-  { id:'aml',      label:'AML' },
-  { id:'credit',   label:'Credit Summary' },
-  { id:'uw',       label:'UW Result' },
-  { id:'customer', label:'Customer' },
-  { id:'tvcheck',  label:'TV-Check' },
-  { id:'exposure', label:'Exposure Summary' },
+const EXTRA_NAV: NavItem[] = [
+  { id:'collateral',    label:'担保物 / Collateral' },
+  { id:'facility',      label:'融资方案 / Facility' },
+  { id:'incomeSummary', label:'收入汇总 / Income' },
+  { id:'aml',           label:'风险关联 / Risk' },
 ];
 
 // ─── Main component ────────────────────────────────────────────────────────────
 export default function ApplicationForm() {
   // ── App meta
   const [appType, setAppType] = useState<AppType>('Non-Individual');
-  const [activeSection, setActiveSection] = useState('identity');
-  const [stepStatus, setStepStatus] = useState<StepState>({
-    processSummary:'idle', identity:'active', appDetails:'idle',
-    companyBasic:'idle', companyProfile:'idle', classification:'idle',
-    addressReg:'idle', addressBiz:'idle', email:'idle', contact:'idle',
-    confirmation:'idle', management:'idle', ubo:'idle', applicantIncome:'idle',
-    guarantor:'idle', incomeSummary:'idle', asset:'idle', collateral:'idle', facility:'idle',
-  });
-
-  function markComplete(id: string) {
-    setStepStatus(s => ({ ...s, [id]: 'complete' }));
-  }
-  function markError(id: string) {
-    setStepStatus(s => ({ ...s, [id]: 'error' }));
-  }
+  const [activeSection, setActiveSection] = useState('m0');
+  const [moduleStatus, setModuleStatus] = useState<ModuleStatus[]>([
+    'active','locked','locked','locked','locked',
+    'locked','locked','locked','locked','locked',
+  ]);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  function completeModule(n: number) {
+    setModuleStatus(prev => {
+      const next = [...prev];
+      next[n] = 'complete';
+      if (n + 1 < next.length && next[n + 1] === 'locked') next[n + 1] = 'active';
+      return next;
+    });
+    setTimeout(() => {
+      const el = document.getElementById(`m${n + 1}`);
+      if (el && scrollRef.current) {
+        scrollRef.current.scrollTo({ top: el.offsetTop - scrollRef.current.offsetTop - 8, behavior: 'smooth' });
+      }
+    }, 60);
+  }
+  function editModule(n: number) {
+    setModuleStatus(prev => { const next=[...prev]; next[n]='active'; return next; });
+    setTimeout(() => {
+      const el = document.getElementById(`m${n}`);
+      if (el && scrollRef.current) {
+        scrollRef.current.scrollTo({ top: el.offsetTop - scrollRef.current.offsetTop - 8, behavior: 'smooth' });
+      }
+    }, 60);
+  }
   function goTo(id: string) {
     setActiveSection(id);
-    setStepStatus(s => ({ ...s, [id]: 'active' }));
     const el = document.getElementById(id);
     if (el && scrollRef.current) {
-      const container = scrollRef.current;
-      container.scrollTo({ top: el.offsetTop - container.offsetTop - 8, behavior: 'smooth' });
-    } else {
-      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      scrollRef.current.scrollTo({ top: el.offsetTop - scrollRef.current.offsetTop - 8, behavior: 'smooth' });
     }
   }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  function markComplete(_id: string) {}
 
   // ── Identity / Company Lock
   const [idType1, setIdType1] = useState('SSM ID');
@@ -686,11 +710,8 @@ export default function ApplicationForm() {
   }
 
   function appStatus() {
-    const total = Object.values(stepStatus).length;
-    const done  = Object.values(stepStatus).filter(v=>v==='complete').length;
-    const errs  = Object.values(stepStatus).filter(v=>v==='error').length;
-    if (errs>0) return { label:'PENDING APPLICATION', color:'bg-gray-200 text-gray-700' };
-    if (done>= total-3) return { label:'READY TO SUBMIT', color:'bg-blue-100 text-blue-700' };
+    const done = moduleStatus.filter(s=>s==='complete').length;
+    if (done >= 10) return { label:'READY TO SUBMIT', color:'bg-blue-100 text-blue-700' };
     return { label:'PENDING APPLICATION', color:'bg-gray-200 text-gray-700' };
   }
   const { label:statusLabel, color:statusColor } = appStatus();
@@ -699,35 +720,40 @@ export default function ApplicationForm() {
 
   // ─ Navigation sidebar
   function NavSidebar() {
-    function renderItem(item: NavItem, depth=0) {
-      const s = stepStatus[item.id] || 'idle';
-      const isActive = activeSection === item.id || (item.sub?.some(x=>x.id===activeSection));
-      return (
-        <div key={item.id}>
-          <button
-            onClick={()=>goTo(item.id)}
-            className={`w-full flex items-center gap-1.5 py-1.5 text-left transition-colors ${depth===0?'px-3':'px-6'} ${isActive?'text-blue-600 font-medium border-l-2 border-blue-600 bg-blue-50':'text-gray-600 border-l-2 border-transparent hover:bg-gray-50'}`}
-          >
-            <span className={`truncate ${depth===0?'text-sm':'text-xs'}`}>{item.label}</span>
-            <StatusIcon s={s}/>
-          </button>
-          {item.sub && item.sub.map(sub=>renderItem(sub, depth+1))}
-        </div>
-      );
-    }
+    const dotCls: Record<ModuleStatus, string> = {
+      locked:   'bg-gray-300',
+      active:   'bg-blue-500',
+      complete: 'bg-green-500',
+    };
     return (
       <div className="h-full flex flex-col">
-        <div className="px-3 py-3 border-b border-gray-200 flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-700">☰ Navigation</span>
+        <div className="px-3 py-3 border-b border-gray-200">
+          <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">录入模块</span>
         </div>
-        <div className="flex-1 overflow-y-auto py-2">
-          {NAV_ITEMS.map(item=>renderItem(item))}
-          <div className="px-3 pt-2 pb-1 mt-1">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Risk Relate</span>
+        <div className="flex-1 overflow-y-auto py-1">
+          <button onClick={()=>goTo('processSummary')}
+            className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs border-l-2 ${activeSection==='processSummary'?'text-blue-600 border-blue-500 bg-blue-50':'text-gray-500 border-transparent hover:bg-gray-50'}`}>
+            📋 申请概览
+          </button>
+          {MODULE_NAV.map((item, n) => {
+            const ms = moduleStatus[n];
+            const isActive = activeSection === item.id;
+            return (
+              <button key={item.id} onClick={()=>goTo(item.id)}
+                className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs border-l-2 transition-colors
+                  ${isActive ? 'text-blue-600 border-blue-500 bg-blue-50 font-medium' : 'text-gray-600 border-transparent hover:bg-gray-50'}
+                  ${ms==='locked' ? 'opacity-40' : ''}`}>
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotCls[ms]}`}/>
+                <span className="truncate">{item.label}</span>
+              </button>
+            );
+          })}
+          <div className="px-3 pt-3 pb-1 mt-1 border-t border-gray-100">
+            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">其他模块</span>
           </div>
-          {RISK_ITEMS.map(item=>(
+          {EXTRA_NAV.map(item => (
             <button key={item.id} onClick={()=>goTo(item.id)}
-              className="w-full flex items-center gap-1.5 px-6 py-1.5 text-left text-xs text-gray-400 hover:bg-gray-50 border-l-2 border-transparent">
+              className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs border-l-2 ${activeSection===item.id?'text-blue-600 border-blue-500 bg-blue-50':'text-gray-500 border-transparent hover:bg-gray-50'}`}>
               {item.label}
             </button>
           ))}
@@ -792,7 +818,7 @@ export default function ApplicationForm() {
 
   // ─── Section: Process Summary ─────────────────────────────────────────────
   function ProcessSummarySection() {
-    const completedCount = Object.values(stepStatus).filter(v=>v==='complete').length;
+    const completedCount = moduleStatus.filter(s=>s==='complete').length;
     return (
       <SectionPanel id="processSummary" icon="📋" title="Process Summary">
         <div className="mt-3">
@@ -806,7 +832,7 @@ export default function ApplicationForm() {
             <div><span className="text-gray-400 block text-xs">Status Log</span><span className="text-xs text-gray-500">Draft created {now}</span></div>
             <div><span className="text-gray-400 block text-xs">Guarantor(s)</span><span className="font-medium">{guarantors.length||'—'}</span></div>
             <div><span className="text-gray-400 block text-xs">EIR</span><span className="font-medium">{eirValue?`${eirValue}%`:'—'}</span></div>
-            <div><span className="text-gray-400 block text-xs">Completion</span><span className="font-medium">{completedCount} / {Object.keys(stepStatus).length} steps</span></div>
+            <div><span className="text-gray-400 block text-xs">Completion</span><span className="font-medium">{completedCount} / 10 模块</span></div>
             <div><span className="text-gray-400 block text-xs">Vehicle</span><span className="font-medium">{vehicleMake&&vehicleModel?`${vehicleMake} ${vehicleModel}`:'—'}</span></div>
             <div><span className="text-gray-400 block text-xs">Approved Tenure</span><span className="font-medium">{tenureMonths?`${tenureMonths} Months`:'—'}</span></div>
           </div>
@@ -832,6 +858,707 @@ export default function ApplicationForm() {
           </div>
         </div>
       </SectionPanel>
+    );
+  }
+
+  // ─── M0: 渠道信息录入 ─────────────────────────────────────────────────────
+  function M0() {
+    const ms = moduleStatus[0];
+    const summary = [productGroup, loanType, salesOfficer, deliveryChannel].filter(Boolean).join(' · ');
+    return (
+      <ModuleCard n={0} id="m0" icon="📡" title="渠道信息录入 · Channel Info"
+        status={ms} onEdit={()=>editModule(0)} summary={summary}>
+        <div className="grid grid-cols-2 gap-4">
+          <Field2 label="Product Group" required>
+            <Select value={productGroup} onChange={setProductGroup} options={[{value:'HP',label:'HP'},{value:'HP+Plus',label:'HP+Plus'},{value:'Lease',label:'Lease (Ijarah)'}]}/>
+          </Field2>
+          <Field2 label="Lending / Financing Type" required>
+            <Select value={loanType} onChange={setLoanType} options={[{value:'Conventional',label:'Conventional'},{value:'Islamic',label:'Islamic (IHP)'}]}/>
+          </Field2>
+          <Field2 label="Attending Officer" required>
+            <Select value={attendingOfficer} onChange={setAttendingOfficer} options={[{value:'saladm1',label:'saladm1'},{value:'saladm2',label:'saladm2'}]}/>
+          </Field2>
+          <Field2 label="Sales Officer" required>
+            <Select value={salesOfficer} onChange={setSalesOfficer} options={[{value:'SalesOfficer1 (sal001)',label:'SalesOfficer1 (sal001)'},{value:'SalesHead1 (salhed1)',label:'SalesHead1 (salhed1)'}]}/>
+          </Field2>
+          <Field2 label="Delivery Channel" required>
+            <Select value={deliveryChannel} onChange={setDeliveryChannel} options={[{value:'H23 - ALC MIRI',label:'H23 – ALC MIRI'},{value:'H25 - ALC MELAKA',label:'H25 – ALC MELAKA'},{value:'H01 - KL MAIN',label:'H01 – KL MAIN'}]}/>
+          </Field2>
+          <Field2 label="Closing Branch" required>
+            <Select value={closingBranch} onChange={setClosingBranch} options={[{value:'Miri Branch',label:'Miri Branch'},{value:'Skudai Branch',label:'Skudai Branch'},{value:'KL Main',label:'KL Main Branch'}]}/>
+          </Field2>
+          <Field2 label="Sales Manager" required>
+            <Select value={salesManager} onChange={setSalesManager} options={[{value:'saladm1',label:'saladm1'},{value:'saladm2',label:'saladm2'}]}/>
+          </Field2>
+          <Field2 label="Source">
+            <Select value={source} onChange={setSource} options={[{value:'NIL',label:'NIL'},{value:'Dealer',label:'Dealer'},{value:'Direct',label:'Direct'},{value:'Referral',label:'Referral'}]}/>
+          </Field2>
+          <Field2 label="Campaign Code">
+            <div className="flex gap-2">
+              <Input value={campaignCode} onChange={setCampaignCode} placeholder="Search campaign..."/>
+              <button className="px-3 py-2 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50">↻</button>
+            </div>
+          </Field2>
+          <Field2 label="Preferred Language" required>
+            <Select value={preferLang} onChange={setPreferLang} options={[{value:'English',label:'English'},{value:'Bahasa Malaysia',label:'Bahasa Malaysia'},{value:'Chinese',label:'Chinese'}]}/>
+          </Field2>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button onClick={()=>completeModule(0)} className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+            确认渠道信息 →
+          </button>
+        </div>
+      </ModuleCard>
+    );
+  }
+
+  // ─── M1: 申请角色选择 ─────────────────────────────────────────────────────
+  function M1() {
+    const ms = moduleStatus[1];
+    const summary = corpLocked ? `${appType} · ${idNo1||cifNo} · ${companyName} · ${etbStatus||'NTB'}` : `${appType} · 尚未锁定`;
+    const corpIdTypes = [
+      { value:'SSM ID', label:'SSM ID (Certificate of Incorporation)' },
+      { value:'BR No',  label:'Business Registration No.' },
+      { value:'Foreign BR', label:'Foreign Business Registration' },
+      { value:'RC',     label:'Registration Certificate (PLT)' },
+      { value:'Trading',label:'Trading License (East MY)' },
+    ];
+    return (
+      <ModuleCard n={1} id="m1" icon="🪪" title="申请角色选择 · Role & Identity"
+        status={ms} onEdit={()=>editModule(1)} summary={summary}>
+        <div className="grid grid-cols-2 gap-6 mb-4">
+          <Field2 label="Customer Type" required>
+            <div className="flex gap-0 rounded border border-gray-300 overflow-hidden w-fit">
+              {(['Non-Individual','Individual'] as AppType[]).map(t=>(
+                <button key={t} onClick={()=>setAppType(t)} className={`px-4 py-1.5 text-sm ${appType===t?'bg-blue-600 text-white':'bg-white text-gray-600 hover:bg-gray-50'}`}>{t}</button>
+              ))}
+            </div>
+          </Field2>
+          <Field2 label="Search By">
+            <div className="flex gap-0 rounded border border-gray-300 overflow-hidden w-fit">
+              {(['ID Number','CIF No.'] as const).map(t=>(
+                <button key={t} onClick={()=>setSearchBy(t)} className={`px-4 py-1.5 text-sm ${searchBy===t?'bg-blue-600 text-white':'bg-white text-gray-600 hover:bg-gray-50'}`}>{t}</button>
+              ))}
+            </div>
+          </Field2>
+        </div>
+        {searchBy==='CIF No.' ? (
+          <div className="mb-4">
+            <Field2 label="CIF No." required>
+              <div className="flex gap-2">
+                <Input value={cifNo} onChange={setCifNo} placeholder="e.g. CIF-00123456" readOnly={corpLocked}/>
+                {!corpLocked && (
+                  <button onClick={doCIFLookup} disabled={!cifNo||lookupStatus==='loading'}
+                    className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap">
+                    {lookupStatus==='loading'?'...':'CIF Lookup'}
+                  </button>
+                )}
+              </div>
+            </Field2>
+            <p className="mt-1 text-xs text-gray-400">反查CIF编号 — 系统将自动填充注册号和公司信息。</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <Field2 label="ID Type 1" required>
+              {appType==='Non-Individual'
+                ? <Select value={idType1} onChange={setIdType1} options={corpIdTypes}/>
+                : <Select value={idType1} onChange={setIdType1} options={[{value:'MyKad',label:'MyKad (Blue)'},{value:'Passport',label:'Passport'},{value:'MyPR',label:'MyPR (Red)'}]}/>
+              }
+            </Field2>
+            <Field2 label={appType==='Non-Individual'?'Registration Number':'ID Number'} required>
+              <div className="flex gap-2">
+                <Input value={idNo1} onChange={setIdNo1}
+                  placeholder={appType==='Non-Individual'?'e.g. 202301234567':'e.g. 980101-14-1234'}
+                  readOnly={corpLocked}/>
+                {!corpLocked && (
+                  <button onClick={doSSMLookup} disabled={!idNo1||lookupStatus==='loading'}
+                    className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap">
+                    {lookupStatus==='loading'?'...':(appType==='Non-Individual'?'Check':'Search')}
+                  </button>
+                )}
+              </div>
+            </Field2>
+            {appType==='Non-Individual' && (
+              <>
+                <Field2 label="ID Type 2 (Old / Previous)">
+                  <Select value={idType2} onChange={setIdType2} options={[{value:'',label:'— Not applicable —'},{value:'OldBR',label:'Old Business Registration No.'},{value:'OldIC',label:'Old Registration Certificate No.'},{value:'FR',label:'Form of Registration (FR)'}]}/>
+                </Field2>
+                <Field2 label="Old / Previous Reg. No.">
+                  <Input value={idNo2} onChange={setIdNo2} placeholder="e.g. old SSM / BR number" readOnly={corpLocked}/>
+                </Field2>
+              </>
+            )}
+          </div>
+        )}
+        {lookupStatus!=='idle' && (
+          <div className="mb-4 border border-gray-200 rounded p-3">
+            <p className="text-xs font-semibold text-gray-600 mb-2">System Check Results</p>
+            <ApiRow label="CIF / HOST" status={cifStatus}/>
+            <ApiRow label={searchBy==='CIF No.'?'SSM / Experian (from CIF)':'Experian / SSM'} status={lookupStatus==='loading'?'loading':lookupStatus==='found'?'ok':'error'}/>
+            <ApiRow label="HP Line Check" status={hpLineStatus}/>
+          </div>
+        )}
+        {lookupStatus==='found' && (
+          <div className="bg-blue-50 border border-blue-200 rounded p-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-semibold text-sm text-blue-800">{companyName}</p>
+                <p className="text-xs text-gray-500 mt-0.5">ID: {idNo1}</p>
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  {etbStatus && <Badge label={etbStatus} color={etbStatus==='ETB'?'green':'blue'}/>}
+                  {enterpriseType && <Badge label={`Type ${enterpriseType}`} color="purple"/>}
+                </div>
+              </div>
+              {!corpLocked ? (
+                <button onClick={()=>{ setCorpLocked(true); completeModule(1); }}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 ml-4 flex-shrink-0">
+                  ✓ 确认锁定
+                </button>
+              ) : <Badge label="🔒 Locked" color="green"/>}
+            </div>
+          </div>
+        )}
+        {lookupStatus==='notfound' && (
+          <div className="bg-amber-50 border border-amber-200 rounded p-3 text-sm text-amber-700">
+            ⚠ 未找到记录。请检查注册号或联系主管。
+          </div>
+        )}
+      </ModuleCard>
+    );
+  }
+
+  // ─── M2: 企业身份概况 ─────────────────────────────────────────────────────
+  function M2() {
+    const ms = moduleStatus[2];
+    const summary = enterpriseType
+      ? `${ENTITY_TYPES.find(e=>e.value===enterpriseType)?.label.split('–')[0]?.trim()||''} · ${effConstitution?'Constitution '+effConstitution:''} · ${cifNo||'—'}`
+      : '—';
+    return (
+      <ModuleCard n={2} id="m2" icon="🏢" title="企业身份概况 · Company Identity"
+        status={ms} onEdit={()=>editModule(2)} summary={summary}>
+        <div className="grid grid-cols-2 gap-4">
+          <Field2 label="ID Type 1" source="SSM">
+            <Input value={idType1} readOnly/>
+          </Field2>
+          <Field2 label="Registration / ID Number" source="SSM">
+            <div className="flex items-center gap-2"><Input value={idNo1} readOnly/>{corpLocked&&<Badge label="🔒" color="gray"/>}</div>
+          </Field2>
+          <Field2 label="Company Name" source="SSM">
+            <Input value={companyName} readOnly/>
+          </Field2>
+          <Field2 label="Enterprise Type" required source="SSM">
+            <Select value={enterpriseType} onChange={v=>setEnterpriseType(v as EntityCode)} options={ENTITY_TYPES} placeholder="— Select —"/>
+          </Field2>
+          {isInactiveBlock && (
+            <div className="col-span-2 p-3 bg-red-50 border border-red-400 rounded flex items-start gap-2 text-red-800">
+              <span className="text-lg">🚫</span>
+              <div>
+                <p className="font-semibold text-sm">Entity Type I (Virtual BE) — Cannot Process HP</p>
+                <p className="text-xs mt-0.5">此实体类型为系统占位符，为非活跃状态，无法创建HP申请。</p>
+              </div>
+            </div>
+          )}
+          {isNonActiveWarn && (
+            <div className="col-span-2 p-3 bg-amber-50 border border-amber-300 rounded flex items-start gap-2 text-amber-800">
+              <span className="text-lg">⚠</span>
+              <div>
+                <p className="font-semibold text-sm">{et==='J'?'Entity J (Society) — Non-Active':'Entity K (Government) — Non-Active'}</p>
+                <p className="text-xs mt-0.5">{et==='J'?'社团/协会/俱乐部需额外合规审查，章程代码需手工确认。':'政府/法定机构需额外合规审查，章程代码需根据政府层级手工选择（V/W/B/G/H/F）。'}</p>
+              </div>
+            </div>
+          )}
+          <Field2 label="Constitution" required source="System">
+            <div className="flex gap-2 items-center">
+              <Select value={effConstitution} onChange={setConstitution} options={CONSTITUTION_OPTIONS} placeholder="— Select —"/>
+              {derivedConstitution && constitution==='' && <Badge label="Auto" color="blue"/>}
+            </div>
+          </Field2>
+          <Field2 label="Basic Group" required source="System">
+            <div className="flex gap-2 items-center">
+              <Select value={effBasicGroup} onChange={setBasicGroup} options={BASIC_GROUP_OPTIONS} placeholder="— Select —"/>
+              {derivedBasicGroup && basicGroup==='' && <Badge label="Auto" color="blue"/>}
+            </div>
+          </Field2>
+          <Field2 label="CIF No." source="System">
+            <div className="flex items-center gap-2">
+              <Input value={cifNo||'—'} readOnly/>
+              <Badge label={etbStatus||'NTB'} color={etbStatus==='ETB'?'green':'blue'}/>
+            </div>
+          </Field2>
+          <Field2 label="Establishment Date" required source="SSM">
+            <Input value={corpEstDate} onChange={setCorpEstDate} placeholder="YYYY-MM-DD" readOnly={corpLocked&&!!corpEstDate}/>
+          </Field2>
+          <Field2 label="Years in Operation" source="System">
+            <Input value={yearsInOperation!==null?`${yearsInOperation} year(s)`:'—'} readOnly/>
+          </Field2>
+          <Field2 label="HP Line" source="System">
+            <Badge label={hpLineStatus==='ok'?'HP Line Hit':'No HP Line'} color={hpLineStatus==='ok'?'amber':'gray'}/>
+          </Field2>
+          {idNo2 && <Field2 label="Old / Previous Reg. No." source="SSM"><Input value={idNo2} readOnly/></Field2>}
+          {needsBnmAssignedId && (
+            <Field2 label="BNM Assigned ID" required source="Manual">
+              <Input value={bnmAssignedId} onChange={setBnmAssignedId} placeholder="BNM-assigned entity identifier"/>
+            </Field2>
+          )}
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button onClick={()=>completeModule(2)} disabled={!enterpriseType}
+            className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50">
+            确认企业身份 →
+          </button>
+        </div>
+      </ModuleCard>
+    );
+  }
+
+  // ─── M3: 业务运营详情 ─────────────────────────────────────────────────────
+  function M3() {
+    const ms = moduleStatus[3];
+    const g = MSIC_GROUPS.find(g=>g.value===msicGroup);
+    const summary = [g?.label, msicCode&&`Code: ${msicCode}`, firmType&&firmType].filter(Boolean).join(' · ')||'—';
+    return (
+      <ModuleCard n={3} id="m3" icon="🏭" title="业务运营详情 · Business Operations"
+        status={ms} onEdit={()=>editModule(3)} summary={summary}>
+        <div className="grid grid-cols-2 gap-4">
+          <Field2 label="Nature of Business Group" required source="Manual">
+            <Select value={msicGroup} onChange={setMsicGroup} options={MSIC_GROUPS} placeholder="— Select group —"/>
+          </Field2>
+          <Field2 label="Nature of Business Code (4-digit)" source="Manual">
+            <Input value={msicCode} onChange={setMsicCode} placeholder="e.g. 4651"/>
+          </Field2>
+          <Field2 label="Nature of Business (Full / 5-digit)" source="Manual">
+            <Input value={nobFull} onChange={setNobFull} placeholder="e.g. 46510"/>
+          </Field2>
+          <Field2 label="Firm Type" source="Manual">
+            <Select value={firmType} onChange={setFirmType} options={[
+              {value:'',label:'— Select —'},{value:'SME',label:'SME – Small & Medium Enterprise'},
+              {value:'MNC',label:'MNC – Multinational'},{value:'GLC',label:'GLC – Govt-Linked Co.'},
+              {value:'Large',label:'Large Firms'},{value:'SOE',label:'SOE – State-Owned Enterprise'},
+            ]}/>
+          </Field2>
+          {et==='B' && (
+            <Field2 label="Board Type" source="Manual">
+              <Select value={boardType} onChange={setBoardType} options={[{value:'',label:'— Select —'},{value:'Main',label:'Main Board (Bursa)'},{value:'ACE',label:'ACE Market (Bursa)'}]}/>
+            </Field2>
+          )}
+          {(et==='D'||et==='E') && (
+            <Field2 label="Place of Registration" source="Manual">
+              <Select value={placeOfReg} onChange={setPlaceOfReg} options={MY_STATES.map(s=>({value:s,label:s}))} placeholder="— Select state —"/>
+            </Field2>
+          )}
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button onClick={()=>completeModule(3)} className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+            确认运营信息 →
+          </button>
+        </div>
+      </ModuleCard>
+    );
+  }
+
+  // ─── M4: 财务与经营数据 ───────────────────────────────────────────────────
+  function M4() {
+    const ms = moduleStatus[4];
+    const summary = [turnoverRange&&`营业额: ${turnoverRange}`, employeeRange&&`员工: ${employeeRange}`, sourceOfRepayment&&sourceOfRepayment].filter(Boolean).join(' · ')||'—';
+    return (
+      <ModuleCard n={4} id="m4" icon="💰" title="财务与经营数据 · Financials"
+        status={ms} onEdit={()=>editModule(4)} summary={summary}>
+        <div className="grid grid-cols-2 gap-4">
+          <Field2 label="Annual Turnover (Actual, RM)" source="Manual">
+            <Input value={turnoverActual} onChange={setTurnoverActual} placeholder="e.g. 2500000"/>
+          </Field2>
+          <Field2 label="Annual Turnover Range" required source="Manual">
+            <Select value={turnoverRange} onChange={setTurnoverRange} options={TURNOVER_RANGES.map(r=>({value:r,label:r}))} placeholder="— Select —"/>
+          </Field2>
+          <Field2 label="No. of Employees (Actual)" source="Manual">
+            <Input value={employeeActual} onChange={setEmployeeActual} placeholder="e.g. 25"/>
+          </Field2>
+          <Field2 label="Employee Range" source="Manual">
+            <Select value={employeeRange} onChange={setEmployeeRange} options={EMPLOYEE_RANGES.map(r=>({value:r,label:r}))} placeholder="— Select —"/>
+          </Field2>
+          <Field2 label="Paid Up Capital (RM)" source="SSM">
+            <Input value={paidUpCapital} onChange={setPaidUpCapital} placeholder="e.g. 500000"/>
+          </Field2>
+          <Field2 label="Authorized Capital (RM)" source="SSM">
+            <Input value={authorizedCapital} onChange={setAuthorizedCapital} placeholder="e.g. 1000000"/>
+          </Field2>
+          <Field2 label="Source of Repayment" required source="Manual">
+            <Select value={sourceOfRepayment} onChange={setSourceOfRepayment} options={['Business Income','Rental Income','Investment Returns','Contract Revenue','Other'].map(r=>({value:r,label:r}))} placeholder="— Select —"/>
+          </Field2>
+          <Field2 label="Primary Income Document" source="OCR">
+            <Select value={primaryIncomeDoc} onChange={setPrimaryIncomeDoc} options={['Audited Financial Statement','Management Accounts','Bank Statements (6 months)','Form B / BE','Form C (Company Tax)'].map(r=>({value:r,label:r}))} placeholder="— Select —"/>
+          </Field2>
+        </div>
+        <p className="text-xs font-semibold text-gray-600 mt-4 mb-2">3-Year Financial History</p>
+        <div className="overflow-x-auto mb-4">
+          <table className="w-full text-xs border border-gray-200 rounded">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left py-2 px-3 font-medium text-gray-500">Year</th>
+                <th className="text-left py-2 px-3 font-medium text-gray-500">Turnover (RM)</th>
+                <th className="text-left py-2 px-3 font-medium text-gray-500">Net Profit (RM)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {['2025','2024','2023'].map((yr,i)=>(
+                <tr key={yr} className="border-t border-gray-100">
+                  <td className="py-2 px-3">{yr}</td>
+                  <td className="py-2 px-3"><input value={bizTurnover3Y[i]} onChange={e=>{const a=[...bizTurnover3Y];a[i]=e.target.value;setBizTurnover3Y(a);}} className="w-full border border-gray-200 rounded px-2 py-1 text-xs" placeholder="0"/></td>
+                  <td className="py-2 px-3"><input value={bizProfit3Y[i]} onChange={e=>{const a=[...bizProfit3Y];a[i]=e.target.value;setBizProfit3Y(a);}} className="w-full border border-gray-200 rounded px-2 py-1 text-xs" placeholder="0"/></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Field2 label="Monthly Net Declared Income (RM)" required source="Manual">
+          <Input value={bizNetIncome} onChange={setBizNetIncome} placeholder="System-calculated or manual"/>
+        </Field2>
+        <div className="mt-4 flex justify-end">
+          <button onClick={()=>completeModule(4)} className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+            确认财务数据 →
+          </button>
+        </div>
+      </ModuleCard>
+    );
+  }
+
+  // ─── M5: 地域与税务 ───────────────────────────────────────────────────────
+  function M5() {
+    const ms = moduleStatus[5];
+    const summary = [`${countryOfOp}${stateOfOp?' · '+stateOfOp:''}`, corpTIN&&`TIN: ${corpTIN}`, bumiStatus&&`Bumi: ${bumiStatus}`].filter(Boolean).join(' · ');
+    return (
+      <ModuleCard n={5} id="m5" icon="🌏" title="地域与税务 · Geography & Tax"
+        status={ms} onEdit={()=>editModule(5)} summary={summary}>
+        <div className="grid grid-cols-2 gap-4">
+          <Field2 label="Country of Operation" required>
+            <Select value={countryOfOp} onChange={setCountryOfOp} options={[{value:'Malaysia',label:'Malaysia'},{value:'Singapore',label:'Singapore'},{value:'Indonesia',label:'Indonesia'}]}/>
+          </Field2>
+          <Field2 label="State of Operation" required={countryOfOp==='Malaysia'}>
+            <Select value={stateOfOp} onChange={setStateOfOp} options={MY_STATES.map(s=>({value:s,label:s}))} placeholder="— Select —"/>
+          </Field2>
+          <Field2 label="TIN (Tax Identification No.)" required source="Manual">
+            <div className="relative">
+              <Input value={corpTIN} onChange={v=>{setCorpTIN(v);setTinValid(null);}} onBlur={()=>setTinValid(validateTIN(corpTIN))} placeholder="e.g. AB1234567C"/>
+              {tinValid===true  && <span className="absolute right-2 top-2 text-green-500 text-xs">✓</span>}
+              {tinValid===false && <span className="absolute right-2 top-2 text-red-500 text-xs">✗</span>}
+            </div>
+            {tinValid===false && <p className="text-xs text-red-500 mt-1">Invalid format. Expected: 1-2 letters + 7-12 digits</p>}
+          </Field2>
+          <Field2 label="SST Registration No." source="Manual">
+            <Input value={corpSST} onChange={setCorpSST} placeholder="Optional"/>
+          </Field2>
+          <Field2 label="Bumiputera Status" required source="Manual">
+            <RadioGroup value={bumiStatus} onChange={setBumiStatus} options={['Yes','No']}/>
+          </Field2>
+          <Field2 label="FEN Resident Status">
+            <Select value={fenResident} onChange={setFenResident} options={[{value:'',label:'— Select —'},{value:'Resident',label:'Resident'},{value:'Non-Resident',label:'Non-Resident'}]}/>
+          </Field2>
+          <Field2 label="Labuan Entity">
+            <RadioGroup value={labuanEntity} onChange={setLabuanEntity} options={['Yes','No']}/>
+          </Field2>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button onClick={()=>completeModule(5)} className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+            确认地域税务 →
+          </button>
+        </div>
+      </ModuleCard>
+    );
+  }
+
+  // ─── M6: 合规审查 ─────────────────────────────────────────────────────────
+  function M6() {
+    const ms = moduleStatus[6];
+    const summary = [customerSector&&customerSector, pepFlag&&`PEP: ${pepFlag}`, complexStructure&&`Complex: ${complexStructure}`].filter(Boolean).join(' · ')||'—';
+    return (
+      <ModuleCard n={6} id="m6" icon="🔍" title="合规审查 · Compliance Review"
+        status={ms} onEdit={()=>editModule(6)} summary={summary}>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <Field2 label="Customer Sector Code">
+            <Select value={customerSector} onChange={setCustomerSector} options={[{value:'',label:'— Select —'},{value:'SME',label:'SME – Small Medium Enterprise'},{value:'CORP',label:'Corporate'},{value:'GLC',label:'GLC – Government-Linked Company'},{value:'NPO',label:'NPO – Non-Profit Organization'}]}/>
+          </Field2>
+          <Field2 label="Bumiputera / NRCC">
+            <Select value={nrccFlag} onChange={setNrccFlag} options={[{value:'',label:'— Select —'},{value:'B',label:'B – Bumiputera'},{value:'N',label:'N – Non-Bumiputera'},{value:'F',label:'F – Foreign'}]}/>
+          </Field2>
+          <Field2 label="SMI Flag">
+            <RadioGroup value={smiFlag} onChange={setSmiFlag} options={['Yes','No']}/>
+          </Field2>
+          <Field2 label="GP Ratings" source="System">
+            <div className="flex items-center gap-2">
+              <Input value={gpRatings||'—'} readOnly/>
+              <span className="text-xs text-gray-400 whitespace-nowrap">System</span>
+            </div>
+          </Field2>
+          <Field2 label="BNM Classification (Existing)" source="System">
+            <Input value={bnmClassExisting||'—'} readOnly/>
+          </Field2>
+          <Field2 label="BNM Classification (Proposed)" source="System">
+            <Input value={bnmClassProposed||'—'} readOnly/>
+          </Field2>
+        </div>
+        <p className="text-xs text-gray-400 italic mb-4">GP Ratings 和 BNM 分类由系统生成，只读。</p>
+        <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+          ℹ AML/CDD 覆盖范围：董事、UBO、担保人及相关自然人。
+        </div>
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-1">1. 是否存在<strong>政治敏感人士 (PEP)</strong>？</p>
+            <RadioGroup value={pepFlag} onChange={setPepFlag} options={['Yes','No','Unknown']}/>
+            {pepFlag==='Yes' && <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">🚫 识别到PEP — 需要增强尽职调查(EDD)，提交前须经高级合规审批。</div>}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-1">2. 是否存在<strong>PEP关联人士 (RCA)</strong>？</p>
+            <RadioGroup value={rcaToPep} onChange={setRcaToPep} options={['Yes','No','Unknown']}/>
+            {rcaToPep==='Yes' && <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">⚠ 识别到RCA — 需额外风险评估。</div>}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-1">3. 公司是否存在复杂所有权结构？</p>
+            <RadioGroup value={complexStructure} onChange={setComplexStructure} options={['Yes','No']}/>
+            {complexStructure==='Yes' && <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">⚠ 复杂结构 — 需记录所有实际受益人层级。</div>}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-1">4. 是否存在记名/无记名股份？</p>
+            <RadioGroup value={nomineeShares} onChange={setNomineeShares} options={['Yes','No']}/>
+            {nomineeShares==='Yes' && <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">🚫 高风险指标 — 需额外AML评估及高级审批。</div>}
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button onClick={()=>completeModule(6)} disabled={!pepFlag||!complexStructure||!nomineeShares}
+            className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50">
+            确认合规审查 →
+          </button>
+        </div>
+      </ModuleCard>
+    );
+  }
+
+  // ─── M7: 关联方信息 ───────────────────────────────────────────────────────
+  function M7() {
+    const ms = moduleStatus[7];
+    const summary = `${directors.length} 人 · ${ubos.length} UBO · ${guarantors.length} 担保人`;
+    return (
+      <ModuleCard n={7} id="m7" icon="👥" title="关联方信息 · Related Parties"
+        status={ms} onEdit={()=>editModule(7)} summary={summary}>
+        {/* Entity banner */}
+        {et && (
+          <div className="mb-4 space-y-2">
+            <div className="p-3 rounded border bg-blue-50 border-blue-200 text-xs text-blue-800">
+              <p className="font-semibold mb-1">
+                {et==='A'&&'Entity A (Sdn Bhd): 记录董事+股东，对法人股东>25%进行穿透。'}
+                {et==='B'&&'Entity B (Berhad): 记录董事+主要股东，上市公司UBO豁免。'}
+                {et==='C'&&'Entity C (Foreign Branch): 记录本地授权代表+海外母公司董事。'}
+                {et==='D'&&'Entity D (Sole Prop): 仅记录业主 — 业主自动为UBO+签署人。'}
+                {et==='E'&&'Entity E (Partnership): 记录所有合伙人 — 每位合伙人自动为UBO+签署人（无限连带责任，无须额外PG）。'}
+                {(et==='F'||et==='G')&&`Entity ${et} (LLP): 记录所有合伙人，利润分配权>25%者为UBO候选。`}
+                {et==='H'&&'Entity H (Professional LLP): 记录所有执业合伙人，需有效执照 — 过期即硬拒。'}
+                {et==='I'&&'Entity I (Virtual BE): 此实体为非活跃状态，无法处理HP申请。'}
+                {et==='J'&&'Entity J (Society): 记录主要委员会成员，从中选定UBO。'}
+                {et==='K'&&'Entity K (Government): 记录授权官员，无需UBO穿透。'}
+                {et==='L'&&'Entity L (East MY SE): 记录持牌人 — 持牌人自动为UBO+签署人。'}
+              </p>
+              <p className="text-blue-600">授权签署人: <strong>{ENTITY_GUARANTOR[et]?.signatories}</strong></p>
+            </div>
+            {et==='H' && <div className="p-2 rounded border bg-red-50 border-red-300 text-xs text-red-800 flex items-start gap-1.5"><span className="flex-shrink-0">🔴</span><span><strong>硬拒规则 (Entity H):</strong> 任何执业合伙人的执照过期或撤销，整个申请必须拒绝 — 一票否决。</span></div>}
+            {et==='F' && <div className="p-2 rounded border bg-amber-50 border-amber-200 text-xs text-amber-800 flex items-start gap-1.5"><span className="flex-shrink-0">⚠</span><span><strong>合规官员必须指定 (Entity F):</strong> 需在下表中标记合规官员，且必须设为签署人。</span></div>}
+            {gr && <div className={`p-2 rounded border text-xs ${gr.mandatory?'bg-amber-50 border-amber-200 text-amber-700':'bg-gray-50 border-gray-200 text-gray-500'}`}>{gr.mandatory?<span>⚠ <strong>需要担保人:</strong> {gr.desc}</span>:<span>ℹ {gr.desc}</span>}</div>}
+          </div>
+        )}
+        {/* Management table */}
+        <p className="text-xs font-semibold text-gray-600 mb-2">管理层 / 股东</p>
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-xs text-gray-500 flex items-center gap-1">
+            {expertianFetched?`${directors.length} 条记录`:'尚未拉取'}
+            {expertianFetched&&<SourceTag src="Experian"/>}
+          </span>
+          <div className="flex gap-2">
+            {!expertianFetched&&corpLocked&&(
+              <button onClick={fetchExperian} disabled={experianLoading} className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 disabled:opacity-50">
+                {experianLoading?'拉取中...':'⟳ 从 Experian 拉取'}
+              </button>
+            )}
+            <button onClick={()=>{const id='m'+Date.now();setDirectors(ds=>[...ds,{id,name:'',icNo:'',nationality:'Malaysia',sharePercent:0,isCorporate:false,roles:['Director'],isUBO:false,isSignatory:false,isGuarantor:false}]);}} className="px-3 py-1.5 border border-gray-300 text-xs rounded hover:bg-gray-50">+ 手工新增</button>
+          </div>
+        </div>
+        {needsDrillDown&&corpDirs.length>0&&!drillComplete&&(
+          <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-start gap-1.5">
+            <span className="flex-shrink-0">🔴</span>
+            <span><strong>需要UBO穿透 (Entity {et}):</strong> 法人股东须穿透至自然人（&gt;25%实际控制）。请点击各法人行的 <strong>⊕ 穿透</strong>。</span>
+          </div>
+        )}
+        {!hasSignatory&&directors.length>0&&(
+          <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700 flex items-start gap-1.5">
+            <span>⚠</span><span><strong>需要签署人:</strong> 至少须指定一名签署人方可提交。</span>
+          </div>
+        )}
+        {directors.length>0 && (
+          <div className="overflow-x-auto mb-4">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left py-2 px-2 font-medium text-gray-500">姓名 / ID</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-500">角色</th>
+                  <th className="text-center py-2 px-2 font-medium text-gray-500">股%</th>
+                  <th className="text-center py-2 px-2 font-medium text-gray-500">UBO</th>
+                  <th className="text-center py-2 px-2 font-medium text-gray-500">签署人</th>
+                  <th className="text-center py-2 px-2 font-medium text-gray-500">担保人</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-500">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {directors.map(d=>(
+                  <tr key={d.id} className={`border-b border-gray-100 hover:bg-gray-50 ${needsDrillDown&&d.isCorporate&&!drilledDirectors.has(d.id)?'bg-red-50':''}`}>
+                    <td className="py-2 px-2">
+                      {d.isCorporate?<span className="text-purple-700 font-medium">{d.name||'(name)'}</span>:<span>{d.name||'(name)'}</span>}
+                      <div className="text-gray-400">{d.icNo}</div>
+                      {d.isCorporate&&<Badge label="Corporate" color="purple"/>}
+                      {d.isCorporate&&drilledDirectors.has(d.id)&&<Badge label="✓ 已穿透" color="green"/>}
+                    </td>
+                    <td className="py-2 px-2">{d.roles.join(', ')}</td>
+                    <td className="py-2 px-2 text-center"><input type="number" value={d.sharePercent} onChange={e=>setDirectors(ds=>ds.map(x=>x.id===d.id?{...x,sharePercent:+e.target.value}:x))} className="w-14 border border-gray-200 rounded px-1 py-0.5 text-center text-xs" min={0} max={100}/>%</td>
+                    <td className="py-2 px-2 text-center">{d.isCorporate?<span className="text-gray-300">—</span>:<input type="checkbox" checked={d.isUBO} onChange={()=>toggleUBO(d.id)} className="cursor-pointer"/>}</td>
+                    <td className="py-2 px-2 text-center">{et==='E'?<input type="checkbox" checked={d.isSignatory} readOnly className="cursor-not-allowed opacity-70" title="All Partners must co-sign"/>:<input type="checkbox" checked={d.isSignatory} onChange={()=>toggleSignatory(d.id)} className="cursor-pointer"/>}</td>
+                    <td className="py-2 px-2 text-center">{d.isCorporate?<span className="text-gray-300">—</span>:<input type="checkbox" checked={d.isGuarantor} onChange={()=>toggleGuarantorFromDir(d.id)} className="cursor-pointer"/>}</td>
+                    <td className="py-2 px-2">{d.isCorporate&&<button onClick={()=>{setDrillTarget(d);setShowDrillDown(true);}} className={`text-xs hover:underline ${needsDrillDown&&!drilledDirectors.has(d.id)?'text-red-600 font-semibold':'text-blue-600'}`}>⊕ 穿透{needsDrillDown&&!drilledDirectors.has(d.id)?' ⚠':''}</button>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {/* UBO */}
+        <p className="text-xs font-semibold text-gray-600 mb-2">UBO 识别</p>
+        {uboRule?.mode==='auto'&&<div className="mb-3 p-3 rounded border bg-green-50 border-green-200 text-xs text-green-800"><p className="font-semibold mb-1">✓ 自动绑定 — UBO 已从管理层识别</p><p>{uboRule.desc}</p></div>}
+        {uboRule?.mode==='exempt'&&<div className="mb-3 p-3 rounded border bg-gray-50 border-gray-200 text-xs text-gray-600"><p className="font-semibold mb-1">○ UBO 穿透豁免</p><p>{uboRule.desc}</p>{ubos.filter(u=>u.source==='Exemption').length===0&&<button onClick={()=>setUbos([{id:'exempt',name:'EXEMPTED',icNo:'—',nationality:'—',sharePercent:0,source:'Exemption',exemptReason:et==='K'?'Government/Statutory Body exemption':'Listed Company – Top 5 simplified exemption'}])} className="mt-2 text-xs px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100">✓ 记录豁免</button>}</div>}
+        {uboRule?.mode==='manual'&&et!=='J'&&<div className="mb-3 p-2 rounded border bg-blue-50 border-blue-200 text-xs text-blue-800"><p className="font-semibold">⊕ 需手工UBO穿透</p><p>{uboRule.desc}</p></div>}
+        {uboRule?.mode==='manual'&&et==='J'&&<div className="mb-3 p-2 rounded border bg-blue-50 border-blue-200 text-xs text-blue-800"><p className="font-semibold">委员会职位确认 (Society)</p><p>在上方管理层表中勾选UBO（通常为主席、秘书、财务）。</p></div>}
+        {ubos.map(u=>(
+          <div key={u.id} className="flex items-center justify-between py-2 border-b border-gray-100 text-sm">
+            <div><span className="font-medium">{u.name}</span>{u.icNo&&u.icNo!=='—'&&<span className="text-gray-400 ml-2 text-xs">{u.icNo}</span>}{u.sharePercent>0&&<span className="ml-2 text-xs text-gray-400">{u.sharePercent}% 实际股权</span>}{u.exemptReason&&<span className="ml-2 text-xs text-green-600 italic">{u.exemptReason}</span>}</div>
+            <div className="flex items-center gap-2"><Badge label={u.source} color={u.source==='Exemption'?'green':u.source.startsWith('Auto')?'amber':'blue'}/>{uboRule?.mode!=='auto'&&<button onClick={()=>setUbos(prev=>prev.filter(x=>x.id!==u.id))} className="text-red-400 hover:text-red-600 text-xs">✕</button>}</div>
+          </div>
+        ))}
+        {uboRule?.mode==='manual'&&<div className="mt-2"><button onClick={()=>{const id='ubo'+Date.now();setUbos(prev=>[...prev,{id,name:'',icNo:'',nationality:'Malaysia',sharePercent:0,source:'Manual'}]);}} className="text-xs px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50">+ 手工新增UBO</button></div>}
+        {/* Guarantors */}
+        <p className="text-xs font-semibold text-gray-600 mt-4 mb-2">担保人</p>
+        {gr?.mandatory&&guarantors.length===0&&<div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded text-sm text-amber-700">⚠ {gr.desc} — 提交前至少需要一名担保人。</div>}
+        {guarantors.length===0&&!gr?.mandatory&&<p className="text-sm text-gray-400 italic mb-3">尚无担保人。</p>}
+        {guarantors.map((g,i)=>(
+          <div key={g.id} className="mb-3 border border-gray-200 rounded p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold text-gray-700">担保人 {i+1}</span>
+              <div className="flex gap-2"><Badge label={g.relationship} color="purple"/><Badge label={g.cifStatus==='ok'?'ETB':'NTB'} color={g.cifStatus==='ok'?'green':'blue'}/><button onClick={()=>{setGuarantors(gs=>gs.filter(x=>x.id!==g.id));setDirectors(ds=>ds.map(d=>d.id===g.id?{...d,isGuarantor:false}:d));}} className="text-xs text-red-400 hover:text-red-600">✕ 移除</button></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div><span className="text-gray-400 text-xs block">姓名</span><span>{g.name}</span></div>
+              <div><span className="text-gray-400 text-xs block">IC / ID</span><span>{g.icNo}</span></div>
+              <div><span className="text-gray-400 text-xs block">国籍</span><span>{g.nationality}</span></div>
+              <div><span className="text-gray-400 text-xs block">月收入 (RM)</span><input type="number" value={g.income} onChange={e=>setGuarantors(gs=>gs.map(x=>x.id===g.id?{...x,income:+e.target.value}:x))} className="w-full border border-gray-200 rounded px-2 py-1 text-sm"/></div>
+            </div>
+          </div>
+        ))}
+        <button onClick={()=>setShowAddGuar(true)} className="px-4 py-2 border border-blue-500 text-blue-600 text-sm rounded hover:bg-blue-50">+ 新增担保人</button>
+        <div className="mt-4 flex justify-end">
+          <button onClick={()=>completeModule(7)} className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+            确认关联方信息 →
+          </button>
+        </div>
+      </ModuleCard>
+    );
+  }
+
+  // ─── M8: 地址与联系信息 ──────────────────────────────────────────────────
+  function M8() {
+    const ms = moduleStatus[8];
+    const summary = regAddr1?`${regAddr1.substring(0,45)}${regAddr1.length>45?'...':''}`:'—';
+    return (
+      <ModuleCard n={8} id="m8" icon="📍" title="地址与联系信息 · Address & Contact"
+        status={ms} onEdit={()=>editModule(8)} summary={summary}>
+        <p className="text-xs font-semibold text-gray-600 mb-2">注册地址</p>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="col-span-2">
+            <Field2 label="Registered Address Line 1" required source="SSM">
+              <Input value={regAddr1} onChange={setRegAddr1} placeholder="Street address from SSM" readOnly={corpLocked&&!!regAddr1}/>
+            </Field2>
+          </div>
+          <Field2 label="City" required source="SSM"><Input value={regCity} onChange={setRegCity} placeholder="e.g. Kuala Lumpur"/></Field2>
+          <Field2 label="State" required source="SSM"><Select value={regState} onChange={setRegState} options={MY_STATES.map(s=>({value:s,label:s}))} placeholder="— Select —"/></Field2>
+          <Field2 label="Postcode" required source="SSM"><Input value={regPostal} onChange={setRegPostal} placeholder="e.g. 50100"/></Field2>
+        </div>
+        <p className="text-xs font-semibold text-gray-600 mb-2">营业地址</p>
+        <label className="flex items-center gap-2 text-sm text-gray-600 mb-3 cursor-pointer">
+          <input type="checkbox" checked={sameAddr} onChange={e=>{setSameAddr(e.target.checked);if(e.target.checked){setBizAddr1(regAddr1);setBizCity(regCity);setBizState(regState);setBizPostal(regPostal);}}}/>
+          与注册地址相同
+        </label>
+        {!sameAddr && (
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="col-span-2"><Field2 label="Business Address Line 1" required><Input value={bizAddr1} onChange={setBizAddr1}/></Field2></div>
+            <Field2 label="City"><Input value={bizCity} onChange={setBizCity}/></Field2>
+            <Field2 label="State"><Select value={bizState} onChange={setBizState} options={MY_STATES.map(s=>({value:s,label:s}))} placeholder="—"/></Field2>
+            <Field2 label="Postcode"><Input value={bizPostal} onChange={setBizPostal}/></Field2>
+          </div>
+        )}
+        <p className="text-xs font-semibold text-gray-600 mb-2">联系方式</p>
+        <div className="grid grid-cols-2 gap-4">
+          <Field2 label="Corporate Email" required><Input value={corpEmail} onChange={setCorpEmail} placeholder="e.g. finance@company.com"/></Field2>
+          <Field2 label="Contact Name" required><Input value={contactName} onChange={setContactName}/></Field2>
+          <Field2 label="Mobile Phone" required><Input value={contactPhone} onChange={setContactPhone} placeholder="+60 12 345 6789"/></Field2>
+          <Field2 label="Email"><Input value={contactEmail} onChange={setContactEmail}/></Field2>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button onClick={()=>completeModule(8)} className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+            确认地址联系 →
+          </button>
+        </div>
+      </ModuleCard>
+    );
+  }
+
+  // ─── M9: 业务确认与同意 ──────────────────────────────────────────────────
+  function M9() {
+    const ms = moduleStatus[9];
+    const summary = [isFaceToFace&&`F2F: ${isFaceToFace}`, customerConfirmHP&&`HP意向: ${customerConfirmHP}`, pdsConfirmed&&'PDS ✓'].filter(Boolean).join(' · ')||'—';
+    return (
+      <ModuleCard n={9} id="m9" icon="✅" title="业务确认与同意 · Confirmation"
+        status={ms} onEdit={()=>editModule(9)} summary={summary}>
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-2">5. 客户身份识别是否面对面完成？</p>
+            <RadioGroup value={isFaceToFace} onChange={setIsFaceToFace} options={['Yes','No']}/>
+          </div>
+          {isFaceToFace==='Yes' && (
+            <div className="grid grid-cols-2 gap-4 pl-4 border-l-2 border-blue-200">
+              <Field2 label="Date of Contact" required><Input value={dateOfContact} onChange={setDateOfContact} placeholder="YYYY-MM-DD"/></Field2>
+              <Field2 label="Mode of Contact" required>
+                <Select value={modeOfContact} onChange={setModeOfContact} options={[{value:'',label:'—'},{value:'Face-to-Face',label:'Face-to-Face'},{value:'Video Call',label:'Video Call'},{value:'Phone',label:'Phone'}]}/>
+              </Field2>
+              <Field2 label="Contacted By" required><Input value={contactedBy} onChange={setContactedBy} placeholder="Officer name"/></Field2>
+            </div>
+          )}
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-1">6. 客户确认申请HP融资意向？</p>
+            <RadioGroup value={customerConfirmHP} onChange={setCustomerConfirmHP} options={['Yes','No']}/>
+          </div>
+          <div className="space-y-2 pt-2 border-t border-gray-100">
+            <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer">
+              <input type="checkbox" checked={pdsConfirmed} onChange={e=>setPdsConfirmed(e.target.checked)} className="mt-0.5"/>
+              <span>客户已收到并确认<span className="font-medium">产品披露表 (PDS)</span></span>
+            </label>
+            <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer">
+              <input type="checkbox" checked={marketingConsent} onChange={e=>setMarketingConsent(e.target.checked)} className="mt-0.5"/>
+              <span>客户同意接收 HLB 营销通讯</span>
+            </label>
+          </div>
+        </div>
+        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
+          ⚠ <strong>非个人申请:</strong> E-Consent / E-Acceptance 不适用，所有协议须由授权签署人通过线下纸质方式签署。
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button onClick={()=>completeModule(9)} disabled={!isFaceToFace||!customerConfirmHP||!pdsConfirmed}
+            className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50">
+            ✓ 完成确认，提交前准备就绪
+          </button>
+        </div>
+      </ModuleCard>
     );
   }
 
@@ -2043,17 +2770,17 @@ export default function ApplicationForm() {
   // (using JSX inline above works; extended version if needed)
 
   // ─── Render ────────────────────────────────────────────────────────────────
-  const canSubmit = corpLocked && !!enterpriseType && !!loanAmount && !!tenureMonths && !!vehicleMake && hasSignatory && mandatoryGuarSatisfied;
+  const allModulesDone = moduleStatus.every(s => s === 'complete');
+  const canSubmit = allModulesDone && !!loanAmount && !!tenureMonths && !!vehicleMake && hasSignatory && mandatoryGuarSatisfied;
+  const completedModuleCount = moduleStatus.filter(s=>s==='complete').length;
   const missingList = [
-    !corpLocked && 'Company not locked',
-    !enterpriseType && 'Enterprise Type',
-    !corpTIN && 'TIN',
-    !loanAmount && 'Loan Amount',
-    !tenureMonths && 'Tenure',
-    !vehicleMake && 'Vehicle',
-    (!!enterpriseType && !hasSignatory) && 'At least 1 Signatory required',
-    gr?.mandatory && guarantors.length === 0 && `${gr.type} Guarantor required (${gr.desc.split(' ')[0]})`,
-    (needsDrillDown && !drillComplete) && 'UBO Drill-down incomplete for corporate shareholder(s)',
+    completedModuleCount < 10 && `${10 - completedModuleCount} 个模块未完成`,
+    !loanAmount && '融资金额',
+    !tenureMonths && '期限',
+    !vehicleMake && '车辆信息',
+    (!!enterpriseType && !hasSignatory) && '至少需要1名签署人',
+    gr?.mandatory && guarantors.length === 0 && `需要${gr.type}担保人`,
+    (needsDrillDown && !drillComplete) && 'UBO穿透未完成',
   ].filter(Boolean) as string[];
 
   return (
@@ -2074,23 +2801,12 @@ export default function ApplicationForm() {
         {/* Scrollable sections */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
           {ProcessSummarySection()}
-          {IdentitySection()}
-          {AppDetailsSection()}
-          {appType==='Non-Individual'
-            ? ApplicantInfoSection()
-            : (
-              <SectionPanel id="applicant" icon="🏢" title="Applicant Information">
-                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
-                  ℹ Switch Customer Type to <strong>Non-Individual</strong> in Identity Verification to enter corporate applicant information.
-                </div>
-              </SectionPanel>
-            )
-          }
-          {GuarantorSection()}
-          {IncomeSummarySection()}
-          {AssetSection()}
+          {M0()} {M1()} {M2()} {M3()} {M4()}
+          {M5()} {M6()} {M7()} {M8()} {M9()}
           {CollateralSection()}
           {FacilitySection()}
+          {IncomeSummarySection()}
+          {AssetSection()}
           {RiskSection()}
         </div>
 
