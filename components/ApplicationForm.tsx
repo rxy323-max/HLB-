@@ -285,7 +285,7 @@ function ModuleCard({ n, id, icon, title, status, onEdit, summary, children }: {
           <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500 flex-shrink-0">{n}</span>
           <span className="text-base leading-none">{icon}</span>
           <span className="font-semibold text-sm text-gray-500">{title}</span>
-          <span className="ml-auto text-xs text-gray-400">🔒 完成上一步后解锁</span>
+          <span className="ml-auto text-xs text-gray-400">🔒 Complete previous step to unlock</span>
         </div>
       </div>
     );
@@ -300,7 +300,7 @@ function ModuleCard({ n, id, icon, title, status, onEdit, summary, children }: {
           <span className="text-base leading-none">{icon}</span>
           <span className="font-semibold text-sm text-gray-700">{title}</span>
           {summary && <span className="ml-2 text-xs text-gray-400 truncate flex-1">{summary}</span>}
-          <button onClick={onEdit} className="ml-auto text-xs text-blue-600 hover:underline flex-shrink-0 px-1">编辑</button>
+          <button onClick={onEdit} className="ml-auto text-xs text-blue-600 hover:underline flex-shrink-0 px-1">Edit</button>
         </div>
       </div>
     );
@@ -311,7 +311,7 @@ function ModuleCard({ n, id, icon, title, status, onEdit, summary, children }: {
         <span className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">{n}</span>
         <span className="text-base leading-none">{icon}</span>
         <span className="font-semibold text-sm text-gray-800">{title}</span>
-        <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700">进行中</span>
+        <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700">Active</span>
       </div>
       <div className="px-4 pb-4 pt-3">{children}</div>
     </div>
@@ -320,22 +320,22 @@ function ModuleCard({ n, id, icon, title, status, onEdit, summary, children }: {
 
 // ─── Navigation config ────────────────────────────────────────────────────────
 const MODULE_NAV: { id: string; label: string }[] = [
-  { id:'m0', label:'0 · 渠道信息录入' },
-  { id:'m1', label:'1 · 申请角色选择' },
-  { id:'m2', label:'2 · 企业身份概况' },
-  { id:'m3', label:'3 · 业务运营详情' },
-  { id:'m4', label:'4 · 财务与经营数据' },
-  { id:'m5', label:'5 · 地域与税务' },
-  { id:'m6', label:'6 · 合规审查' },
-  { id:'m7', label:'7 · 关联方信息' },
-  { id:'m8', label:'8 · 地址与联系信息' },
-  { id:'m9', label:'9 · 业务确认与同意' },
+  { id:'m0', label:'0 · Channel Info' },
+  { id:'m1', label:'1 · Role & Identity' },
+  { id:'m2', label:'2 · Company Identity' },
+  { id:'m3', label:'3 · Operations' },
+  { id:'m4', label:'4 · Financials' },
+  { id:'m5', label:'5 · Geography & Tax' },
+  { id:'m6', label:'6 · Compliance' },
+  { id:'m7', label:'7 · Related Parties' },
+  { id:'m8', label:'8 · Address & Contact' },
+  { id:'m9', label:'9 · Confirmation' },
 ];
 const EXTRA_NAV: NavItem[] = [
-  { id:'collateral',    label:'担保物 / Collateral' },
-  { id:'facility',      label:'融资方案 / Facility' },
-  { id:'incomeSummary', label:'收入汇总 / Income' },
-  { id:'aml',           label:'风险关联 / Risk' },
+  { id:'collateral',    label:'Collateral' },
+  { id:'facility',      label:'Facility' },
+  { id:'incomeSummary', label:'Income Summary' },
+  { id:'aml',           label:'Risk / AML' },
 ];
 
 // ─── Main component ────────────────────────────────────────────────────────────
@@ -728,12 +728,12 @@ export default function ApplicationForm() {
     return (
       <div className="h-full flex flex-col">
         <div className="px-3 py-3 border-b border-gray-200">
-          <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">录入模块</span>
+          <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Modules</span>
         </div>
         <div className="flex-1 overflow-y-auto py-1">
           <button onClick={()=>goTo('processSummary')}
             className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs border-l-2 ${activeSection==='processSummary'?'text-blue-600 border-blue-500 bg-blue-50':'text-gray-500 border-transparent hover:bg-gray-50'}`}>
-            📋 申请概览
+            📋 Application Overview
           </button>
           {MODULE_NAV.map((item, n) => {
             const ms = moduleStatus[n];
@@ -749,7 +749,7 @@ export default function ApplicationForm() {
             );
           })}
           <div className="px-3 pt-3 pb-1 mt-1 border-t border-gray-100">
-            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">其他模块</span>
+            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Other Sections</span>
           </div>
           {EXTRA_NAV.map(item => (
             <button key={item.id} onClick={()=>goTo(item.id)}
@@ -832,7 +832,7 @@ export default function ApplicationForm() {
             <div><span className="text-gray-400 block text-xs">Status Log</span><span className="text-xs text-gray-500">Draft created {now}</span></div>
             <div><span className="text-gray-400 block text-xs">Guarantor(s)</span><span className="font-medium">{guarantors.length||'—'}</span></div>
             <div><span className="text-gray-400 block text-xs">EIR</span><span className="font-medium">{eirValue?`${eirValue}%`:'—'}</span></div>
-            <div><span className="text-gray-400 block text-xs">Completion</span><span className="font-medium">{completedCount} / 10 模块</span></div>
+            <div><span className="text-gray-400 block text-xs">Completion</span><span className="font-medium">{completedCount} / 10 modules</span></div>
             <div><span className="text-gray-400 block text-xs">Vehicle</span><span className="font-medium">{vehicleMake&&vehicleModel?`${vehicleMake} ${vehicleModel}`:'—'}</span></div>
             <div><span className="text-gray-400 block text-xs">Approved Tenure</span><span className="font-medium">{tenureMonths?`${tenureMonths} Months`:'—'}</span></div>
           </div>
@@ -866,7 +866,7 @@ export default function ApplicationForm() {
     const ms = moduleStatus[0];
     const summary = [productGroup, loanType, salesOfficer, deliveryChannel].filter(Boolean).join(' · ');
     return (
-      <ModuleCard n={0} id="m0" icon="📡" title="渠道信息录入 · Channel Info"
+      <ModuleCard n={0} id="m0" icon="📡" title="Channel Info"
         status={ms} onEdit={()=>editModule(0)} summary={summary}>
         <div className="grid grid-cols-2 gap-4">
           <Field2 label="Product Group" required>
@@ -905,7 +905,7 @@ export default function ApplicationForm() {
         </div>
         <div className="mt-4 flex justify-end">
           <button onClick={()=>completeModule(0)} className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
-            确认渠道信息 →
+            Confirm Channel Info →
           </button>
         </div>
       </ModuleCard>
@@ -915,7 +915,7 @@ export default function ApplicationForm() {
   // ─── M1: 申请角色选择 ─────────────────────────────────────────────────────
   function M1() {
     const ms = moduleStatus[1];
-    const summary = corpLocked ? `${appType} · ${idNo1||cifNo} · ${companyName} · ${etbStatus||'NTB'}` : `${appType} · 尚未锁定`;
+    const summary = corpLocked ? `${appType} · ${idNo1||cifNo} · ${companyName} · ${etbStatus||'NTB'}` : `${appType} · Not yet locked`;
     const corpIdTypes = [
       { value:'SSM ID', label:'SSM ID (Certificate of Incorporation)' },
       { value:'BR No',  label:'Business Registration No.' },
@@ -924,7 +924,7 @@ export default function ApplicationForm() {
       { value:'Trading',label:'Trading License (East MY)' },
     ];
     return (
-      <ModuleCard n={1} id="m1" icon="🪪" title="申请角色选择 · Role & Identity"
+      <ModuleCard n={1} id="m1" icon="🪪" title="Role & Identity"
         status={ms} onEdit={()=>editModule(1)} summary={summary}>
         <div className="grid grid-cols-2 gap-6 mb-4">
           <Field2 label="Customer Type" required>
@@ -955,7 +955,7 @@ export default function ApplicationForm() {
                 )}
               </div>
             </Field2>
-            <p className="mt-1 text-xs text-gray-400">反查CIF编号 — 系统将自动填充注册号和公司信息。</p>
+            <p className="mt-1 text-xs text-gray-400">Reverse lookup by CIF — system will auto-populate registration number and company details.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 mb-4">
@@ -1012,7 +1012,7 @@ export default function ApplicationForm() {
               {!corpLocked ? (
                 <button onClick={()=>{ setCorpLocked(true); completeModule(1); }}
                   className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 ml-4 flex-shrink-0">
-                  ✓ 确认锁定
+                  ✓ Confirm &amp; Lock
                 </button>
               ) : <Badge label="🔒 Locked" color="green"/>}
             </div>
@@ -1020,7 +1020,22 @@ export default function ApplicationForm() {
         )}
         {lookupStatus==='notfound' && (
           <div className="bg-amber-50 border border-amber-200 rounded p-3 text-sm text-amber-700">
-            ⚠ 未找到记录。请检查注册号或联系主管。
+            ⚠ No record found. Please verify the registration number or contact your supervisor.
+          </div>
+        )}
+        {!corpLocked && (
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+            {lookupStatus!=='found' && (idNo1||cifNo) && (
+              <p className="text-xs text-gray-400">
+                {lookupStatus==='notfound' ? 'Proceeding with manual entry.' : 'Run a lookup above, or proceed manually.'}
+              </p>
+            )}
+            <button
+              onClick={()=>{ setCorpLocked(true); completeModule(1); }}
+              disabled={!idNo1 && !cifNo}
+              className="ml-auto px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50">
+              ✓ Confirm &amp; Lock →
+            </button>
           </div>
         )}
       </ModuleCard>
@@ -1034,7 +1049,7 @@ export default function ApplicationForm() {
       ? `${ENTITY_TYPES.find(e=>e.value===enterpriseType)?.label.split('–')[0]?.trim()||''} · ${effConstitution?'Constitution '+effConstitution:''} · ${cifNo||'—'}`
       : '—';
     return (
-      <ModuleCard n={2} id="m2" icon="🏢" title="企业身份概况 · Company Identity"
+      <ModuleCard n={2} id="m2" icon="🏢" title="Company Identity"
         status={ms} onEdit={()=>editModule(2)} summary={summary}>
         <div className="grid grid-cols-2 gap-4">
           <Field2 label="ID Type 1" source="SSM">
@@ -1054,7 +1069,7 @@ export default function ApplicationForm() {
               <span className="text-lg">🚫</span>
               <div>
                 <p className="font-semibold text-sm">Entity Type I (Virtual BE) — Cannot Process HP</p>
-                <p className="text-xs mt-0.5">此实体类型为系统占位符，为非活跃状态，无法创建HP申请。</p>
+                <p className="text-xs mt-0.5">This entity type is a system placeholder and is inactive — HP applications cannot be created.</p>
               </div>
             </div>
           )}
@@ -1063,7 +1078,7 @@ export default function ApplicationForm() {
               <span className="text-lg">⚠</span>
               <div>
                 <p className="font-semibold text-sm">{et==='J'?'Entity J (Society) — Non-Active':'Entity K (Government) — Non-Active'}</p>
-                <p className="text-xs mt-0.5">{et==='J'?'社团/协会/俱乐部需额外合规审查，章程代码需手工确认。':'政府/法定机构需额外合规审查，章程代码需根据政府层级手工选择（V/W/B/G/H/F）。'}</p>
+                <p className="text-xs mt-0.5">{et==='J'?'Societies/associations/clubs require additional compliance review; constitution code must be confirmed manually.':'Government/statutory bodies require additional compliance review; constitution code must be selected manually based on government tier (V/W/B/G/H/F).'}</p>
               </div>
             </div>
           )}
@@ -1104,7 +1119,7 @@ export default function ApplicationForm() {
         <div className="mt-4 flex justify-end">
           <button onClick={()=>completeModule(2)} disabled={!enterpriseType}
             className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50">
-            确认企业身份 →
+            Confirm Company Identity →
           </button>
         </div>
       </ModuleCard>
@@ -1117,7 +1132,7 @@ export default function ApplicationForm() {
     const g = MSIC_GROUPS.find(g=>g.value===msicGroup);
     const summary = [g?.label, msicCode&&`Code: ${msicCode}`, firmType&&firmType].filter(Boolean).join(' · ')||'—';
     return (
-      <ModuleCard n={3} id="m3" icon="🏭" title="业务运营详情 · Business Operations"
+      <ModuleCard n={3} id="m3" icon="🏭" title="Business Operations"
         status={ms} onEdit={()=>editModule(3)} summary={summary}>
         <div className="grid grid-cols-2 gap-4">
           <Field2 label="Nature of Business Group" required source="Manual">
@@ -1149,7 +1164,7 @@ export default function ApplicationForm() {
         </div>
         <div className="mt-4 flex justify-end">
           <button onClick={()=>completeModule(3)} className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
-            确认运营信息 →
+            Confirm Operations →
           </button>
         </div>
       </ModuleCard>
@@ -1159,9 +1174,9 @@ export default function ApplicationForm() {
   // ─── M4: 财务与经营数据 ───────────────────────────────────────────────────
   function M4() {
     const ms = moduleStatus[4];
-    const summary = [turnoverRange&&`营业额: ${turnoverRange}`, employeeRange&&`员工: ${employeeRange}`, sourceOfRepayment&&sourceOfRepayment].filter(Boolean).join(' · ')||'—';
+    const summary = [turnoverRange&&`Turnover: ${turnoverRange}`, employeeRange&&`Employees: ${employeeRange}`, sourceOfRepayment&&sourceOfRepayment].filter(Boolean).join(' · ')||'—';
     return (
-      <ModuleCard n={4} id="m4" icon="💰" title="财务与经营数据 · Financials"
+      <ModuleCard n={4} id="m4" icon="💰" title="Financials"
         status={ms} onEdit={()=>editModule(4)} summary={summary}>
         <div className="grid grid-cols-2 gap-4">
           <Field2 label="Annual Turnover (Actual, RM)" source="Manual">
@@ -1215,7 +1230,7 @@ export default function ApplicationForm() {
         </Field2>
         <div className="mt-4 flex justify-end">
           <button onClick={()=>completeModule(4)} className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
-            确认财务数据 →
+            Confirm Financials →
           </button>
         </div>
       </ModuleCard>
@@ -1227,7 +1242,7 @@ export default function ApplicationForm() {
     const ms = moduleStatus[5];
     const summary = [`${countryOfOp}${stateOfOp?' · '+stateOfOp:''}`, corpTIN&&`TIN: ${corpTIN}`, bumiStatus&&`Bumi: ${bumiStatus}`].filter(Boolean).join(' · ');
     return (
-      <ModuleCard n={5} id="m5" icon="🌏" title="地域与税务 · Geography & Tax"
+      <ModuleCard n={5} id="m5" icon="🌏" title="Geography & Tax"
         status={ms} onEdit={()=>editModule(5)} summary={summary}>
         <div className="grid grid-cols-2 gap-4">
           <Field2 label="Country of Operation" required>
@@ -1259,7 +1274,7 @@ export default function ApplicationForm() {
         </div>
         <div className="mt-4 flex justify-end">
           <button onClick={()=>completeModule(5)} className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
-            确认地域税务 →
+            Confirm Geography &amp; Tax →
           </button>
         </div>
       </ModuleCard>
@@ -1271,7 +1286,7 @@ export default function ApplicationForm() {
     const ms = moduleStatus[6];
     const summary = [customerSector&&customerSector, pepFlag&&`PEP: ${pepFlag}`, complexStructure&&`Complex: ${complexStructure}`].filter(Boolean).join(' · ')||'—';
     return (
-      <ModuleCard n={6} id="m6" icon="🔍" title="合规审查 · Compliance Review"
+      <ModuleCard n={6} id="m6" icon="🔍" title="Compliance Review"
         status={ms} onEdit={()=>editModule(6)} summary={summary}>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <Field2 label="Customer Sector Code">
@@ -1296,36 +1311,36 @@ export default function ApplicationForm() {
             <Input value={bnmClassProposed||'—'} readOnly/>
           </Field2>
         </div>
-        <p className="text-xs text-gray-400 italic mb-4">GP Ratings 和 BNM 分类由系统生成，只读。</p>
+        <p className="text-xs text-gray-400 italic mb-4">GP Ratings and BNM Classification are system-generated and read-only.</p>
         <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
-          ℹ AML/CDD 覆盖范围：董事、UBO、担保人及相关自然人。
+          ℹ AML/CDD scope covers: Directors, UBOs, Guarantors and all associated natural persons.
         </div>
         <div className="space-y-4">
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-1">1. 是否存在<strong>政治敏感人士 (PEP)</strong>？</p>
+            <p className="text-sm font-medium text-gray-700 mb-1">1. Are any <strong>Politically Exposed Persons (PEP)</strong> identified?</p>
             <RadioGroup value={pepFlag} onChange={setPepFlag} options={['Yes','No','Unknown']}/>
-            {pepFlag==='Yes' && <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">🚫 识别到PEP — 需要增强尽职调查(EDD)，提交前须经高级合规审批。</div>}
+            {pepFlag==='Yes' && <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">🚫 PEP identified — Enhanced Due Diligence (EDD) required; senior compliance approval needed before submission.</div>}
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-1">2. 是否存在<strong>PEP关联人士 (RCA)</strong>？</p>
+            <p className="text-sm font-medium text-gray-700 mb-1">2. Are any <strong>Relatives or Close Associates of PEP (RCA)</strong> identified?</p>
             <RadioGroup value={rcaToPep} onChange={setRcaToPep} options={['Yes','No','Unknown']}/>
-            {rcaToPep==='Yes' && <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">⚠ 识别到RCA — 需额外风险评估。</div>}
+            {rcaToPep==='Yes' && <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">⚠ RCA identified — Additional risk assessment required.</div>}
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-1">3. 公司是否存在复杂所有权结构？</p>
+            <p className="text-sm font-medium text-gray-700 mb-1">3. Does the company have a complex ownership structure?</p>
             <RadioGroup value={complexStructure} onChange={setComplexStructure} options={['Yes','No']}/>
-            {complexStructure==='Yes' && <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">⚠ 复杂结构 — 需记录所有实际受益人层级。</div>}
+            {complexStructure==='Yes' && <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">⚠ Complex structure — All beneficial ownership layers must be documented.</div>}
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-1">4. 是否存在记名/无记名股份？</p>
+            <p className="text-sm font-medium text-gray-700 mb-1">4. Are there nominee or bearer shares?</p>
             <RadioGroup value={nomineeShares} onChange={setNomineeShares} options={['Yes','No']}/>
-            {nomineeShares==='Yes' && <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">🚫 高风险指标 — 需额外AML评估及高级审批。</div>}
+            {nomineeShares==='Yes' && <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">🚫 High-risk indicator — Additional AML assessment and senior approval required.</div>}
           </div>
         </div>
         <div className="mt-4 flex justify-end">
           <button onClick={()=>completeModule(6)} disabled={!pepFlag||!complexStructure||!nomineeShares}
             className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50">
-            确认合规审查 →
+            Confirm Compliance →
           </button>
         </div>
       </ModuleCard>
@@ -1335,59 +1350,59 @@ export default function ApplicationForm() {
   // ─── M7: 关联方信息 ───────────────────────────────────────────────────────
   function M7() {
     const ms = moduleStatus[7];
-    const summary = `${directors.length} 人 · ${ubos.length} UBO · ${guarantors.length} 担保人`;
+    const summary = `${directors.length} person(s) · ${ubos.length} UBO · ${guarantors.length} Guarantor(s)`;
     return (
-      <ModuleCard n={7} id="m7" icon="👥" title="关联方信息 · Related Parties"
+      <ModuleCard n={7} id="m7" icon="👥" title="Related Parties"
         status={ms} onEdit={()=>editModule(7)} summary={summary}>
         {/* Entity banner */}
         {et && (
           <div className="mb-4 space-y-2">
             <div className="p-3 rounded border bg-blue-50 border-blue-200 text-xs text-blue-800">
               <p className="font-semibold mb-1">
-                {et==='A'&&'Entity A (Sdn Bhd): 记录董事+股东，对法人股东>25%进行穿透。'}
-                {et==='B'&&'Entity B (Berhad): 记录董事+主要股东，上市公司UBO豁免。'}
-                {et==='C'&&'Entity C (Foreign Branch): 记录本地授权代表+海外母公司董事。'}
-                {et==='D'&&'Entity D (Sole Prop): 仅记录业主 — 业主自动为UBO+签署人。'}
-                {et==='E'&&'Entity E (Partnership): 记录所有合伙人 — 每位合伙人自动为UBO+签署人（无限连带责任，无须额外PG）。'}
-                {(et==='F'||et==='G')&&`Entity ${et} (LLP): 记录所有合伙人，利润分配权>25%者为UBO候选。`}
-                {et==='H'&&'Entity H (Professional LLP): 记录所有执业合伙人，需有效执照 — 过期即硬拒。'}
-                {et==='I'&&'Entity I (Virtual BE): 此实体为非活跃状态，无法处理HP申请。'}
-                {et==='J'&&'Entity J (Society): 记录主要委员会成员，从中选定UBO。'}
-                {et==='K'&&'Entity K (Government): 记录授权官员，无需UBO穿透。'}
-                {et==='L'&&'Entity L (East MY SE): 记录持牌人 — 持牌人自动为UBO+签署人。'}
+                {et==='A'&&'Entity A (Sdn Bhd): Record Directors + Shareholders; drill through corporate shareholders >25%.'}
+                {et==='B'&&'Entity B (Berhad): Record Directors + major shareholders; UBO exemption applies for listed companies.'}
+                {et==='C'&&'Entity C (Foreign Branch): Record local authorised representative + overseas parent company directors.'}
+                {et==='D'&&'Entity D (Sole Prop): Owner only — owner is automatically UBO + Signatory.'}
+                {et==='E'&&'Entity E (Partnership): Record all partners — each partner is automatically UBO + Signatory (unlimited joint liability; no additional PG required).'}
+                {(et==='F'||et==='G')&&`Entity ${et} (LLP): Record all partners; those with >25% profit entitlement are UBO candidates.`}
+                {et==='H'&&'Entity H (Professional LLP): Record all practising partners with valid licences — expired licence is a hard reject.'}
+                {et==='I'&&'Entity I (Virtual BE): This entity is inactive and cannot be processed for HP applications.'}
+                {et==='J'&&'Entity J (Society): Record key committee members and select UBOs from among them.'}
+                {et==='K'&&'Entity K (Government): Record authorised officers; UBO drill-through is not required.'}
+                {et==='L'&&'Entity L (East MY SE): Record licence holder — licence holder is automatically UBO + Signatory.'}
               </p>
-              <p className="text-blue-600">授权签署人: <strong>{ENTITY_GUARANTOR[et]?.signatories}</strong></p>
+              <p className="text-blue-600">Authorised Signatories: <strong>{ENTITY_GUARANTOR[et]?.signatories}</strong></p>
             </div>
-            {et==='H' && <div className="p-2 rounded border bg-red-50 border-red-300 text-xs text-red-800 flex items-start gap-1.5"><span className="flex-shrink-0">🔴</span><span><strong>硬拒规则 (Entity H):</strong> 任何执业合伙人的执照过期或撤销，整个申请必须拒绝 — 一票否决。</span></div>}
-            {et==='F' && <div className="p-2 rounded border bg-amber-50 border-amber-200 text-xs text-amber-800 flex items-start gap-1.5"><span className="flex-shrink-0">⚠</span><span><strong>合规官员必须指定 (Entity F):</strong> 需在下表中标记合规官员，且必须设为签署人。</span></div>}
-            {gr && <div className={`p-2 rounded border text-xs ${gr.mandatory?'bg-amber-50 border-amber-200 text-amber-700':'bg-gray-50 border-gray-200 text-gray-500'}`}>{gr.mandatory?<span>⚠ <strong>需要担保人:</strong> {gr.desc}</span>:<span>ℹ {gr.desc}</span>}</div>}
+            {et==='H' && <div className="p-2 rounded border bg-red-50 border-red-300 text-xs text-red-800 flex items-start gap-1.5"><span className="flex-shrink-0">🔴</span><span><strong>Hard Reject Rule (Entity H):</strong> If any practising partner's licence is expired or revoked, the entire application must be declined — one veto applies.</span></div>}
+            {et==='F' && <div className="p-2 rounded border bg-amber-50 border-amber-200 text-xs text-amber-800 flex items-start gap-1.5"><span className="flex-shrink-0">⚠</span><span><strong>Compliance Officer Required (Entity F):</strong> A compliance officer must be designated in the table below and set as Signatory.</span></div>}
+            {gr && <div className={`p-2 rounded border text-xs ${gr.mandatory?'bg-amber-50 border-amber-200 text-amber-700':'bg-gray-50 border-gray-200 text-gray-500'}`}>{gr.mandatory?<span>⚠ <strong>Guarantor required:</strong> {gr.desc}</span>:<span>ℹ {gr.desc}</span>}</div>}
           </div>
         )}
         {/* Management table */}
-        <p className="text-xs font-semibold text-gray-600 mb-2">管理层 / 股东</p>
+        <p className="text-xs font-semibold text-gray-600 mb-2">Management &amp; Shareholders</p>
         <div className="flex justify-between items-center mb-2">
           <span className="text-xs text-gray-500 flex items-center gap-1">
-            {expertianFetched?`${directors.length} 条记录`:'尚未拉取'}
+            {expertianFetched?`${directors.length} record(s)`:'Not yet fetched'}
             {expertianFetched&&<SourceTag src="Experian"/>}
           </span>
           <div className="flex gap-2">
             {!expertianFetched&&corpLocked&&(
               <button onClick={fetchExperian} disabled={experianLoading} className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 disabled:opacity-50">
-                {experianLoading?'拉取中...':'⟳ 从 Experian 拉取'}
+                {experianLoading?'Loading...':'⟳ Fetch from Experian'}
               </button>
             )}
-            <button onClick={()=>{const id='m'+Date.now();setDirectors(ds=>[...ds,{id,name:'',icNo:'',nationality:'Malaysia',sharePercent:0,isCorporate:false,roles:['Director'],isUBO:false,isSignatory:false,isGuarantor:false}]);}} className="px-3 py-1.5 border border-gray-300 text-xs rounded hover:bg-gray-50">+ 手工新增</button>
+            <button onClick={()=>{const id='m'+Date.now();setDirectors(ds=>[...ds,{id,name:'',icNo:'',nationality:'Malaysia',sharePercent:0,isCorporate:false,roles:['Director'],isUBO:false,isSignatory:false,isGuarantor:false}]);}} className="px-3 py-1.5 border border-gray-300 text-xs rounded hover:bg-gray-50">+ Add Manually</button>
           </div>
         </div>
         {needsDrillDown&&corpDirs.length>0&&!drillComplete&&(
           <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-start gap-1.5">
             <span className="flex-shrink-0">🔴</span>
-            <span><strong>需要UBO穿透 (Entity {et}):</strong> 法人股东须穿透至自然人（&gt;25%实际控制）。请点击各法人行的 <strong>⊕ 穿透</strong>。</span>
+            <span><strong>UBO Drill-Through Required (Entity {et}):</strong> Corporate shareholders must be traced to natural persons (&gt;25% beneficial control). Click <strong>⊕ Drill Down</strong> on each corporate row.</span>
           </div>
         )}
         {!hasSignatory&&directors.length>0&&(
           <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700 flex items-start gap-1.5">
-            <span>⚠</span><span><strong>需要签署人:</strong> 至少须指定一名签署人方可提交。</span>
+            <span>⚠</span><span><strong>Signatory required:</strong> At least one signatory must be designated before submission.</span>
           </div>
         )}
         {directors.length>0 && (
@@ -1395,13 +1410,13 @@ export default function ApplicationForm() {
             <table className="w-full text-xs border-collapse">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left py-2 px-2 font-medium text-gray-500">姓名 / ID</th>
-                  <th className="text-left py-2 px-2 font-medium text-gray-500">角色</th>
-                  <th className="text-center py-2 px-2 font-medium text-gray-500">股%</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-500">Name / ID</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-500">Role</th>
+                  <th className="text-center py-2 px-2 font-medium text-gray-500">Share%</th>
                   <th className="text-center py-2 px-2 font-medium text-gray-500">UBO</th>
-                  <th className="text-center py-2 px-2 font-medium text-gray-500">签署人</th>
-                  <th className="text-center py-2 px-2 font-medium text-gray-500">担保人</th>
-                  <th className="text-left py-2 px-2 font-medium text-gray-500">操作</th>
+                  <th className="text-center py-2 px-2 font-medium text-gray-500">Signatory</th>
+                  <th className="text-center py-2 px-2 font-medium text-gray-500">Guarantor</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-500">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -1411,14 +1426,14 @@ export default function ApplicationForm() {
                       {d.isCorporate?<span className="text-purple-700 font-medium">{d.name||'(name)'}</span>:<span>{d.name||'(name)'}</span>}
                       <div className="text-gray-400">{d.icNo}</div>
                       {d.isCorporate&&<Badge label="Corporate" color="purple"/>}
-                      {d.isCorporate&&drilledDirectors.has(d.id)&&<Badge label="✓ 已穿透" color="green"/>}
+                      {d.isCorporate&&drilledDirectors.has(d.id)&&<Badge label="✓ Drilled" color="green"/>}
                     </td>
                     <td className="py-2 px-2">{d.roles.join(', ')}</td>
                     <td className="py-2 px-2 text-center"><input type="number" value={d.sharePercent} onChange={e=>setDirectors(ds=>ds.map(x=>x.id===d.id?{...x,sharePercent:+e.target.value}:x))} className="w-14 border border-gray-200 rounded px-1 py-0.5 text-center text-xs" min={0} max={100}/>%</td>
                     <td className="py-2 px-2 text-center">{d.isCorporate?<span className="text-gray-300">—</span>:<input type="checkbox" checked={d.isUBO} onChange={()=>toggleUBO(d.id)} className="cursor-pointer"/>}</td>
                     <td className="py-2 px-2 text-center">{et==='E'?<input type="checkbox" checked={d.isSignatory} readOnly className="cursor-not-allowed opacity-70" title="All Partners must co-sign"/>:<input type="checkbox" checked={d.isSignatory} onChange={()=>toggleSignatory(d.id)} className="cursor-pointer"/>}</td>
                     <td className="py-2 px-2 text-center">{d.isCorporate?<span className="text-gray-300">—</span>:<input type="checkbox" checked={d.isGuarantor} onChange={()=>toggleGuarantorFromDir(d.id)} className="cursor-pointer"/>}</td>
-                    <td className="py-2 px-2">{d.isCorporate&&<button onClick={()=>{setDrillTarget(d);setShowDrillDown(true);}} className={`text-xs hover:underline ${needsDrillDown&&!drilledDirectors.has(d.id)?'text-red-600 font-semibold':'text-blue-600'}`}>⊕ 穿透{needsDrillDown&&!drilledDirectors.has(d.id)?' ⚠':''}</button>}</td>
+                    <td className="py-2 px-2">{d.isCorporate&&<button onClick={()=>{setDrillTarget(d);setShowDrillDown(true);}} className={`text-xs hover:underline ${needsDrillDown&&!drilledDirectors.has(d.id)?'text-red-600 font-semibold':'text-blue-600'}`}>⊕ Drill Down{needsDrillDown&&!drilledDirectors.has(d.id)?' ⚠':''}</button>}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1426,40 +1441,40 @@ export default function ApplicationForm() {
           </div>
         )}
         {/* UBO */}
-        <p className="text-xs font-semibold text-gray-600 mb-2">UBO 识别</p>
-        {uboRule?.mode==='auto'&&<div className="mb-3 p-3 rounded border bg-green-50 border-green-200 text-xs text-green-800"><p className="font-semibold mb-1">✓ 自动绑定 — UBO 已从管理层识别</p><p>{uboRule.desc}</p></div>}
-        {uboRule?.mode==='exempt'&&<div className="mb-3 p-3 rounded border bg-gray-50 border-gray-200 text-xs text-gray-600"><p className="font-semibold mb-1">○ UBO 穿透豁免</p><p>{uboRule.desc}</p>{ubos.filter(u=>u.source==='Exemption').length===0&&<button onClick={()=>setUbos([{id:'exempt',name:'EXEMPTED',icNo:'—',nationality:'—',sharePercent:0,source:'Exemption',exemptReason:et==='K'?'Government/Statutory Body exemption':'Listed Company – Top 5 simplified exemption'}])} className="mt-2 text-xs px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100">✓ 记录豁免</button>}</div>}
-        {uboRule?.mode==='manual'&&et!=='J'&&<div className="mb-3 p-2 rounded border bg-blue-50 border-blue-200 text-xs text-blue-800"><p className="font-semibold">⊕ 需手工UBO穿透</p><p>{uboRule.desc}</p></div>}
-        {uboRule?.mode==='manual'&&et==='J'&&<div className="mb-3 p-2 rounded border bg-blue-50 border-blue-200 text-xs text-blue-800"><p className="font-semibold">委员会职位确认 (Society)</p><p>在上方管理层表中勾选UBO（通常为主席、秘书、财务）。</p></div>}
+        <p className="text-xs font-semibold text-gray-600 mb-2">UBO Identification</p>
+        {uboRule?.mode==='auto'&&<div className="mb-3 p-3 rounded border bg-green-50 border-green-200 text-xs text-green-800"><p className="font-semibold mb-1">✓ Auto-bound — UBOs identified from Management table</p><p>{uboRule.desc}</p></div>}
+        {uboRule?.mode==='exempt'&&<div className="mb-3 p-3 rounded border bg-gray-50 border-gray-200 text-xs text-gray-600"><p className="font-semibold mb-1">○ UBO Drill-Through Exempt</p><p>{uboRule.desc}</p>{ubos.filter(u=>u.source==='Exemption').length===0&&<button onClick={()=>setUbos([{id:'exempt',name:'EXEMPTED',icNo:'—',nationality:'—',sharePercent:0,source:'Exemption',exemptReason:et==='K'?'Government/Statutory Body exemption':'Listed Company – Top 5 simplified exemption'}])} className="mt-2 text-xs px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100">✓ Record Exemption</button>}</div>}
+        {uboRule?.mode==='manual'&&et!=='J'&&<div className="mb-3 p-2 rounded border bg-blue-50 border-blue-200 text-xs text-blue-800"><p className="font-semibold">⊕ Manual UBO Drill-Through Required</p><p>{uboRule.desc}</p></div>}
+        {uboRule?.mode==='manual'&&et==='J'&&<div className="mb-3 p-2 rounded border bg-blue-50 border-blue-200 text-xs text-blue-800"><p className="font-semibold">Committee Position Confirmation (Society)</p><p>Check the UBO checkbox in the Management table above (typically Chairman, Secretary, Treasurer).</p></div>}
         {ubos.map(u=>(
           <div key={u.id} className="flex items-center justify-between py-2 border-b border-gray-100 text-sm">
-            <div><span className="font-medium">{u.name}</span>{u.icNo&&u.icNo!=='—'&&<span className="text-gray-400 ml-2 text-xs">{u.icNo}</span>}{u.sharePercent>0&&<span className="ml-2 text-xs text-gray-400">{u.sharePercent}% 实际股权</span>}{u.exemptReason&&<span className="ml-2 text-xs text-green-600 italic">{u.exemptReason}</span>}</div>
+            <div><span className="font-medium">{u.name}</span>{u.icNo&&u.icNo!=='—'&&<span className="text-gray-400 ml-2 text-xs">{u.icNo}</span>}{u.sharePercent>0&&<span className="ml-2 text-xs text-gray-400">{u.sharePercent}% beneficial interest</span>}{u.exemptReason&&<span className="ml-2 text-xs text-green-600 italic">{u.exemptReason}</span>}</div>
             <div className="flex items-center gap-2"><Badge label={u.source} color={u.source==='Exemption'?'green':u.source.startsWith('Auto')?'amber':'blue'}/>{uboRule?.mode!=='auto'&&<button onClick={()=>setUbos(prev=>prev.filter(x=>x.id!==u.id))} className="text-red-400 hover:text-red-600 text-xs">✕</button>}</div>
           </div>
         ))}
-        {uboRule?.mode==='manual'&&<div className="mt-2"><button onClick={()=>{const id='ubo'+Date.now();setUbos(prev=>[...prev,{id,name:'',icNo:'',nationality:'Malaysia',sharePercent:0,source:'Manual'}]);}} className="text-xs px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50">+ 手工新增UBO</button></div>}
+        {uboRule?.mode==='manual'&&<div className="mt-2"><button onClick={()=>{const id='ubo'+Date.now();setUbos(prev=>[...prev,{id,name:'',icNo:'',nationality:'Malaysia',sharePercent:0,source:'Manual'}]);}} className="text-xs px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50">+ Add UBO Manually</button></div>}
         {/* Guarantors */}
-        <p className="text-xs font-semibold text-gray-600 mt-4 mb-2">担保人</p>
-        {gr?.mandatory&&guarantors.length===0&&<div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded text-sm text-amber-700">⚠ {gr.desc} — 提交前至少需要一名担保人。</div>}
-        {guarantors.length===0&&!gr?.mandatory&&<p className="text-sm text-gray-400 italic mb-3">尚无担保人。</p>}
+        <p className="text-xs font-semibold text-gray-600 mt-4 mb-2">Guarantors</p>
+        {gr?.mandatory&&guarantors.length===0&&<div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded text-sm text-amber-700">⚠ {gr.desc} — At least one guarantor is required before submission.</div>}
+        {guarantors.length===0&&!gr?.mandatory&&<p className="text-sm text-gray-400 italic mb-3">No guarantors added.</p>}
         {guarantors.map((g,i)=>(
           <div key={g.id} className="mb-3 border border-gray-200 rounded p-3">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-gray-700">担保人 {i+1}</span>
-              <div className="flex gap-2"><Badge label={g.relationship} color="purple"/><Badge label={g.cifStatus==='ok'?'ETB':'NTB'} color={g.cifStatus==='ok'?'green':'blue'}/><button onClick={()=>{setGuarantors(gs=>gs.filter(x=>x.id!==g.id));setDirectors(ds=>ds.map(d=>d.id===g.id?{...d,isGuarantor:false}:d));}} className="text-xs text-red-400 hover:text-red-600">✕ 移除</button></div>
+              <span className="text-sm font-semibold text-gray-700">Guarantor {i+1}</span>
+              <div className="flex gap-2"><Badge label={g.relationship} color="purple"/><Badge label={g.cifStatus==='ok'?'ETB':'NTB'} color={g.cifStatus==='ok'?'green':'blue'}/><button onClick={()=>{setGuarantors(gs=>gs.filter(x=>x.id!==g.id));setDirectors(ds=>ds.map(d=>d.id===g.id?{...d,isGuarantor:false}:d));}} className="text-xs text-red-400 hover:text-red-600">✕ Remove</button></div>
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div><span className="text-gray-400 text-xs block">姓名</span><span>{g.name}</span></div>
+              <div><span className="text-gray-400 text-xs block">Name</span><span>{g.name}</span></div>
               <div><span className="text-gray-400 text-xs block">IC / ID</span><span>{g.icNo}</span></div>
-              <div><span className="text-gray-400 text-xs block">国籍</span><span>{g.nationality}</span></div>
-              <div><span className="text-gray-400 text-xs block">月收入 (RM)</span><input type="number" value={g.income} onChange={e=>setGuarantors(gs=>gs.map(x=>x.id===g.id?{...x,income:+e.target.value}:x))} className="w-full border border-gray-200 rounded px-2 py-1 text-sm"/></div>
+              <div><span className="text-gray-400 text-xs block">Nationality</span><span>{g.nationality}</span></div>
+              <div><span className="text-gray-400 text-xs block">Monthly Income (RM)</span><input type="number" value={g.income} onChange={e=>setGuarantors(gs=>gs.map(x=>x.id===g.id?{...x,income:+e.target.value}:x))} className="w-full border border-gray-200 rounded px-2 py-1 text-sm"/></div>
             </div>
           </div>
         ))}
-        <button onClick={()=>setShowAddGuar(true)} className="px-4 py-2 border border-blue-500 text-blue-600 text-sm rounded hover:bg-blue-50">+ 新增担保人</button>
+        <button onClick={()=>setShowAddGuar(true)} className="px-4 py-2 border border-blue-500 text-blue-600 text-sm rounded hover:bg-blue-50">+ Add Guarantor</button>
         <div className="mt-4 flex justify-end">
           <button onClick={()=>completeModule(7)} className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
-            确认关联方信息 →
+            Confirm Related Parties →
           </button>
         </div>
       </ModuleCard>
@@ -1471,9 +1486,9 @@ export default function ApplicationForm() {
     const ms = moduleStatus[8];
     const summary = regAddr1?`${regAddr1.substring(0,45)}${regAddr1.length>45?'...':''}`:'—';
     return (
-      <ModuleCard n={8} id="m8" icon="📍" title="地址与联系信息 · Address & Contact"
+      <ModuleCard n={8} id="m8" icon="📍" title="Address & Contact"
         status={ms} onEdit={()=>editModule(8)} summary={summary}>
-        <p className="text-xs font-semibold text-gray-600 mb-2">注册地址</p>
+        <p className="text-xs font-semibold text-gray-600 mb-2">Registered Address</p>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="col-span-2">
             <Field2 label="Registered Address Line 1" required source="SSM">
@@ -1484,10 +1499,10 @@ export default function ApplicationForm() {
           <Field2 label="State" required source="SSM"><Select value={regState} onChange={setRegState} options={MY_STATES.map(s=>({value:s,label:s}))} placeholder="— Select —"/></Field2>
           <Field2 label="Postcode" required source="SSM"><Input value={regPostal} onChange={setRegPostal} placeholder="e.g. 50100"/></Field2>
         </div>
-        <p className="text-xs font-semibold text-gray-600 mb-2">营业地址</p>
+        <p className="text-xs font-semibold text-gray-600 mb-2">Business / Operating Address</p>
         <label className="flex items-center gap-2 text-sm text-gray-600 mb-3 cursor-pointer">
           <input type="checkbox" checked={sameAddr} onChange={e=>{setSameAddr(e.target.checked);if(e.target.checked){setBizAddr1(regAddr1);setBizCity(regCity);setBizState(regState);setBizPostal(regPostal);}}}/>
-          与注册地址相同
+          Same as Registered Address
         </label>
         {!sameAddr && (
           <div className="grid grid-cols-2 gap-4 mb-4">
@@ -1497,7 +1512,7 @@ export default function ApplicationForm() {
             <Field2 label="Postcode"><Input value={bizPostal} onChange={setBizPostal}/></Field2>
           </div>
         )}
-        <p className="text-xs font-semibold text-gray-600 mb-2">联系方式</p>
+        <p className="text-xs font-semibold text-gray-600 mb-2">Contact Details</p>
         <div className="grid grid-cols-2 gap-4">
           <Field2 label="Corporate Email" required><Input value={corpEmail} onChange={setCorpEmail} placeholder="e.g. finance@company.com"/></Field2>
           <Field2 label="Contact Name" required><Input value={contactName} onChange={setContactName}/></Field2>
@@ -1506,7 +1521,7 @@ export default function ApplicationForm() {
         </div>
         <div className="mt-4 flex justify-end">
           <button onClick={()=>completeModule(8)} className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
-            确认地址联系 →
+            Confirm Address &amp; Contact →
           </button>
         </div>
       </ModuleCard>
@@ -1516,13 +1531,13 @@ export default function ApplicationForm() {
   // ─── M9: 业务确认与同意 ──────────────────────────────────────────────────
   function M9() {
     const ms = moduleStatus[9];
-    const summary = [isFaceToFace&&`F2F: ${isFaceToFace}`, customerConfirmHP&&`HP意向: ${customerConfirmHP}`, pdsConfirmed&&'PDS ✓'].filter(Boolean).join(' · ')||'—';
+    const summary = [isFaceToFace&&`F2F: ${isFaceToFace}`, customerConfirmHP&&`HP Intent: ${customerConfirmHP}`, pdsConfirmed&&'PDS ✓'].filter(Boolean).join(' · ')||'—';
     return (
-      <ModuleCard n={9} id="m9" icon="✅" title="业务确认与同意 · Confirmation"
+      <ModuleCard n={9} id="m9" icon="✅" title="Confirmation"
         status={ms} onEdit={()=>editModule(9)} summary={summary}>
         <div className="space-y-4">
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">5. 客户身份识别是否面对面完成？</p>
+            <p className="text-sm font-medium text-gray-700 mb-2">5. Was customer identification completed face-to-face?</p>
             <RadioGroup value={isFaceToFace} onChange={setIsFaceToFace} options={['Yes','No']}/>
           </div>
           {isFaceToFace==='Yes' && (
@@ -1535,27 +1550,27 @@ export default function ApplicationForm() {
             </div>
           )}
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-1">6. 客户确认申请HP融资意向？</p>
+            <p className="text-sm font-medium text-gray-700 mb-1">6. Has the customer confirmed their intent to apply for HP financing?</p>
             <RadioGroup value={customerConfirmHP} onChange={setCustomerConfirmHP} options={['Yes','No']}/>
           </div>
           <div className="space-y-2 pt-2 border-t border-gray-100">
             <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer">
               <input type="checkbox" checked={pdsConfirmed} onChange={e=>setPdsConfirmed(e.target.checked)} className="mt-0.5"/>
-              <span>客户已收到并确认<span className="font-medium">产品披露表 (PDS)</span></span>
+              <span>Customer has received and acknowledged the <span className="font-medium">Product Disclosure Sheet (PDS)</span></span>
             </label>
             <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer">
               <input type="checkbox" checked={marketingConsent} onChange={e=>setMarketingConsent(e.target.checked)} className="mt-0.5"/>
-              <span>客户同意接收 HLB 营销通讯</span>
+              <span>Customer consents to receive HLB marketing communications</span>
             </label>
           </div>
         </div>
         <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
-          ⚠ <strong>非个人申请:</strong> E-Consent / E-Acceptance 不适用，所有协议须由授权签署人通过线下纸质方式签署。
+          ⚠ <strong>Non-Individual Application:</strong> E-Consent / E-Acceptance is not applicable. All agreements must be signed offline by authorised signatories.
         </div>
         <div className="mt-4 flex justify-end">
           <button onClick={()=>completeModule(9)} disabled={!isFaceToFace||!customerConfirmHP||!pdsConfirmed}
             className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50">
-            ✓ 完成确认，提交前准备就绪
+            ✓ All Confirmed — Ready for Submission
           </button>
         </div>
       </ModuleCard>
@@ -2774,13 +2789,13 @@ export default function ApplicationForm() {
   const canSubmit = allModulesDone && !!loanAmount && !!tenureMonths && !!vehicleMake && hasSignatory && mandatoryGuarSatisfied;
   const completedModuleCount = moduleStatus.filter(s=>s==='complete').length;
   const missingList = [
-    completedModuleCount < 10 && `${10 - completedModuleCount} 个模块未完成`,
-    !loanAmount && '融资金额',
-    !tenureMonths && '期限',
-    !vehicleMake && '车辆信息',
-    (!!enterpriseType && !hasSignatory) && '至少需要1名签署人',
-    gr?.mandatory && guarantors.length === 0 && `需要${gr.type}担保人`,
-    (needsDrillDown && !drillComplete) && 'UBO穿透未完成',
+    completedModuleCount < 10 && `${10 - completedModuleCount} module(s) incomplete`,
+    !loanAmount && 'Financing Amount',
+    !tenureMonths && 'Tenure',
+    !vehicleMake && 'Vehicle Info',
+    (!!enterpriseType && !hasSignatory) && 'At least 1 Signatory required',
+    gr?.mandatory && guarantors.length === 0 && `${gr.type} Guarantor required`,
+    (needsDrillDown && !drillComplete) && 'UBO drill-through incomplete',
   ].filter(Boolean) as string[];
 
   return (
