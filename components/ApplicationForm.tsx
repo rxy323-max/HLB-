@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AppType = 'Individual' | 'Non-Individual';
@@ -44,14 +44,14 @@ const ENTITY_TYPES = [
 ];
 
 const ENTITY_TO_CONSTITUTION: Record<EntityCode,string> = {
-  A:'R', B:'U', C:'O', D:'S', E:'P', F:'O', G:'O', H:'O', I:'', J:'A', K:'', L:'S',
+  A:'R', B:'U', C:'O', D:'S', E:'P', F:'O', G:'O', H:'O', I:'', J:'', K:'', L:'S',
 };
-// J→ 'A' (Assoc/School/Society); K→ '' (multi-option: V/W/B/G/H/F depending on government level); I→ inactive
+// J→ '' (hand-select: A/C/T); K→ '' (hand-select: V/W/B/G/H/F per government tier); I→ inactive
 const ENTITY_TO_BASIC_GROUP: Record<EntityCode,string> = {
   A:'24.0', B:'24.0', C:'24.0', D:'21.0', E:'22.0',
-  F:'26.0', G:'26.0', H:'26.0', I:'', J:'43.0', K:'31.0', L:'21.0',
+  F:'26.0', G:'26.0', H:'26.0', I:'', J:'43.0', K:'', L:'21.0',
 };
-// J→ 43.0 (Societies/Associations); K→ 31.0 (Federal Government) — may be 34.0 for Statutory Bodies, pending backend config; I→ inactive
+// J→ 43.0 (Societies/Associations); K→ '' (hand-select: 31.0/32.0/33.0/34.0 per government tier); I→ inactive
 // [⚠ PENDING CONFIRMATION] A类 1-2 directors PG mandatory rule is still under business confirmation per V3 §17.
 const ENTITY_GUARANTOR: Record<EntityCode,{ type:GuarantorRequirement; mandatory:boolean; desc:string; signatories:string }> = {
   A:{ type:'PG', mandatory:true,  desc:'1–2 director(s) Personal Guarantee (pending final business confirmation)', signatories:'BR-authorised Director(s)' },
@@ -88,16 +88,16 @@ const CONSTITUTION_OPTIONS = [
   { value:'U', label:'U – Bhd / Public Ltd Co' },
   { value:'S', label:'S – Sole Proprietor' },
   { value:'P', label:'P – Partnership' },
-  { value:'O', label:'O – Others' },
   { value:'A', label:'A – Assoc / School / Society' },
-  { value:'B', label:'B – Statutory Body' },
   { value:'C', label:'C – Cooperative' },
-  { value:'G', label:'G – Government Body' },
-  { value:'H', label:'H – Federal Statutory Authority' },
-  { value:'F', label:'F – ODBE / Other Govt Body' },
-  { value:'V', label:'V – Federal Government Dept' },
-  { value:'W', label:'W – State Government Dept' },
   { value:'T', label:'T – Trade Union' },
+  { value:'V', label:'V – Federal Govt' },
+  { value:'W', label:'W – Local Govt' },
+  { value:'B', label:'B – Statutory Body' },
+  { value:'G', label:'G – Government Body' },
+  { value:'H', label:'H – Fed Stat Auth' },
+  { value:'F', label:'F – ODBE / Other Govt' },
+  { value:'O', label:'O – Others' },
   { value:'I', label:'I – Individual' },
 ];
 // K-class (Government) may use V/W/B/G/H/F depending on government level — officer must select manually
@@ -107,7 +107,9 @@ const BASIC_GROUP_OPTIONS = [
   { value:'22.0', label:'22.0 – Partnerships' },
   { value:'24.0', label:'24.0 – Companies' },
   { value:'26.0', label:'26.0 – Limited Liability Partnership' },
-  { value:'31.0', label:'31.0 – Federal Government' },
+  { value:'31.0', label:'31.0 – Federal / Central Government' },
+  { value:'32.0', label:'32.0 – State Government' },
+  { value:'33.0', label:'33.0 – Local Government' },
   { value:'34.0', label:'34.0 – Statutory Bodies' },
   { value:'43.0', label:'43.0 – Societies / Associations' },
   { value:'91.0', label:'91.0 – Others' },
@@ -503,6 +505,14 @@ export default function ApplicationForm() {
   const derivedBasicGroup   = et ? ENTITY_TO_BASIC_GROUP[et] : '';
   const effConstitution = constitution || derivedConstitution;
   const effBasicGroup   = basicGroup   || derivedBasicGroup;
+  const derivedGpRating = useMemo(() => {
+    const gpMap: Record<string,string> = {
+      A:'GP 1', B:'GP 3', C:'GP 2', D:'GP 3', F:'GP 2',
+      G:'GP 4', H:'GP 4', I:'GP 4', J:'GP 4', K:'GP 3',
+      L:'GP 4', M:'GP 4', N:'GP 4',
+    };
+    return msicGroup ? (gpMap[msicGroup] || '—') : '—';
+  }, [msicGroup]);
 
   // Entity status flags
   const isInactiveBlock = et === 'I';                   // I = Virtual BE — cannot process HP at all
@@ -1114,15 +1124,22 @@ export default function ApplicationForm() {
           <div id="companyProfile" className="scroll-mt-4">
             <div className="grid grid-cols-2 gap-4">
               <Field2 label="Basic Group" required source="System">
-                <div className="flex gap-2 items-center">
-                  <Select value={effBasicGroup} onChange={setBasicGroup} options={BASIC_GROUP_OPTIONS} placeholder="— Select —"/>
-                  {derivedBasicGroup && basicGroup==='' && <Badge label="Auto-mapped" color="blue"/>}
+                <div className="flex flex-col gap-1">
+                  <div className="flex gap-2 items-center">
+                    <Select value={effBasicGroup} onChange={setBasicGroup} options={BASIC_GROUP_OPTIONS} placeholder="— Select —"/>
+                    {derivedBasicGroup && basicGroup==='' && <Badge label="Auto-mapped" color="blue"/>}
+                  </div>
+                  {et==='K' && !basicGroup && <p className="text-xs text-amber-600">Select based on government tier: 31.0 Federal / 32.0 State / 33.0 Local / 34.0 Statutory</p>}
                 </div>
               </Field2>
               <Field2 label="Constitution" required source="System">
-                <div className="flex gap-2 items-center">
-                  <Select value={effConstitution} onChange={setConstitution} options={CONSTITUTION_OPTIONS} placeholder="— Select —"/>
-                  {derivedConstitution && constitution==='' && <Badge label="Auto-mapped" color="blue"/>}
+                <div className="flex flex-col gap-1">
+                  <div className="flex gap-2 items-center">
+                    <Select value={effConstitution} onChange={setConstitution} options={CONSTITUTION_OPTIONS} placeholder="— Select —"/>
+                    {derivedConstitution && constitution==='' && <Badge label="Auto-mapped" color="blue"/>}
+                  </div>
+                  {et==='K' && !constitution && <p className="text-xs text-amber-600">Select based on government tier: V Federal / W Local / B Statutory / G Govt Body / H Fed Stat Auth / F ODBE</p>}
+                  {et==='J' && !constitution && <p className="text-xs text-amber-600">Select society type: A Assoc/Society / C Cooperative / T Trade Union</p>}
                 </div>
               </Field2>
               <Field2 label="Nature of Business Group" required source="Manual">
@@ -1230,9 +1247,12 @@ export default function ApplicationForm() {
               <Field2 label="Constitution Code"><Input value={effConstitution} readOnly/></Field2>
               <Field2 label="Customer Sector Code">
                 <Select value={customerSector} onChange={setCustomerSector} options={[
-                  {value:'',label:'— Select —'},{value:'SME',label:'SME – Small Medium Enterprise'},
-                  {value:'CORP',label:'Corporate'},{value:'GLC',label:'GLC – Government-Linked Company'},
-                  {value:'NPO',label:'NPO – Non-Profit Organization'},
+                  {value:'',label:'— Select —'},
+                  {value:'Bumi SME-Micro',label:'Bumi SME – Micro'},
+                  {value:'Bumi SME-Small',label:'Bumi SME – Small'},
+                  {value:'Bumi SME-Medium',label:'Bumi SME – Medium'},
+                  {value:'Non-Bumi DBE',label:'Non-Bumiputra Controlled DBE'},
+                  {value:'Non-Resident DBE',label:'Non-Resident Controlled DBE'},
                 ]}/>
               </Field2>
               <Field2 label="Bumiputera / NRCC">
@@ -1243,7 +1263,7 @@ export default function ApplicationForm() {
               </Field2>
               <Field2 label="GP Ratings" source="System">
                 <div className="flex items-center gap-2">
-                  <Input value={gpRatings||'—'} readOnly/>
+                  <Input value={derivedGpRating} readOnly/>
                   <span className="text-xs text-gray-400 whitespace-nowrap">System-generated</span>
                 </div>
               </Field2>
