@@ -137,8 +137,6 @@ const RELATIONSHIP_BY_ENTITY: Record<string, { value: string; label: string; isG
     { value:'Corporate Guarantor',      label:'Corporate Guarantor',               isGuarantor: true  },
     { value:'Guarantor',                label:'Guarantor',                         isGuarantor: true  },
     { value:'Director',                 label:'Director (Non-Guarantor)',           isGuarantor: false },
-    { value:'Director/Shareholder',     label:'Director / Shareholder (Non-Gtr)',  isGuarantor: false },
-    { value:'Shareholder',              label:'Shareholder',                        isGuarantor: false },
   ],
   D: [
     { value:'Sole Proprietorship',      label:'Sole Proprietorship (Owner)',        isGuarantor: false },
@@ -160,13 +158,15 @@ const RELATIONSHIP_BY_ENTITY: Record<string, { value: string; label: string; isG
     { value:'Partner (LLP only)',       label:'Partner (LLP only)',                 isGuarantor: true  },
     { value:'Guarantor',                label:'Guarantor',                         isGuarantor: true  },
     { value:'Director',                 label:'Director (Non-Guarantor)',           isGuarantor: false },
-    { value:'Shareholder',              label:'Shareholder',                        isGuarantor: false },
   ],
   H: [
     { value:'Partner (LLP only)',       label:'Partner (LLP only)',                 isGuarantor: true  },
     { value:'Director/Guarantor',       label:'Director / Guarantor',             isGuarantor: true  },
     { value:'Guarantor',                label:'Guarantor',                         isGuarantor: true  },
+    { value:'Guarantor/Shareholder',    label:'Guarantor / Shareholder',           isGuarantor: true  },
     { value:'Director',                 label:'Director (Non-Guarantor)',           isGuarantor: false },
+    { value:'Director/Shareholder',     label:'Director / Shareholder (Non-Gtr)',  isGuarantor: false },
+    { value:'Shareholder',              label:'Shareholder',                        isGuarantor: false },
   ],
   J: [
     { value:'Guarantor',                label:'Guarantor',                         isGuarantor: true  },
@@ -1716,6 +1716,14 @@ export default function ApplicationForm() {
               <div className="mb-3 p-2 rounded border bg-blue-50 border-blue-200 text-xs text-blue-800">
                 <p className="font-semibold">Committee Position Confirmation (Society)</p>
                 <p>Tick the UBO checkbox for key committee members (Chairman, Secretary, Treasurer) in the Management table above.</p>
+              </div>
+            )}
+            {/* Mode: MANUAL (A/C/F/G/H) — prompt if no directors loaded yet */}
+            {uboRule?.mode==='manual' && et!=='J' && directors.length===0 && (
+              <div className="mb-3 p-3 rounded border bg-blue-50 border-blue-200 text-xs text-blue-700">
+                <p className="font-semibold">⊕ UBO Penetration Required</p>
+                <p className="mt-1">{uboRule.desc}</p>
+                <p className="mt-1 text-blue-500">Fetch shareholder data from Experian in the Management & Shareholder section above, then return here to drill down.</p>
               </div>
             )}
             {/* Mode: MANUAL (A/C/F/G/H) — UBO penetration tree */}
