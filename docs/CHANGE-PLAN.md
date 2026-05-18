@@ -350,10 +350,10 @@ M7 的 Confirm 按钮：
 - 方案 A：保留 MSIC 字母分组（当前）—— 字段内容不变，只是和文档表述不同
 - 方案 B：替换为文档的21个数字编码
 
-**需要业务方确认后再改。**
+**结论：两套都需要。** MSIC 用于 BNM 监管申报，NOB Code 用于 GP Rating 推导。
 
-- [ ] 已确认选择：______
-- [ ] 已完成
+- [x] 已确认：新增 NOB Code 下拉（21项，主字段），MSIC 字段改名为"MSIC Group (BNM)"和"MSIC Code"保留
+- [x] 已完成：NOB_CODES 常量；nobCode state；M2 加 NOB Code 下拉；derivedGpRating 改从 nobCode 推导
 
 ---
 
@@ -376,7 +376,7 @@ M7 的 Confirm 按钮：
 
 改动：在 M1 的查询结果区增加条目，并用不同颜色或 badge 区分适用范围。
 
-- [ ] 已完成
+- [x] 已完成：7 条 ApiRow（含 SSM/Experian），按颜色区分适用范围（灰=所有人，蓝=仅担保人，紫=Non-Individual 主申请人）
 
 ---
 
