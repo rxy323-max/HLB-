@@ -422,7 +422,7 @@ M7 的 Confirm 按钮：
 **需业务方确认后再改。**
 
 - [x] 已确认选择：M1 先开（Role & Identity 先锁定企业），M1 完成后同时解锁 M0 和 M2
-- [ ] 如需对调：在 `moduleStatus` 初始值中将 `m1` 改为 `'active'`，`m0` 改为 `'locked'`；并调整 `completeModule` 触发链
+- [x] 已完成：moduleStatus 初始值 M1 active，completeModule(1) 同时解锁 M0+M2，滚动到 M2
 
 ---
 
@@ -504,7 +504,7 @@ M7 的 Confirm 按钮：
 NavSidebar 底部相应渲染为两个独立 section，中间加分隔线。
 
 - [x] 已确认方案：选 B（恢复 ○/✓ 字符图标，与稳定版一致）
-- [ ] 5-A/5-B 已完成
+- [x] 5-A/5-B 已完成：NavSidebar 重写，顶部 ☰ Navigation，text-sm 字号，✓/● 图标，Other Sections + Risk Relate 两组
 
 ---
 
