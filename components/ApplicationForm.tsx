@@ -331,20 +331,14 @@ const MODULE_NAV: { id: string; label: string }[] = [
   { id:'m8', label:'8 · Address & Contact' },
   { id:'m9', label:'9 · Confirmation' },
 ];
-const EXTRA_NAV: NavItem[] = [
-  { id:'collateral',    label:'Collateral' },
-  { id:'facility',      label:'Facility' },
-  { id:'incomeSummary', label:'Income Summary' },
-  { id:'aml',           label:'Risk / AML' },
-];
 
 // ─── Main component ────────────────────────────────────────────────────────────
 export default function ApplicationForm() {
   // ── App meta
   const [appType, setAppType] = useState<AppType>('Non-Individual');
-  const [activeSection, setActiveSection] = useState('m0');
+  const [activeSection, setActiveSection] = useState('m1');
   const [moduleStatus, setModuleStatus] = useState<ModuleStatus[]>([
-    'active','locked','locked','locked','locked',
+    'locked','active','locked','locked','locked',
     'locked','locked','locked','locked','locked',
   ]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -353,11 +347,19 @@ export default function ApplicationForm() {
     setModuleStatus(prev => {
       const next = [...prev];
       next[n] = 'complete';
-      if (n + 1 < next.length && next[n + 1] === 'locked') next[n + 1] = 'active';
+      if (n === 1) {
+        // M1 (Role & Identity) completion unlocks M0 (Channel Info) and M2 (Company Identity)
+        if (next[0] === 'locked') next[0] = 'active';
+        if (next[2] === 'locked') next[2] = 'active';
+      } else if (n + 1 < next.length && next[n + 1] === 'locked') {
+        next[n + 1] = 'active';
+      }
       return next;
     });
+    // After M1, scroll to M2 (main flow continues); otherwise scroll to next module
+    const scrollTarget = n === 1 ? 2 : n + 1;
     setTimeout(() => {
-      const el = document.getElementById(`m${n + 1}`);
+      const el = document.getElementById(`m${scrollTarget}`);
       if (el && scrollRef.current) {
         scrollRef.current.scrollTo({ top: el.offsetTop - scrollRef.current.offsetTop - 8, behavior: 'smooth' });
       }
@@ -720,40 +722,62 @@ export default function ApplicationForm() {
 
   // ─ Navigation sidebar
   function NavSidebar() {
-    const dotCls: Record<ModuleStatus, string> = {
-      locked:   'bg-gray-300',
-      active:   'bg-blue-500',
-      complete: 'bg-green-500',
-    };
+    function moduleIcon(ms: ModuleStatus) {
+      if (ms === 'complete') return <span className="ml-auto text-green-500 text-xs flex-shrink-0">✓</span>;
+      if (ms === 'active')   return <span className="ml-auto text-blue-500 text-xs flex-shrink-0">●</span>;
+      return null;
+    }
+    const otherSections = [
+      { id:'collateral',    label:'Collateral & Seller' },
+      { id:'facility',      label:'Facility / Financing' },
+      { id:'incomeSummary', label:'Income Summary' },
+    ];
+    const riskItems = [
+      { id:'aml',      label:'AML' },
+      { id:'credit',   label:'Credit Summary' },
+      { id:'uw',       label:'UW Result' },
+      { id:'customer', label:'Customer' },
+      { id:'tvcheck',  label:'TV-Check' },
+      { id:'exposure', label:'Exposure Summary' },
+    ];
     return (
       <div className="h-full flex flex-col">
-        <div className="px-3 py-3 border-b border-gray-200">
-          <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Modules</span>
+        <div className="px-3 py-3 border-b border-gray-200 flex items-center gap-2">
+          <span className="text-sm font-semibold text-gray-700">☰ Navigation</span>
         </div>
-        <div className="flex-1 overflow-y-auto py-1">
+        <div className="flex-1 overflow-y-auto py-2">
           <button onClick={()=>goTo('processSummary')}
-            className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs border-l-2 ${activeSection==='processSummary'?'text-blue-600 border-blue-500 bg-blue-50':'text-gray-500 border-transparent hover:bg-gray-50'}`}>
-            📋 Application Overview
+            className={`w-full flex items-center gap-1.5 px-3 py-1.5 text-left text-sm border-l-2 ${activeSection==='processSummary'?'text-blue-600 border-blue-600 bg-blue-50 font-medium':'text-gray-600 border-transparent hover:bg-gray-50'}`}>
+            <span className="truncate">📋 Application Overview</span>
           </button>
           {MODULE_NAV.map((item, n) => {
             const ms = moduleStatus[n];
             const isActive = activeSection === item.id;
             return (
               <button key={item.id} onClick={()=>goTo(item.id)}
-                className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs border-l-2 transition-colors
-                  ${isActive ? 'text-blue-600 border-blue-500 bg-blue-50 font-medium' : 'text-gray-600 border-transparent hover:bg-gray-50'}
+                className={`w-full flex items-center gap-1.5 px-3 py-1.5 text-left text-sm border-l-2 transition-colors
+                  ${isActive ? 'text-blue-600 border-blue-600 bg-blue-50 font-medium' : 'text-gray-600 border-transparent hover:bg-gray-50'}
                   ${ms==='locked' ? 'opacity-40' : ''}`}>
-                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotCls[ms]}`}/>
-                <span className="truncate">{item.label}</span>
+                <span className="truncate flex-1">{item.label}</span>
+                {moduleIcon(ms)}
               </button>
             );
           })}
-          <div className="px-3 pt-3 pb-1 mt-1 border-t border-gray-100">
-            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Other Sections</span>
+          <div className="px-3 pt-3 pb-1 mt-1 border-t border-gray-200">
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Other Sections</span>
           </div>
-          {EXTRA_NAV.map(item => (
+          {otherSections.map(item => (
             <button key={item.id} onClick={()=>goTo(item.id)}
-              className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs border-l-2 ${activeSection===item.id?'text-blue-600 border-blue-500 bg-blue-50':'text-gray-500 border-transparent hover:bg-gray-50'}`}>
+              className={`w-full flex items-center gap-1.5 px-3 py-1.5 text-left text-sm border-l-2 ${activeSection===item.id?'text-blue-600 border-blue-600 bg-blue-50 font-medium':'text-gray-600 border-transparent hover:bg-gray-50'}`}>
+              <span className="truncate">{item.label}</span>
+            </button>
+          ))}
+          <div className="px-3 pt-3 pb-1 mt-1 border-t border-gray-200">
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Risk Relate</span>
+          </div>
+          {riskItems.map(item => (
+            <button key={item.id} onClick={()=>goTo(item.id)}
+              className="w-full flex items-center gap-1.5 px-3 py-1.5 text-left text-xs text-gray-400 border-l-2 border-transparent hover:bg-gray-50">
               {item.label}
             </button>
           ))}
