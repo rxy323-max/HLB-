@@ -565,6 +565,10 @@ export default function ApplicationForm() {
   const [showDrillDown,      setShowDrillDown]      = useState(false);
   const [drillTarget,        setDrillTarget]        = useState<Director|null>(null);
   const [drilledDirectors,   setDrilledDirectors]   = useState<Set<string>>(new Set());
+  // UBO tree: maps corporate director ID → manually-entered sub-shareholders
+  const [drillChildren, setDrillChildren] = useState<Record<string,{
+    id:string; name:string; icNo:string; isCorporate:boolean; sharePercent:number;
+  }[]>>({});
 
   // ── Guarantor
   const [guarantors,   setGuarantors]   = useState<Guarantor[]>([]);
@@ -1687,15 +1691,14 @@ export default function ApplicationForm() {
         {/* UBO Identification — display varies by entity type mode */}
         <SubSection title="UBO Identification">
           <div id="ubo" className="scroll-mt-4">
-            {/* Mode: AUTO (D/E/L) — UBOs are auto-bound from Management, no manual action needed */}
+            {/* Mode: AUTO (D/E/L) */}
             {uboRule?.mode==='auto' && (
               <div className="mb-3 p-3 rounded border bg-green-50 border-green-200 text-xs text-green-800">
                 <p className="font-semibold mb-1">✓ Auto-bound — UBO identified from Management & Shareholder</p>
                 <p>{uboRule.desc}</p>
-                <p className="mt-1 text-green-600">UBO list is automatically maintained. No manual entry required.</p>
               </div>
             )}
-            {/* Mode: EXEMPT (B/K) — no UBO penetration needed */}
+            {/* Mode: EXEMPT (B/K) */}
             {uboRule?.mode==='exempt' && (
               <div className="mb-3 p-3 rounded border bg-gray-50 border-gray-200 text-xs text-gray-600">
                 <p className="font-semibold mb-1">○ UBO Penetration Exempted</p>
@@ -1708,47 +1711,173 @@ export default function ApplicationForm() {
                 )}
               </div>
             )}
-            {/* Mode: MANUAL (A/C/F/G/H) — drill-down required */}
-            {uboRule?.mode==='manual' && et!=='J' && (
-              <div className="mb-3 p-2 rounded border bg-blue-50 border-blue-200 text-xs text-blue-800">
-                <p className="font-semibold">⊕ Manual UBO Penetration Required</p>
-                <p>{uboRule.desc}</p>
-                <p className="mt-1 text-blue-600">Use <strong>⊕ Drill-down</strong> on corporate shareholders above, then click <strong>Set as UBO</strong> for natural persons ≥25%.</p>
-              </div>
-            )}
-            {/* Mode: MANUAL (J — Society) — committee position selection */}
+            {/* Mode: MANUAL (J — Society) */}
             {uboRule?.mode==='manual' && et==='J' && (
               <div className="mb-3 p-2 rounded border bg-blue-50 border-blue-200 text-xs text-blue-800">
                 <p className="font-semibold">Committee Position Confirmation (Society)</p>
-                <p>Select UBO(s) from the committee member list above by ticking the UBO checkbox. Typically: Chairman, Secretary, and Treasurer.</p>
+                <p>Tick the UBO checkbox for key committee members (Chairman, Secretary, Treasurer) in the Management table above.</p>
               </div>
             )}
-            {/* UBO list */}
-            {ubos.length===0 && uboRule?.mode==='manual' && (
-              <p className="text-xs text-gray-400 italic mb-3">No UBO confirmed yet. Mark UBO from Management table above, or add manually below.</p>
+            {/* Mode: MANUAL (A/C/F/G/H) — UBO penetration tree */}
+            {uboRule?.mode==='manual' && et!=='J' && directors.length>0 && (
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-gray-600">Shareholder Penetration Tree</p>
+                  <span className="text-xs text-gray-400">⚠ = UBO candidate (effective ≥25%)</span>
+                </div>
+                {/* Layer 1 — from Experian */}
+                <div className="border border-gray-200 rounded overflow-hidden">
+                  {directors.map((d,i)=>{
+                    const isLastL1 = i===directors.length-1;
+                    const children = drillChildren[d.id]??[];
+                    const isDrilled = drilledDirectors.has(d.id);
+                    return (
+                      <div key={d.id}>
+                        {/* Layer 1 row */}
+                        <div className={`flex items-center gap-2 px-3 py-2 text-xs ${i%2===0?'bg-white':'bg-gray-50'} ${!isLastL1||children.length>0?'border-b border-gray-100':''}`}>
+                          <span className="text-gray-300 mr-1 flex-shrink-0">L1</span>
+                          <span className={`flex-1 font-medium ${d.isCorporate?'text-purple-700':'text-gray-800'}`}>
+                            {d.name||'(unnamed)'}
+                            {d.isCorporate && <span className="ml-1 text-purple-400 font-normal">[Corp]</span>}
+                          </span>
+                          <span className="text-gray-500 w-14 text-right">{d.sharePercent}%</span>
+                          <span className="text-gray-400 w-20 text-right">effective: {d.sharePercent}%</span>
+                          {!d.isCorporate && d.sharePercent>=25 && <span className="text-amber-600 font-semibold">⚠ UBO?</span>}
+                          {d.isCorporate && (
+                            <button onClick={()=>{ setDrillTarget(d); setShowDrillDown(true); }}
+                              className={`ml-2 text-xs px-2 py-0.5 rounded border ${isDrilled?'border-green-300 text-green-700 bg-green-50':'border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100'}`}>
+                              {isDrilled?'✓ Drilled':'⊕ Drill-down'}
+                            </button>
+                          )}
+                        </div>
+                        {/* Layer 2 — manually entered children */}
+                        {children.map((c,j)=>{
+                          const effL2 = parseFloat(((d.sharePercent*c.sharePercent)/100).toFixed(1));
+                          const isUboL2 = !c.isCorporate && effL2>=25;
+                          const grandChildren = drillChildren[c.id]??[];
+                          const isDrilledL2 = drilledDirectors.has(c.id);
+                          return (
+                            <div key={c.id}>
+                              <div className={`flex items-center gap-2 pl-8 pr-3 py-1.5 text-xs bg-blue-50 border-b border-blue-100`}>
+                                <span className="text-blue-300 mr-1 flex-shrink-0">L2</span>
+                                <span className={`flex-1 ${c.isCorporate?'text-purple-700 font-medium':'text-gray-700'}`}>
+                                  {c.name||'(unnamed)'}
+                                  {c.isCorporate && <span className="ml-1 text-purple-400 font-normal">[Corp]</span>}
+                                </span>
+                                <span className="text-gray-500 w-14 text-right">{c.sharePercent}%</span>
+                                <span className={`w-20 text-right font-medium ${isUboL2?'text-amber-600':'text-gray-500'}`}>
+                                  effective: {effL2}%
+                                </span>
+                                {isUboL2 && <span className="text-amber-600 font-semibold">⚠ UBO?</span>}
+                                {c.isCorporate && (
+                                  <button onClick={()=>{ setDrillTarget({...c, sharePercent:effL2, roles:[], isCorporate:true, isUBO:false, isSignatory:false, isGuarantor:false, nationality:'Malaysia'}); setShowDrillDown(true); }}
+                                    className={`ml-2 text-xs px-2 py-0.5 rounded border ${isDrilledL2?'border-green-300 text-green-700 bg-green-50':'border-blue-300 text-blue-700 hover:bg-blue-100'}`}>
+                                    {isDrilledL2?'✓ Drilled':'⊕ Drill-down'}
+                                  </button>
+                                )}
+                                {!isUboL2 && !c.isCorporate && effL2>0 && (
+                                  <button onClick={()=>{
+                                    const id='ubo_'+c.id;
+                                    if (!ubos.find(u=>u.id===id)) {
+                                      setUbos(prev=>[...prev,{ id, name:c.name, icNo:c.icNo, nationality:'Malaysia', sharePercent:effL2, source:`Drill-down via ${d.name}` }]);
+                                    }
+                                  }} className="ml-2 text-xs px-2 py-0.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-100">
+                                    + Add as UBO
+                                  </button>
+                                )}
+                                {/* Layer 3 — grandchildren */}
+                                {grandChildren.map(gc=>{
+                                  const effL3 = parseFloat(((effL2*gc.sharePercent)/100).toFixed(1));
+                                  const isUboL3 = !gc.isCorporate && effL3>=25;
+                                  return (
+                                    <span key={gc.id}/> // rendered below separately
+                                  );
+                                })}
+                              </div>
+                              {/* Layer 3 rows */}
+                              {grandChildren.map(gc=>{
+                                const effL3 = parseFloat(((effL2*gc.sharePercent)/100).toFixed(1));
+                                const isUboL3 = !gc.isCorporate && effL3>=25;
+                                return (
+                                  <div key={gc.id} className="flex items-center gap-2 pl-16 pr-3 py-1.5 text-xs bg-indigo-50 border-b border-indigo-100">
+                                    <span className="text-indigo-300 mr-1 flex-shrink-0">L3</span>
+                                    <span className={`flex-1 ${gc.isCorporate?'text-purple-700 font-medium':'text-gray-700'}`}>
+                                      {gc.name||'(unnamed)'}
+                                      {gc.isCorporate && <span className="ml-1 text-purple-400 font-normal">[Corp]</span>}
+                                    </span>
+                                    <span className="text-gray-500 w-14 text-right">{gc.sharePercent}%</span>
+                                    <span className={`w-20 text-right font-medium ${isUboL3?'text-amber-600':'text-gray-500'}`}>
+                                      effective: {effL3}%
+                                    </span>
+                                    {isUboL3 && <span className="text-amber-600 font-semibold">⚠ UBO?</span>}
+                                    {!isUboL3 && !gc.isCorporate && effL3>0 && (
+                                      <button onClick={()=>{
+                                        const id='ubo_'+gc.id;
+                                        if (!ubos.find(u=>u.id===id)) {
+                                          setUbos(prev=>[...prev,{ id, name:gc.name, icNo:gc.icNo, nationality:'Malaysia', sharePercent:effL3, source:`Drill-down L3 via ${c.name}` }]);
+                                        }
+                                      }} className="ml-2 text-xs px-2 py-0.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-100">
+                                        + Add as UBO
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                        {/* Prompt for undrilled corporate L1 */}
+                        {d.isCorporate && !isDrilled && (
+                          <div className="pl-8 pr-3 py-1.5 text-xs text-gray-400 italic bg-gray-50 border-b border-gray-100">
+                            ↳ Click ⊕ Drill-down to enter sub-shareholders of {d.name}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
-            {ubos.map(u=>(
+
+            {/* UBO confirmed list (all modes) */}
+            {ubos.length===0 && uboRule?.mode==='manual' && (
+              <p className="text-xs text-gray-400 italic mb-3">No UBO confirmed yet. Click ⊕ Drill-down on corporate shareholders above, or use ⚠ UBO candidate rows to add.</p>
+            )}
+            {ubos.filter(u=>u.source!=='Exemption').length>0 && (
+              <div className="mt-3">
+                <p className="text-xs font-semibold text-gray-600 mb-2">Confirmed UBOs</p>
+                {ubos.filter(u=>u.source!=='Exemption').map(u=>(
+                  <div key={u.id} className="flex items-center justify-between py-2 border-b border-gray-100 text-sm">
+                    <div>
+                      <span className="font-medium">{u.name}</span>
+                      {u.icNo && u.icNo!=='—' && <span className="text-gray-400 ml-2 text-xs">{u.icNo}</span>}
+                      {u.sharePercent>0 && <span className="ml-2 text-xs text-gray-400">{u.sharePercent}% effective</span>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge label={u.source} color={u.source.startsWith('Auto')?'amber':'blue'}/>
+                      {uboRule?.mode!=='auto' && (
+                        <button onClick={()=>setUbos(prev=>prev.filter(x=>x.id!==u.id))} className="text-red-400 hover:text-red-600 text-xs">✕</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {ubos.filter(u=>u.source==='Exemption').map(u=>(
               <div key={u.id} className="flex items-center justify-between py-2 border-b border-gray-100 text-sm">
                 <div>
-                  <span className="font-medium">{u.name}</span>
-                  {u.icNo && u.icNo!=='—' && <span className="text-gray-400 ml-2 text-xs">{u.icNo}</span>}
-                  {u.sharePercent>0 && <span className="ml-2 text-xs text-gray-400">{u.sharePercent}% effective shareholding</span>}
+                  <span className="font-medium text-gray-500">{u.name}</span>
                   {u.exemptReason && <span className="ml-2 text-xs text-green-600 italic">{u.exemptReason}</span>}
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge label={u.source} color={u.source==='Exemption'?'green':u.source.startsWith('Auto')?'amber':'blue'}/>
-                  {uboRule?.mode!=='auto' && (
-                    <button onClick={()=>setUbos(prev=>prev.filter(x=>x.id!==u.id))} className="text-red-400 hover:text-red-600 text-xs">✕</button>
-                  )}
-                </div>
+                <Badge label="Exemption" color="green"/>
               </div>
             ))}
-            {/* Add manual UBO button — only for manual mode */}
+            {/* Add manual UBO (manual mode only) */}
             {uboRule?.mode==='manual' && (
-              <div className="flex gap-2 mt-3">
-                <button onClick={()=>{ const id='ubo'+Date.now(); setUbos(prev=>[...prev,{ id, name:'', icNo:'', nationality:'Malaysia', sharePercent:0, source:'Manual' }]); }}
-                  className="text-xs px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50">+ Add UBO Manually</button>
-              </div>
+              <button onClick={()=>{ const id='ubo'+Date.now(); setUbos(prev=>[...prev,{ id, name:'', icNo:'', nationality:'Malaysia', sharePercent:0, source:'Manual' }]); }}
+                className="text-xs px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50 mt-3">
+                + Add UBO Manually
+              </button>
             )}
           </div>
         </SubSection>
@@ -2128,58 +2257,99 @@ export default function ApplicationForm() {
   }
 
   function DrillDownModal() {
-    const [ddIdNo, setDdIdNo] = useState('');
-    const [ddResult, setDdResult] = useState<'idle'|'loading'|'found'>('idle');
-    if (!showDrillDown || !drillTarget) return null;
-    function doDD() {
-      setDdResult('loading');
-      setTimeout(()=>setDdResult('found'),1500);
+    const target = drillTarget;
+    const existing = target ? (drillChildren[target.id] ?? []) : [];
+    const [rows, setRows] = useState(existing.length > 0 ? existing : [
+      { id:'dd'+Date.now(), name:'', icNo:'', isCorporate:false, sharePercent:0 }
+    ]);
+    if (!showDrillDown || !target) return null;
+    function addRow() {
+      setRows(r=>[...r,{ id:'dd'+Date.now(), name:'', icNo:'', isCorporate:false, sharePercent:0 }]);
     }
+    function removeRow(id:string) {
+      setRows(r=>r.filter(x=>x.id!==id));
+    }
+    function updateRow(id:string, field:string, value:string|boolean|number) {
+      setRows(r=>r.map(x=>x.id===id?{...x,[field]:value}:x));
+    }
+    function confirm() {
+      if (!target) return;
+      const filled = rows.filter(r=>r.name.trim());
+      setDrillChildren(prev=>({...prev,[target.id]:filled}));
+      setDrilledDirectors(prev=>{ const n=new Set(prev); n.add(target.id); return n; });
+      setShowDrillDown(false); setDrillTarget(null);
+    }
+    const totalPct = rows.reduce((s,r)=>s+(+r.sharePercent||0),0);
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg w-[520px] p-5 shadow-xl">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-gray-800">⊕ UBO Drill-down: {drillTarget.name}</h3>
+        <div className="bg-white rounded-lg w-[560px] max-h-[90vh] overflow-y-auto p-5 shadow-xl">
+          <div className="flex justify-between items-center mb-1">
+            <h3 className="font-semibold text-gray-800">⊕ Drill-down: {target.name}</h3>
             <button onClick={()=>{ setShowDrillDown(false); setDrillTarget(null); }} className="text-gray-400 hover:text-gray-600">✕</button>
           </div>
-          <p className="text-xs text-gray-500 mb-4">Corporate shareholder holding {drillTarget.sharePercent}%. Enter their SSM registration number to fetch next-level shareholders.</p>
-          <div className="flex gap-2 mb-4">
-            <Input value={ddIdNo} onChange={setDdIdNo} placeholder="Corporate shareholder SSM ID"/>
-            <button onClick={doDD} disabled={!ddIdNo} className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 whitespace-nowrap">{ddResult==='loading'?'…':'Fetch'}</button>
+          <p className="text-xs text-gray-500 mb-4">
+            Direct shareholding in applicant: <strong>{target.sharePercent}%</strong>.
+            Enter all shareholders of this entity. Effective % = {target.sharePercent}% × their direct %.
+          </p>
+          <table className="w-full text-xs border-collapse mb-3">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="text-left py-1.5 px-2 font-medium text-gray-500">Name</th>
+                <th className="text-left py-1.5 px-2 font-medium text-gray-500">IC / Reg No.</th>
+                <th className="text-center py-1.5 px-2 font-medium text-gray-500">Corp?</th>
+                <th className="text-center py-1.5 px-2 font-medium text-gray-500">Direct %</th>
+                <th className="text-center py-1.5 px-2 font-medium text-gray-500">Effective %</th>
+                <th className="py-1.5 px-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(r=>{
+                const eff = parseFloat(((target.sharePercent * (+r.sharePercent||0))/100).toFixed(1));
+                const isUboCandidate = !r.isCorporate && eff >= 25;
+                return (
+                  <tr key={r.id} className="border-b border-gray-100">
+                    <td className="py-1 px-2">
+                      <input className="w-full border border-gray-200 rounded px-1 py-0.5 text-xs"
+                        value={r.name} onChange={e=>updateRow(r.id,'name',e.target.value)} placeholder="Full name"/>
+                    </td>
+                    <td className="py-1 px-2">
+                      <input className="w-full border border-gray-200 rounded px-1 py-0.5 text-xs"
+                        value={r.icNo} onChange={e=>updateRow(r.id,'icNo',e.target.value)} placeholder="IC / SSM No."/>
+                    </td>
+                    <td className="py-1 px-2 text-center">
+                      <input type="checkbox" checked={r.isCorporate}
+                        onChange={e=>updateRow(r.id,'isCorporate',e.target.checked)} className="cursor-pointer"/>
+                    </td>
+                    <td className="py-1 px-2 text-center">
+                      <input type="number" min={0} max={100}
+                        className="w-14 border border-gray-200 rounded px-1 py-0.5 text-center text-xs"
+                        value={r.sharePercent||''} onChange={e=>updateRow(r.id,'sharePercent',+e.target.value)}/>%
+                    </td>
+                    <td className="py-1 px-2 text-center">
+                      <span className={isUboCandidate?'font-semibold text-amber-600':'text-gray-500'}>
+                        {eff}%{isUboCandidate?' ⚠':''}
+                      </span>
+                    </td>
+                    <td className="py-1 px-2 text-center">
+                      <button onClick={()=>removeRow(r.id)} className="text-red-400 hover:text-red-600">✕</button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={addRow} className="text-xs px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">+ Add Row</button>
+            <span className={`text-xs ${Math.abs(totalPct-100)<0.1?'text-green-600':'text-amber-600'}`}>
+              Total: {totalPct.toFixed(1)}% {Math.abs(totalPct-100)>=0.1&&'(should sum to 100%)'}
+            </span>
           </div>
-          {ddResult==='found' && (
-            <div className="border border-green-200 bg-green-50 rounded p-3">
-              <p className="text-xs text-green-700 font-semibold mb-2">✓ Next-level shareholders found:</p>
-              <div className="text-xs text-gray-600">
-                {[
-                  { name:'CHAN WEI KIAT', icNo:'810301-14-9999', pct:0.70 },
-                  { name:'LIM AH KOW',   icNo:'850615-07-1234', pct:0.30 },
-                ].map(person=>(
-                  <div key={person.name} className="flex items-center justify-between py-1 border-b border-green-100 last:border-0">
-                    <span>{person.name} — {Math.round(drillTarget.sharePercent * person.pct)}%</span>
-                    <button onClick={()=>{
-                      const id = 'ubo_dd'+Date.now();
-                      setUbos(prev=>[...prev,{
-                        id, name:person.name, icNo:person.icNo, nationality:'Malaysia',
-                        sharePercent: Math.round(drillTarget.sharePercent * person.pct),
-                        source: 'Drill-down via '+drillTarget.name,
-                      }]);
-                      setDrilledDirectors(prev=>{ const n=new Set(prev); n.add(drillTarget.id); return n; });
-                      setShowDrillDown(false); setDrillTarget(null);
-                    }} className="text-blue-600 hover:underline">Set as UBO</button>
-                  </div>
-                ))}
-                <button onClick={()=>{
-                  setDrilledDirectors(prev=>{ const n=new Set(prev); n.add(drillTarget.id); return n; });
-                  setShowDrillDown(false); setDrillTarget(null);
-                }} className="mt-2 w-full text-center text-xs text-green-700 font-semibold hover:underline">
-                  ✓ Mark drill-down complete (no additional UBO)
-                </button>
-              </div>
-            </div>
-          )}
-          <div className="mt-4 flex justify-end">
-            <button onClick={()=>{ setShowDrillDown(false); setDrillTarget(null); }} className="px-4 py-2 border border-gray-300 rounded text-sm">Close</button>
+          <div className="flex justify-end gap-3">
+            <button onClick={()=>{ setShowDrillDown(false); setDrillTarget(null); }} className="px-4 py-2 border border-gray-300 rounded text-sm">Cancel</button>
+            <button onClick={confirm} disabled={!rows.some(r=>r.name.trim())}
+              className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50">
+              ✓ Save & Close
+            </button>
           </div>
         </div>
       </div>
