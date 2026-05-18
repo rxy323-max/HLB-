@@ -114,6 +114,74 @@ const BASIC_GROUP_OPTIONS = [
   { value:'43.0', label:'43.0 – Societies / Associations' },
   { value:'91.0', label:'91.0 – Others' },
 ];
+const RELATIONSHIP_BY_ENTITY: Record<string, { value: string; label: string; isGuarantor: boolean }[]> = {
+  A: [
+    { value:'Director/Guarantor',       label:'Director / Guarantor',             isGuarantor: true  },
+    { value:'Gtr/Dir/Shareholder',      label:'Gtr / Dir / Shareholder',          isGuarantor: true  },
+    { value:'Guarantor',                label:'Guarantor',                         isGuarantor: true  },
+    { value:'Guarantor/Shareholder',    label:'Guarantor / Shareholder',           isGuarantor: true  },
+    { value:'Director',                 label:'Director (Non-Guarantor)',           isGuarantor: false },
+    { value:'Director/Shareholder',     label:'Director / Shareholder (Non-Gtr)',  isGuarantor: false },
+    { value:'Shareholder',              label:'Shareholder',                        isGuarantor: false },
+  ],
+  B: [
+    { value:'Director/Guarantor',       label:'Director / Guarantor',             isGuarantor: true  },
+    { value:'Gtr/Dir/Shareholder',      label:'Gtr / Dir / Shareholder',          isGuarantor: true  },
+    { value:'Guarantor',                label:'Guarantor',                         isGuarantor: true  },
+    { value:'Guarantor/Shareholder',    label:'Guarantor / Shareholder',           isGuarantor: true  },
+    { value:'Director',                 label:'Director (Non-Guarantor)',           isGuarantor: false },
+    { value:'Director/Shareholder',     label:'Director / Shareholder (Non-Gtr)',  isGuarantor: false },
+    { value:'Shareholder',              label:'Shareholder',                        isGuarantor: false },
+  ],
+  C: [
+    { value:'Corporate Guarantor',      label:'Corporate Guarantor',               isGuarantor: true  },
+    { value:'Guarantor',                label:'Guarantor',                         isGuarantor: true  },
+    { value:'Director',                 label:'Director (Non-Guarantor)',           isGuarantor: false },
+    { value:'Director/Shareholder',     label:'Director / Shareholder (Non-Gtr)',  isGuarantor: false },
+    { value:'Shareholder',              label:'Shareholder',                        isGuarantor: false },
+  ],
+  D: [
+    { value:'Sole Proprietorship',      label:'Sole Proprietorship (Owner)',        isGuarantor: false },
+    { value:'Guarantor',                label:'Guarantor',                         isGuarantor: true  },
+  ],
+  E: [
+    { value:'Partner of Partnership',   label:'Partner of Partnership',             isGuarantor: true  },
+  ],
+  F: [
+    { value:'Partner (LLP only)',       label:'Partner (LLP only)',                 isGuarantor: true  },
+    { value:'Director/Guarantor',       label:'Director / Guarantor',             isGuarantor: true  },
+    { value:'Guarantor/Shareholder',    label:'Guarantor / Shareholder',           isGuarantor: true  },
+    { value:'Compliance Officer',       label:'Compliance Officer (required)',      isGuarantor: false },
+    { value:'Director',                 label:'Director (Non-Guarantor)',           isGuarantor: false },
+    { value:'Shareholder',              label:'Shareholder',                        isGuarantor: false },
+  ],
+  G: [
+    { value:'Corporate Guarantor',      label:'Corporate Guarantor',               isGuarantor: true  },
+    { value:'Partner (LLP only)',       label:'Partner (LLP only)',                 isGuarantor: true  },
+    { value:'Guarantor',                label:'Guarantor',                         isGuarantor: true  },
+    { value:'Director',                 label:'Director (Non-Guarantor)',           isGuarantor: false },
+    { value:'Shareholder',              label:'Shareholder',                        isGuarantor: false },
+  ],
+  H: [
+    { value:'Partner (LLP only)',       label:'Partner (LLP only)',                 isGuarantor: true  },
+    { value:'Director/Guarantor',       label:'Director / Guarantor',             isGuarantor: true  },
+    { value:'Guarantor',                label:'Guarantor',                         isGuarantor: true  },
+    { value:'Director',                 label:'Director (Non-Guarantor)',           isGuarantor: false },
+  ],
+  J: [
+    { value:'Guarantor',                label:'Guarantor',                         isGuarantor: true  },
+    { value:'Director/Guarantor',       label:'Committee Member / Guarantor',      isGuarantor: true  },
+    { value:'Director',                 label:'Committee Member (Non-Gtr)',         isGuarantor: false },
+  ],
+  K: [
+    { value:'Director',                 label:'Authorised Officer (Non-Gtr)',       isGuarantor: false },
+    { value:'Guarantor',                label:'Guarantor',                         isGuarantor: true  },
+  ],
+  L: [
+    { value:'Sole Proprietorship',      label:'Sole Proprietorship (Owner)',        isGuarantor: false },
+    { value:'Guarantor',                label:'Guarantor',                         isGuarantor: true  },
+  ],
+};
 const MY_STATES = [
   'Johor','Kedah','Kelantan','Melaka','Negeri Sembilan','Pahang',
   'Perak','Perlis','Pulau Pinang','Sabah','Sarawak','Selangor',
@@ -527,6 +595,7 @@ export default function ApplicationForm() {
 
   // Signatory, drill-down, guarantor checks
   const hasSignatory = directors.some(d => d.isSignatory);
+  const fTypeComplianceOk = et !== 'F' || directors.some(d => d.roles.includes('Compliance Officer') && d.isSignatory);
   const drillRequiredEntities: EntityCode[] = ['A','C','F','G','H'];
   const needsDrillDown = et && drillRequiredEntities.includes(et);
   const corpDirs = directors.filter(d => d.isCorporate);
@@ -1651,7 +1720,15 @@ export default function ApplicationForm() {
                 <Input value={bizNetIncome} onChange={setBizNetIncome} placeholder="System-calculated or manual"/>
               </Field2>
             </div>
-            <button onClick={()=>{ markComplete('applicantIncome'); markComplete('companyProfile'); markComplete('classification'); markComplete('addressReg'); markComplete('email'); markComplete('confirmation'); markComplete('management'); markComplete('ubo'); }} className="mt-3 px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">✓ Save Applicant Info</button>
+            {et === 'F' && !fTypeComplianceOk && (
+              <p className="mt-2 text-xs text-red-500">Entity F requires a designated Compliance Officer set as Signatory. Add them via <strong>Add Related Party</strong> → Relationship: Compliance Officer, then mark Signatory.</p>
+            )}
+            <button
+              onClick={()=>{ markComplete('applicantIncome'); markComplete('companyProfile'); markComplete('classification'); markComplete('addressReg'); markComplete('email'); markComplete('confirmation'); markComplete('management'); markComplete('ubo'); }}
+              disabled={!fTypeComplianceOk}
+              className="mt-3 px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50">
+              ✓ Save Applicant Info
+            </button>
           </div>
         </SubSection>
       </SectionPanel>
@@ -1938,42 +2015,16 @@ export default function ApplicationForm() {
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg w-[480px] p-5 shadow-xl">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-gray-800">Add Guarantor</h3>
+            <h3 className="font-semibold text-gray-800">Add Related Party</h3>
             <button onClick={()=>setShowAddGuar(false)} className="text-gray-400 hover:text-gray-600">✕</button>
           </div>
           <div className="space-y-3">
             <Field2 label="Name" required><Input value={newGuar.name||''} onChange={v=>setNewGuar(g=>({...g,name:v}))}/></Field2>
             <Field2 label="IC / Passport No." required><Input value={newGuar.icNo||''} onChange={v=>setNewGuar(g=>({...g,icNo:v}))}/></Field2>
             <Field2 label="Relationship To Application">
-              <Select value={newGuar.relationship||''} onChange={v=>setNewGuar(g=>({...g,relationship:v}))} options={[
-                // A/B (Company): Director/Guarantor or Dir+Shareholder+Gtr
-                ...(['A','B'].includes(et) ? [
-                  {value:'Director / Guarantor', label:'Director / Guarantor'},
-                  {value:'Director / Shareholder / Guarantor', label:'Director / Shareholder / Guarantor'},
-                ] : []),
-                // C (Foreign Branch): Corporate Guarantor or authorised rep
-                ...(et === 'C' ? [
-                  {value:'Corporate Guarantor', label:'Corporate Guarantor (CG)'},
-                  {value:'Director / Guarantor', label:'Director / Guarantor (Local Rep)'},
-                ] : []),
-                // E (Partnership): Partner of Partnership (recorded as Owner, not Guarantor — optional)
-                ...(et === 'E' ? [
-                  {value:'Partner of Partnership', label:'Partner of Partnership'},
-                ] : []),
-                // F/G/H (LLP): Core Partner Guarantor
-                ...(['F','G','H'].includes(et) ? [
-                  {value:'Director / Guarantor', label:'Partner / Guarantor'},
-                  {value:'Corporate Guarantor', label:'Corporate Guarantor (CG)'},
-                ] : []),
-                // J (Society): Committee member Guarantor
-                ...(et === 'J' ? [
-                  {value:'Director / Guarantor', label:'Committee Member / Guarantor'},
-                ] : []),
-                // Fallback — no entity selected or generic
-                ...(!et || ['D','K','L','I'].includes(et) ? [
-                  {value:'Guarantor', label:'Guarantor'},
-                ] : []),
-              ]} placeholder="— Select —"/>
+              <Select value={newGuar.relationship||''} onChange={v=>setNewGuar(g=>({...g,relationship:v}))}
+                options={et ? (RELATIONSHIP_BY_ENTITY[et] ?? [{value:'Guarantor',label:'Guarantor',isGuarantor:true}]) : [{value:'Guarantor',label:'Guarantor',isGuarantor:true}]}
+                placeholder="— Select —"/>
             </Field2>
             <Field2 label="Monthly Income (RM)"><Input value={String(newGuar.income||'')} onChange={v=>setNewGuar(g=>({...g,income:+v}))}/></Field2>
           </div>
@@ -1989,11 +2040,18 @@ export default function ApplicationForm() {
                   const age=new Date().getFullYear()-yr;
                   if (age<18||age>75) { alert(`Guarantor age (${age}) must be between 18 and 75.`); return; }
                 }
+                const selectedRel = newGuar.relationship||'Guarantor';
+                const relDef = et ? (RELATIONSHIP_BY_ENTITY[et]??[]).find(r=>r.value===selectedRel) : null;
+                const isGtr = relDef ? relDef.isGuarantor : true;
                 const id='g'+Date.now();
-                setGuarantors(gs=>[...gs,{ id, name:newGuar.name!, icNo:newGuar.icNo!, nationality:'Malaysia', relationship:newGuar.relationship||'Guarantor', cifStatus:'ok', income:newGuar.income||0 }]);
+                if (isGtr) {
+                  setGuarantors(gs=>[...gs,{ id, name:newGuar.name!, icNo:newGuar.icNo!, nationality:'Malaysia', relationship:selectedRel, cifStatus:'ok', income:newGuar.income||0 }]);
+                } else {
+                  setDirectors(ds=>[...ds,{ id, name:newGuar.name!, icNo:newGuar.icNo!, nationality:'Malaysia', sharePercent:0, isCorporate:false, roles:[selectedRel], isUBO:false, isSignatory:false, isGuarantor:false }]);
+                }
                 setShowAddGuar(false); setNewGuar({});
               }
-            }} className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Add Guarantor</button>
+            }} className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Add Person</button>
           </div>
         </div>
       </div>
