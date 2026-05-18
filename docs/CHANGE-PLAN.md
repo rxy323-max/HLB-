@@ -296,7 +296,7 @@ const relationshipOptions = et
 
 **依据：** 需求文档 §4.4 完整角色映射表；§5.2 Role To Application枚举值
 
-- [ ] 已完成
+- [x] 已完成
 
 ---
 
@@ -335,7 +335,7 @@ M7 的 Confirm 按钮：
 
 **依据：** 需求文档 §4.8 F类 特殊约束"必须有指定Compliance Officer"
 
-- [ ] 已完成
+- [x] 已完成
 
 ---
 
