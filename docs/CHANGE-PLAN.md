@@ -395,7 +395,7 @@ M7 的 Confirm 按钮：
 
 **规模：** 较大，建议单独开一个功能分支来做。
 
-- [ ] 确认排期后开始
+- [x] 已完成：drillChildren state；DrillDownModal 重写为多行手动录入表格（有效持股实时计算）；UBO 区域树形展示（L1 Experian / L2-L3 手动）；⚠ UBO 候选标记；+ Add as UBO 按钮；递归 ⊕ Drill-down 支持 L2 层法人继续穿透
 
 ---
 
