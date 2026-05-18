@@ -207,6 +207,29 @@ const MSIC_GROUPS = [
   { value:'M', label:'M – Professional, Scientific & Technical' },
   { value:'N', label:'N – Administrative & Support Service' },
 ];
+const NOB_CODES = [
+  { value:'1.0',  label:'1.0 – Trading' },
+  { value:'2.0',  label:'2.0 – Wholesale' },
+  { value:'3.0',  label:'3.0 – Manufacturing' },
+  { value:'4.0',  label:'4.0 – Construction' },
+  { value:'5.0',  label:'5.0 – Plantation' },
+  { value:'6.0',  label:'6.0 – Husbandry' },
+  { value:'7.0',  label:'7.0 – Insurance' },
+  { value:'8.0',  label:'8.0 – Banking' },
+  { value:'9.0',  label:'9.0 – Warehousing' },
+  { value:'10.0', label:'10.0 – Transportation' },
+  { value:'11.0', label:'11.0 – Agriculture' },
+  { value:'12.0', label:'12.0 – Fisheries' },
+  { value:'13.0', label:'13.0 – Restaurant / Hotel Operator' },
+  { value:'14.0', label:'14.0 – Hawkers / Petty Traders' },
+  { value:'15.0', label:'15.0 – Mining / Quarrying' },
+  { value:'16.0', label:'16.0 – Franchise' },
+  { value:'17.0', label:'17.0 – IT & Telecommunication' },
+  { value:'18.0', label:'18.0 – Business Services' },
+  { value:'19.0', label:'19.0 – Clinics (Medical / Dental / Veterinary / Pharmacists)' },
+  { value:'20.0', label:'20.0 – Professional Firms (Accounting / Audit / Tax)' },
+  { value:'21.0', label:'21.0 – Professional Firms (Engineers / Architects / Surveyors)' },
+];
 const VEHICLE_MAKES = ['Perodua','Proton','Toyota','Honda','BMW','Mercedes-Benz','Mazda','Hyundai','Kia'];
 const MOCK_VEHICLE_MODELS: Record<string,{model:string; msrp:number}[]> = {
   Perodua:[{ model:'Myvi 1.5 AV CVT',msrp:61990 },{ model:'Axia E (M)',msrp:40990 },{ model:'Bezza 1.3 AV',msrp:59990 }],
@@ -435,8 +458,12 @@ export default function ApplicationForm() {
   const [idNo2,   setIdNo2]   = useState('');
   const [searchBy, setSearchBy] = useState<'ID Number'|'CIF No.'>('ID Number');
   const [lookupStatus, setLookupStatus] = useState<'idle'|'loading'|'found'|'notfound'>('idle');
-  const [cifStatus,    setCifStatus]    = useState<'idle'|'loading'|'ok'|'error'>('idle');
-  const [hpLineStatus, setHpLineStatus] = useState<'idle'|'loading'|'ok'|'error'>('idle');
+  const [cifStatus,        setCifStatus]        = useState<'idle'|'loading'|'ok'|'error'>('idle');
+  const [hpLineStatus,     setHpLineStatus]     = useState<'idle'|'loading'|'ok'|'error'>('idle');
+  const [wtWhitelistStatus,setWtWhitelistStatus]= useState<'idle'|'loading'|'ok'|'error'>('idle');
+  const [incomeDbStatus,   setIncomeDbStatus]   = useState<'idle'|'loading'|'ok'|'error'>('idle');
+  const [appHistoryStatus, setAppHistoryStatus] = useState<'idle'|'loading'|'ok'|'error'>('idle');
+  const [preConsentStatus, setPreConsentStatus] = useState<'idle'|'loading'|'ok'|'error'>('idle');
   const [corpLocked, setCorpLocked] = useState(false);
 
   // ── Application Details
@@ -463,6 +490,7 @@ export default function ApplicationForm() {
   // ── Company Profile
   const [constitution,      setConstitution]      = useState('');
   const [basicGroup,        setBasicGroup]        = useState('');
+  const [nobCode,           setNobCode]           = useState('');
   const [msicGroup,         setMsicGroup]         = useState('');
   const [msicCode,          setMsicCode]          = useState('');
   const [bumiStatus,        setBumiStatus]        = useState('');
@@ -574,13 +602,16 @@ export default function ApplicationForm() {
   const effConstitution = constitution || derivedConstitution;
   const effBasicGroup   = basicGroup   || derivedBasicGroup;
   const derivedGpRating = useMemo(() => {
+    // GP Rating derived from NOB Code per requirements §5.2 (pending business confirmation on exact mapping)
     const gpMap: Record<string,string> = {
-      A:'GP 1', B:'GP 3', C:'GP 2', D:'GP 3', F:'GP 2',
-      G:'GP 4', H:'GP 4', I:'GP 4', J:'GP 4', K:'GP 3',
-      L:'GP 4', M:'GP 4', N:'GP 4',
+      '1.0':'GP 4','2.0':'GP 4','3.0':'GP 2','4.0':'GP 2','5.0':'GP 1',
+      '6.0':'GP 1','7.0':'GP 3','8.0':'GP 3','9.0':'GP 4','10.0':'GP 4',
+      '11.0':'GP 1','12.0':'GP 1','13.0':'GP 4','14.0':'GP 4','15.0':'GP 3',
+      '16.0':'GP 4','17.0':'GP 4','18.0':'GP 4','19.0':'GP 4','20.0':'GP 4',
+      '21.0':'GP 4',
     };
-    return msicGroup ? (gpMap[msicGroup] || '—') : '—';
-  }, [msicGroup]);
+    return nobCode ? (gpMap[nobCode] || '—') : '—';
+  }, [nobCode]);
 
   // Entity status flags
   const isInactiveBlock = et === 'I';                   // I = Virtual BE — cannot process HP at all
@@ -706,6 +737,10 @@ export default function ApplicationForm() {
     setLookupStatus('loading');
     setCifStatus('loading');
     setHpLineStatus('loading');
+    setWtWhitelistStatus('loading');
+    setIncomeDbStatus('loading');
+    setAppHistoryStatus('loading');
+    setPreConsentStatus('loading');
     const key = idNo1.replace(/[-\s]/g,'');
     setTimeout(()=>{
       const data = MOCK_SSM[key];
@@ -727,6 +762,10 @@ export default function ApplicationForm() {
       }
       setCifStatus(key==='202301234567'?'ok':'error');
       setTimeout(()=>setHpLineStatus('error'), 400);
+      setTimeout(()=>setWtWhitelistStatus(key==='202301234567'?'ok':'error'), 600);
+      setTimeout(()=>setIncomeDbStatus('ok'), 800);
+      setTimeout(()=>setAppHistoryStatus(key==='202301234567'?'ok':'error'), 700);
+      setTimeout(()=>setPreConsentStatus('ok'), 900);
     }, 1800);
   }
 
@@ -1015,9 +1054,36 @@ export default function ApplicationForm() {
         {lookupStatus!=='idle' && (
           <div className="mt-4 border border-gray-200 rounded p-3">
             <p className="text-xs font-semibold text-gray-600 mb-2">System Check Results</p>
-            <ApiRow label="CIF / HOST"    status={cifStatus}/>
-            <ApiRow label={searchBy==='CIF No.' ? 'SSM / Experian (from CIF)' : 'Experian / SSM'} status={lookupStatus==='loading'?'loading':lookupStatus==='found'?'ok':'error'}/>
-            <ApiRow label="HP Line Check" status={hpLineStatus}/>
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <ApiRow label="CIF Profile (HOST)" status={cifStatus}/>
+                <span className="text-xs text-gray-400 ml-auto">All applicants</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ApiRow label={searchBy==='CIF No.' ? 'SSM / Experian (from CIF)' : 'Experian / SSM'} status={lookupStatus==='loading'?'loading':lookupStatus==='found'?'ok':'error'}/>
+                <span className="text-xs text-gray-400 ml-auto">All applicants</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ApiRow label="App History (CrediOS)" status={appHistoryStatus}/>
+                <span className="text-xs text-gray-400 ml-auto">All applicants</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ApiRow label="Pre-Consent (e-Consent)" status={preConsentStatus}/>
+                <span className="text-xs text-gray-400 ml-auto">All applicants</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ApiRow label="WT Whitelist (CrediOS)" status={wtWhitelistStatus}/>
+                <span className="text-xs text-blue-400 ml-auto">Guarantors only</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ApiRow label="Income DB (HLB API)" status={incomeDbStatus}/>
+                <span className="text-xs text-blue-400 ml-auto">Guarantors only</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ApiRow label="HP Line (BCB Source)" status={hpLineStatus}/>
+                <span className="text-xs text-purple-400 ml-auto">Non-Individual main applicant</span>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1211,13 +1277,16 @@ export default function ApplicationForm() {
                   {et==='J' && !constitution && <p className="text-xs text-amber-600">Select society type: A Assoc/Society / C Cooperative / T Trade Union</p>}
                 </div>
               </Field2>
-              <Field2 label="Nature of Business Group" required source="Manual">
+              <Field2 label="Nature of Business Code" required source="Manual">
+                <Select value={nobCode} onChange={setNobCode} options={NOB_CODES} placeholder="— Select NOB code —"/>
+              </Field2>
+              <Field2 label="MSIC Group (BNM)" required source="Manual">
                 <Select value={msicGroup} onChange={setMsicGroup} options={MSIC_GROUPS} placeholder="— Select group —"/>
               </Field2>
-              <Field2 label="Nature of Business Code (4-digit)" source="Manual">
+              <Field2 label="MSIC Code (4-digit)" source="Manual">
                 <Input value={msicCode} onChange={setMsicCode} placeholder="e.g. 4651"/>
               </Field2>
-              <Field2 label="Nature of Business Code (Full / 5-digit)" source="Manual">
+              <Field2 label="MSIC Code (Full / 5-digit)" source="Manual">
                 <Input value={nobFull} onChange={setNobFull} placeholder="e.g. 46510 (3rd-level MSIC)"/>
               </Field2>
               <Field2 label="Firm Type" source="Manual">
