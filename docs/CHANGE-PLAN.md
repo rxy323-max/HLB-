@@ -51,7 +51,7 @@ const CONSTITUTION_OPTIONS = [
 
 **依据：** 需求文档 §5.2 Constitution Code枚举值完整表
 
-- [ ] 已完成
+- [x] 已完成
 
 ---
 
@@ -96,7 +96,7 @@ const BASIC_GROUP_OPTIONS = [
 
 **依据：** 需求文档 §5.2 Basic Group枚举值；§2.2.11 K类 Basic Group 31.0/32.0/33.0/34.0（视具体政府层级）
 
-- [ ] 已完成
+- [x] 已完成
 
 ---
 
@@ -127,7 +127,7 @@ const ENTITY_TO_CONSTITUTION: Record<EntityCode,string> = {
 
 **依据：** 需求文档 §2.2.10 J类 Constitution Code A/C/T；§2.2.11 K类 Constitution Code V/W/B/G/H/F等
 
-- [ ] 已完成
+- [x] 已完成
 
 ---
 
@@ -157,7 +157,7 @@ NPO – Non-Profit Organization
 
 **依据：** 需求文档 §5.2 Customer Sector Code枚举值
 
-- [ ] 已完成
+- [x] 已完成
 
 ---
 
@@ -199,7 +199,7 @@ const derivedGpRating = useMemo(() => {
 
 **注意：** GP 映射关系需要业务确认，以上为合理默认值，待确认后调整。
 
-- [ ] 已完成
+- [x] 已完成
 
 ---
 
