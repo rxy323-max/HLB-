@@ -399,13 +399,130 @@ M7 的 Confirm 按钮：
 
 ---
 
-## 改动顺序总结
+---
+
+## 批次 4 · 模块顺序调整（需求文档 §1.2）
+
+### 4-A  M0 / M1 解锁顺序待确认
+
+**问题：** 需求文档 §1.2 分步录入流程表格中，Step 1（申请角色选择 / Role & Identity）排在 Step 0（渠道信息录入 / Channel Info）之前——即文档把 Step 1 列在首位。
+
+| 文档顺序 | 步骤编号 | 模块名 |
+|---|---|---|
+| 第 1 行 | Step 1 | 申请角色选择（Role & Identity） |
+| 第 2 行 | Step 0 | 渠道信息录入（Channel Info） |
+| 第 3 行+ | Step 2–9 | 后续模块… |
+
+**当前实现：** M0（Channel Info）开场解锁，M1（Role & Identity）在 M0 完成后解锁。
+
+**两种解读：**
+- 解读 A：Step 0 只是"准备步骤"，编号为 0 表示最低优先，实际可以任意时间填，Role & Identity 才是第一个主要操作——但 Channel Info 仍先解锁（维持现状）
+- 解读 B：文档明确把 Role & Identity 排首位，Channel Info 应该后填（两者顺序对调）
+
+**需业务方确认后再改。**
+
+- [ ] 已确认选择：______（维持现状 / 对调 M0↔M1）
+- [ ] 如需对调：在 `moduleStatus` 初始值中将 `m1` 改为 `'active'`，`m0` 改为 `'locked'`；并调整 `completeModule` 触发链
+
+---
+
+## 批次 5 · 左侧导航栏视觉还原（对照主线稳定版）
+
+### 5-A  侧边栏整体视觉差异清单
+
+对照分支：`stable/prototype-v1.0-初稿定稿-20260508`
+
+| 项目 | 稳定版（主线）| 当前版（feature/optimize-v2）| 需恢复？ |
+|---|---|---|---|
+| 顶部标题 | `☰ Navigation` | `Modules`（小型大写）| ✅ 需改 |
+| 状态指示器 | StatusIcon：○ idle / ✓ complete / ✗ error | 彩色圆点：灰/蓝/绿 | 讨论 |
+| 菜单结构 | 层级树（父项 + 子项缩进）| 平铺列表 | ⚠️ 见说明 |
+| 顶级字号 | `text-sm` | `text-xs` | ✅ 需改 |
+| 底部区标题 | `Risk Relate` | `Other Sections` | ✅ 需改 |
+| 底部区内容 | 6项：AML / Credit Summary / UW Result / Customer / TV-Check / Exposure Summary | 4项：Collateral / Facility / Income / Risk·AML | ✅ 需改 |
+| 底部区字色 | `text-gray-400`（置灰，表示次级）| `text-gray-500` | ✅ 需改 |
+
+**关于菜单结构：** 稳定版是层级树（Identity Verification 下挂 Company Basic、Company Profile 等子项）；当前版是 10 个平铺模块。两者功能架构已经不同，不能原样恢复。建议在平铺模块的基础上，恢复稳定版的**视觉风格**（字号、颜色、标题样式），而不是恢复层级结构。
+
+### 5-B  具体修改内容
+
+**文件位置：** `ApplicationForm.tsx`，`NavSidebar` 函数（约第 722 行）及 `EXTRA_NAV` 常量（约第 334 行）
+
+**改动 1 — 顶部标题：**
+
+现状：
+```tsx
+<span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Modules</span>
+```
+目标：
+```tsx
+<span className="text-sm font-semibold text-gray-700">☰ Navigation</span>
+```
+
+**改动 2 — 模块列表字号（顶级项从 xs 改回 sm）：**
+
+现状：`text-xs border-l-2`
+目标：`text-sm border-l-2`（和稳定版一致）
+
+**改动 3 — 状态指示器（两个方案，需选其一）：**
+
+- 方案 A（保留彩色圆点）：维持现状，视觉更直观
+- 方案 B（恢复 StatusIcon 样式）：
+  ```tsx
+  // locked → 无图标（opacity 已处理）
+  // active → ● 蓝点
+  // complete → ✓ 绿色
+  ```
+  建议方案 B，和稳定版风格一致
+
+**改动 4 — 底部区还原（EXTRA_NAV + 标题 + 6 个风险项）：**
+
+现状 EXTRA_NAV（4 项）：
+```ts
+{ id:'collateral',    label:'Collateral' },
+{ id:'facility',      label:'Facility' },
+{ id:'incomeSummary', label:'Income Summary' },
+{ id:'aml',           label:'Risk / AML' },
+```
+
+目标 — 拆为两组，和稳定版对齐：
+```ts
+// 上组（Other Sections，较重要）
+{ id:'collateral',    label:'Collateral & Seller' },
+{ id:'facility',      label:'Facility / Financing' },
+{ id:'incomeSummary', label:'Income Summary' },
+
+// 下组（Risk Relate，次级，text-gray-400）
+{ id:'aml',           label:'AML' },
+{ id:'credit',        label:'Credit Summary' },
+{ id:'uw',            label:'UW Result' },
+{ id:'customer',      label:'Customer' },
+{ id:'tvcheck',       label:'TV-Check' },
+{ id:'exposure',      label:'Exposure Summary' },
+```
+
+NavSidebar 底部相应渲染为两个独立 section，中间加分隔线。
+
+- [ ] 已确认方案（状态指示器选 A / B）：______
+- [ ] 5-A/5-B 已完成
+
+---
+
+## 改动顺序总结（更新版）
 
 ```
-批次 1（枚举值）：1-A → 1-B → 1-C → 1-D → 1-E   ← 约 1-2小时
-批次 2（角色系统）：2-A → 2-B                       ← 约 1-2小时
+优先级 0（需先确认，不动代码）：
+  → 4-A：M0/M1 顺序 — 确认是否对调
+  → 5-B：状态指示器 — 确认选 A（圆点）还是 B（图标）
+
+批次 0（视觉）：  5-B  ← 视觉还原，不影响业务逻辑，建议优先改，效果立竿见影
+批次 1（枚举值）：1-A → 1-B → 1-C → 1-D → 1-E   ← 约 1-2 小时
+批次 2（角色系统）：2-A → 2-B                       ← 约 1-2 小时
 批次 3（待确认/复杂）：先确认 3-A，再做 3-B，3-C 单独排期
+批次 4（顺序）：  4-A（确认后）
 ```
+
+**建议改动顺序：** 5-B（视觉）→ 1-A/B/C/D/E（枚举值）→ 2-A/B（角色）→ 确认后做 3-A/4-A
 
 ---
 
