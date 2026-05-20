@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E-Acceptance Prototype v3 – HLB LOAD$</title>
+<title>E-Acceptance Prototype v4 – HLB LOAD$</title>
 <style>
 /* ── Reset ── */
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -86,9 +86,11 @@ tr:hover td{background:#fafafa;}
 .ep-circle{width:26px;height:26px;border-radius:50%;border:2px solid #dadce0;background:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#9aa0a6;transition:.2s;}
 .ep-step.done .ep-circle{background:#34a853;border-color:#34a853;color:#fff;}
 .ep-step.active .ep-circle{background:#1967d2;border-color:#1967d2;color:#fff;}
+.ep-step.failed .ep-circle{background:#c5221f;border-color:#c5221f;color:#fff;}
 .ep-label{margin-top:5px;font-size:11px;color:#9aa0a6;text-align:center;line-height:1.4;}
 .ep-step.done .ep-label{color:#34a853;}
 .ep-step.active .ep-label{color:#1967d2;font-weight:600;}
+.ep-step.failed .ep-label{color:#c5221f;}
 
 /* ── Switch link ── */
 .switch-link-row{display:flex;justify-content:flex-end;margin-bottom:14px;}
@@ -103,6 +105,22 @@ tr:hover td{background:#fafafa;}
 .m-sec-title{font-size:13px;font-weight:600;}
 .m-sec-sub{font-size:11px;color:#9aa0a6;margin-top:1px;}
 .m-section-body{padding:16px;}
+
+/* ── Per-applicant bio sub-card ── */
+.m-bio-person{border:1px solid #e8eaed;border-radius:6px;margin-bottom:10px;overflow:hidden;}
+.m-bio-person:last-child{margin-bottom:0;}
+.m-bio-person-hdr{background:#f8f9fa;padding:9px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e8eaed;}
+.m-bio-person-hdr-left{display:flex;align-items:center;gap:8px;}
+.m-bio-person-body{padding:14px;}
+
+/* ── Attempt counter ── */
+.attempt-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;margin-left:6px;}
+.ab-warn{background:#fef7e0;color:#b45309;}
+.ab-danger{background:#fce8e6;color:#c5221f;}
+
+/* ── Auto-switch banner ── */
+.auto-switch-banner{background:#fce8e6;border:1px solid #f5c6cb;border-radius:6px;padding:10px 14px;display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;}
+.auto-switch-banner svg{flex-shrink:0;margin-top:2px;width:15px;height:15px;stroke:#c5221f;fill:none;stroke-width:2;}
 
 /* ── Bio result inline summary ── */
 .bio-inline-result{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:500;}
@@ -222,6 +240,8 @@ tr:hover td{background:#fafafa;}
 /* ── Alert ── */
 .alert-warn{background:#fef7e0;border:1px solid #fde68a;border-radius:6px;padding:10px 14px;font-size:12px;color:#b45309;display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;}
 .alert-warn svg{width:15px;height:15px;fill:none;stroke:#b45309;stroke-width:2;flex-shrink:0;margin-top:1px;}
+.alert-err{background:#fce8e6;border:1px solid #f5c6cb;border-radius:6px;padding:10px 14px;font-size:12px;color:#c5221f;display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;}
+.alert-err svg{width:15px;height:15px;fill:none;stroke:#c5221f;stroke-width:2;flex-shrink:0;margin-top:1px;}
 
 /* ── Footer ── */
 .footer{background:#fff;border-top:1px solid #e8eaed;padding:10px 20px;display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;}
@@ -249,7 +269,7 @@ tr:hover td{background:#fafafa;}
 /* ── Dev tool ── */
 .dev-tool{position:fixed;bottom:20px;right:20px;z-index:200;}
 .dev-fab{width:40px;height:40px;border-radius:50%;background:#1e2235;color:#fff;border:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.3);}
-.dev-panel{display:none;position:absolute;bottom:50px;right:0;background:#fff;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.2);padding:12px;width:270px;border:1px solid #e8eaed;max-height:80vh;overflow-y:auto;}
+.dev-panel{display:none;position:absolute;bottom:50px;right:0;background:#fff;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.2);padding:12px;width:280px;border:1px solid #e8eaed;max-height:80vh;overflow-y:auto;}
 .dev-panel.open{display:block;}
 .dev-title{font-size:11px;font-weight:700;color:#9aa0a6;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase;}
 .dev-sep{height:1px;background:#e8eaed;margin:6px 0;}
@@ -359,26 +379,26 @@ tr:hover td{background:#fafafa;}
 
           <!-- Step 1 -->
           <div id="eaStep1"><div class="bio-layout">
-            <div class="bio-left" id="s1Left"><!-- rendered by JS --></div>
-            <div class="bio-right" id="s1Right"><!-- rendered by JS --></div>
+            <div class="bio-left" id="s1Left"></div>
+            <div class="bio-right" id="s1Right"></div>
           </div></div>
 
           <!-- Step 2 -->
           <div id="eaStep2" style="display:none;"><div class="bio-layout">
-            <div class="bio-left" id="s2Left"><!-- rendered by JS --></div>
-            <div class="bio-right" id="s2Right"><!-- rendered by JS --></div>
+            <div class="bio-left" id="s2Left"></div>
+            <div class="bio-right" id="s2Right"></div>
           </div></div>
 
           <!-- Step 3 -->
           <div id="eaStep3" style="display:none;">
             <div class="bio-layout">
-              <div class="bio-left" id="s3Left"><!-- rendered by JS --></div>
-              <div class="bio-right" id="s3Right"><!-- rendered by JS --></div>
+              <div class="bio-left" id="s3Left"></div>
+              <div class="bio-right" id="s3Right"></div>
             </div>
             <div id="otpWrap" style="display:none;justify-content:center;margin-top:14px;">
               <div class="otp-panel">
                 <div class="otp-title">Fingerprint Verification Failed — OTP Fallback</div>
-                <div class="otp-sub">System has sent a 6-digit OTP to customer's mobile.<br>Officer enters the OTP as shown on RIB Portal.</div>
+                <div class="otp-sub">3 biometric attempts exhausted. System has sent a 6-digit OTP to customer's registered mobile.<br>Enter OTP as displayed on RIB Portal.</div>
                 <div class="otp-inputs">
                   <input class="otp-input" maxlength="1" oninput="otpNext(this)">
                   <input class="otp-input" maxlength="1" oninput="otpNext(this)">
@@ -402,7 +422,7 @@ tr:hover td{background:#fafafa;}
               <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               <div>
                 <div class="cb-title">E-Acceptance Completed</div>
-                <div class="cb-sub">Customer GGBOUND completed E-Acceptance on 20-05-2026 16:50:29 via Biometric. Signed documents attached.</div>
+                <div class="cb-sub" id="eaCompleteSub">Customer GGBOUND completed E-Acceptance on 20-05-2026 16:50:29 via Biometric. Signed documents attached.</div>
               </div>
             </div>
             <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
@@ -423,7 +443,7 @@ tr:hover td{background:#fafafa;}
                     <div class="amd-info-item"><label>Send Date</label><span id="amdSmsDate">—</span></div>
                     <div class="amd-info-item"><label>Customer Acceptance</label><span id="amdCustStatus">Pending</span></div>
                   </div>
-                  <p style="font-size:12px;color:#5f6368;margin-bottom:10px;">Only documents with field changes are listed. Customer must accept via eTracker link sent by SMS.</p>
+                  <p style="font-size:12px;color:#5f6368;margin-bottom:10px;">Documents with field changes are highlighted. Customer reviews changes and accepts via eTracker link sent by SMS.</p>
                   <div class="amd-doc-cards" id="amdDocCards"></div>
                   <div class="amd-sms-row">
                     <button class="btn btn-secondary btn-sm" id="btnTriggerSMS" onclick="triggerSMS()">Trigger Amendment SMS</button>
@@ -446,21 +466,13 @@ tr:hover td{background:#fafafa;}
                 <div class="m-sec-num" id="mSec1Num">1</div>
                 <div>
                   <div class="m-sec-title">Identity Verification <span class="badge bd-purple" style="font-size:10px;margin-left:4px;">Optional</span></div>
-                  <div class="m-sec-sub">Biometric verification — Manual Acceptance Verification type</div>
+                  <div class="m-sec-sub">Biometric verification per applicant — Manual Acceptance Verification type. Result recorded; does not block signing.</div>
                 </div>
               </div>
-              <button class="lnk" id="mBioSkipBtn" onclick="skipManualBio()">Skip</button>
+              <button class="lnk" id="mBioSkipAllBtn" onclick="skipAllManualBio()">Skip All</button>
             </div>
             <div class="m-section-body" id="mSec1Body">
-              <!-- Bio result summary (shown after done/skipped) -->
-              <div id="mBioSummary" style="display:none;"></div>
-              <!-- Bio layout (shown while in progress) -->
-              <div id="mBioLayout">
-                <div class="bio-layout">
-                  <div class="bio-left" id="mBioLeft"><!-- rendered by JS --></div>
-                  <div class="bio-right" id="mBioRight"><!-- rendered by JS --></div>
-                </div>
-              </div>
+              <div id="mBioContent"><!-- rendered by JS --></div>
             </div>
           </div>
 
@@ -476,7 +488,7 @@ tr:hover td{background:#fafafa;}
               </div>
             </div>
             <div class="m-section-body">
-              <div class="ma-instruction">Please download all contracts below. Have the applicant sign on paper and upload the signed copies to the Document Centre after completion.</div>
+              <div class="ma-instruction">Please download all contracts below. Have each applicant sign on paper and upload the signed copies to Document Centre after completion.</div>
               <div id="manualApplicants"><!-- rendered by JS --></div>
             </div>
           </div>
@@ -566,34 +578,44 @@ tr:hover td{background:#fafafa;}
 <!-- ═══ DEV TOOL ═══ -->
 <div class="dev-tool">
   <div class="dev-panel" id="devPanel">
-    <div class="dev-title">🔧 Prototype Scenarios — v3</div>
+    <div class="dev-title">🔧 Prototype Scenarios — v4</div>
 
-    <div class="dev-group">E-Acceptance Flow</div>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-disc',this)">Step 1 — Device not connected</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-scan',this)">Step 1 — Scanning for device</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-ready',this)">Step 1 — Device ready</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-matched',this)">Step 1 — Identity Verified ✓</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-fail',this)">Step 1 — Biometric Unmatched</button>
-    <div class="dev-sep"></div>
-    <button class="dev-btn" onclick="applyScenario('ea-s2-wait',this)">Step 2 — Awaiting RIB</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s2-done',this)">Step 2 — RIB Accepted ✓</button>
-    <div class="dev-sep"></div>
-    <button class="dev-btn" onclick="applyScenario('ea-s3-ready',this)">Step 3 — 2nd Bio ready</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s3-otp',this)">Step 3 — OTP Fallback</button>
-    <button class="dev-btn" onclick="applyScenario('ea-complete',this)">E-Acceptance Completed</button>
-    <button class="dev-btn" onclick="applyScenario('ea-amendment',this)">E-Acceptance + Amendment</button>
+    <div class="dev-group">E-Acceptance · Step 1 Identity Verification</div>
+    <button class="dev-btn" onclick="applyScenario('ea-s1-disc',this)">Disconnected</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s1-ready',this)">Device ready</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s1-matched',this)">✓ Matched (1st attempt)</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s1-fail1',this)">✗ Failed — attempt 1/3</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s1-fail2',this)">✗ Failed — attempt 2/3</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s1-fail3',this)">✗ Max retries → auto-switch</button>
 
+    <div class="dev-sep"></div>
+    <div class="dev-group">E-Acceptance · Step 2 RIB Portal</div>
+    <button class="dev-btn" onclick="applyScenario('ea-s2-wait',this)">Awaiting customer at RIB</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s2-done',this)">✓ RIB Accepted</button>
+
+    <div class="dev-sep"></div>
+    <div class="dev-group">E-Acceptance · Step 3 Confirmation</div>
+    <button class="dev-btn" onclick="applyScenario('ea-s3-ready',this)">Device ready</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s3-fail1',this)">✗ Failed — attempt 1/3</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s3-fail2',this)">✗ Failed — attempt 2/3</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s3-otp',this)">✗ Max retries → OTP fallback</button>
+    <button class="dev-btn" onclick="applyScenario('ea-complete',this)">✓ E-Acceptance Completed</button>
+    <button class="dev-btn" onclick="applyScenario('ea-amendment',this)">✓ Completed + Amendment</button>
+
+    <div class="dev-sep"></div>
     <div class="dev-group">Manual — No Guarantor</div>
-    <button class="dev-btn" onclick="applyScenario('m-ng-disc',this)">Bio: Device not connected</button>
-    <button class="dev-btn" onclick="applyScenario('m-ng-ready',this)">Bio: Device ready</button>
-    <button class="dev-btn" onclick="applyScenario('m-ng-matched',this)">Bio: Matched ✓</button>
-    <button class="dev-btn" onclick="applyScenario('m-ng-fail',this)">Bio: Unmatched (proceed anyway)</button>
-    <button class="dev-btn" onclick="applyScenario('m-ng-skip',this)">Bio: Skipped</button>
+    <button class="dev-btn" onclick="applyScenario('m-ng-disc',this)">Disconnected</button>
+    <button class="dev-btn" onclick="applyScenario('m-ng-ready',this)">Device ready</button>
+    <button class="dev-btn" onclick="applyScenario('m-ng-matched',this)">✓ Matched</button>
+    <button class="dev-btn" onclick="applyScenario('m-ng-fail',this)">✗ Unmatched (proceed anyway)</button>
+    <button class="dev-btn" onclick="applyScenario('m-ng-skip',this)">Skipped</button>
 
+    <div class="dev-sep"></div>
     <div class="dev-group">Manual — With Guarantor</div>
-    <button class="dev-btn active" onclick="applyScenario('m-g-disc',this)">Bio: Device not connected</button>
-    <button class="dev-btn" onclick="applyScenario('m-g-matched',this)">Bio: Matched ✓</button>
-    <button class="dev-btn" onclick="applyScenario('m-g-skip',this)">Bio: Skipped</button>
+    <button class="dev-btn active" onclick="applyScenario('m-g-disc',this)">Both: Disconnected</button>
+    <button class="dev-btn" onclick="applyScenario('m-g-p-matched',this)">Primary ✓ done · Guarantor active</button>
+    <button class="dev-btn" onclick="applyScenario('m-g-both-matched',this)">Both ✓ Matched</button>
+    <button class="dev-btn" onclick="applyScenario('m-g-skip',this)">Both: Skipped</button>
   </div>
   <button class="dev-fab" onclick="document.getElementById('devPanel').classList.toggle('open')" title="Scenarios">⚙</button>
 </div>
@@ -626,23 +648,26 @@ const EA_LOG={
   amendment:{type:'Hirer Amendment Acceptance (1st)',pds:'Y',ss:'Y',hpa:'Y',app4:'—',status:'Completed',dt:'20/05/2026 05:30 PM',remark:'Biometric Acceptance'},
   bank:{type:'Bank Acceptance',pds:'—',ss:'—',hpa:'—',app4:'—',status:'Completed',dt:'21/05/2026 09:00 AM',remark:'Funded'},
 };
+const BIO_APPLICANTS=[
+  {name:'GGBOUND',id:'60-12-2308243',role:'PRIMARY',key:'mBioPrimary'},
+  {name:'MASLIZAWATI BINTI MOHAMAD',id:'60-12-2597236',role:'GUARANTOR',key:'mBioGuarantor'},
+];
 
 // ═══════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════
 let S={
   mode:'manual', hasGuarantor:true,
-  // EA
+  // EA flow
   eaStep:1,
-  s1Dev:'disconnected',
+  s1Dev:'disconnected', s1Attempts:0,
   s2RibDone:false,
-  s3Dev:'disconnected',
-  otpVisible:false,
-  eaComplete:false,
-  amendmentRequired:false, smsSent:false,
-  // Manual bio
-  mBioDev:'disconnected',  // disconnected|ready|matched|unmatched|skipped
-  mBioDone:false,          // true after matched/unmatched/skipped
+  s3Dev:'disconnected', s3Attempts:0,
+  eaComplete:false, amendmentRequired:false, smsSent:false,
+  eaViaOTP:false,
+  // Manual bio per-applicant
+  mBioPrimary:{dev:'disconnected',done:false,attempts:0},
+  mBioGuarantor:{dev:'disconnected',done:false,attempts:0},
 };
 
 // ═══════════════════════════════════════════════
@@ -705,6 +730,7 @@ function requestModeSwitch(mode){
   applyMode(mode);
 }
 function confirmSwitchToManual(){closeModal('modalSwitchConfirm');applyMode('manual');}
+function forceManualSwitch(){applyMode('manual');}  // auto-switch, no confirm needed
 function applyMode(mode){
   S.mode=mode;
   document.getElementById('tglEA').classList.toggle('active',mode==='ea');
@@ -717,17 +743,19 @@ function applyMode(mode){
 }
 
 // ═══════════════════════════════════════════════
-//  E-ACCEPTANCE
+//  E-ACCEPTANCE — PANEL CONTROLLER
 // ═══════════════════════════════════════════════
 function renderEAPanel(){
   if(S.mode!=='ea')return;
-  // progress
-  const prog=document.getElementById('eaProgress');
   [1,2,3].forEach(n=>{
-    document.getElementById('eps'+n).className='ep-step '+(S.eaComplete||S.eaStep>n?'done':S.eaStep===n?'active':'');
-    document.getElementById('epc'+n).textContent=S.eaComplete||S.eaStep>n?'✓':n;
+    const isFailed=(n===1&&S.s1Dev==='unmatched'&&S.s1Attempts>=3);
+    document.getElementById('eps'+n).className='ep-step '+(
+      S.eaComplete||S.eaStep>n?'done':
+      isFailed?'failed':
+      S.eaStep===n?'active':''
+    );
+    document.getElementById('epc'+n).textContent=(S.eaComplete||S.eaStep>n)?'✓':(isFailed?'✗':n);
   });
-  if(S.eaComplete)prog.style.setProperty('--line-bg','#34a853');
   document.getElementById('switchLinkRow').style.display=S.eaComplete?'none':'flex';
   document.getElementById('eaStep1').style.display=(!S.eaComplete&&S.eaStep===1)?'block':'none';
   document.getElementById('eaStep2').style.display=(!S.eaComplete&&S.eaStep===2)?'block':'none';
@@ -738,6 +766,8 @@ function renderEAPanel(){
     if(S.eaStep===2)renderStep2();
     if(S.eaStep===3)renderStep3();
   } else {
+    document.getElementById('eaCompleteSub').textContent=
+      'Customer GGBOUND completed E-Acceptance on 20-05-2026 16:50:29 via '+(S.eaViaOTP?'OTP':'Biometric')+'. Signed documents attached.';
     document.getElementById('amendmentSection').style.display=S.amendmentRequired?'block':'none';
     if(S.amendmentRequired)renderAmendment();
   }
@@ -745,15 +775,20 @@ function renderEAPanel(){
 
 // ── Shared left panel builder ──
 function leftPanel(step,overrides={}){
-  const bio=overrides.bioStatus||'—'; const bioClass=overrides.bioClass||'';
-  const req=overrides.reqTime||'—'; const res=overrides.resTime||'—';
-  const trig=overrides.trigCount||'0'; const retry=overrides.retry||'0 / 3';
+  const bio=overrides.bioStatus||'—';
+  const bioClass=overrides.bioClass||'';
+  const req=overrides.reqTime||'—';
+  const res=overrides.resTime||'—';
+  const trig=overrides.trigCount||'0';
+  const retry=overrides.retry||'0 / 3';
   const trigPoint=overrides.trigPoint||'Letter Printing E-Acceptance';
   const remark=overrides.remark||'';
+  const name=overrides.name||'GGBOUND';
+  const nric=overrides.nric||'60-12-2308243';
   return `<div class="info-sec">
     <div class="info-sec-title">Customer</div>
-    <div class="bio-row"><span class="bio-lbl">Name</span><span class="bio-val">GGBOUND</span></div>
-    <div class="bio-row"><span class="bio-lbl">NRIC</span><span class="bio-val">60-12-2308243</span></div>
+    <div class="bio-row"><span class="bio-lbl">Name</span><span class="bio-val">${name}</span></div>
+    <div class="bio-row"><span class="bio-lbl">NRIC</span><span class="bio-val">${nric}</span></div>
   </div>
   <div class="info-sec">
     <div class="info-sec-title">Sales</div>
@@ -775,9 +810,11 @@ function leftPanel(step,overrides={}){
 // ── Device SVG ──
 function devViz(st){
   const bg={disconnected:'#fce8e6',scanning:'#fef7e0',connected:'#e6f4ea'};
-  const icon={disconnected:'<span style="color:#c5221f;font-size:14px;">✕</span>',
+  const icon={
+    disconnected:'<span style="color:#c5221f;font-size:14px;">✕</span>',
     scanning:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" class="spin"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>',
-    connected:'<span style="color:#137333;font-size:14px;">✓</span>'};
+    connected:'<span style="color:#137333;font-size:14px;">✓</span>'
+  };
   const dots=(on)=>[1,2,3].map(()=>`<div class="conn-dot ${on?'on':''}"></div>`).join('');
   return `<div class="device-vis">
     <div class="device-box"><svg class="device-icon" viewBox="0 0 58 72"><rect x="4" y="2" width="50" height="68" rx="8" fill="#f0f4ff" stroke="#4f5bd5" stroke-width="2"/><rect x="12" y="12" width="34" height="22" rx="3" fill="#4f5bd5" opacity=".22"/><rect x="18" y="46" width="22" height="3" rx="1.5" fill="#4f5bd5" opacity=".35"/><rect x="18" y="52" width="22" height="3" rx="1.5" fill="#4f5bd5" opacity=".35"/><rect x="18" y="58" width="22" height="3" rx="1.5" fill="#4f5bd5" opacity=".35"/></svg><span class="device-name">Biometric Reader</span></div>
@@ -786,72 +823,190 @@ function devViz(st){
   </div>`;
 }
 
-// ── Step 1 ──
+// ── Attempt badge helper ──
+function attBadge(n,max){
+  if(n===0)return'';
+  const cls=n>=max?'ab-danger':'ab-warn';
+  return `<span class="attempt-badge ${cls}">${n}/${max} attempt${n>1?'s':''} used</span>`;
+}
+
+// ═══════════════════════════════════════════════
+//  STEP 1 — Identity Verification
+// ═══════════════════════════════════════════════
 function renderStep1(){
-  const dev=S.s1Dev;
+  const dev=S.s1Dev; const att=S.s1Attempts;
   const now=fmtNow(),now2=fmtNow(2);
   let leftOpts={},right='';
+
   if(dev==='disconnected'){
-    right=devViz('disconnected')+`<div class="state-title">Connect Biometric Device</div><div class="state-sub">Ensure the MyKad reader and fingerprint scanner are properly connected via USB.</div><div style="display:flex;gap:8px;"><button class="btn btn-primary btn-sm" onclick="S.s1Dev='scanning';renderStep1()">Reconnect</button><button class="btn btn-secondary btn-sm">Restart Service</button></div>`;
+    right=devViz('disconnected')+`
+      <div class="state-title">Connect Biometric Device</div>
+      <div class="state-sub">Ensure the MyKad reader and fingerprint scanner are connected via USB.</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm" onclick="S.s1Dev='scanning';renderStep1()">Reconnect</button>
+        <button class="btn btn-secondary btn-sm">Restart Service</button>
+      </div>`;
   } else if(dev==='scanning'){
-    right=devViz('scanning')+`<div class="state-title">Scanning for Devices...</div><div class="state-sub">Ensure the MyKad reader and fingerprint scanner are properly connected via USB.</div>`;
+    right=devViz('scanning')+`<div class="state-title">Scanning for Devices...</div><div class="state-sub">Ensure the MyKad reader and fingerprint scanner are connected via USB.</div>`;
     setTimeout(()=>{if(S.s1Dev==='scanning'){S.s1Dev='ready';renderStep1();}},2000);
   } else if(dev==='ready'){
-    right=devViz('connected')+`<div class="state-title">Device Connected</div><div class="state-sub">Ask the customer to place their thumb on the fingerprint scanner.</div><div style="display:flex;gap:8px;"><button class="btn btn-primary btn-sm" onclick="S.s1Dev='matched';renderStep1()">Simulate: Scan Finger</button></div>`;
+    right=devViz('connected')+`
+      <div class="state-title">Device Connected</div>
+      <div class="state-sub">Ask the customer to place their thumb on the fingerprint scanner.${att>0?' <strong>'+att+'/3 previous attempt(s) failed.</strong>':''}</div>
+      ${att>0?attBadge(att,3):''}
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn btn-primary btn-sm" onclick="S.s1Dev='matched';renderStep1()">Simulate: Match</button>
+        <button class="btn btn-secondary btn-sm" onclick="simS1Fail()">Simulate: Fail</button>
+      </div>`;
   } else if(dev==='matched'){
-    leftOpts={bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:'1 / 3'};
-    right=`<div class="bio-result"><div class="bio-result-icon">✅</div><div class="bio-result-title brt-matched">Identity Verified</div><p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">Biometric matched. Acceptance Flag = YES.<br>Customer may proceed to review and sign at RIB Portal.</p><button class="btn btn-primary" onclick="goStep2()">Proceed to RIB Portal →</button></div>`;
+    leftOpts={bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3'};
+    right=`<div class="bio-result">
+      <div class="bio-result-icon">✅</div>
+      <div class="bio-result-title brt-matched">Identity Verified</div>
+      <p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">Biometric matched. Acceptance Flag = YES.<br>Customer may proceed to review and sign at RIB Portal.</p>
+      <button class="btn btn-primary" onclick="goStep2()">Proceed to RIB Portal →</button>
+    </div>`;
   } else if(dev==='unmatched'){
-    leftOpts={bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:'1 / 3',remark:'Failed to fetch. Please ensure KTMyKadWeb service is running and CORS is configured'};
-    right=`<div class="bio-result"><div class="bio-result-icon">❌</div><div class="bio-result-title brt-failed">Biometric Not Matched</div><p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">Verification failed. Attempts: 1 / 3.<br>Retry or switch to Manual Acceptance if retries exhausted.</p><div style="display:flex;gap:8px;"><button class="btn btn-primary btn-sm" onclick="S.s1Dev='ready';renderStep1()">Retry</button><button class="btn btn-danger btn-sm" onclick="openModal('modalSwitchConfirm')">Switch to Manual</button></div></div>`;
+    leftOpts={bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3',remark:'Biometric not matched.'};
+    if(att>=3){
+      right=`
+        <div class="auto-switch-banner">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div><strong>Maximum attempts reached (3/3).</strong><br>Verification failed. System requires this application to proceed via Manual Acceptance.</div>
+        </div>
+        <div class="bio-result">
+          <div class="bio-result-icon">❌</div>
+          <div class="bio-result-title brt-failed">Biometric Verification Failed</div>
+          <p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">E-Acceptance is no longer available for this session.</p>
+          <button class="btn btn-danger" onclick="forceManualSwitch()">Proceed with Manual Acceptance</button>
+        </div>`;
+    } else {
+      const rem=3-att;
+      right=`<div class="bio-result">
+        <div class="bio-result-icon">❌</div>
+        <div class="bio-result-title brt-failed">Biometric Not Matched</div>
+        ${attBadge(att,3)}
+        <p style="font-size:12px;color:#5f6368;margin:8px 0 14px;">${rem} attempt(s) remaining before automatic switch to Manual Acceptance.</p>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button class="btn btn-primary btn-sm" onclick="retryS1()">Retry (${rem} left)</button>
+          <button class="btn btn-danger btn-sm" onclick="openModal('modalSwitchConfirm')">Switch to Manual Acceptance</button>
+        </div>
+      </div>`;
+    }
   }
   document.getElementById('s1Left').innerHTML=leftPanel(1,leftOpts);
   document.getElementById('s1Right').innerHTML=right;
 }
 
-// ── Step 2 ──
+function simS1Fail(){S.s1Attempts++;S.s1Dev='unmatched';renderStep1();}
+function retryS1(){S.s1Dev='ready';renderEAPanel();}
+
+// ═══════════════════════════════════════════════
+//  STEP 2 — RIB Portal
+// ═══════════════════════════════════════════════
 function renderStep2(){
-  document.getElementById('s2Left').innerHTML=leftPanel(2,{bioStatus:'Matched',bioClass:'matched',trigPoint:'Letter Printing E-Acceptance'});
+  document.getElementById('s2Left').innerHTML=leftPanel(2,{bioStatus:'Matched',bioClass:'matched',retry:S.s1Attempts+' / 3',trigPoint:'Letter Printing E-Acceptance'});
   const el=document.getElementById('s2Right');
   if(!S.s2RibDone){
-    el.innerHTML=`<div class="rib-panel"><div class="rib-header">🌐 Customer Reviewing at RIB Portal</div><div class="rib-doc-list">${['HP Agreement with T&C','HP Agreement Second Schedule','Product Disclosure Sheet'].map(d=>`<div class="rib-doc-item"><span style="color:#1967d2;">📄</span><span>${d}</span></div>`).join('')}</div><div class="rib-waiting"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" class="spin"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> Waiting for customer to complete review and acceptance...</div><div style="display:flex;gap:8px;justify-content:center;"><button class="btn btn-secondary btn-sm">Resend RIB Link</button><button class="btn btn-primary btn-sm" onclick="S.s2RibDone=true;renderStep2()">Simulate: Customer Accepted</button></div></div>`;
+    el.innerHTML=`<div class="rib-panel">
+      <div class="rib-header">🌐 Customer Reviewing at RIB Portal</div>
+      <div class="rib-doc-list">
+        ${['HP Agreement with T&C','HP Agreement Second Schedule','Product Disclosure Sheet'].map(d=>`<div class="rib-doc-item"><span style="color:#1967d2;">📄</span><span>${d}</span></div>`).join('')}
+      </div>
+      <div class="rib-waiting"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" class="spin"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> Waiting for customer to review and accept all documents...</div>
+      <div style="display:flex;gap:8px;justify-content:center;">
+        <button class="btn btn-secondary btn-sm">Resend RIB Link</button>
+        <button class="btn btn-primary btn-sm" onclick="S.s2RibDone=true;renderStep2()">Simulate: Customer Accepted</button>
+      </div>
+    </div>`;
   } else {
-    el.innerHTML=`<div class="rib-ok"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><div><div style="font-weight:600;font-size:13px;color:#137333;margin-bottom:2px;">Customer completed review and acceptance at RIB Portal</div><div style="font-size:12px;color:#3c4043;">1st Signing Complete — Acceptance Flag confirmed.</div></div></div><div style="text-align:center;margin-top:10px;"><button class="btn btn-primary" onclick="goStep3()">Proceed to E-Acceptance Confirmation →</button></div>`;
+    el.innerHTML=`<div class="rib-ok"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <div><div style="font-weight:600;font-size:13px;color:#137333;margin-bottom:2px;">Customer completed review and acceptance at RIB Portal</div>
+      <div style="font-size:12px;color:#3c4043;">1st Signing Complete — Acceptance Flag confirmed.</div></div>
+    </div>
+    <div style="text-align:center;margin-top:10px;">
+      <button class="btn btn-primary" onclick="goStep3()">Proceed to E-Acceptance Confirmation →</button>
+    </div>`;
   }
 }
 
-// ── Step 3 ──
+// ═══════════════════════════════════════════════
+//  STEP 3 — E-Acceptance Confirmation
+// ═══════════════════════════════════════════════
 function renderStep3(){
-  const dev=S.s3Dev; const now=fmtNow(),now2=fmtNow(2);
+  const dev=S.s3Dev; const att=S.s3Attempts;
+  const now=fmtNow(),now2=fmtNow(2);
   let leftOpts={trigPoint:'E-Acceptance Confirmation'},right='';
   const otp=document.getElementById('otpWrap');
   otp.style.display='none';
+
   if(dev==='disconnected'){
-    right=devViz('disconnected')+`<div class="state-title">Connect Biometric Device</div><div class="state-sub">Ensure the biometric device is connected before proceeding with E-Acceptance Confirmation.</div><div style="display:flex;gap:8px;"><button class="btn btn-primary btn-sm" onclick="S.s3Dev='ready';renderStep3()">Reconnect</button><button class="btn btn-secondary btn-sm">Restart Service</button></div>`;
+    right=devViz('disconnected')+`
+      <div class="state-title">Connect Biometric Device</div>
+      <div class="state-sub">Ensure the biometric device is connected before proceeding with E-Acceptance Confirmation.</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm" onclick="S.s3Dev='ready';renderStep3()">Reconnect</button>
+        <button class="btn btn-secondary btn-sm">Restart Service</button>
+      </div>`;
   } else if(dev==='ready'){
-    right=devViz('connected')+`<div class="state-title">Device Connected</div><div class="state-sub">Ask the customer to place their thumb to confirm E-Acceptance.</div><div style="display:flex;gap:8px;"><button class="btn btn-primary btn-sm" onclick="S.s3Dev='matched';renderStep3()">Simulate: Scan Finger</button><button class="btn btn-secondary btn-sm" onclick="S.s3Dev='unmatched';S.otpVisible=true;renderStep3()">Simulate: Failed → OTP</button></div>`;
+    right=devViz('connected')+`
+      <div class="state-title">Device Connected</div>
+      <div class="state-sub">Ask the customer to confirm E-Acceptance with fingerprint.${att>0?' <strong>'+att+'/3 previous attempt(s) failed.</strong>':''}</div>
+      ${att>0?attBadge(att,3):''}
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn btn-primary btn-sm" onclick="S.s3Dev='matched';renderStep3()">Simulate: Match</button>
+        <button class="btn btn-secondary btn-sm" onclick="simS3Fail()">Simulate: Fail</button>
+      </div>`;
   } else if(dev==='matched'){
-    leftOpts={...leftOpts,bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:'1 / 3'};
-    right=`<div class="bio-result"><div class="bio-result-icon">✅</div><div class="bio-result-title brt-matched">E-Acceptance Confirmation Complete</div><p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">2nd Biometric matched. E-Acceptance process fully completed.</p><button class="btn btn-primary" onclick="completeEA()">Complete E-Acceptance →</button></div>`;
+    leftOpts={...leftOpts,bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3'};
+    right=`<div class="bio-result">
+      <div class="bio-result-icon">✅</div>
+      <div class="bio-result-title brt-matched">E-Acceptance Confirmation Complete</div>
+      <p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">2nd Biometric matched. E-Acceptance process fully completed.</p>
+      <button class="btn btn-primary" onclick="completeEA(false)">Complete E-Acceptance →</button>
+    </div>`;
   } else if(dev==='unmatched'){
-    leftOpts={...leftOpts,bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:'1 / 3',remark:'Biometric failed. OTP fallback activated.'};
-    right=`<div class="bio-result"><div class="bio-result-icon">⚠️</div><div class="bio-result-title brt-warn">Biometric Verification Failed</div><p style="font-size:12px;color:#5f6368;margin:5px 0 8px;">OTP fallback is available for the 2nd verification only.</p></div>`;
-    if(S.otpVisible)otp.style.display='flex';
+    leftOpts={...leftOpts,bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3'};
+    if(att>=3){
+      leftOpts={...leftOpts,remark:'3 biometric attempts exhausted. OTP fallback activated.'};
+      right=`<div class="bio-result">
+        <div class="bio-result-icon">⚠️</div>
+        <div class="bio-result-title brt-warn">Biometric Verification Failed — OTP Fallback</div>
+        ${attBadge(att,3)}
+        <p style="font-size:12px;color:#5f6368;margin:8px 0 8px;">3 attempts exhausted. OTP has been sent to customer's registered mobile.</p>
+      </div>`;
+      otp.style.display='flex';
+    } else {
+      const rem=3-att;
+      leftOpts={...leftOpts,remark:'Biometric not matched. '+rem+' attempt(s) remaining.'};
+      right=`<div class="bio-result">
+        <div class="bio-result-icon">❌</div>
+        <div class="bio-result-title brt-failed">Biometric Not Matched</div>
+        ${attBadge(att,3)}
+        <p style="font-size:12px;color:#5f6368;margin:8px 0 14px;">${rem} attempt(s) remaining. OTP fallback activates after ${att>=2?'the next':'${rem===2?"2 more":"1 more"}'} failure.</p>
+        <button class="btn btn-primary btn-sm" onclick="retryS3()">Retry (${rem} left)</button>
+      </div>`;
+    }
   }
   document.getElementById('s3Left').innerHTML=leftPanel(3,leftOpts);
   document.getElementById('s3Right').innerHTML=right;
 }
 
+function simS3Fail(){S.s3Attempts++;S.s3Dev='unmatched';renderStep3();}
+function retryS3(){S.s3Dev='ready';renderStep3();}
+
 function goStep2(){S.eaStep=2;renderEAPanel();}
 function goStep3(){S.eaStep=3;S.s3Dev='disconnected';renderEAPanel();}
-function completeEA(){
-  S.eaComplete=true;
+function completeEA(viaOTP){
+  S.eaComplete=true;S.eaViaOTP=!!viaOTP;
   document.getElementById('eaStatusHeader').textContent='Completed';
   document.getElementById('eaStatusHeader').style.color='#137333';
   renderEAPanel();updateFooter();
 }
 
-// ── Amendment ──
+// ═══════════════════════════════════════════════
+//  AMENDMENT
+// ═══════════════════════════════════════════════
 function renderAmendment(){
   document.getElementById('amdSmsStatus').textContent=S.smsSent?'Sent – Pending Response':'—';
   document.getElementById('amdSmsDate').textContent=S.smsSent?fmtNow():'—';
@@ -861,8 +1016,11 @@ function renderAmendment(){
     <div class="amd-doc-card ${d.changed?'changed':''}">
       ${d.changed?'<span class="changed-pill">Changed</span>':''}
       <div style="font-size:12px;font-weight:600;margin-bottom:4px;">${d.name} <span class="vbadge">${d.ver}</span></div>
-      <div style="font-size:11px;color:${d.changed?'#c5221f':'#9aa0a6'};margin-bottom:10px;">${d.changed?'Changed: '+d.fields:'No changes detected'}</div>
-      <div style="display:flex;gap:5px;"><button class="btn-outline-sm"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</button><button class="btn-outline-sm"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download</button></div>
+      <div style="font-size:11px;color:${d.changed?'#c5221f':'#9aa0a6'};margin-bottom:10px;">${d.changed?'Fields changed: '+d.fields:'No changes detected'}</div>
+      <div style="display:flex;gap:5px;">
+        <button class="btn-outline-sm"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</button>
+        <button class="btn-outline-sm"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download</button>
+      </div>
     </div>`).join('');
 }
 function triggerSMS(){
@@ -888,65 +1046,112 @@ function openEALog(){
 }
 
 // ═══════════════════════════════════════════════
-//  MANUAL — BIOMETRIC
+//  MANUAL — BIOMETRIC (per-applicant)
 // ═══════════════════════════════════════════════
-function renderManualBio(){
-  const dev=S.mBioDev;
-  const done=S.mBioDone;
-  const now=fmtNow(),now2=fmtNow(2);
-
-  // Section 1 num indicator
-  const numEl=document.getElementById('mSec1Num');
-  numEl.className='m-sec-num '+(dev==='skipped'?'skipped':done?'done':'');
-  numEl.textContent=dev==='skipped'?'—':(done?'✓':'1');
-
-  // Skip button: hide after done
-  document.getElementById('mBioSkipBtn').style.display=done?'none':'inline';
-
-  if(done){
-    // Show summary, hide layout
-    document.getElementById('mBioLayout').style.display='none';
-    const summary=document.getElementById('mBioSummary');
-    summary.style.display='block';
-    if(dev==='matched'){
-      summary.innerHTML=`<div class="bio-inline-result bir-matched">✅ Identity Verified — Biometric matched (Manual Acceptance Verification). Result recorded.</div>`;
-    } else if(dev==='unmatched'){
-      summary.innerHTML=`<div class="bio-inline-result bir-unmatched">⚠ Biometric Not Matched — Proceeding with Manual Acceptance. Result recorded.</div>`;
-    } else if(dev==='skipped'){
-      summary.innerHTML=`<div class="bio-inline-result bir-skipped">— Identity Verification skipped. Proceeding with contract documents.</div>`;
-    }
-    return;
-  }
-
-  // Show layout
-  document.getElementById('mBioLayout').style.display='block';
-  document.getElementById('mBioSummary').style.display='none';
-
-  // Left panel
-  const leftOpts={trigPoint:'Manual Acceptance'};
-  if(dev==='matched') Object.assign(leftOpts,{bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:'1 / 3'});
-  else if(dev==='unmatched') Object.assign(leftOpts,{bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:'1 / 3',remark:'Biometric not matched. Proceeding with Manual Acceptance.'});
-  document.getElementById('mBioLeft').innerHTML=leftPanel('manual',leftOpts);
-
-  // Right panel
-  let right='';
-  if(dev==='disconnected'){
-    right=devViz('disconnected')+`<div class="state-title">Connect Biometric Device</div><div class="state-sub">Ensure the MyKad reader and fingerprint scanner are connected via USB.<br>Identity verification is optional — you may skip if the device is unavailable.</div><div style="display:flex;gap:8px;"><button class="btn btn-primary btn-sm" onclick="S.mBioDev='ready';renderManualBio()">Reconnect</button><button class="btn btn-secondary btn-sm">Restart Service</button></div>`;
-  } else if(dev==='scanning'){
-    right=devViz('scanning')+`<div class="state-title">Scanning for Devices...</div>`;
-    setTimeout(()=>{if(S.mBioDev==='scanning'){S.mBioDev='ready';renderManualBio();}},2000);
-  } else if(dev==='ready'){
-    right=devViz('connected')+`<div class="state-title">Device Connected</div><div class="state-sub">Ask the customer to place their thumb on the fingerprint scanner.<br><span style="color:#b45309;">Note: Result will be recorded but does not affect document signing.</span></div><div style="display:flex;gap:8px;"><button class="btn btn-primary btn-sm" onclick="setManualBioResult('matched')">Simulate: Scan Finger</button></div>`;
-  } else if(dev==='matched'){
-    right=`<div class="bio-result"><div class="bio-result-icon">✅</div><div class="bio-result-title brt-matched">Identity Verified</div><p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">Biometric matched. Result recorded as Manual Acceptance Verification.<br>Proceed to download and sign contract documents.</p><button class="btn btn-primary" onclick="S.mBioDone=true;renderManualBio()">Proceed to Contract Documents →</button></div>`;
-  } else if(dev==='unmatched'){
-    right=`<div class="bio-result"><div class="bio-result-icon">⚠️</div><div class="bio-result-title brt-warn">Biometric Not Matched</div><p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">Biometric not matched. Result recorded.<br>You may still proceed with Manual Acceptance — this does not block the signing process.</p><div style="display:flex;gap:8px;justify-content:center;"><button class="btn btn-secondary btn-sm" onclick="S.mBioDev='ready';renderManualBio()">Retry</button><button class="btn btn-primary btn-sm" onclick="S.mBioDone=true;renderManualBio()">Proceed Anyway →</button></div></div>`;
-  }
-  document.getElementById('mBioRight').innerHTML=right;
+function getActiveBioApplicants(){
+  const all=BIO_APPLICANTS;
+  return S.hasGuarantor?all:[all[0]];
 }
 
-function setManualBioResult(result){S.mBioDev=result;renderManualBio();}
-function skipManualBio(){S.mBioDev='skipped';S.mBioDone=true;renderManualBio();}
+function renderManualBio(){
+  const applicants=getActiveBioApplicants();
+  const allDone=applicants.every(a=>S[a.key].done);
+  const allSkipped=applicants.every(a=>S[a.key].dev==='skipped');
+
+  const numEl=document.getElementById('mSec1Num');
+  numEl.className='m-sec-num '+(allSkipped?'skipped':allDone?'done':'');
+  numEl.textContent=allSkipped?'—':(allDone?'✓':'1');
+  document.getElementById('mBioSkipAllBtn').style.display=allDone?'none':'inline';
+
+  document.getElementById('mBioContent').innerHTML=
+    applicants.map(a=>renderApplicantBioCard(a)).join('');
+}
+
+function renderApplicantBioCard(a){
+  const bio=S[a.key];
+  const dev=bio.dev; const done=bio.done;
+  const now=fmtNow(),now2=fmtNow(2);
+  const roleBadge=`<span class="badge ${a.role==='PRIMARY'?'bd-primary':'bd-other'}">${a.role}</span>`;
+  const nameHtml=`<span style="font-size:12px;font-weight:600;">${a.name}</span><span style="font-size:11px;color:#5f6368;margin-left:6px;">${a.id}</span>`;
+
+  if(done){
+    let summary='';
+    if(dev==='matched') summary=`<div class="bio-inline-result bir-matched">✅ Identity Verified — Biometric matched. Result recorded.</div>`;
+    else if(dev==='unmatched') summary=`<div class="bio-inline-result bir-unmatched">⚠ Biometric Not Matched — Result recorded. Proceeding with Manual Acceptance.</div>`;
+    else if(dev==='skipped') summary=`<div class="bio-inline-result bir-skipped">— Identity Verification skipped.</div>`;
+    return `<div class="m-bio-person">
+      <div class="m-bio-person-hdr"><div class="m-bio-person-hdr-left">${roleBadge}${nameHtml}</div></div>
+      <div class="m-bio-person-body">${summary}</div>
+    </div>`;
+  }
+
+  // Build left and right panels
+  const leftOpts={trigPoint:'Manual Acceptance',name:a.name,nric:a.id};
+  if(dev==='matched') Object.assign(leftOpts,{bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:(bio.attempts||1)+' / 3'});
+  else if(dev==='unmatched') Object.assign(leftOpts,{bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:bio.attempts+' / 3',remark:'Biometric not matched.'});
+
+  let right='';
+  const k=`'${a.key}'`;
+  if(dev==='disconnected'){
+    right=devViz('disconnected')+`
+      <div class="state-title">Connect Biometric Device</div>
+      <div class="state-sub">Ensure the MyKad reader is connected via USB.<br><span style="color:#b45309;font-weight:500;">Optional — result does not block contract access.</span></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm" onclick="mBioSet(${k},'scanning')">Reconnect</button>
+        <button class="btn btn-secondary btn-sm">Restart Service</button>
+      </div>`;
+  } else if(dev==='scanning'){
+    right=devViz('scanning')+`<div class="state-title">Scanning for Devices...</div>`;
+    setTimeout(()=>{if(S[a.key].dev==='scanning'){S[a.key].dev='ready';renderManualBio();}},2000);
+  } else if(dev==='ready'){
+    right=devViz('connected')+`
+      <div class="state-title">Device Connected</div>
+      <div class="state-sub">Ask the customer to place their thumb.<br><span style="color:#b45309;font-weight:500;">Result will be recorded but does not affect signing.</span></div>
+      ${bio.attempts>0?attBadge(bio.attempts,3):''}
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn btn-primary btn-sm" onclick="mBioSet(${k},'matched')">Simulate: Match</button>
+        <button class="btn btn-secondary btn-sm" onclick="mBioFail(${k})">Simulate: Fail</button>
+      </div>`;
+  } else if(dev==='matched'){
+    right=`<div class="bio-result">
+      <div class="bio-result-icon">✅</div>
+      <div class="bio-result-title brt-matched">Identity Verified</div>
+      <p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">Biometric matched. Result recorded as Manual Acceptance Verification.</p>
+      <button class="btn btn-primary btn-sm" onclick="mBioProceed(${k})">Confirm →</button>
+    </div>`;
+  } else if(dev==='unmatched'){
+    right=`<div class="bio-result">
+      <div class="bio-result-icon">⚠️</div>
+      <div class="bio-result-title brt-warn">Biometric Not Matched</div>
+      ${attBadge(bio.attempts,3)}
+      <p style="font-size:12px;color:#5f6368;margin:8px 0 14px;">Result recorded. You may retry or proceed anyway — this does not block the signing process.</p>
+      <div style="display:flex;gap:8px;justify-content:center;">
+        <button class="btn btn-secondary btn-sm" onclick="mBioSet(${k},'ready')">Retry</button>
+        <button class="btn btn-primary btn-sm" onclick="mBioProceed(${k})">Proceed Anyway →</button>
+        <button class="lnk" style="font-size:12px;" onclick="mBioSkip(${k})">Skip</button>
+      </div>
+    </div>`;
+  }
+
+  return `<div class="m-bio-person">
+    <div class="m-bio-person-hdr">
+      <div class="m-bio-person-hdr-left">${roleBadge}${nameHtml}</div>
+      <button class="lnk" onclick="mBioSkip(${k})">Skip</button>
+    </div>
+    <div class="m-bio-person-body">
+      <div class="bio-layout">
+        <div class="bio-left">${leftPanel('manual',leftOpts)}</div>
+        <div class="bio-right" style="min-height:260px;">${right}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function mBioSet(key,dev){S[key].dev=dev;renderManualBio();}
+function mBioFail(key){S[key].attempts=(S[key].attempts||0)+1;S[key].dev='unmatched';renderManualBio();}
+function mBioProceed(key){S[key].done=true;renderManualBio();updateFooter();}
+function mBioSkip(key){S[key].dev='skipped';S[key].done=true;renderManualBio();updateFooter();}
+function skipAllManualBio(){getActiveBioApplicants().forEach(a=>mBioSkip(a.key));}
 
 // ═══════════════════════════════════════════════
 //  MANUAL — DOCUMENTS
@@ -993,8 +1198,14 @@ function otpNext(el){if(el.value&&el.nextElementSibling?.classList.contains('otp
 function verifyOTP(){
   const v=[...document.querySelectorAll('.otp-input')].map(i=>i.value).join('');
   const r=document.getElementById('otpResult');
-  if(v.length===6){r.style.color='#137333';r.textContent='OTP verified. Completing E-Acceptance...';setTimeout(()=>completeEA(),900);}
-  else{r.style.color='#c5221f';r.textContent='Please enter all 6 digits.';}
+  if(v.length===6){
+    r.style.color='#137333';
+    r.textContent='OTP verified. Completing E-Acceptance...';
+    setTimeout(()=>completeEA(true),900);
+  } else {
+    r.style.color='#c5221f';
+    r.textContent='Please enter all 6 digits.';
+  }
 }
 
 // ═══════════════════════════════════════════════
@@ -1003,35 +1214,62 @@ function verifyOTP(){
 function applyScenario(key,btn){
   document.querySelectorAll('.dev-btn').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
-  // reset
-  S={mode:'ea',hasGuarantor:false,eaStep:1,s1Dev:'disconnected',s2RibDone:false,s3Dev:'disconnected',otpVisible:false,eaComplete:false,amendmentRequired:false,smsSent:false,mBioDev:'disconnected',mBioDone:false};
+
+  const fresh={
+    mode:'ea', hasGuarantor:false,
+    eaStep:1, s1Dev:'disconnected', s1Attempts:0,
+    s2RibDone:false, s3Dev:'disconnected', s3Attempts:0,
+    eaComplete:false, amendmentRequired:false, smsSent:false, eaViaOTP:false,
+    mBioPrimary:{dev:'disconnected',done:false,attempts:0},
+    mBioGuarantor:{dev:'disconnected',done:false,attempts:0},
+  };
+  S=Object.assign({},fresh);
 
   const map={
-    'ea-s1-disc': {},
-    'ea-s1-scan': {s1Dev:'scanning'},
-    'ea-s1-ready': {s1Dev:'ready'},
-    'ea-s1-matched': {s1Dev:'matched'},
-    'ea-s1-fail': {s1Dev:'unmatched'},
-    'ea-s2-wait': {eaStep:2,s1Dev:'matched'},
-    'ea-s2-done': {eaStep:2,s1Dev:'matched',s2RibDone:true},
-    'ea-s3-ready': {eaStep:3,s1Dev:'matched',s2RibDone:true},
-    'ea-s3-otp': {eaStep:3,s1Dev:'matched',s2RibDone:true,s3Dev:'unmatched',otpVisible:true},
-    'ea-complete': {eaComplete:true},
+    // Step 1
+    'ea-s1-disc':   {},
+    'ea-s1-ready':  {s1Dev:'ready'},
+    'ea-s1-matched':{s1Dev:'matched',s1Attempts:1},
+    'ea-s1-fail1':  {s1Dev:'unmatched',s1Attempts:1},
+    'ea-s1-fail2':  {s1Dev:'unmatched',s1Attempts:2},
+    'ea-s1-fail3':  {s1Dev:'unmatched',s1Attempts:3},
+    // Step 2
+    'ea-s2-wait':   {eaStep:2,s1Dev:'matched',s1Attempts:1},
+    'ea-s2-done':   {eaStep:2,s1Dev:'matched',s1Attempts:1,s2RibDone:true},
+    // Step 3
+    'ea-s3-ready':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibDone:true,s3Dev:'ready'},
+    'ea-s3-fail1':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibDone:true,s3Dev:'unmatched',s3Attempts:1},
+    'ea-s3-fail2':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibDone:true,s3Dev:'unmatched',s3Attempts:2},
+    'ea-s3-otp':    {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibDone:true,s3Dev:'unmatched',s3Attempts:3},
+    'ea-complete':  {eaComplete:true},
     'ea-amendment': {eaComplete:true,amendmentRequired:true},
-    // manual no guarantor
-    'm-ng-disc': {mode:'manual'},
-    'm-ng-ready': {mode:'manual',mBioDev:'ready'},
-    'm-ng-matched': {mode:'manual',mBioDev:'matched'},
-    'm-ng-fail': {mode:'manual',mBioDev:'unmatched'},
-    'm-ng-skip': {mode:'manual',mBioDev:'skipped',mBioDone:true},
-    // manual with guarantor
-    'm-g-disc': {mode:'manual',hasGuarantor:true},
-    'm-g-matched': {mode:'manual',hasGuarantor:true,mBioDev:'matched'},
-    'm-g-skip': {mode:'manual',hasGuarantor:true,mBioDev:'skipped',mBioDone:true},
+    // Manual no guarantor
+    'm-ng-disc':    {mode:'manual'},
+    'm-ng-ready':   {mode:'manual',mBioPrimary:{dev:'ready',done:false,attempts:0}},
+    'm-ng-matched': {mode:'manual',mBioPrimary:{dev:'matched',done:false,attempts:1}},
+    'm-ng-fail':    {mode:'manual',mBioPrimary:{dev:'unmatched',done:false,attempts:1}},
+    'm-ng-skip':    {mode:'manual',mBioPrimary:{dev:'skipped',done:true,attempts:0}},
+    // Manual with guarantor
+    'm-g-disc':     {mode:'manual',hasGuarantor:true},
+    'm-g-p-matched':{mode:'manual',hasGuarantor:true,
+                     mBioPrimary:{dev:'matched',done:true,attempts:1},
+                     mBioGuarantor:{dev:'disconnected',done:false,attempts:0}},
+    'm-g-both-matched':{mode:'manual',hasGuarantor:true,
+                        mBioPrimary:{dev:'matched',done:true,attempts:1},
+                        mBioGuarantor:{dev:'matched',done:false,attempts:1}},
+    'm-g-skip':     {mode:'manual',hasGuarantor:true,
+                     mBioPrimary:{dev:'skipped',done:true,attempts:0},
+                     mBioGuarantor:{dev:'skipped',done:true,attempts:0}},
   };
-  Object.assign(S,map[key]||{});
 
-  // header
+  const patch=map[key]||{};
+  // Deep-merge bio sub-objects if provided
+  if(patch.mBioPrimary)   S.mBioPrimary=Object.assign({},fresh.mBioPrimary,patch.mBioPrimary);
+  if(patch.mBioGuarantor) S.mBioGuarantor=Object.assign({},fresh.mBioGuarantor,patch.mBioGuarantor);
+  const {mBioPrimary,mBioGuarantor,...flatPatch}=patch;
+  Object.assign(S,flatPatch);
+
+  // Update header
   document.getElementById('guarantorCount').textContent=S.hasGuarantor?'1':'0';
   document.getElementById('eaStatusHeader').textContent=S.eaComplete?'Completed':'—';
   document.getElementById('eaStatusHeader').style.color=S.eaComplete?'#137333':'';
@@ -1040,7 +1278,7 @@ function applyScenario(key,btn){
   document.getElementById('eaTip').style.display=S.hasGuarantor?'inline':'none';
 
   applyMode(S.mode);
-  // switch to Acceptance tab
+  // Switch to Acceptance tab
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===1));
   document.getElementById('tp-doclib').classList.remove('active');
   document.getElementById('tp-acceptance').classList.add('active');
