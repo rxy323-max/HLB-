@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Acceptance Prototype – HLB LOAD$</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; background: #f0f2f5; color: #1a1a2e; display: flex; height: 100vh; overflow: hidden; }
+
+  /* ── Sidebar ── */
+  .sidebar { width: 56px; background: #1e2235; display: flex; flex-direction: column; align-items: center; padding: 12px 0; flex-shrink: 0; }
+  .sidebar-logo { width: 36px; height: 36px; background: #e63946; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+  .sidebar-logo svg { width: 22px; height: 22px; fill: white; }
+  .nav-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 4px 0; cursor: pointer; color: #8892a4; transition: all .15s; }
+  .nav-icon:hover, .nav-icon.active { background: #2d3348; color: #fff; }
+  .nav-icon svg { width: 18px; height: 18px; fill: currentColor; }
+  .sidebar-bottom { margin-top: auto; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: #4a5568; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 600; margin: 8px 0; }
+
+  /* ── Main area ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ── Top bar ── */
+  .topbar { background: #fff; border-bottom: 1px solid #e8eaed; padding: 0 24px; height: 48px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .breadcrumb-tag { background: #e8f0fe; color: #1967d2; padding: 4px 10px; border-radius: 4px; font-size: 13px; font-weight: 500; }
+
+  /* ── Content scroll ── */
+  .content { flex: 1; overflow-y: auto; padding: 20px 24px; }
+
+  /* ── Contract header card ── */
+  .contract-header { background: #fff; border-radius: 8px; border: 1px solid #e8eaed; padding: 16px 20px; margin-bottom: 16px; }
+  .contract-title-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .contract-num { font-size: 17px; font-weight: 600; color: #1a1a2e; }
+  .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+  .badge-completed { background: #e8eaed; color: #5f6368; }
+  .badge-approved { background: #e6f4ea; color: #137333; }
+  .badge-pending { background: #fef7e0; color: #b45309; }
+  .badge-fail { background: #fce8e6; color: #c5221f; }
+  .badge-manual { background: #e8eaed; color: #5f6368; }
+  .badge-primary { border: 1px solid #1967d2; color: #1967d2; background: #fff; font-size: 11px; padding: 2px 7px; border-radius: 10px; }
+  .badge-other { border: 1px solid #9aa0a6; color: #5f6368; background: #fff; font-size: 11px; padding: 2px 7px; border-radius: 10px; }
+
+  .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 0; }
+  .info-item label { font-size: 11px; color: #80868b; display: block; margin-bottom: 2px; }
+  .info-item span { font-size: 13px; font-weight: 500; color: #1a1a2e; }
+
+  /* ── Tabs ── */
+  .tabs { background: #fff; border-radius: 8px 8px 0 0; border: 1px solid #e8eaed; border-bottom: none; display: flex; }
+  .tab { padding: 12px 20px; font-size: 14px; cursor: pointer; color: #5f6368; border-bottom: 3px solid transparent; transition: all .15s; user-select: none; }
+  .tab.active { color: #1967d2; border-bottom-color: #1967d2; font-weight: 500; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .tab-content { background: #fff; border: 1px solid #e8eaed; border-top: none; border-radius: 0 0 8px 8px; padding: 20px; }
+
+  /* ── Toolbar row ── */
+  .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .toolbar label { font-size: 13px; color: #5f6368; }
+  .select-sm { border: 1px solid #dadce0; border-radius: 4px; padding: 5px 10px; font-size: 13px; color: #1a1a2e; background: #fff; cursor: pointer; }
+  .input-search { border: 1px solid #dadce0; border-radius: 4px; padding: 5px 12px; font-size: 13px; width: 220px; outline: none; }
+  .input-search:focus { border-color: #1967d2; }
+  .btn-text { margin-left: auto; color: #9aa0a6; font-size: 13px; cursor: pointer; }
+  .btn-text:hover { color: #1967d2; }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 12px; font-weight: 600; color: #5f6368; padding: 8px 12px; border-bottom: 2px solid #e8eaed; white-space: nowrap; }
+  td { padding: 11px 12px; border-bottom: 1px solid #f1f3f4; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8f9fa; }
+  td.doc-name { font-weight: 500; color: #1a1a2e; }
+  .action-links { display: flex; gap: 10px; }
+  .action-link { color: #1967d2; text-decoration: none; font-size: 13px; cursor: pointer; }
+  .action-link:hover { text-decoration: underline; }
+  .action-link.disabled { color: #9aa0a6; cursor: default; pointer-events: none; }
+  .version-text { font-size: 12px; color: #5f6368; }
+  input[type=checkbox] { accent-color: #1967d2; width: 14px; height: 14px; }
+
+  /* ── Signing mode toggle ── */
+  .signing-mode-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .signing-mode-row label { font-size: 13px; color: #5f6368; font-weight: 500; }
+  .toggle-group { display: flex; border: 1px solid #dadce0; border-radius: 6px; overflow: hidden; }
+  .toggle-btn { padding: 7px 18px; font-size: 13px; cursor: pointer; background: #fff; color: #5f6368; border: none; outline: none; transition: all .15s; }
+  .toggle-btn.active { background: #1967d2; color: #fff; font-weight: 500; }
+  .toggle-btn:not(.active):hover { background: #f8f9fa; }
+
+  /* ── E-Acceptance steps ── */
+  .ea-status-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; padding: 10px 16px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e8eaed; }
+  .ea-status-bar .label { font-size: 12px; color: #5f6368; }
+  .ea-status-bar .value { font-weight: 600; font-size: 13px; }
+
+  .steps-wrapper { display: flex; gap: 0; margin-bottom: 20px; position: relative; }
+  .steps-wrapper::before { content: ''; position: absolute; top: 28px; left: 40px; right: 40px; height: 2px; background: #e8eaed; z-index: 0; }
+  .step-card { flex: 1; background: #fff; border: 1px solid #e8eaed; border-radius: 8px; padding: 16px; margin: 0 6px; position: relative; z-index: 1; text-align: center; }
+  .step-card.done { border-color: #34a853; }
+  .step-card.active { border-color: #1967d2; box-shadow: 0 0 0 3px #e8f0fe; }
+  .step-card.error { border-color: #ea4335; }
+  .step-num { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; margin: 0 auto 8px; }
+  .step-num.done { background: #34a853; color: #fff; }
+  .step-num.active { background: #1967d2; color: #fff; }
+  .step-num.waiting { background: #e8eaed; color: #9aa0a6; }
+  .step-num.error { background: #ea4335; color: #fff; }
+  .step-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .step-subtitle { font-size: 11px; color: #5f6368; margin-bottom: 10px; }
+  .step-status { font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 8px; }
+  .step-status.matched { background: #e6f4ea; color: #137333; }
+  .step-status.notdone { background: #f1f3f4; color: #9aa0a6; }
+  .step-status.waiting { background: #fef7e0; color: #b45309; }
+  .step-status.error { background: #fce8e6; color: #c5221f; }
+  .step-status.unmatched { background: #fce8e6; color: #c5221f; }
+
+  /* ── Scenario selector (for demo) ── */
+  .scenario-bar { background: #fffbf0; border: 1px solid #fde68a; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .scenario-bar span { font-size: 12px; color: #92400e; font-weight: 500; }
+  .scenario-btn { padding: 4px 10px; border: 1px solid #fbbf24; border-radius: 4px; background: #fff; font-size: 12px; color: #92400e; cursor: pointer; }
+  .scenario-btn.active { background: #fbbf24; color: #78350f; font-weight: 500; }
+
+  /* ── Manual acceptance cards ── */
+  .applicant-section { margin-bottom: 20px; }
+  .applicant-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .applicant-name { font-weight: 600; font-size: 15px; }
+  .applicant-id { color: #5f6368; font-size: 13px; }
+  .manual-instructions { background: #f8f9fa; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: #3c4043; line-height: 1.5; }
+  .doc-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .doc-card { border: 1px solid #e8eaed; border-radius: 8px; padding: 16px; }
+  .doc-card-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+  .doc-icon { width: 32px; height: 32px; background: #f1f3f4; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .doc-icon svg { width: 16px; height: 16px; fill: #5f6368; }
+  .doc-card-name { font-size: 13px; font-weight: 500; flex: 1; }
+  .doc-card-meta { font-size: 11px; color: #9aa0a6; margin-top: 2px; }
+  .version-badge { color: #34a853; font-weight: 600; font-size: 11px; }
+  .doc-card-actions { display: flex; gap: 8px; }
+  .btn-outline { flex: 1; padding: 7px 0; border: 1px solid #dadce0; border-radius: 6px; background: #fff; font-size: 12px; color: #3c4043; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all .15s; }
+  .btn-outline:hover { border-color: #1967d2; color: #1967d2; background: #f8f0fe; }
+  .btn-outline svg { width: 13px; height: 13px; fill: currentColor; }
+
+  /* ── Footer bar ── */
+  .footer-bar { background: #fff; border-top: 1px solid #e8eaed; padding: 12px 24px; display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
+  .btn { padding: 8px 20px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; outline: none; transition: all .15s; }
+  .btn-primary { background: #1967d2; color: #fff; }
+  .btn-primary:hover { background: #1557b0; }
+  .btn-primary:disabled { background: #dadce0; color: #9aa0a6; cursor: default; }
+  .btn-secondary { background: #fff; color: #3c4043; border: 1px solid #dadce0; }
+  .btn-secondary:hover { background: #f8f9fa; }
+  .btn-danger { background: #fff; color: #ea4335; border: 1px solid #ea4335; }
+  .btn-danger:hover { background: #fce8e6; }
+
+  /* ── E-Acceptance log modal ── */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 10px; width: 860px; max-width: 95vw; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 8px 40px rgba(0,0,0,.18); }
+  .modal-header { padding: 16px 20px; border-bottom: 1px solid #e8eaed; display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-size: 15px; font-weight: 600; }
+  .modal-close { width: 28px; height: 28px; border-radius: 4px; border: none; background: #f1f3f4; cursor: pointer; font-size: 16px; color: #5f6368; display: flex; align-items: center; justify-content: center; }
+  .modal-close:hover { background: #e8eaed; }
+  .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+  .modal-info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; padding: 14px; background: #f8f9fa; border-radius: 6px; }
+  .modal-info-item label { font-size: 11px; color: #80868b; display: block; margin-bottom: 2px; }
+  .modal-info-item span { font-size: 13px; font-weight: 500; }
+  .modal-footer { padding: 12px 20px; border-top: 1px solid #e8eaed; display: flex; gap: 8px; justify-content: flex-end; }
+  .ea-log-table th { background: #f8f9fa; }
+  .ea-log-table td { font-size: 12px; }
+  .flag-y { color: #137333; font-weight: 600; }
+  .flag-blank { color: #dadce0; }
+  .sms-trigger-note { font-size: 11px; color: #9aa0a6; font-style: italic; }
+
+  /* ── Amendment section ── */
+  .amendment-section { margin-top: 20px; }
+  .section-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #1a1a2e; display: flex; align-items: center; gap: 8px; }
+  .section-title .pill { background: #fef7e0; color: #b45309; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+  .amendment-info-bar { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; padding: 14px; background: #fffbf0; border: 1px solid #fde68a; border-radius: 6px; margin-bottom: 14px; }
+  .amendment-info-bar label { font-size: 11px; color: #92400e; display: block; margin-bottom: 2px; }
+  .amendment-info-bar span { font-size: 13px; font-weight: 500; }
+  .amendment-doc-card { position: relative; }
+  .changed-badge { position: absolute; top: -8px; right: -8px; background: #ea4335; color: #fff; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 8px; }
+
+  /* ── E-Acceptance complete state ── */
+  .ea-complete-banner { background: #e6f4ea; border: 1px solid #ceead6; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+  .ea-complete-banner svg { width: 24px; height: 24px; fill: #137333; flex-shrink: 0; }
+  .ea-complete-banner .title { font-weight: 600; font-size: 14px; color: #137333; }
+  .ea-complete-banner .sub { font-size: 12px; color: #3c4043; margin-top: 2px; }
+
+  /* ── Eligibility warning ── */
+  .ineligible-banner { background: #fce8e6; border: 1px solid #f5c6c2; border-radius: 8px; padding: 14px 18px; display: flex; gap: 10px; align-items: flex-start; margin-bottom: 16px; }
+  .ineligible-banner svg { width: 18px; height: 18px; fill: #c5221f; flex-shrink: 0; margin-top: 1px; }
+  .ineligible-banner p { font-size: 13px; color: #c5221f; }
+
+  /* ── Biometric confirm popup ── */
+  .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 200; align-items: center; justify-content: center; }
+  .confirm-overlay.open { display: flex; }
+  .confirm-box { background: #fff; border-radius: 10px; width: 420px; padding: 24px; box-shadow: 0 8px 40px rgba(0,0,0,.2); }
+  .confirm-box h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+  .confirm-box p { font-size: 13px; color: #5f6368; line-height: 1.6; margin-bottom: 20px; }
+  .confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* Divider */
+  .divider { height: 1px; background: #e8eaed; margin: 20px 0; }
+  .text-muted { color: #9aa0a6; font-size: 12px; }
+  .mt-8 { margin-top: 8px; }
+  .inline-icon { vertical-align: middle; margin-right: 4px; }
+
+  /* ── History modal ── */
+  .history-modal { width: 600px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+  </div>
+  <div class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+  <div class="nav-icon active"><svg viewBox="0 0 24 24"><path d="M9 12h6M9 16h6M9 8h6M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg></div>
+  <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+  <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+  <div class="sidebar-bottom">
+    <div class="avatar">USE</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ MAIN -->
+<div class="main">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <span class="breadcrumb-tag">Contract</span>
+  </div>
+
+  <!-- Scrollable content -->
+  <div class="content" id="mainContent">
+
+    <!-- Contract header -->
+    <div class="contract-header">
+      <div class="contract-title-row">
+        <span class="contract-num">KRP/HP/2026/Y0010922</span>
+        <span class="badge badge-completed" id="overallStatusBadge">Completed</span>
+      </div>
+      <div class="info-grid">
+        <div class="info-item"><label>CP No.</label><span>375/HP/2026/Y0010922</span></div>
+        <div class="info-item"><label>Status</label><span id="appStatus">Approved</span></div>
+        <div class="info-item"><label>Lending Type</label><span>Conventional</span></div>
+        <div class="info-item"><label>Request Type</label><span>Review</span></div>
+        <div class="info-item"><label>App. Date</label><span>18-05-2026</span></div>
+        <div class="info-item"><label>Pool Group</label><span>Xpress</span></div>
+        <div class="info-item"><label>Product Code</label><span>test_0408</span></div>
+        <div class="info-item"><label>Amendment</label><span>--</span></div>
+        <div class="info-item"><label>Applicant Name</label><span>GGBOUND</span></div>
+        <div class="info-item"><label>No. of Guarantors</label><span>0</span></div>
+        <div class="info-item"><label>E-Acceptance Eligible</label><span id="eligibleDisplay" style="color:#137333;font-weight:600;">Yes</span></div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('doclib')">Document Library</div>
+      <div class="tab" onclick="switchTab('acceptance')">Acceptance</div>
+    </div>
+
+    <!-- ─────────────────────────── TAB: Document Library -->
+    <div id="tab-doclib" class="tab-panel active">
+      <div class="tab-content">
+        <div class="toolbar">
+          <label>Role:</label>
+          <select class="select-sm" onchange="filterDocs(this.value)">
+            <option value="all">All</option>
+            <option value="Primary">Primary</option>
+            <option value="Other">Other</option>
+          </select>
+          <label style="margin-left:12px;">Search:</label>
+          <input class="input-search" type="text" placeholder="Document name..." oninput="searchDocs(this.value)">
+          <span class="btn-text" onclick="batchDownload()">Batch Download</span>
+        </div>
+
+        <table id="docTable">
+          <thead>
+            <tr>
+              <th style="width:36px;"><input type="checkbox" id="checkAll" onchange="toggleAll(this)"></th>
+              <th style="width:40px;">No.</th>
+              <th>Document</th>
+              <th style="width:100px;">Role</th>
+              <th style="width:200px;">Latest Version</th>
+              <th style="width:220px;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="docTableBody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────── TAB: Acceptance -->
+    <div id="tab-acceptance" class="tab-panel">
+      <div class="tab-content">
+
+        <!-- Scenario picker (prototype helper) -->
+        <div class="scenario-bar">
+          <span>🔧 Prototype State:</span>
+          <button class="scenario-btn active" onclick="setScenario('pending')">Pending (1st Bio done)</button>
+          <button class="scenario-btn" onclick="setScenario('step3')">Ready for 2nd Bio</button>
+          <button class="scenario-btn" onclick="setScenario('completed')">E-Acceptance Completed</button>
+          <button class="scenario-btn" onclick="setScenario('amendment')">Amendment Required</button>
+          <button class="scenario-btn" onclick="setScenario('failed')">Biometric Failed</button>
+          <button class="scenario-btn" onclick="setScenario('manual')">Manual Acceptance</button>
+        </div>
+
+        <!-- Signing Mode toggle -->
+        <div class="signing-mode-row">
+          <label>Signing Mode:</label>
+          <div class="toggle-group">
+            <button class="toggle-btn" id="btnEA" onclick="setSigningMode('ea')">E-Acceptance</button>
+            <button class="toggle-btn active" id="btnManual" onclick="setSigningMode('manual')">Manual Acceptance</button>
+          </div>
+        </div>
+
+        <!-- E-Acceptance panel -->
+        <div id="panelEA" style="display:none;">
+          <div id="ineligibleBanner" class="ineligible-banner" style="display:none;">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <p>Application not eligible for E-Acceptance. Individual hirer without guarantor and Purchase from Dealer required. Please proceed with Manual Acceptance.</p>
+          </div>
+
+          <div class="ea-status-bar">
+            <span class="label">E-Acceptance Status:</span>
+            <span class="badge" id="eaStatusBadge">—</span>
+            <span style="margin-left:auto;">
+              <span class="action-link" onclick="openEALog()">View E-Acceptance Log</span>
+            </span>
+          </div>
+
+          <!-- Steps -->
+          <div class="steps-wrapper" id="stepsWrapper">
+            <!-- Step 1 -->
+            <div class="step-card" id="step1Card">
+              <div class="step-num waiting" id="step1Num">1</div>
+              <div class="step-title">Identity Verification</div>
+              <div class="step-subtitle">1st Biometric – Customer attends branch</div>
+              <div class="step-status notdone" id="step1Status">Not Done</div>
+              <div id="step1Action"></div>
+            </div>
+            <!-- Step 2 -->
+            <div class="step-card" id="step2Card">
+              <div class="step-num waiting" id="step2Num">2</div>
+              <div class="step-title">Customer Reviews &amp; Signs</div>
+              <div class="step-subtitle">Redirected to RIB portal for 1st signing</div>
+              <div class="step-status notdone" id="step2Status">Waiting</div>
+              <div id="step2Action"></div>
+            </div>
+            <!-- Step 3 -->
+            <div class="step-card" id="step3Card">
+              <div class="step-num waiting" id="step3Num">3</div>
+              <div class="step-title">E-Acceptance Confirmation</div>
+              <div class="step-subtitle">2nd Biometric – Confirm acceptance</div>
+              <div class="step-status notdone" id="step3Status">Not Done</div>
+              <div id="step3Action"></div>
+            </div>
+          </div>
+
+          <!-- E-Acceptance complete banner -->
+          <div class="ea-complete-banner" id="eaCompleteBanner" style="display:none;">
+            <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <div>
+              <div class="title">E-Acceptance Completed</div>
+              <div class="sub">Customer GGBOUND has successfully completed biometric E-Acceptance on 20-05-2026 16:50:29. Signed documents have been attached.</div>
+            </div>
+          </div>
+
+          <!-- Amendment section -->
+          <div class="amendment-section" id="amendmentSection" style="display:none;">
+            <div class="divider"></div>
+            <div class="section-title">Amendment Documents <span class="pill">Action Required</span></div>
+            <div class="amendment-info-bar">
+              <div><label>SMS Infobip Status</label><span id="smsStatus">—</span></div>
+              <div><label>Send Date</label><span id="smsSendDate">—</span></div>
+              <div><label>Amendment Acceptance</label><span id="amendStatus">—</span></div>
+            </div>
+            <p style="font-size:13px;color:#5f6368;margin-bottom:14px;">The following documents have field changes since initial acceptance. Changed fields are highlighted. Customer must accept via eTracker link sent by SMS.</p>
+            <div class="doc-cards" id="amendmentDocCards"></div>
+            <div style="margin-top:14px;display:flex;gap:8px;align-items:center;">
+              <button class="btn btn-secondary" id="btnTriggerSMS" onclick="triggerSMS()">Trigger Amendment SMS</button>
+              <span class="sms-trigger-note" id="smsNote">Enabled when amendment docs generated and no Infobip response yet.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manual Acceptance panel -->
+        <div id="panelManual" style="display:none;">
+          <div class="applicant-section">
+            <div class="applicant-header">
+              <span class="badge badge-primary">PRIMARY</span>
+              <span class="applicant-name">GGBOUND</span>
+              <span class="applicant-id">60-12-2308243</span>
+            </div>
+            <div class="manual-instructions">
+              Please download all contracts below. Have the applicant sign on paper and upload the signed copies to the Document Centre after completion.
+            </div>
+            <div class="doc-cards" id="manualDocCards">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- end tab-acceptance -->
+
+  </div><!-- end .content -->
+
+  <!-- Footer -->
+  <div class="footer-bar" id="footerBar">
+    <button class="btn btn-secondary">Cancel</button>
+    <button class="btn btn-primary" id="btnConfirmProceed" disabled onclick="confirmProceed()">Confirm &amp; Proceed</button>
+  </div>
+
+</div><!-- end .main -->
+
+<!-- ═══════════════════════════════════════════════════════════ E-ACCEPTANCE LOG MODAL -->
+<div class="modal-overlay" id="modalEALog">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">E-Acceptance Log</span>
+      <button class="modal-close" onclick="closeModal('modalEALog')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-info-grid">
+        <div class="modal-info-item"><label>Name</label><span>GGBOUND</span></div>
+        <div class="modal-info-item"><label>App. Ref. No.</label><span>375/HP/2026/Y0010922</span></div>
+        <div class="modal-info-item"><label>Bank Name</label><span>Hong Leong Bank</span></div>
+        <div class="modal-info-item"><label>Lending Type</label><span>Conventional</span></div>
+        <div class="modal-info-item"><label>Loan Account No.</label><span>37493001774</span></div>
+        <div class="modal-info-item"><label>SMS Infobip Status</label><span id="logSmsStatus">—</span></div>
+        <div class="modal-info-item"><label>Send Date</label><span id="logSmsSendDate">—</span></div>
+      </div>
+
+      <table class="ea-log-table" style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left;font-size:12px;color:#5f6368;padding:8px;background:#f8f9fa;border-bottom:2px solid #e8eaed;">E-Acceptance Type</th>
+            <th style="text-align:center;font-size:12px;color:#5f6368;padding:8px;background:#f8f9fa;border-bottom:2px solid #e8eaed;">PDS</th>
+            <th style="text-align:center;font-size:12px;color:#5f6368;padding:8px;background:#f8f9fa;border-bottom:2px solid #e8eaed;">Second Schedule</th>
+            <th style="text-align:center;font-size:12px;color:#5f6368;padding:8px;background:#f8f9fa;border-bottom:2px solid #e8eaed;">HP Agreement &amp; T&amp;C</th>
+            <th style="text-align:center;font-size:12px;color:#5f6368;padding:8px;background:#f8f9fa;border-bottom:2px solid #e8eaed;">Appendix 4</th>
+            <th style="text-align:center;font-size:12px;color:#5f6368;padding:8px;background:#f8f9fa;border-bottom:2px solid #e8eaed;">Status</th>
+            <th style="text-align:left;font-size:12px;color:#5f6368;padding:8px;background:#f8f9fa;border-bottom:2px solid #e8eaed;">Date Time</th>
+            <th style="text-align:left;font-size:12px;color:#5f6368;padding:8px;background:#f8f9fa;border-bottom:2px solid #e8eaed;">Remark</th>
+          </tr>
+        </thead>
+        <tbody id="eaLogBody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="printLog()">Print Log</button>
+      <button class="btn btn-danger" id="modalTriggerSMS" onclick="triggerSMSFromModal()">Trigger Amendment SMS</button>
+      <button class="btn btn-secondary" onclick="closeModal('modalEALog')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ HISTORY MODAL -->
+<div class="modal-overlay" id="modalHistory">
+  <div class="modal history-modal">
+    <div class="modal-header">
+      <span class="modal-title" id="historyModalTitle">Document History</span>
+      <button class="modal-close" onclick="closeModal('modalHistory')">✕</button>
+    </div>
+    <div class="modal-body">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left;font-size:12px;color:#5f6368;padding:8px;border-bottom:2px solid #e8eaed;">Version</th>
+            <th style="text-align:left;font-size:12px;color:#5f6368;padding:8px;border-bottom:2px solid #e8eaed;">Generated Date</th>
+            <th style="text-align:left;font-size:12px;color:#5f6368;padding:8px;border-bottom:2px solid #e8eaed;">Generated By</th>
+            <th style="text-align:left;font-size:12px;color:#5f6368;padding:8px;border-bottom:2px solid #e8eaed;">Type</th>
+            <th style="text-align:left;font-size:12px;color:#5f6368;padding:8px;border-bottom:2px solid #e8eaed;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalHistory')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ CONFIRM BIOMETRIC POPUP -->
+<div class="confirm-overlay" id="confirmBioOverlay">
+  <div class="confirm-box">
+    <h3 id="confirmBioTitle">Start Biometric Verification</h3>
+    <p id="confirmBioMsg">Please ensure the customer is present. The biometric scanner will be activated. Proceed?</p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmBio()">Proceed</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ CONFIRM MODE SWITCH -->
+<div class="confirm-overlay" id="confirmModeOverlay">
+  <div class="confirm-box">
+    <h3>Switch to Manual Acceptance?</h3>
+    <p>E-Acceptance is in progress. Switching to Manual Acceptance will stop the e-signing process. This action cannot be undone for this application. Are you sure?</p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="closeConfirm2()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmModeSwitch()">Switch to Manual</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════
+const DOCS = [
+  { id:1, name:'Letter of Undertaking',       role:'Other',   version:'v1', genDate:'2026-05-18 22:12:13', canGenerate:false },
+  { id:2, name:'HP Application Form',         role:'Primary', version:'v1', genDate:'2026-05-19 18:37:47', canGenerate:false },
+  { id:3, name:'HP Agreement with T&C',       role:'Primary', version:'v1', genDate:'2026-05-18 22:12:14', canGenerate:false },
+  { id:4, name:'HP Agreement Second Schedule',role:'Primary', version:'v1', genDate:'2026-05-18 22:12:14', canGenerate:false },
+  { id:5, name:'Product Disclosure Sheet',    role:'Primary', version:'v1', genDate:'2026-05-18 22:12:14', canGenerate:false },
+  { id:6, name:'HpEconsentLogAsp',            role:'Other',   version:'v1', genDate:'2026-05-19 11:04:18', canGenerate:false },
+];
+
+const MANUAL_DOCS = [
+  { name:'HP Application Form.pdf',          version:'v1', docId:'DTFF02026051178646', genDate:'2026-05-20 16:50:29' },
+  { name:'HP Agreement with T&C.pdf',        version:'v1', docId:'DTFF02026051178660', genDate:'2026-05-18 22:12:14' },
+  { name:'HP Agreement Second Schedule.pdf', version:'v1', docId:'DTFF02026043078624', genDate:'2026-05-18 22:12:14' },
+  { name:'Product Disclosure Sheet.pdf',     version:'v1', docId:'DTFF02026050678641', genDate:'2026-05-18 22:12:14' },
+];
+
+const AMENDMENT_DOCS = [
+  { name:'HP Agreement with T&C.pdf',        version:'v2', changed:true,  changes:['Financial Amount','Interest Rate','Monthly Installment'] },
+  { name:'HP Agreement Second Schedule.pdf', version:'v2', changed:true,  changes:['APR','Duration','Installment Count'] },
+  { name:'Product Disclosure Sheet.pdf',     version:'v2', changed:false, changes:[] },
+];
+
+// EA log rows
+const EA_LOG_INITIAL = {
+  type:'Hirer Initial Acceptance', pds:'Y', ss:'Y', hpa:'Y', app4:'—',
+  status:'Completed', datetime:'20/05/2026 04:50 PM', remark:'Biometric Acceptance'
+};
+const EA_LOG_AMENDMENT = {
+  type:'Hirer Amendment Acceptance (1st)', pds:'Y', ss:'Y', hpa:'Y', app4:'—',
+  status:'Completed', datetime:'20/05/2026 05:30 PM', remark:'Biometric Acceptance'
+};
+const EA_LOG_BANK = {
+  type:'Bank Acceptance', pds:'—', ss:'—', hpa:'—', app4:'—',
+  status:'Completed', datetime:'21/05/2026 09:00 AM', remark:'Funded'
+};
+
+// ══════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════
+let currentScenario = 'manual';
+let signingMode = 'manual';
+let pendingBioStep = null;
+let downloadedDocs = new Set();
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  renderDocTable(DOCS);
+  renderManualDocs();
+  setScenario('manual');
+});
+
+// ══════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['doclib','acceptance'][i] === tab));
+  document.getElementById('tab-doclib').classList.toggle('active', tab==='doclib');
+  document.getElementById('tab-acceptance').classList.toggle('active', tab==='acceptance');
+}
+
+// ══════════════════════════════════════════════════
+//  DOC LIBRARY
+// ══════════════════════════════════════════════════
+function renderDocTable(docs) {
+  const tbody = document.getElementById('docTableBody');
+  tbody.innerHTML = docs.map((d,i) => `
+    <tr>
+      <td><input type="checkbox" class="doc-check" value="${d.id}"></td>
+      <td>${i+1}</td>
+      <td class="doc-name">${d.name}</td>
+      <td><span class="badge ${d.role==='Primary'?'badge-primary':'badge-other'}">${d.role}</span></td>
+      <td class="version-text">${d.version} - ${d.genDate}</td>
+      <td>
+        <div class="action-links">
+          <span class="action-link ${d.canGenerate?'':'disabled'}">Generate</span>
+          <span class="action-link" onclick="viewDoc('${d.name}')">View</span>
+          <span class="action-link" onclick="downloadDoc('${d.name}')">Download</span>
+          <span class="action-link" onclick="openHistory('${d.name}','${d.version}','${d.genDate}')">History</span>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function filterDocs(role) {
+  const filtered = role==='all' ? DOCS : DOCS.filter(d=>d.role===role);
+  renderDocTable(filtered);
+}
+
+function searchDocs(q) {
+  const filtered = q ? DOCS.filter(d=>d.name.toLowerCase().includes(q.toLowerCase())) : DOCS;
+  renderDocTable(filtered);
+}
+
+function toggleAll(cb) {
+  document.querySelectorAll('.doc-check').forEach(c => c.checked = cb.checked);
+}
+
+function batchDownload() { alert('Batch downloading selected documents...'); }
+function viewDoc(name) { alert(`Viewing: ${name}\n(Opens document viewer / PDF in new tab)`); }
+function downloadDoc(name) { alert(`Downloading: ${name}`); }
+
+function openHistory(name, ver, date) {
+  document.getElementById('historyModalTitle').textContent = `History – ${name}`;
+  document.getElementById('historyBody').innerHTML = `
+    <tr><td style="padding:8px;border-bottom:1px solid #f1f3f4;">${ver}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f3f4;">${date}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f3f4;">System</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f3f4;">Initial Generation</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f3f4;"><span class="action-link">View</span> · <span class="action-link">Download</span></td>
+    </tr>`;
+  document.getElementById('modalHistory').classList.add('open');
+}
+
+// ══════════════════════════════════════════════════
+//  SIGNING MODE
+// ══════════════════════════════════════════════════
+function setSigningMode(mode) {
+  if (mode === 'manual' && signingMode === 'ea' && (currentScenario === 'pending' || currentScenario === 'step3')) {
+    document.getElementById('confirmModeOverlay').classList.add('open');
+    return;
+  }
+  applySigningMode(mode);
+}
+
+function applySigningMode(mode) {
+  signingMode = mode;
+  document.getElementById('btnEA').classList.toggle('active', mode==='ea');
+  document.getElementById('btnManual').classList.toggle('active', mode==='manual');
+  document.getElementById('panelEA').style.display = mode==='ea' ? 'block' : 'none';
+  document.getElementById('panelManual').style.display = mode==='manual' ? 'block' : 'none';
+  updateFooter();
+}
+
+function closeConfirm2() { document.getElementById('confirmModeOverlay').classList.remove('open'); }
+function confirmModeSwitch() {
+  closeConfirm2();
+  setScenario('manual');
+  applySigningMode('manual');
+}
+
+// ══════════════════════════════════════════════════
+//  SCENARIOS
+// ══════════════════════════════════════════════════
+function setScenario(scenario) {
+  currentScenario = scenario;
+  document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+  event && event.target && event.target.classList.add('active');
+
+  // reset amendment
+  document.getElementById('amendmentSection').style.display = 'none';
+  document.getElementById('eaCompleteBanner').style.display = 'none';
+
+  if (scenario === 'manual') {
+    applySigningMode('manual');
+    updateOverallStatus('Pending Checking and Maintenance', 'badge-pending');
+    document.getElementById('appStatus').textContent = 'Pending Checking and Maintenance';
+    return;
+  }
+
+  applySigningMode('ea');
+  updateOverallStatus('Completed', 'badge-completed');
+  document.getElementById('appStatus').textContent = 'Approved';
+
+  switch(scenario) {
+    case 'pending':
+      setEAStatus('Pending', 'badge-pending');
+      renderStep(1,'active','Matched','matched', `<button class="btn btn-secondary" style="font-size:12px;padding:5px 10px;" onclick="startBio(1)">Re-scan if needed</button>`);
+      renderStep(2,'active','Pending – Awaiting Customer at RIB','waiting', '');
+      renderStep(3,'waiting','Not Done','notdone', `<button class="btn btn-primary" style="font-size:12px;padding:5px 10px;opacity:.4;cursor:default">Start 2nd Biometric</button>`);
+      break;
+    case 'step3':
+      setEAStatus('Pending', 'badge-pending');
+      renderStep(1,'done','Matched','matched','');
+      renderStep(2,'done','1st Signing Complete','matched','');
+      renderStep(3,'active','Not Done','notdone', `<button class="btn btn-primary" style="font-size:12px;padding:5px 10px;" onclick="startBio(2)">Start 2nd Biometric</button>`);
+      break;
+    case 'completed':
+      setEAStatus('Completed', 'badge-approved');
+      renderStep(1,'done','Matched','matched','');
+      renderStep(2,'done','1st Signing Complete','matched','');
+      renderStep(3,'done','Matched','matched','');
+      document.getElementById('eaCompleteBanner').style.display = 'flex';
+      renderEALog(['initial','bank']);
+      break;
+    case 'amendment':
+      setEAStatus('Completed', 'badge-approved');
+      renderStep(1,'done','Matched','matched','');
+      renderStep(2,'done','1st Signing Complete','matched','');
+      renderStep(3,'done','Matched','matched','');
+      document.getElementById('eaCompleteBanner').style.display = 'flex';
+      showAmendment('Sent – Pending Response', '20/05/2026 05:10 PM', 'Pending Customer Acceptance');
+      renderEALog(['initial']);
+      document.getElementById('logSmsStatus').textContent = 'Sent – Pending Response';
+      document.getElementById('logSmsSendDate').textContent = '20/05/2026 05:10 PM';
+      break;
+    case 'failed':
+      setEAStatus('Fail', 'badge-fail');
+      renderStep(1,'error','Unmatched','unmatched', `<button class="btn btn-danger" style="font-size:12px;padding:5px 10px;" onclick="alertFail()">Proceed to Manual</button>`);
+      renderStep(2,'waiting','Waiting','waiting','');
+      renderStep(3,'waiting','Not Done','notdone','');
+      document.getElementById('ineligibleBanner').style.display = 'none';
+      break;
+  }
+  updateFooter();
+}
+
+function renderStep(num, cardState, statusText, statusClass, actionHtml) {
+  const card = document.getElementById(`step${num}Card`);
+  const numEl = document.getElementById(`step${num}Num`);
+  const statusEl = document.getElementById(`step${num}Status`);
+  const actionEl = document.getElementById(`step${num}Action`);
+  card.className = `step-card ${cardState}`;
+  numEl.className = `step-num ${cardState==='done'?'done':cardState==='active'?'active':cardState==='error'?'error':'waiting'}`;
+  statusEl.className = `step-status ${statusClass}`;
+  statusEl.textContent = statusText;
+  actionEl.innerHTML = actionHtml;
+}
+
+function setEAStatus(text, badgeClass) {
+  const el = document.getElementById('eaStatusBadge');
+  el.textContent = text;
+  el.className = `badge ${badgeClass}`;
+}
+
+function updateOverallStatus(text, cls) {
+  const el = document.getElementById('overallStatusBadge');
+  el.textContent = text;
+  el.className = `badge ${cls}`;
+}
+
+// ══════════════════════════════════════════════════
+//  BIOMETRIC
+// ══════════════════════════════════════════════════
+function startBio(step) {
+  pendingBioStep = step;
+  const title = step===1 ? 'Start Identity Verification (1st Biometric)' : 'Start E-Acceptance Confirmation (2nd Biometric)';
+  const msg = step===1
+    ? 'Activating biometric scanner for Identity Verification. Customer must be present. Proceed?'
+    : '1st signing at RIB is complete. Activating biometric scanner for E-Acceptance Confirmation. Proceed?';
+  document.getElementById('confirmBioTitle').textContent = title;
+  document.getElementById('confirmBioMsg').textContent = msg;
+  document.getElementById('confirmBioOverlay').classList.add('open');
+}
+
+function closeConfirm() { document.getElementById('confirmBioOverlay').classList.remove('open'); }
+
+function confirmBio() {
+  closeConfirm();
+  if (pendingBioStep === 2) {
+    // Simulate successful 2nd biometric → completed
+    setScenario('completed');
+    // re-activate the correct scenario button
+    document.querySelectorAll('.scenario-btn').forEach((b,i) => b.classList.toggle('active', i===2));
+  }
+}
+
+function alertFail() {
+  alert('Biometric verification failed.\nProceeding to Manual Acceptance mode.');
+  setScenario('manual');
+  document.querySelectorAll('.scenario-btn').forEach((b,i) => b.classList.toggle('active', i===5));
+}
+
+// ══════════════════════════════════════════════════
+//  AMENDMENT
+// ══════════════════════════════════════════════════
+function showAmendment(smsStatus, smsDate, amendStatus) {
+  document.getElementById('amendmentSection').style.display = 'block';
+  document.getElementById('smsStatus').textContent = smsStatus;
+  document.getElementById('smsSendDate').textContent = smsDate;
+  document.getElementById('amendStatus').textContent = amendStatus;
+
+  const cards = document.getElementById('amendmentDocCards');
+  cards.innerHTML = AMENDMENT_DOCS.map(d => `
+    <div class="doc-card amendment-doc-card">
+      ${d.changed ? '<span class="changed-badge">Changed</span>' : ''}
+      <div class="doc-card-header">
+        <div class="doc-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div>
+          <div class="doc-card-name">${d.name} <span class="version-badge">${d.version}</span></div>
+          ${d.changed ? `<div class="doc-card-meta" style="color:#ea4335;">Changed: ${d.changes.join(', ')}</div>` : '<div class="doc-card-meta">No changes detected</div>'}
+        </div>
+      </div>
+      <div class="doc-card-actions">
+        <button class="btn-outline"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</button>
+        <button class="btn-outline"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download</button>
+      </div>
+    </div>`).join('');
+
+  // SMS button state
+  const btnSMS = document.getElementById('btnTriggerSMS');
+  if (smsStatus.startsWith('Sent')) {
+    btnSMS.disabled = true;
+    document.getElementById('smsNote').textContent = 'SMS already sent. Awaiting customer response via eTracker.';
+  } else {
+    btnSMS.disabled = false;
+    document.getElementById('smsNote').textContent = 'Click to send amendment notification SMS via Infobip to customer.';
+  }
+}
+
+function triggerSMS() {
+  alert('Amendment notification SMS sent via Infobip to customer.\nLink: www.hlb.com.my/etracker\nReason: EAA – E-Acceptance Amendment Notification');
+  document.getElementById('smsStatus').textContent = 'Sent – Pending Response';
+  document.getElementById('smsSendDate').textContent = new Date().toLocaleDateString('en-MY') + ' ' + new Date().toLocaleTimeString('en-MY');
+  document.getElementById('btnTriggerSMS').disabled = true;
+  document.getElementById('smsNote').textContent = 'SMS sent. Awaiting customer acceptance via eTracker.';
+}
+
+function triggerSMSFromModal() {
+  triggerSMS();
+  closeModal('modalEALog');
+}
+
+// ══════════════════════════════════════════════════
+//  MANUAL DOCS
+// ══════════════════════════════════════════════════
+function renderManualDocs() {
+  const container = document.getElementById('manualDocCards');
+  container.innerHTML = MANUAL_DOCS.map(d => `
+    <div class="doc-card">
+      <div class="doc-card-header">
+        <div class="doc-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div>
+          <div class="doc-card-name">${d.name} <span class="version-badge">${d.version}</span></div>
+          <div class="doc-card-meta">${d.docId}<br>${d.genDate}</div>
+        </div>
+      </div>
+      <div class="doc-card-actions">
+        <button class="btn-outline" onclick="viewDoc('${d.name}')"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</button>
+        <button class="btn-outline" onclick="markDownloaded('${d.name}',this)"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download</button>
+      </div>
+    </div>`).join('');
+}
+
+function markDownloaded(name, btn) {
+  downloadedDocs.add(name);
+  btn.style.background = '#e6f4ea';
+  btn.style.color = '#137333';
+  btn.style.borderColor = '#34a853';
+  alert(`Downloading: ${name}`);
+  updateFooter();
+}
+
+// ══════════════════════════════════════════════════
+//  E-ACCEPTANCE LOG
+// ══════════════════════════════════════════════════
+function renderEALog(types) {
+  const rows = {
+    initial: EA_LOG_INITIAL,
+    amendment: EA_LOG_AMENDMENT,
+    bank: EA_LOG_BANK,
+  };
+  document.getElementById('eaLogBody').innerHTML = types.map(t => {
+    const r = rows[t];
+    return `<tr>
+      <td style="padding:8px;border-bottom:1px solid #f1f3f4;font-size:12px;">${r.type}</td>
+      <td style="padding:8px;border-bottom:1px solid #f1f3f4;text-align:center;" class="${r.pds==='Y'?'flag-y':'flag-blank'}">${r.pds}</td>
+      <td style="padding:8px;border-bottom:1px solid #f1f3f4;text-align:center;" class="${r.ss==='Y'?'flag-y':'flag-blank'}">${r.ss}</td>
+      <td style="padding:8px;border-bottom:1px solid #f1f3f4;text-align:center;" class="${r.hpa==='Y'?'flag-y':'flag-blank'}">${r.hpa}</td>
+      <td style="padding:8px;border-bottom:1px solid #f1f3f4;text-align:center;" class="flag-blank">${r.app4}</td>
+      <td style="padding:8px;border-bottom:1px solid #f1f3f4;text-align:center;"><span class="badge badge-approved" style="font-size:11px;">${r.status}</span></td>
+      <td style="padding:8px;border-bottom:1px solid #f1f3f4;font-size:12px;white-space:nowrap;">${r.datetime}</td>
+      <td style="padding:8px;border-bottom:1px solid #f1f3f4;font-size:12px;">${r.remark}</td>
+    </tr>`;
+  }).join('');
+}
+
+function openEALog() {
+  const types = currentScenario === 'completed' ? ['initial','bank']
+              : currentScenario === 'amendment' ? ['initial']
+              : [];
+  if (types.length === 0) {
+    document.getElementById('eaLogBody').innerHTML = `<tr><td colspan="8" style="padding:20px;text-align:center;color:#9aa0a6;">No E-Acceptance records yet.</td></tr>`;
+  } else {
+    renderEALog(types);
+  }
+  // SMS trigger button in modal
+  const modalSMS = document.getElementById('modalTriggerSMS');
+  modalSMS.disabled = currentScenario !== 'amendment';
+  document.getElementById('modalEALog').classList.add('open');
+}
+
+// ══════════════════════════════════════════════════
+//  FOOTER
+// ══════════════════════════════════════════════════
+function updateFooter() {
+  const btn = document.getElementById('btnConfirmProceed');
+  if (signingMode === 'manual') {
+    btn.disabled = downloadedDocs.size < MANUAL_DOCS.length;
+    btn.title = btn.disabled ? 'Please download all documents first.' : '';
+  } else {
+    btn.disabled = currentScenario !== 'completed';
+    btn.title = btn.disabled ? 'E-Acceptance must be Completed before proceeding.' : '';
+  }
+}
+
+function confirmProceed() {
+  if (signingMode === 'manual') {
+    alert('Manual Acceptance confirmed.\nApplication status will be updated to "Pending Checking and Maintenance".\nPlease upload signed documents to Document Centre.');
+  } else {
+    alert('E-Acceptance Confirmed & Proceeding.\nApplication moves to next workflow step.');
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  MODAL HELPERS
+// ══════════════════════════════════════════════════
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function printLog() { window.print(); }
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if(e.target === el) el.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
