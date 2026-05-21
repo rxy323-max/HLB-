@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E-Acceptance Prototype v4 – HLB LOAD$</title>
+<title>E-Acceptance Prototype v5 – HLB LOAD$</title>
 <style>
 /* ── Reset ── */
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -279,6 +279,119 @@ tr:hover td{background:#fafafa;}
 .dev-btn.active{background:#1967d2;color:#fff;}
 
 .text-muted{color:#9aa0a6;font-size:12px;}
+
+/* ═══════════ v5 NEW STYLES ═══════════ */
+/* Status textbox */
+.status-textbox{background:#f8f9fa;border:1px solid #dadce0;border-radius:6px;padding:11px 14px;font-family:'Courier New',monospace;font-size:12px;min-height:50px;margin-bottom:12px;transition:.3s;display:flex;align-items:center;gap:8px;}
+.status-textbox.stb-ok{background:#e6f4ea;border-color:#ceead6;color:#137333;}
+.status-textbox.stb-warn{background:#fef7e0;border-color:#fde68a;color:#b45309;}
+.status-textbox.stb-err{background:#fce8e6;border-color:#f5c6cb;color:#c5221f;}
+.stb-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:#9aa0a6;}
+.stb-dot.ok{background:#137333;}.stb-dot.warn{background:#b45309;}.stb-dot.err{background:#c5221f;}
+/* Scan pills */
+.scan-pills{display:flex;gap:5px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.scan-pill{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:500;background:#e8eaed;color:#5f6368;}
+.scan-pill.active{background:#1967d2;color:#fff;}.scan-pill.done{background:#34a853;color:#fff;}
+/* Info main page (Step 1 right) */
+.info-main-page{display:flex;flex-direction:column;gap:12px;width:100%;}
+.info-status-card{background:#f8f9fa;border:1px solid #e8eaed;border-radius:8px;padding:12px 14px;}
+.isc-label{font-size:10px;font-weight:700;color:#9aa0a6;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}
+.isc-status-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.isc-counter{font-size:12px;color:#5f6368;}
+.remarks-lbl{font-size:12px;color:#5f6368;margin-bottom:4px;}
+.remarks-req{color:#c5221f;font-size:11px;font-weight:600;}
+.remarks-ta{width:100%;border:1px solid #dadce0;border-radius:5px;padding:7px 10px;font-size:12px;resize:vertical;min-height:56px;font-family:inherit;outline:none;transition:.15s;}
+.remarks-ta:focus{border-color:#1967d2;}.remarks-ta.err{border-color:#c5221f;background:#fff8f8;}
+.remarks-hint{font-size:11px;color:#c5221f;margin-top:3px;}
+.info-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;}
+/* Prototype controls */
+.proto-ctrl{background:#fffbf0;border:1px solid #fde68a;border-radius:6px;padding:10px 12px;margin-top:12px;}
+.proto-ctrl-ttl{font-size:10px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;}
+.proto-row{display:flex;gap:6px;flex-wrap:wrap;}
+.pbtn{padding:4px 10px;border:1px solid #dadce0;border-radius:4px;background:#fff;font-size:11px;cursor:pointer;transition:.15s;}
+.pbtn:hover{background:#e8f0fe;border-color:#1967d2;color:#1967d2;}
+.pbtn.ok{border-color:#34a853;color:#137333;}.pbtn.ok:hover{background:#e6f4ea;}
+.pbtn.fail{border-color:#c5221f;color:#c5221f;}.pbtn.fail:hover{background:#fce8e6;}
+.pbtn.warn{border-color:#b45309;color:#b45309;}.pbtn.warn:hover{background:#fef7e0;}
+/* RIB Portal Frame */
+.rib-frame{border:1px solid #dadce0;border-radius:8px;overflow:hidden;width:100%;}
+.rib-frame-hdr{background:#c00;padding:9px 14px;display:flex;align-items:center;gap:10px;}
+.rib-frame-logo{color:#fff;font-size:13px;font-weight:700;}
+.rib-frame-sub{color:rgba(255,255,255,.7);font-size:10px;margin-left:auto;}
+.rib-frame-body{background:#fff;padding:14px;}
+/* RIB Doc rows */
+.rib-doc-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e8eaed;border-radius:6px;margin-bottom:7px;cursor:pointer;transition:.15s;background:#fff;}
+.rib-doc-row:hover{border-color:#1967d2;background:#f8fbff;}
+.rib-doc-row.confirmed{border-color:#ceead6;background:#f6fff8;}
+.rib-tick{width:20px;height:20px;border-radius:50%;border:2px solid #dadce0;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;transition:.2s;}
+.rib-tick.ok{background:#34a853;border-color:#34a853;color:#fff;}
+.rib-doc-name{flex:1;font-size:13px;font-weight:500;}
+.rib-doc-amend{font-size:10px;background:#fef7e0;color:#b45309;padding:2px 6px;border-radius:8px;font-weight:600;}
+.rib-chevron{color:#9aa0a6;font-size:14px;}
+.rib-submit-area{margin-top:14px;border-top:1px solid #e8eaed;padding-top:12px;}
+.rib-submit-hint{font-size:11px;color:#9aa0a6;text-align:center;margin-bottom:8px;}
+.btn-rib-sub{width:100%;padding:10px;background:#1967d2;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;}
+.btn-rib-sub:disabled{background:#dadce0;color:#9aa0a6;cursor:not-allowed;}
+.btn-rib-sub:not(:disabled):hover{background:#1557b0;}
+/* RIB Thank You */
+.rib-ty{text-align:center;padding:18px 14px;}
+.rib-ty-icon{font-size:42px;margin-bottom:10px;}
+.rib-ty-title{font-size:15px;font-weight:700;color:#137333;margin-bottom:6px;}
+.rib-ty-sub{font-size:12px;color:#5f6368;line-height:1.6;margin-bottom:14px;}
+.btn-dl{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;background:#137333;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;}
+/* OTP RIB side */
+.rib-otp{text-align:center;padding:8px 0;}
+.rib-otp-phone{font-size:42px;margin-bottom:8px;}
+.rib-otp-title{font-size:14px;font-weight:700;color:#c5221f;margin-bottom:6px;}
+.rib-otp-sub{font-size:12px;color:#5f6368;line-height:1.6;margin-bottom:12px;}
+.btn-rcv-otp{display:block;width:100%;max-width:260px;margin:0 auto 10px;padding:11px;background:#c5221f;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;}
+.btn-rcv-otp:hover{background:#a41919;}
+/* Step 3 dual panels */
+.s3-dual{display:flex;flex-direction:column;gap:10px;width:100%;}
+.s3-panel{border:1px solid #e8eaed;border-radius:8px;overflow:hidden;}
+.s3-panel-hdr{background:#f8f9fa;border-bottom:1px solid #e8eaed;padding:7px 12px;display:flex;align-items:center;gap:8px;}
+.s3-panel-tag{font-size:10px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.5px;}
+.s3-panel-body{padding:12px;}
+/* Doc review modal */
+.doc-rev-hdr{background:#f8f9fa;border:1px solid #e8eaed;border-radius:6px;padding:10px 12px;margin-bottom:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.drh-i label{font-size:10px;color:#80868b;display:block;}.drh-i span{font-size:12px;font-weight:500;}
+.doc-content{font-size:12px;color:#3c4043;line-height:1.7;}
+.doc-section{margin-bottom:12px;}
+.doc-sec-ttl{font-size:11px;font-weight:700;color:#1967d2;margin-bottom:4px;}
+.field-hl{background:#fef3c7;padding:0 3px;border-radius:2px;font-weight:600;}
+.doc-decl{background:#e8f0fe;border:1px solid #c5d9f9;border-radius:8px;padding:12px;margin-top:14px;}
+.doc-decl-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;cursor:pointer;}
+.doc-cb{width:16px;height:16px;flex-shrink:0;margin-top:2px;accent-color:#1967d2;}
+.doc-decl-txt{font-size:12px;color:#1967d2;line-height:1.5;font-weight:500;}
+/* eTracker modal */
+.et-frame{border-radius:8px;overflow:hidden;border:1px solid #dadce0;}
+.et-hdr{background:#c00;padding:9px 14px;display:flex;align-items:center;justify-content:space-between;}
+.et-logo{color:#fff;font-size:14px;font-weight:700;}
+.et-body{background:#f0f0f0;padding:14px;min-height:320px;}
+.et-card{background:#fff;border-radius:8px;border:1px solid #e0e0e0;padding:14px;margin-bottom:10px;}
+.et-prog{display:flex;gap:0;margin:8px 0 10px;}
+.et-ps{flex:1;text-align:center;}
+.et-pb{height:5px;background:#e0e0e0;margin-bottom:3px;}
+.et-pb.done{background:#c00;}.et-pb.active{background:#fbbf24;}
+.et-pl{font-size:9px;color:#666;}
+.et-alert{background:#fff8f8;border:1px solid #ffcdd2;border-radius:6px;padding:11px 12px;margin-bottom:10px;}
+.et-alert p{font-size:12px;color:#333;margin-bottom:10px;line-height:1.5;}
+.btn-et-review{width:100%;padding:10px;background:#c00;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-et-review:hover{background:#a00;}
+.et-clause{padding:10px 12px;border:1px solid #e8eaed;border-radius:6px;background:#fff;margin-bottom:8px;}
+.et-clause-ttl{font-size:11px;font-weight:700;color:#333;margin-bottom:4px;}
+.et-hl{background:#fef3c7;padding:0 3px;border-radius:2px;font-weight:600;}
+.et-declare{background:#f9f9f9;border:1px solid #e0e0e0;border-radius:6px;padding:10px;margin-top:10px;}
+.et-decl-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;cursor:pointer;}
+.et-cb{width:15px;height:15px;flex-shrink:0;margin-top:2px;accent-color:#c00;}
+.et-decl-txt{font-size:11px;color:#333;line-height:1.5;}
+.btn-et-confirm{width:100%;padding:9px;background:#c00;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-et-confirm:disabled{background:#ccc;cursor:not-allowed;}
+.et-confirmed{text-align:center;padding:26px 16px;}
+.et-conf-icon{font-size:46px;margin-bottom:10px;}
+.et-conf-title{font-size:15px;font-weight:700;color:#137333;margin-bottom:6px;}
+.et-conf-sub{font-size:12px;color:#5f6368;line-height:1.6;}
+.scan-device-area{background:#f8f9fa;border:1px solid #e8eaed;border-radius:8px;padding:12px;text-align:center;margin-bottom:12px;}
 </style>
 </head>
 <body>
@@ -447,6 +560,7 @@ tr:hover td{background:#fafafa;}
                   <div class="amd-doc-cards" id="amdDocCards"></div>
                   <div class="amd-sms-row">
                     <button class="btn btn-secondary btn-sm" id="btnTriggerSMS" onclick="triggerSMS()">Trigger Amendment SMS</button>
+                    <button class="btn btn-secondary btn-sm" onclick="openETrackerModal()" style="margin-left:4px;">Preview: e-Tracker Customer View</button>
                     <span class="text-muted" id="smsNote">Enabled before Infobip response is received.</span>
                   </div>
                 </div>
@@ -575,32 +689,61 @@ tr:hover td{background:#fafafa;}
   </div>
 </div>
 
+<!-- ═══ MODAL: Biometric Scan ═══ -->
+<div class="modal-overlay" id="modalScan">
+  <div class="modal" style="width:500px;">
+    <div class="modal-hdr"><h3 id="scanModalTitle">Biometric Scan</h3><button class="modal-x" onclick="closeScanModal()">✕</button></div>
+    <div class="modal-body" id="scanModalBody" style="padding:16px;"><!-- rendered by JS --></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: RIB Document Review ═══ -->
+<div class="modal-overlay" id="modalRibDoc">
+  <div class="modal" style="width:680px;">
+    <div class="modal-hdr"><h3 id="ribDocTitle">Document Review</h3><button class="modal-x" onclick="closeModal('modalRibDoc')">✕</button></div>
+    <div class="modal-body" id="ribDocBody" style="max-height:65vh;overflow-y:auto;padding:16px 18px;"><!-- rendered by JS --></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: eTracker Amendment ═══ -->
+<div class="modal-overlay" id="modalETracker">
+  <div class="modal" style="width:640px;">
+    <div class="modal-hdr"><h3>e-Tracker — Customer View (Amendment)</h3><button class="modal-x" onclick="closeModal('modalETracker')">✕</button></div>
+    <div class="modal-body" style="padding:0;" id="etrackerBody"><!-- rendered by JS --></div>
+  </div>
+</div>
+
 <!-- ═══ DEV TOOL ═══ -->
 <div class="dev-tool">
   <div class="dev-panel" id="devPanel">
-    <div class="dev-title">🔧 Prototype Scenarios — v4</div>
+    <div class="dev-title">🔧 Prototype Scenarios — v5</div>
 
     <div class="dev-group">E-Acceptance · Step 1 Identity Verification</div>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-disc',this)">Disconnected</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-ready',this)">Device ready</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s1-init',this)">初始状态 (Not Done)</button>
     <button class="dev-btn" onclick="applyScenario('ea-s1-matched',this)">✓ Matched (1st attempt)</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-fail1',this)">✗ Failed — attempt 1/3</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-fail2',this)">✗ Failed — attempt 2/3</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-fail3',this)">✗ Max retries → auto-switch</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s1-fail1',this)">✗ Unmatched — 1/3</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s1-fail2',this)">✗ Unmatched — 2/3</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s1-fail3',this)">✗ Max retries (3/3) → Manual</button>
 
     <div class="dev-sep"></div>
     <div class="dev-group">E-Acceptance · Step 2 RIB Portal</div>
-    <button class="dev-btn" onclick="applyScenario('ea-s2-wait',this)">Awaiting customer at RIB</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s2-done',this)">✓ RIB Accepted</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s2-wait',this)">RIB — 待审阅 (全未勾选)</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s2-partial',this)">RIB — 部分勾选 (2/3)</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s2-allconfirmed',this)">RIB — 全部确认 (Submit 解锁)</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s2-appendix4',this)">RIB — 含 Appendix 4 (二手车)</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s2-amendment',this)">RIB — Amendment 黄字高亮</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s2-submitted',this)">RIB — 已提交 → 等待二次指纹</button>
 
     <div class="dev-sep"></div>
     <div class="dev-group">E-Acceptance · Step 3 Confirmation</div>
-    <button class="dev-btn" onclick="applyScenario('ea-s3-ready',this)">Device ready</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s3-fail1',this)">✗ Failed — attempt 1/3</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s3-fail2',this)">✗ Failed — attempt 2/3</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s3-otp',this)">✗ Max retries → OTP fallback</button>
-    <button class="dev-btn" onclick="applyScenario('ea-complete',this)">✓ E-Acceptance Completed</button>
-    <button class="dev-btn" onclick="applyScenario('ea-amendment',this)">✓ Completed + Amendment</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s3-wait',this)">CrediOS 待扫描 / RIB 等待中</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s3-fail1',this)">✗ Unmatched — 1/3</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s3-fail2',this)">✗ Unmatched — 2/3</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s3-otp',this)">✗ 3/3 → RIB OTP 界面</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s3-otp-sent',this)">RIB OTP 已发送 → 输入中</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s3-matched',this)">✓ Matched → RIB Thank You</button>
+    <button class="dev-btn" onclick="applyScenario('ea-complete',this)">✓ E-Acceptance 已完成</button>
+    <button class="dev-btn" onclick="applyScenario('ea-amendment',this)">✓ 完成 + Amendment (触发SMS)</button>
 
     <div class="dev-sep"></div>
     <div class="dev-group">Manual — No Guarantor</div>
@@ -660,15 +803,29 @@ let S={
   mode:'manual', hasGuarantor:true,
   // EA flow
   eaStep:1,
-  s1Dev:'disconnected', s1Attempts:0,
-  s2RibDone:false,
+  // Step 1 — info page + scan
+  s1Result:null,        // null | 'matched' | 'unmatched' | 'error'
+  s1Attempts:0,
+  s1Remarks:'',
+  // Step 2 — RIB portal
+  s2Confirmed:[false,false,false,false],
+  s2ShowAppendix4:false,
+  s2IsAmendment:false,
+  s2Submitted:false,
+  s2ActiveDoc:null,
+  // Step 3 — EA Confirmation
   s3Dev:'disconnected', s3Attempts:0,
+  s3OtpTriggered:false, s3OtpVerified:false,
   eaComplete:false, amendmentRequired:false, smsSent:false,
   eaViaOTP:false,
   // Manual bio per-applicant
   mBioPrimary:{dev:'disconnected',done:false,attempts:0},
   mBioGuarantor:{dev:'disconnected',done:false,attempts:0},
 };
+
+// Scan modal state
+let scanCtx='s1';
+let scanState='ready';
 
 // ═══════════════════════════════════════════════
 //  INIT
@@ -748,7 +905,7 @@ function applyMode(mode){
 function renderEAPanel(){
   if(S.mode!=='ea')return;
   [1,2,3].forEach(n=>{
-    const isFailed=(n===1&&S.s1Dev==='unmatched'&&S.s1Attempts>=3);
+    const isFailed=(n===1&&S.s1Result==='unmatched'&&S.s1Attempts>=3);
     document.getElementById('eps'+n).className='ep-step '+(
       S.eaComplete||S.eaStep>n?'done':
       isFailed?'failed':
@@ -831,172 +988,266 @@ function attBadge(n,max){
 }
 
 // ═══════════════════════════════════════════════
-//  STEP 1 — Identity Verification
+//  STEP 1 — Identity Verification (v5)
 // ═══════════════════════════════════════════════
 function renderStep1(){
-  const dev=S.s1Dev; const att=S.s1Attempts;
+  const r=S.s1Result; const att=S.s1Attempts;
   const now=fmtNow(),now2=fmtNow(2);
-  let leftOpts={},right='';
+  // Left panel
+  let lo={};
+  if(r==='matched')   lo={bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:String(att),retry:att+' / 3'};
+  if(r==='unmatched') lo={bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:String(att),retry:att+' / 3',remark:'Biometric not matched.'};
+  if(r==='error')     lo={bioStatus:'Error',bioClass:'warn',trigCount:String(att),retry:att+' / 3'};
+  document.getElementById('s1Left').innerHTML=leftPanel(1,lo);
 
-  if(dev==='disconnected'){
-    right=devViz('disconnected')+`
-      <div class="state-title">Connect Biometric Device</div>
-      <div class="state-sub">Ensure the MyKad reader and fingerprint scanner are connected via USB.</div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-primary btn-sm" onclick="S.s1Dev='scanning';renderStep1()">Reconnect</button>
-        <button class="btn btn-secondary btn-sm">Restart Service</button>
-      </div>`;
-  } else if(dev==='scanning'){
-    right=devViz('scanning')+`<div class="state-title">Scanning for Devices...</div><div class="state-sub">Ensure the MyKad reader and fingerprint scanner are connected via USB.</div>`;
-    setTimeout(()=>{if(S.s1Dev==='scanning'){S.s1Dev='ready';renderStep1();}},2000);
-  } else if(dev==='ready'){
-    right=devViz('connected')+`
-      <div class="state-title">Device Connected</div>
-      <div class="state-sub">Ask the customer to place their thumb on the fingerprint scanner.${att>0?' <strong>'+att+'/3 previous attempt(s) failed.</strong>':''}</div>
-      ${att>0?attBadge(att,3):''}
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button class="btn btn-primary btn-sm" onclick="S.s1Dev='matched';renderStep1()">Simulate: Match</button>
-        <button class="btn btn-secondary btn-sm" onclick="simS1Fail()">Simulate: Fail</button>
-      </div>`;
-  } else if(dev==='matched'){
-    leftOpts={bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3'};
-    right=`<div class="bio-result">
-      <div class="bio-result-icon">✅</div>
-      <div class="bio-result-title brt-matched">Identity Verified</div>
-      <p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">Biometric matched. Acceptance Flag = YES.<br>Customer may proceed to review and sign at RIB Portal.</p>
-      <button class="btn btn-primary" onclick="goStep2()">Proceed to RIB Portal →</button>
-    </div>`;
-  } else if(dev==='unmatched'){
-    leftOpts={bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3',remark:'Biometric not matched.'};
-    if(att>=3){
-      right=`
-        <div class="auto-switch-banner">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <div><strong>Maximum attempts reached (3/3).</strong><br>Verification failed. System requires this application to proceed via Manual Acceptance.</div>
-        </div>
-        <div class="bio-result">
-          <div class="bio-result-icon">❌</div>
-          <div class="bio-result-title brt-failed">Biometric Verification Failed</div>
-          <p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">E-Acceptance is no longer available for this session.</p>
-          <button class="btn btn-danger" onclick="forceManualSwitch()">Proceed with Manual Acceptance</button>
-        </div>`;
-    } else {
-      const rem=3-att;
-      right=`<div class="bio-result">
-        <div class="bio-result-icon">❌</div>
-        <div class="bio-result-title brt-failed">Biometric Not Matched</div>
-        ${attBadge(att,3)}
-        <p style="font-size:12px;color:#5f6368;margin:8px 0 14px;">${rem} attempt(s) remaining before automatic switch to Manual Acceptance.</p>
-        <div style="display:flex;gap:8px;justify-content:center;">
-          <button class="btn btn-primary btn-sm" onclick="retryS1()">Retry (${rem} left)</button>
-          <button class="btn btn-danger btn-sm" onclick="openModal('modalSwitchConfirm')">Switch to Manual Acceptance</button>
-        </div>
-      </div>`;
-    }
+  // Status badge
+  const badge=r==='matched'?'<span class="badge bd-green">✓ Matched</span>':
+              r==='unmatched'?'<span class="badge bd-red">✗ Unmatched</span>':
+              r==='error'?'<span class="badge bd-orange">⚠ Error</span>':
+              '<span class="badge bd-gray">— Not Done</span>';
+
+  const needRemarks=(r==='unmatched'||r==='error');
+  const remarksMissing=needRemarks&&!S.s1Remarks.trim();
+
+  // Alert banner
+  let alertHtml='';
+  if(att>=3&&r==='unmatched'){
+    alertHtml=`<div class="auto-switch-banner"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div><strong>Maximum attempts reached (3/3).</strong><br>System requires transfer to Manual Acceptance.</div></div>`;
   }
-  document.getElementById('s1Left').innerHTML=leftPanel(1,leftOpts);
-  document.getElementById('s1Right').innerHTML=right;
+
+  // Action buttons
+  let btns='';
+  if(r==='matched'){
+    btns=`<button class="btn btn-primary" onclick="goStep2()">Proceed to RIB Portal →</button>
+          <button class="btn btn-secondary btn-sm" onclick="openScanModal('s1')">Re-scan</button>
+          <button class="btn btn-secondary btn-sm" onclick="alert('Generating Report PDF...')">Report</button>`;
+  } else if(att>=3&&r==='unmatched'){
+    btns=`<button class="btn btn-danger" onclick="saveAndForceManual()">Proceed with Manual Acceptance</button>
+          <button class="btn btn-secondary btn-sm" onclick="alert('Generating Report PDF...')">Report</button>
+          <button class="btn btn-secondary btn-sm" onclick="saveRemarks()" ${remarksMissing?'disabled':''}>Save</button>`;
+  } else {
+    const hasResult=r!=null;
+    btns=`<button class="btn btn-primary" onclick="openScanModal('s1')">Start Biometric Scan</button>
+          ${hasResult?`<button class="btn btn-secondary btn-sm" onclick="openScanModal('s1')">Retry</button>`:''}
+          ${hasResult?`<button class="btn btn-secondary btn-sm" onclick="alert('Generating Report PDF...')">Report</button>`:''}
+          ${hasResult?`<button class="btn btn-secondary btn-sm" onclick="saveRemarks()" ${remarksMissing?'disabled':''}>Save</button>`:''}
+          <button class="btn btn-secondary btn-sm" onclick="openModal('modalSwitchConfirm')">Manual Acceptance</button>`;
+  }
+
+  document.getElementById('s1Right').innerHTML=`<div class="info-main-page">
+    <div class="info-status-card">
+      <div class="isc-label">Biometric Status</div>
+      <div class="isc-status-row">${badge}${att?attBadge(att,3):''}</div>
+      <div class="isc-counter">Triggering Counter: <strong>${att}</strong></div>
+    </div>
+    ${alertHtml}
+    <div>
+      <div class="remarks-lbl">Remarks${needRemarks?' <span class="remarks-req">* Required</span>':''}</div>
+      <textarea class="remarks-ta${remarksMissing?' err':''}" placeholder="${needRemarks?'Required: enter reason for failure...':'Optional remarks...'}" oninput="S.s1Remarks=this.value">${S.s1Remarks}</textarea>
+      ${remarksMissing?'<div class="remarks-hint">⚠ Remarks required when status is Unmatched or Error</div>':''}
+    </div>
+    <div class="info-btns">${btns}</div>
+  </div>`;
 }
 
-function simS1Fail(){S.s1Attempts++;S.s1Dev='unmatched';renderStep1();}
-function retryS1(){S.s1Dev='ready';renderEAPanel();}
+function saveRemarks(){S.s1Remarks=document.querySelector('.remarks-ta')?.value||S.s1Remarks;alert('Remarks saved.');}
+function saveAndForceManual(){if(!S.s1Remarks.trim()){alert('Please enter Remarks before proceeding.');return;}forceManualSwitch();}
 
 // ═══════════════════════════════════════════════
-//  STEP 2 — RIB Portal
+//  STEP 2 — RIB Portal (v5)
 // ═══════════════════════════════════════════════
+function getRibDocs(){
+  const base=[
+    {name:'Product Disclosure Sheet',amended:S.s2IsAmendment},
+    {name:'Second Schedule',amended:S.s2IsAmendment},
+    {name:'HP Agreement & Terms and Conditions',amended:S.s2IsAmendment},
+  ];
+  if(S.s2ShowAppendix4) base.push({name:'Appendix 4',amended:false,note:'Used / Refurbished vehicle only'});
+  return base;
+}
+
 function renderStep2(){
   document.getElementById('s2Left').innerHTML=leftPanel(2,{bioStatus:'Matched',bioClass:'matched',retry:S.s1Attempts+' / 3',trigPoint:'Letter Printing E-Acceptance'});
-  const el=document.getElementById('s2Right');
-  if(!S.s2RibDone){
-    el.innerHTML=`<div class="rib-panel">
-      <div class="rib-header">🌐 Customer Reviewing at RIB Portal</div>
-      <div class="rib-doc-list">
-        ${['HP Agreement with T&C','HP Agreement Second Schedule','Product Disclosure Sheet'].map(d=>`<div class="rib-doc-item"><span style="color:#1967d2;">📄</span><span>${d}</span></div>`).join('')}
-      </div>
-      <div class="rib-waiting"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" class="spin"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> Waiting for customer to review and accept all documents...</div>
-      <div style="display:flex;gap:8px;justify-content:center;">
-        <button class="btn btn-secondary btn-sm">Resend RIB Link</button>
-        <button class="btn btn-primary btn-sm" onclick="S.s2RibDone=true;renderStep2()">Simulate: Customer Accepted</button>
+  const docs=getRibDocs();
+  const allOk=docs.every((_,i)=>S.s2Confirmed[i]);
+
+  if(S.s2Submitted){
+    document.getElementById('s2Right').innerHTML=`<div class="rib-frame">
+      <div class="rib-frame-hdr"><span class="rib-frame-logo">🏦 HLB Retail Internet Banking</span><span class="rib-frame-sub">e-Acceptance</span></div>
+      <div class="rib-frame-body" style="text-align:center;padding:28px 20px;">
+        <div style="font-size:36px;margin-bottom:12px;">🔐</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:8px;">Your bank officer will now scan your fingerprint to complete the signing</div>
+        <div style="font-size:12px;color:#5f6368;line-height:1.6;margin-bottom:18px;">Please remain at the counter. Your officer will complete the E-Acceptance Confirmation.</div>
+        <button class="btn btn-primary btn-sm" onclick="goStep3()">Officer: Proceed to E-Acceptance Confirmation →</button>
       </div>
     </div>`;
-  } else {
-    el.innerHTML=`<div class="rib-ok"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      <div><div style="font-weight:600;font-size:13px;color:#137333;margin-bottom:2px;">Customer completed review and acceptance at RIB Portal</div>
-      <div style="font-size:12px;color:#3c4043;">1st Signing Complete — Acceptance Flag confirmed.</div></div>
-    </div>
-    <div style="text-align:center;margin-top:10px;">
-      <button class="btn btn-primary" onclick="goStep3()">Proceed to E-Acceptance Confirmation →</button>
-    </div>`;
+    return;
   }
+
+  const docRows=docs.map((d,i)=>`
+    <div class="rib-doc-row ${S.s2Confirmed[i]?'confirmed':''}" onclick="openRibDoc(${i})">
+      <div class="rib-tick ${S.s2Confirmed[i]?'ok':''}">${S.s2Confirmed[i]?'✓':''}</div>
+      <div class="rib-doc-name">${d.name}${d.note?` <span style="font-size:10px;color:#9aa0a6;">(${d.note})</span>`:''}</div>
+      ${d.amended&&!S.s2Confirmed[i]?'<span class="rib-doc-amend">AMENDED</span>':''}
+      <span class="rib-chevron">›</span>
+    </div>`).join('');
+
+  document.getElementById('s2Right').innerHTML=`<div class="rib-frame">
+    <div class="rib-frame-hdr"><span class="rib-frame-logo">🏦 HLB Retail Internet Banking</span><span class="rib-frame-sub">e-Acceptance${S.s2IsAmendment?' — Amendment':''}</span></div>
+    <div class="rib-frame-body">
+      <div style="font-size:13px;font-weight:600;margin-bottom:3px;">${S.s2IsAmendment?'Please review the amended documents and confirm':'Review and confirm all documents to complete e-Acceptance'}</div>
+      <div style="font-size:11px;color:#5f6368;margin-bottom:14px;">Click each document to read and confirm. ${S.s2IsAmendment?'<strong style="color:#b45309;">Changed fields are highlighted in yellow.</strong>':''}</div>
+      <div id="ribDocListWrap">${docRows}</div>
+      <div class="rib-submit-area">
+        <div class="rib-submit-hint">${allOk?'All documents confirmed — you may submit.':'Confirm all documents above to enable Submit.'}</div>
+        <button class="btn-rib-sub" ${allOk?'':'disabled'} onclick="submitRib()">Submit</button>
+      </div>
+    </div>
+  </div>`;
 }
 
+function openRibDoc(idx){
+  S.s2ActiveDoc=idx;
+  const d=getRibDocs()[idx];
+  const isAmend=S.s2IsAmendment&&d.amended;
+  document.getElementById('ribDocTitle').textContent=d.name;
+  document.getElementById('ribDocBody').innerHTML=genDocContent(d.name,isAmend,idx);
+  openModal('modalRibDoc');
+}
+
+function genDocContent(name,isAmend,idx){
+  const hl=t=>isAmend?`<span class="field-hl">${t}</span>`:t;
+  const now=fmtNow().substring(0,10);
+  const ver=isAmend?'v2':'v1';
+  const bodies={
+    'Product Disclosure Sheet':`<div class="doc-rev-hdr"><div class="drh-i"><label>Applicant</label><span>GGBOUND</span></div><div class="drh-i"><label>NRIC</label><span>60-12-2308243</span></div><div class="drh-i"><label>Date</label><span>${now}</span></div></div>
+      <div class="doc-content"><div class="doc-section"><div class="doc-sec-ttl">1. Product Information</div>
+        <p>Product: Hire Purchase Financing (Conventional)</p><p>Financing Amount: ${hl('RM 80,000.00')}</p>
+        <p>Tenure: ${hl('60 months')}</p><p>Monthly Instalment: ${hl('RM 1,458.33')}</p><p>Annual Percentage Rate: ${hl('3.75% p.a.')}</p></div>
+      <div class="doc-section"><div class="doc-sec-ttl">2. Fees and Charges</div><p>Stamp Duty: RM 100.00 &nbsp; Processing Fee: Nil</p></div>
+      <div class="doc-section"><div class="doc-sec-ttl">3. Key Risks</div><p>Failure to pay instalments may result in repossession of the vehicle and legal action.</p></div></div>`,
+    'Second Schedule':`<div class="doc-rev-hdr"><div class="drh-i"><label>Contract No.</label><span>KRP/HP/2026/Y0010922</span></div><div class="drh-i"><label>Date</label><span>${now}</span></div><div class="drh-i"><label>Version</label><span>${ver}</span></div></div>
+      <div class="doc-content"><div class="doc-section"><div class="doc-sec-ttl">Schedule of Payment</div>
+        <p>Loan Amount: ${hl('RM 80,000.00')}</p><p>Interest Rate: ${hl('3.75% per annum')}</p>
+        <p>Repayment Period: ${hl('60 months')}</p><p>Monthly Payment: ${hl('RM 1,458.33')}</p>
+        <p>Total Repayment: ${hl('RM 87,499.80')}</p><p>First Payment Date: 01-07-2026</p></div></div>`,
+    'HP Agreement & Terms and Conditions':`<div class="doc-rev-hdr"><div class="drh-i"><label>Hirer</label><span>GGBOUND</span></div><div class="drh-i"><label>Vehicle</label><span>PERODUA MYVI 1.5X</span></div><div class="drh-i"><label>Version</label><span>${ver}</span></div></div>
+      <div class="doc-content"><div class="doc-section"><div class="doc-sec-ttl">1. Hire Purchase Agreement</div>
+        <p>Hire Purchase Price: ${hl('RM 87,499.80')}</p><p>Deposit Paid: RM 10,000.00</p><p>Balance Financed: ${hl('RM 77,499.80')}</p></div>
+      <div class="doc-section"><div class="doc-sec-ttl">2. Terms and Conditions</div>
+        <p>2.1 The Hirer shall pay monthly instalments on the due date.</p>
+        <p>2.2 The vehicle remains property of the Owner until all payments are completed.</p>
+        <p>2.3 The Hirer shall maintain comprehensive insurance on the vehicle at all times.</p></div></div>`,
+    'Appendix 4':`<div class="doc-content"><div class="doc-section"><div class="doc-sec-ttl">Appendix 4 — Used / Refurbished Vehicle Declaration</div>
+      <p>Vehicle Registration: WXX1234 &nbsp;|&nbsp; Year: 2022 &nbsp;|&nbsp; Condition: Used</p>
+      <p>The Hirer acknowledges this is a used/refurbished vehicle and accepts the condition as inspected.</p></div></div>`,
+  };
+  const body=bodies[name]||`<div class="doc-content"><p>${name}</p></div>`;
+  return body+`<div class="doc-decl"><label class="doc-decl-row">
+    <input type="checkbox" class="doc-cb" id="ribDocCheck" onchange="document.getElementById('ribDocConfirmBtn').disabled=!this.checked">
+    <span class="doc-decl-txt">I hereby declare that I have read and understood the contents of this document and agree to be bound by its terms and conditions.</span>
+    </label>
+    <button class="btn btn-primary btn-sm" id="ribDocConfirmBtn" disabled style="width:100%;margin-top:4px;" onclick="confirmRibDoc()">Confirm</button>
+  </div>`;
+}
+
+function confirmRibDoc(){S.s2Confirmed[S.s2ActiveDoc]=true;closeModal('modalRibDoc');renderStep2();}
+function submitRib(){S.s2Submitted=true;renderStep2();}
+
 // ═══════════════════════════════════════════════
-//  STEP 3 — E-Acceptance Confirmation
+//  STEP 3 — E-Acceptance Confirmation (v5)
 // ═══════════════════════════════════════════════
 function renderStep3(){
   const dev=S.s3Dev; const att=S.s3Attempts;
   const now=fmtNow(),now2=fmtNow(2);
-  let leftOpts={trigPoint:'E-Acceptance Confirmation'},right='';
-  const otp=document.getElementById('otpWrap');
-  otp.style.display='none';
+  document.getElementById('otpWrap').style.display='none';
 
-  if(dev==='disconnected'){
-    right=devViz('disconnected')+`
-      <div class="state-title">Connect Biometric Device</div>
-      <div class="state-sub">Ensure the biometric device is connected before proceeding with E-Acceptance Confirmation.</div>
+  let lo={trigPoint:'E-Acceptance Confirmation'};
+  if(dev==='matched')   Object.assign(lo,{bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3'});
+  if(dev==='unmatched') Object.assign(lo,{bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3',remark:att>=3?'3 attempts exhausted. OTP activated.':'Not matched.'});
+  document.getElementById('s3Left').innerHTML=leftPanel(3,lo);
+
+  // CrediOS panel content
+  let crediOS='';
+  if(!dev||dev==='disconnected'){
+    crediOS=`<p style="font-size:12px;color:#5f6368;margin-bottom:10px;">Click to start E-Acceptance Confirmation biometric scan.</p>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-primary btn-sm" onclick="S.s3Dev='ready';renderStep3()">Reconnect</button>
+        <button class="btn btn-primary btn-sm" onclick="openScanModal('s3')">Start E-Acceptance Confirmation Scan</button>
         <button class="btn btn-secondary btn-sm">Restart Service</button>
       </div>`;
-  } else if(dev==='ready'){
-    right=devViz('connected')+`
-      <div class="state-title">Device Connected</div>
-      <div class="state-sub">Ask the customer to confirm E-Acceptance with fingerprint.${att>0?' <strong>'+att+'/3 previous attempt(s) failed.</strong>':''}</div>
-      ${att>0?attBadge(att,3):''}
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button class="btn btn-primary btn-sm" onclick="S.s3Dev='matched';renderStep3()">Simulate: Match</button>
-        <button class="btn btn-secondary btn-sm" onclick="simS3Fail()">Simulate: Fail</button>
-      </div>`;
   } else if(dev==='matched'){
-    leftOpts={...leftOpts,bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3'};
-    right=`<div class="bio-result">
-      <div class="bio-result-icon">✅</div>
-      <div class="bio-result-title brt-matched">E-Acceptance Confirmation Complete</div>
-      <p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">2nd Biometric matched. E-Acceptance process fully completed.</p>
-      <button class="btn btn-primary" onclick="completeEA(false)">Complete E-Acceptance →</button>
-    </div>`;
-  } else if(dev==='unmatched'){
-    leftOpts={...leftOpts,bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3'};
-    if(att>=3){
-      leftOpts={...leftOpts,remark:'3 biometric attempts exhausted. OTP fallback activated.'};
-      right=`<div class="bio-result">
-        <div class="bio-result-icon">⚠️</div>
-        <div class="bio-result-title brt-warn">Biometric Verification Failed — OTP Fallback</div>
-        ${attBadge(att,3)}
-        <p style="font-size:12px;color:#5f6368;margin:8px 0 8px;">3 attempts exhausted. OTP has been sent to customer's registered mobile.</p>
+    crediOS=`<div class="bio-inline-result bir-matched">✅ E-Acceptance Confirmation — Biometric matched. Signing complete.</div>`;
+  } else if(dev==='unmatched'&&att<3){
+    crediOS=`<div class="bio-inline-result bir-unmatched">❌ Not matched (${att}/3 attempts used)</div>
+      <div style="margin-top:10px;display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm" onclick="openScanModal('s3')">Retry Scan</button>
       </div>`;
-      otp.style.display='flex';
-    } else {
-      const rem=3-att;
-      leftOpts={...leftOpts,remark:'Biometric not matched. '+rem+' attempt(s) remaining.'};
-      right=`<div class="bio-result">
-        <div class="bio-result-icon">❌</div>
-        <div class="bio-result-title brt-failed">Biometric Not Matched</div>
-        ${attBadge(att,3)}
-        <p style="font-size:12px;color:#5f6368;margin:8px 0 14px;">${rem} attempt(s) remaining. OTP fallback activates after ${att>=2?'the next':'${rem===2?"2 more":"1 more"}'} failure.</p>
-        <button class="btn btn-primary btn-sm" onclick="retryS3()">Retry (${rem} left)</button>
-      </div>`;
-    }
+  } else if(dev==='unmatched'&&att>=3){
+    crediOS=`<div class="bio-inline-result bir-unmatched">❌ 3/3 attempts exhausted — OTP fallback activated on RIB</div>`;
   }
-  document.getElementById('s3Left').innerHTML=leftPanel(3,leftOpts);
-  document.getElementById('s3Right').innerHTML=right;
+
+  // RIB panel content
+  let ribView='';
+  if(dev==='matched'){
+    ribView=`<div class="rib-ty"><div class="rib-ty-icon">🎉</div>
+      <div class="rib-ty-title">Thank You for Accepting Your Loan / Financing Documents</div>
+      <div class="rib-ty-sub">Your e-Acceptance has been completed successfully. Your signed documents are ready for download.</div>
+      <button class="btn-dl" onclick="completeEA(false)">⬇ Download Signed Documents</button></div>`;
+  } else if(dev==='unmatched'&&att>=3){
+    ribView=renderRibOTPView();
+  } else {
+    ribView=`<div style="text-align:center;padding:20px 14px;">
+      <div style="font-size:34px;margin-bottom:10px;">🔐</div>
+      <div style="font-size:14px;font-weight:600;color:#202124;margin-bottom:6px;">Your bank officer will now scan your fingerprint to complete the signing</div>
+      <div style="font-size:12px;color:#5f6368;line-height:1.6;">Please remain at the counter and follow the officer's instructions.</div>
+    </div>`;
+  }
+
+  document.getElementById('s3Right').innerHTML=`<div class="s3-dual">
+    <div class="s3-panel">
+      <div class="s3-panel-hdr"><span>💼</span><span class="s3-panel-tag">Bank Officer (CrediOS)</span></div>
+      <div class="s3-panel-body">${crediOS}</div>
+    </div>
+    <div class="s3-panel">
+      <div class="s3-panel-hdr"><span>🌐</span><span class="s3-panel-tag">Customer — HLB RIB Portal</span><span style="margin-left:auto;background:#c00;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;">RIB</span></div>
+      <div class="s3-panel-body">${ribView}</div>
+    </div>
+  </div>`;
 }
 
-function simS3Fail(){S.s3Attempts++;S.s3Dev='unmatched';renderStep3();}
-function retryS3(){S.s3Dev='ready';renderStep3();}
+function renderRibOTPView(){
+  if(S.s3OtpVerified) return `<div class="rib-ty"><div class="rib-ty-icon">🎉</div>
+    <div class="rib-ty-title">Thank You for Accepting Your Loan / Financing Documents</div>
+    <div class="rib-ty-sub">e-Acceptance completed via OTP verification. Signed documents ready for download.</div>
+    <button class="btn-dl" onclick="completeEA(true)">⬇ Download Signed Documents</button></div>`;
+  if(S.s3OtpTriggered) return `<div class="rib-otp">
+    <div class="rib-otp-phone">📱</div>
+    <div class="rib-otp-title">Enter Your OTP</div>
+    <div class="rib-otp-sub">A 6-digit OTP has been sent to your registered mobile. Enter it below to complete signing.</div>
+    <div class="otp-inputs">
+      <input class="otp-input" maxlength="1" oninput="otpNext(this)"><input class="otp-input" maxlength="1" oninput="otpNext(this)">
+      <input class="otp-input" maxlength="1" oninput="otpNext(this)"><input class="otp-input" maxlength="1" oninput="otpNext(this)">
+      <input class="otp-input" maxlength="1" oninput="otpNext(this)"><input class="otp-input" maxlength="1" oninput="otpNext(this)">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px;">
+      <button class="btn btn-primary btn-sm" onclick="verifyOTP()">Verify OTP</button>
+      <button class="btn btn-secondary btn-sm">Resend OTP</button>
+    </div>
+    <div id="otpResult" style="text-align:center;font-size:12px;"></div>
+  </div>`;
+  return `<div class="rib-otp">
+    <div class="rib-otp-phone">📱</div>
+    <div class="rib-otp-title">Unable to Capture Your Fingerprint</div>
+    <div class="rib-otp-sub">We're sorry — we could not capture your fingerprint after 3 attempts. Click below to receive a 6-digit OTP on your registered mobile number.</div>
+    <button class="btn-rcv-otp" onclick="triggerRibOTP()">Receive OTP</button>
+  </div>`;
+}
 
-function goStep2(){S.eaStep=2;renderEAPanel();}
-function goStep3(){S.eaStep=3;S.s3Dev='disconnected';renderEAPanel();}
+function triggerRibOTP(){S.s3OtpTriggered=true;renderStep3();}
+function retryS3(){S.s3Dev='disconnected';renderStep3();}
+
+function goStep2(){S.eaStep=2;S.s2Confirmed=[false,false,false,false];S.s2Submitted=false;renderEAPanel();}
+function goStep3(){S.eaStep=3;S.s3Dev='disconnected';S.s3Attempts=0;S.s3OtpTriggered=false;S.s3OtpVerified=false;renderEAPanel();}
 function completeEA(viaOTP){
   S.eaComplete=true;S.eaViaOTP=!!viaOTP;
   document.getElementById('eaStatusHeader').textContent='Completed';
@@ -1200,11 +1451,162 @@ function verifyOTP(){
   const r=document.getElementById('otpResult');
   if(v.length===6){
     r.style.color='#137333';
-    r.textContent='OTP verified. Completing E-Acceptance...';
-    setTimeout(()=>completeEA(true),900);
+    r.textContent='✓ OTP verified. Completing E-Acceptance...';
+    setTimeout(()=>{S.s3OtpVerified=true;S.eaViaOTP=true;renderStep3();setTimeout(()=>completeEA(true),1200);},900);
   } else {
     r.style.color='#c5221f';
     r.textContent='Please enter all 6 digits.';
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  SCAN MODAL (v5)
+// ═══════════════════════════════════════════════
+function openScanModal(ctx){
+  scanCtx=ctx;scanState='ready';
+  document.getElementById('scanModalTitle').textContent=
+    ctx==='s1'?'Identity Verification — Biometric Scan (MyKad + Fingerprint)':
+               'E-Acceptance Confirmation — Biometric Scan';
+  renderScanModal();openModal('modalScan');
+}
+function closeScanModal(){closeModal('modalScan');}
+
+function renderScanModal(){
+  const SM={
+    'ready':       {cls:'',dot:'',        msg:'Reader is ready.',step:1},
+    'reading':     {cls:'stb-warn',dot:'warn',msg:'Reading MyKad... Please wait.',step:1},
+    'no-mykad':    {cls:'stb-err', dot:'err', msg:'No MyKad detected. Please insert the MyKad card and try again.',step:1},
+    'thumb-prompt':{cls:'stb-warn',dot:'warn',msg:'Please place your thumb on the scanner when light is On.',step:2},
+    'verified':    {cls:'stb-ok',  dot:'ok',  msg:'Verified OK. Please Remove Card.',step:3},
+    'unmatched':   {cls:'stb-err', dot:'err', msg:'Thumbprint not matched. Please try again.',step:2},
+    'error-timeout':{cls:'stb-err',dot:'err', msg:'Error - Time Out. Please restart the service and try again.',step:2},
+    'error-fetch': {cls:'stb-err', dot:'err', msg:'Error fetching biometric data. Please check device connection.',step:1},
+  };
+  const s=SM[scanState]||SM['ready'];
+  const pills=['MyKad Read','Fingerprint Scan','Result'].map((l,i)=>
+    `<span class="scan-pill ${i<s.step-1?'done':i===s.step-1?'active':''}">${l}</span>${i<2?'<span style="color:#9aa0a6;font-size:10px;margin:0 2px;">›</span>':''}`).join('');
+
+  let btns='',proto='';
+  if(scanState==='ready'||scanState==='no-mykad'||scanState==='error-fetch'){
+    btns=`<button class="btn btn-primary btn-sm" onclick="doReadMyKad()">Read MyKad</button>
+          <button class="btn btn-secondary btn-sm" onclick="scanState='ready';renderScanModal()">Restart Service</button>
+          <button class="btn btn-secondary btn-sm" onclick="closeScanModal()">Back</button>`;
+    proto=`<div class="proto-ctrl"><div class="proto-ctrl-ttl">⚙ Prototype Controls</div><div class="proto-row">
+      <button class="pbtn ok" onclick="scanState='thumb-prompt';renderScanModal()">✓ Card Detected</button>
+      <button class="pbtn fail" onclick="scanState='no-mykad';renderScanModal()">✗ No MyKad</button>
+      <button class="pbtn warn" onclick="scanState='error-fetch';renderScanModal()">⚠ Error Fetch</button>
+    </div></div>`;
+  } else if(scanState==='thumb-prompt'){
+    btns=`<div style="font-size:12px;color:#5f6368;">Waiting for fingerprint...</div>
+          <button class="btn btn-secondary btn-sm" onclick="closeScanModal()">Cancel</button>`;
+    proto=`<div class="proto-ctrl"><div class="proto-ctrl-ttl">⚙ Prototype Controls</div><div class="proto-row">
+      <button class="pbtn ok" onclick="scanState='verified';renderScanModal()">✓ Thumb Matched</button>
+      <button class="pbtn fail" onclick="scanState='unmatched';renderScanModal()">✗ Unmatched</button>
+      <button class="pbtn warn" onclick="scanState='error-timeout';renderScanModal()">⚠ Timeout</button>
+    </div></div>`;
+  } else if(scanState==='verified'){
+    btns=`<button class="btn btn-primary btn-sm" onclick="onScanSuccess()">Continue →</button>`;
+  } else if(scanState==='unmatched'||scanState==='error-timeout'){
+    btns=`<button class="btn btn-secondary btn-sm" onclick="scanState='ready';renderScanModal()">Retry</button>
+          <button class="btn btn-secondary btn-sm" onclick="onScanFail()">Record &amp; Back</button>`;
+  } else if(scanState==='reading'){
+    btns=`<div style="font-size:12px;color:#5f6368;">Reading...</div>`;
+  }
+
+  const devState=scanState==='thumb-prompt'?'scanning':scanState==='verified'||scanState==='reading'?'connected':'connected';
+  document.getElementById('scanModalBody').innerHTML=`
+    <div class="scan-pills">${pills}</div>
+    <div class="scan-device-area">${devViz(devState)}</div>
+    <div class="status-textbox ${s.cls}"><div class="stb-dot ${s.dot}"></div><span>${s.msg}</span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">${btns}</div>
+    ${proto}`;
+}
+
+function doReadMyKad(){
+  scanState='reading';renderScanModal();
+  setTimeout(()=>{if(scanState==='reading'){scanState='thumb-prompt';renderScanModal();}},1400);
+}
+
+function onScanSuccess(){
+  closeModal('modalScan');
+  if(scanCtx==='s1'){S.s1Result='matched';S.s1Attempts++;renderStep1();renderEAPanel();}
+  else if(scanCtx==='s3'){S.s3Dev='matched';S.s3Attempts++;renderStep3();}
+}
+
+function onScanFail(){
+  closeModal('modalScan');
+  if(scanCtx==='s1'){S.s1Result='unmatched';S.s1Attempts++;renderStep1();}
+  else if(scanCtx==='s3'){S.s3Dev='unmatched';S.s3Attempts++;renderStep3();}
+}
+
+// ═══════════════════════════════════════════════
+//  eTRACKER AMENDMENT MODAL (v5)
+// ═══════════════════════════════════════════════
+let etPage='home'; // 'home'|'review'|'confirmed'
+let etDeclared=false;
+
+function openETrackerModal(){
+  etPage='home';etDeclared=false;
+  renderETrackerModal();openModal('modalETracker');
+}
+
+function renderETrackerModal(){
+  const body=document.getElementById('etrackerBody');
+  if(etPage==='home'){
+    body.innerHTML=`<div class="et-frame">
+      <div class="et-hdr"><span class="et-logo">🏦 e-Tracker</span><span style="color:rgba(255,255,255,.7);font-size:11px;">Hong Leong Bank</span></div>
+      <div class="et-body">
+        <div class="et-card">
+          <div style="font-size:12px;font-weight:600;color:#333;margin-bottom:8px;">Hire Purchase — KRP/HP/2026/Y0010922</div>
+          <div class="et-prog">
+            <div class="et-ps"><div class="et-pb done"></div><div class="et-pl">Application</div></div>
+            <div class="et-ps"><div class="et-pb done"></div><div class="et-pl">Approved</div></div>
+            <div class="et-ps"><div class="et-pb active"></div><div class="et-pl">Signing</div></div>
+            <div class="et-ps"><div class="et-pb"></div><div class="et-pl">Funded</div></div>
+          </div>
+        </div>
+        <div class="et-alert">
+          <p>Your hire purchase loan documents have been updated. Please review the changes and confirm your acceptance of the updated terms.</p>
+          <button class="btn-et-review" onclick="etPage='review';renderETrackerModal()">Review Now</button>
+        </div>
+      </div>
+    </div>`;
+  } else if(etPage==='review'){
+    body.innerHTML=`<div class="et-frame">
+      <div class="et-hdr"><span class="et-logo">🏦 e-Tracker</span><span style="color:rgba(255,255,255,.7);font-size:11px;">Amendment Review</span></div>
+      <div class="et-body">
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px;color:#333;">Updated Hire Purchase Agreement</div>
+        <div style="font-size:11px;color:#b45309;margin-bottom:12px;font-weight:500;">⚠ Fields highlighted in yellow have been changed. Please review carefully.</div>
+        <div class="et-clause"><div class="et-clause-ttl">Financing Terms</div>
+          <p style="font-size:12px;line-height:1.7;">Financing Amount: <span class="et-hl">RM 85,000.00</span><br>
+          Monthly Instalment: <span class="et-hl">RM 1,541.67</span><br>
+          Tenure: <span class="et-hl">66 months</span><br>
+          Annual Percentage Rate: <span class="et-hl">4.00% p.a.</span></p>
+        </div>
+        <div class="et-clause"><div class="et-clause-ttl">Total Repayment</div>
+          <p style="font-size:12px;line-height:1.7;">Total Repayment Amount: <span class="et-hl">RM 101,750.22</span><br>
+          First Payment Date: 01-07-2026</p>
+        </div>
+        <div class="et-declare">
+          <label class="et-decl-row"><input type="checkbox" class="et-cb" onchange="etDeclared=this.checked;document.getElementById('etConfirmBtn').disabled=!this.checked">
+            <span class="et-decl-txt">I hereby declare that I have read and understood the final loan/financing documents and the updated terms and conditions, and I hereby accept the amended hire purchase agreement.</span>
+          </label>
+          <button class="btn-et-confirm" id="etConfirmBtn" disabled onclick="etPage='confirmed';renderETrackerModal()">Confirm</button>
+        </div>
+      </div>
+    </div>`;
+  } else {
+    body.innerHTML=`<div class="et-frame">
+      <div class="et-hdr"><span class="et-logo">🏦 e-Tracker</span></div>
+      <div class="et-body">
+        <div class="et-confirmed">
+          <div class="et-conf-icon">✅</div>
+          <div class="et-conf-title">Amendment Accepted</div>
+          <div class="et-conf-sub">Thank you. Your acceptance of the updated hire purchase agreement has been recorded. A confirmation will be sent to your registered email.</div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:14px;" onclick="closeModal('modalETracker')">Close</button>
+        </div>
+      </div>
+    </div>`;
   }
 }
 
@@ -1216,9 +1618,11 @@ function applyScenario(key,btn){
   if(btn)btn.classList.add('active');
 
   const fresh={
-    mode:'ea', hasGuarantor:false,
-    eaStep:1, s1Dev:'disconnected', s1Attempts:0,
-    s2RibDone:false, s3Dev:'disconnected', s3Attempts:0,
+    mode:'ea', hasGuarantor:false, eaStep:1,
+    s1Result:null, s1Attempts:0, s1Remarks:'',
+    s2Confirmed:[false,false,false,false], s2ShowAppendix4:false, s2IsAmendment:false,
+    s2Submitted:false, s2ActiveDoc:null,
+    s3Dev:'disconnected', s3Attempts:0, s3OtpTriggered:false, s3OtpVerified:false,
     eaComplete:false, amendmentRequired:false, smsSent:false, eaViaOTP:false,
     mBioPrimary:{dev:'disconnected',done:false,attempts:0},
     mBioGuarantor:{dev:'disconnected',done:false,attempts:0},
@@ -1227,20 +1631,25 @@ function applyScenario(key,btn){
 
   const map={
     // Step 1
-    'ea-s1-disc':   {},
-    'ea-s1-ready':  {s1Dev:'ready'},
-    'ea-s1-matched':{s1Dev:'matched',s1Attempts:1},
-    'ea-s1-fail1':  {s1Dev:'unmatched',s1Attempts:1},
-    'ea-s1-fail2':  {s1Dev:'unmatched',s1Attempts:2},
-    'ea-s1-fail3':  {s1Dev:'unmatched',s1Attempts:3},
+    'ea-s1-init':   {},
+    'ea-s1-matched':{s1Result:'matched',s1Attempts:1},
+    'ea-s1-fail1':  {s1Result:'unmatched',s1Attempts:1},
+    'ea-s1-fail2':  {s1Result:'unmatched',s1Attempts:2},
+    'ea-s1-fail3':  {s1Result:'unmatched',s1Attempts:3},
     // Step 2
-    'ea-s2-wait':   {eaStep:2,s1Dev:'matched',s1Attempts:1},
-    'ea-s2-done':   {eaStep:2,s1Dev:'matched',s1Attempts:1,s2RibDone:true},
+    'ea-s2-wait':       {eaStep:2,s1Result:'matched',s1Attempts:1},
+    'ea-s2-partial':    {eaStep:2,s1Result:'matched',s1Attempts:1,s2Confirmed:[true,true,false,false]},
+    'ea-s2-allconfirmed':{eaStep:2,s1Result:'matched',s1Attempts:1,s2Confirmed:[true,true,true,false]},
+    'ea-s2-appendix4':  {eaStep:2,s1Result:'matched',s1Attempts:1,s2ShowAppendix4:true},
+    'ea-s2-amendment':  {eaStep:2,s1Result:'matched',s1Attempts:1,s2IsAmendment:true},
+    'ea-s2-submitted':  {eaStep:2,s1Result:'matched',s1Attempts:1,s2Confirmed:[true,true,true,false],s2Submitted:true},
     // Step 3
-    'ea-s3-ready':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibDone:true,s3Dev:'ready'},
-    'ea-s3-fail1':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibDone:true,s3Dev:'unmatched',s3Attempts:1},
-    'ea-s3-fail2':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibDone:true,s3Dev:'unmatched',s3Attempts:2},
-    'ea-s3-otp':    {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibDone:true,s3Dev:'unmatched',s3Attempts:3},
+    'ea-s3-wait':   {eaStep:3,s1Result:'matched',s1Attempts:1,s2Confirmed:[true,true,true,false],s2Submitted:true},
+    'ea-s3-fail1':  {eaStep:3,s1Result:'matched',s1Attempts:1,s2Confirmed:[true,true,true,false],s2Submitted:true,s3Dev:'unmatched',s3Attempts:1},
+    'ea-s3-fail2':  {eaStep:3,s1Result:'matched',s1Attempts:1,s2Confirmed:[true,true,true,false],s2Submitted:true,s3Dev:'unmatched',s3Attempts:2},
+    'ea-s3-otp':    {eaStep:3,s1Result:'matched',s1Attempts:1,s2Confirmed:[true,true,true,false],s2Submitted:true,s3Dev:'unmatched',s3Attempts:3},
+    'ea-s3-otp-sent':{eaStep:3,s1Result:'matched',s1Attempts:1,s2Confirmed:[true,true,true,false],s2Submitted:true,s3Dev:'unmatched',s3Attempts:3,s3OtpTriggered:true},
+    'ea-s3-matched':{eaStep:3,s1Result:'matched',s1Attempts:1,s2Confirmed:[true,true,true,false],s2Submitted:true,s3Dev:'matched',s3Attempts:1},
     'ea-complete':  {eaComplete:true},
     'ea-amendment': {eaComplete:true,amendmentRequired:true},
     // Manual no guarantor
@@ -1263,7 +1672,6 @@ function applyScenario(key,btn){
   };
 
   const patch=map[key]||{};
-  // Deep-merge bio sub-objects if provided
   if(patch.mBioPrimary)   S.mBioPrimary=Object.assign({},fresh.mBioPrimary,patch.mBioPrimary);
   if(patch.mBioGuarantor) S.mBioGuarantor=Object.assign({},fresh.mBioGuarantor,patch.mBioGuarantor);
   const {mBioPrimary,mBioGuarantor,...flatPatch}=patch;
