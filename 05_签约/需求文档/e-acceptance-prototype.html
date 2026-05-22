@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E-Acceptance Prototype v6 – HLB LOAD$</title>
+<title>E-Acceptance Prototype v7 – HLB LOAD$</title>
 <style>
 /* ── Reset ── */
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -392,6 +392,16 @@ tr:hover td{background:#fafafa;}
 .et-conf-title{font-size:15px;font-weight:700;color:#137333;margin-bottom:6px;}
 .et-conf-sub{font-size:12px;color:#5f6368;line-height:1.6;}
 .scan-device-area{background:#f8f9fa;border:1px solid #e8eaed;border-radius:8px;padding:12px;text-align:center;margin-bottom:12px;}
+/* ═══════════ v7 ═══════════ */
+.step-card{background:#fff;border:1px solid #e8eaed;border-radius:8px;padding:20px 24px;margin-bottom:14px;}
+.step-card-flush{background:#fff;border:1px solid #e8eaed;border-radius:8px;overflow:hidden;margin-bottom:14px;}
+.sc-hdr{padding:14px 18px;border-bottom:1px solid #e8eaed;display:flex;align-items:center;justify-content:space-between;}
+.sc-hdr-title{font-size:13px;font-weight:700;}
+.sc-count{font-size:12px;color:#5f6368;background:#f1f3f4;padding:3px 10px;border-radius:10px;}
+.sc-body{padding:14px 18px;}
+.sc-ftr{padding:12px 18px;border-top:1px solid #e8eaed;}
+.status-icon{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:24px;}
+.si-green{background:#e6f4ea;}.si-red{background:#fce8e6;}.si-gray{background:#f1f3f4;}.si-orange{background:#fef7e0;}
 </style>
 </head>
 <body>
@@ -466,13 +476,12 @@ tr:hover td{background:#fafafa;}
       <div class="tab-panel" id="tp-acceptance">
 
         <!-- Mode Toggle -->
-        <div class="mode-row">
-          <label>Signing Mode:</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
           <div class="toggle-grp">
             <button class="tgl" id="tglEA" onclick="requestModeSwitch('ea')">E-Acceptance</button>
             <button class="tgl active" id="tglManual" onclick="requestModeSwitch('manual')">Manual Acceptance</button>
           </div>
-          <span class="tgl-tip" id="eaTip" style="display:none;">Not available — application has guarantor(s)</span>
+          <span class="tgl-tip" id="eaTip" style="display:none;">Unavailable — application has guarantor(s)</span>
         </div>
 
         <!-- ══════════════ E-ACCEPTANCE PANEL ══════════════ -->
@@ -485,29 +494,15 @@ tr:hover td{background:#fafafa;}
             <div class="ep-step" id="eps3"><div class="ep-circle" id="epc3">3</div><div class="ep-label">E-Acceptance<br>Confirmation</div></div>
           </div>
 
-          <!-- Switch link (hidden after completion) -->
-          <div class="switch-link-row" id="switchLinkRow">
-            <button class="lnk" onclick="openModal('modalSwitchConfirm')">Switch to Manual Acceptance</button>
-          </div>
-
           <!-- Step 1 -->
-          <div id="eaStep1"><div class="bio-layout">
-            <div class="bio-left" id="s1Left"></div>
-            <div class="bio-right" id="s1Right"></div>
-          </div></div>
+          <div id="eaStep1"><div id="s1Panel"></div></div>
 
           <!-- Step 2 -->
-          <div id="eaStep2" style="display:none;"><div class="bio-layout">
-            <div class="bio-left" id="s2Left"></div>
-            <div class="bio-right" id="s2Right"></div>
-          </div></div>
+          <div id="eaStep2" style="display:none;"><div id="s2Panel"></div></div>
 
           <!-- Step 3 -->
           <div id="eaStep3" style="display:none;">
-            <div class="bio-layout">
-              <div class="bio-left" id="s3Left"></div>
-              <div class="bio-right" id="s3Right"></div>
-            </div>
+            <div id="s3Panel"></div>
             <div id="otpWrap" style="display:none;justify-content:center;margin-top:14px;">
               <div class="otp-panel">
                 <div class="otp-title">Fingerprint Verification Failed — OTP Fallback</div>
@@ -716,7 +711,7 @@ tr:hover td{background:#fafafa;}
 <!-- ═══ DEV TOOL ═══ -->
 <div class="dev-tool">
   <div class="dev-panel" id="devPanel">
-    <div class="dev-title">🔧 Prototype Scenarios — v6</div>
+    <div class="dev-title">🔧 Prototype Scenarios — v7</div>
 
     <div class="dev-group">E-Acceptance · Step 1 Identity Verification</div>
     <button class="dev-btn" onclick="applyScenario('ea-s1-init',this)">Initial State — Not Done</button>
@@ -913,7 +908,6 @@ function renderEAPanel(){
     );
     document.getElementById('epc'+n).textContent=(S.eaComplete||S.eaStep>n)?'✓':(isFailed?'✗':n);
   });
-  document.getElementById('switchLinkRow').style.display=S.eaComplete?'none':'flex';
   document.getElementById('eaStep1').style.display=(!S.eaComplete&&S.eaStep===1)?'block':'none';
   document.getElementById('eaStep2').style.display=(!S.eaComplete&&S.eaStep===2)?'block':'none';
   document.getElementById('eaStep3').style.display=(!S.eaComplete&&S.eaStep===3)?'block':'none';
@@ -988,83 +982,67 @@ function attBadge(n,max){
 }
 
 // ═══════════════════════════════════════════════
-//  STEP 1 — Identity Verification (v5)
+//  STEP 1 — Identity Verification (v7)
 // ═══════════════════════════════════════════════
 function renderStep1(){
   const r=S.s1Result; const att=S.s1Attempts;
-  const now=fmtNow(),now2=fmtNow(2);
-  // Left panel
-  let lo={};
-  if(r==='matched')   lo={bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:String(att),retry:att+' / 3'};
-  if(r==='unmatched') lo={bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:String(att),retry:att+' / 3',remark:'Biometric not matched.'};
-  if(r==='error')     lo={bioStatus:'Error',bioClass:'warn',trigCount:String(att),retry:att+' / 3'};
-  document.getElementById('s1Left').innerHTML=leftPanel(1,lo);
-
-  // Status badge
-  const badge=r==='matched'?'<span class="badge bd-green">✓ Matched</span>':
-              r==='unmatched'?'<span class="badge bd-red">✗ Unmatched</span>':
-              r==='error'?'<span class="badge bd-orange">⚠ Error</span>':
-              '<span class="badge bd-gray">— Not Done</span>';
-
   const needRemarks=(r==='unmatched'||r==='error');
   const remarksMissing=needRemarks&&!S.s1Remarks.trim();
 
-  // Guidance banner
-  let guidanceHtml='';
-  if(!r){
-    guidanceHtml=`<div style="background:#e8f0fe;border:1px solid #c5d9f9;border-radius:8px;padding:12px 14px;">
-      <div style="font-size:12px;font-weight:700;color:#1967d2;margin-bottom:5px;">Sales Officer — Guidance</div>
-      <div style="font-size:12px;color:#1967d2;line-height:1.8;">
-        1. Ask the customer to have their MyKad (IC) ready<br>
-        2. Click <strong>Start Biometric Scan</strong> to open the scanner<br>
-        3. Insert the customer's MyKad into the reader and click <strong>Read MyKad</strong><br>
-        4. Ask the customer to place their thumb on the scanner when the light turns on
+  const statusBadge=
+    r==='matched'  ?`<span class="badge bd-green" style="font-size:13px;padding:5px 14px;">✓ Matched</span>`:
+    r==='unmatched'?`<span class="badge bd-red"   style="font-size:13px;padding:5px 14px;">✗ Unmatched</span>`:
+    r==='error'    ?`<span class="badge bd-orange" style="font-size:13px;padding:5px 14px;">⚠ Error</span>`:
+                    `<span class="badge bd-gray"   style="font-size:13px;padding:5px 14px;">— Not Done</span>`;
+
+  let alertHtml='';
+  if(att>=3&&r==='unmatched'){
+    alertHtml=`<div class="alert-err" style="margin-bottom:14px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Maximum attempts reached (3/3). Enter Remarks and switch to Manual Acceptance to continue with paper signing.</span></div>`;
+  } else if((r==='unmatched'||r==='error')&&att<3){
+    alertHtml=`<div class="alert-warn" style="margin-bottom:14px;"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Fingerprint not verified. ${3-att} attempt${3-att!==1?'s':''} remaining.</span></div>`;
+  }
+
+  let primaryBtn='';
+  let otherBtns='';
+  if(r==='matched'){
+    primaryBtn=`<button class="btn btn-primary" onclick="goStep2()">Proceed to Document Review →</button>`;
+    otherBtns=`<button class="btn btn-secondary btn-sm" onclick="openScanModal('s1')">Re-scan</button>
+               <button class="btn btn-secondary btn-sm" onclick="alert('Generating report...')">Report</button>
+               <button class="btn btn-secondary btn-sm" onclick="saveRemarks()">Save</button>`;
+  } else if(att>=3&&r==='unmatched'){
+    primaryBtn=`<button class="btn btn-danger" onclick="saveAndForceManual()" ${remarksMissing?'disabled':''}>Switch to Manual Acceptance</button>`;
+    otherBtns=`<button class="btn btn-secondary btn-sm" onclick="alert('Generating report...')">Report</button>
+               <button class="btn btn-secondary btn-sm" onclick="saveRemarks()" ${remarksMissing?'disabled':''}>Save</button>`;
+  } else {
+    primaryBtn=`<button class="btn btn-primary" onclick="openScanModal('s1')">${r?'Retry Biometric Scan':'Start Biometric Scan'}</button>`;
+    otherBtns=`${r?`<button class="btn btn-secondary btn-sm" onclick="alert('Generating report...')">Report</button>`:''}
+               <button class="btn btn-secondary btn-sm" onclick="saveRemarks()" ${!S.s1Remarks.trim()?'disabled':''}>Save</button>
+               <button class="btn btn-secondary btn-sm" onclick="openModal('modalSwitchConfirm')">Manual Acceptance</button>`;
+  }
+
+  document.getElementById('s1Panel').innerHTML=`
+    ${alertHtml}
+    <div class="step-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:#9aa0a6;text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;">Biometric Status</div>
+          <div style="display:flex;align-items:center;gap:8px;">${statusBadge}${att?attBadge(att,3):''}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;font-weight:700;color:#9aa0a6;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;">Triggering Counter</div>
+          <div style="font-size:26px;font-weight:700;color:${att>=3?'#c5221f':att>0?'#b45309':'#9aa0a6'};">${att}<span style="font-size:13px;font-weight:400;color:#9aa0a6;"> / 3</span></div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div class="remarks-lbl">Remarks${needRemarks?' <span class="remarks-req">* Required</span>':' <span style="font-size:11px;color:#9aa0a6;">(optional)</span>'}</div>
+        <textarea class="remarks-ta${remarksMissing?' err':''}" rows="3" placeholder="${needRemarks?'Enter reason for verification failure...':'Enter remarks if any...'}" oninput="S.s1Remarks=this.value">${S.s1Remarks}</textarea>
+        ${remarksMissing?'<div class="remarks-hint">⚠ Remarks required when status is Unmatched or Error</div>':''}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        ${primaryBtn}
+        ${otherBtns}
       </div>
     </div>`;
-  } else if(r==='matched'){
-    guidanceHtml=`<div style="background:#e6f4ea;border:1px solid #ceead6;border-radius:8px;padding:12px 14px;">
-      <div style="font-size:12px;font-weight:700;color:#137333;margin-bottom:4px;">Identity Verified — Next Step</div>
-      <div style="font-size:12px;color:#137333;line-height:1.6;">Direct the customer to the HLB RIB portal to review and confirm the loan documents. Click <strong>Proceed to Document Review</strong> below.</div>
-    </div>`;
-  } else if(att>=3&&r==='unmatched'){
-    guidanceHtml=`<div class="auto-switch-banner"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div><strong>Maximum Attempts Reached (3/3)</strong><br>Fingerprint could not be verified. Please enter Remarks below and switch to Manual Acceptance (paper signing).</div></div>`;
-  } else if(r==='unmatched'||r==='error'){
-    guidanceHtml=`<div class="alert-warn"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><div>Verification did not succeed. Ask the customer to retry — ensure their thumb is placed flat and firmly on the scanner. You have <strong>${3-att} attempt${3-att!==1?'s':''} remaining</strong>.</div></div>`;
-  }
-
-  // Action buttons
-  let btns='';
-  if(r==='matched'){
-    btns=`<button class="btn btn-primary" onclick="goStep2()">Proceed to Document Review →</button>
-          <button class="btn btn-secondary btn-sm" onclick="openScanModal('s1')">Re-scan</button>
-          <button class="btn btn-secondary btn-sm" onclick="alert('Generating biometric report PDF...')">Report</button>
-          <button class="btn btn-secondary btn-sm" onclick="saveRemarks()">Save</button>`;
-  } else if(att>=3&&r==='unmatched'){
-    btns=`<button class="btn btn-danger" onclick="saveAndForceManual()">Switch to Manual Acceptance</button>
-          <button class="btn btn-secondary btn-sm" onclick="alert('Generating biometric report PDF...')">Report</button>
-          <button class="btn btn-secondary btn-sm" onclick="saveRemarks()" ${remarksMissing?'disabled':''}>Save</button>`;
-  } else {
-    const hasResult=r!=null;
-    btns=`<button class="btn btn-primary" onclick="openScanModal('s1')">${hasResult?'Retry Biometric Scan':'Start Biometric Scan'}</button>
-          ${hasResult?`<button class="btn btn-secondary btn-sm" onclick="alert('Generating biometric report PDF...')">Report</button>`:''}
-          <button class="btn btn-secondary btn-sm" onclick="saveRemarks()" ${!S.s1Remarks.trim()?'disabled':''}>Save</button>
-          <button class="btn btn-secondary btn-sm" onclick="openModal('modalSwitchConfirm')">Switch to Manual</button>`;
-  }
-
-  document.getElementById('s1Right').innerHTML=`<div class="info-main-page">
-    <div class="info-status-card">
-      <div class="isc-label">Biometric Status</div>
-      <div class="isc-status-row">${badge}${att?attBadge(att,3):''}</div>
-      <div class="isc-counter">Triggering Counter: <strong>${att}</strong></div>
-    </div>
-    ${guidanceHtml}
-    <div>
-      <div class="remarks-lbl">Remarks${needRemarks?' <span class="remarks-req">* Required</span>':' <span style="font-size:11px;color:#9aa0a6;">(optional)</span>'}</div>
-      <textarea class="remarks-ta${remarksMissing?' err':''}" placeholder="${needRemarks?'Required: describe the reason for verification failure...':'Enter any relevant remarks here...'}" oninput="S.s1Remarks=this.value">${S.s1Remarks}</textarea>
-      ${remarksMissing?'<div class="remarks-hint">⚠ Remarks are required when Biometric Status is Unmatched or Error</div>':''}
-    </div>
-    <div class="info-btns">${btns}</div>
-  </div>`;
 }
 
 function saveRemarks(){S.s1Remarks=document.querySelector('.remarks-ta')?.value||S.s1Remarks;alert('Remarks saved.');}
@@ -1084,57 +1062,46 @@ function getRibDocs(){
 }
 
 function renderStep2(){
-  document.getElementById('s2Left').innerHTML=leftPanel(2,{bioStatus:'Matched',bioClass:'matched',retry:S.s1Attempts+' / 3',trigPoint:'Letter Printing E-Acceptance'});
   const docs=getRibDocs();
   const confirmedCount=docs.filter((_,i)=>S.s2Confirmed[i]).length;
   const allOk=docs.every((_,i)=>S.s2Confirmed[i]);
 
   if(S.s2Submitted){
-    document.getElementById('s2Right').innerHTML=`<div style="width:100%;max-width:520px;display:flex;flex-direction:column;gap:12px;">
-      <div class="complete-banner">
-        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        <div><div class="cb-title">Documents Confirmed &amp; Submitted</div>
-        <div class="cb-sub">Customer has reviewed and accepted all loan documents on RIB portal. Submission recorded by system.</div></div>
-      </div>
-      <div class="alert-warn">
-        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <div><strong>Next Step for Sales Officer:</strong><br>Ask the customer to remain at the counter. You will now complete E-Acceptance Confirmation by scanning their fingerprint one final time.</div>
-      </div>
-      <button class="btn btn-primary" onclick="goStep3()">Proceed to E-Acceptance Confirmation →</button>
-    </div>`;
+    document.getElementById('s2Panel').innerHTML=`
+      <div class="step-card" style="text-align:center;padding:36px 24px;">
+        <div class="status-icon si-green">✓</div>
+        <div style="font-size:15px;font-weight:700;color:#137333;margin-bottom:8px;">Documents Confirmed &amp; Submitted</div>
+        <div style="font-size:12px;color:#5f6368;line-height:1.7;margin-bottom:22px;">Customer has reviewed and accepted all loan documents on the RIB portal.</div>
+        <button class="btn btn-primary" onclick="goStep3()">Proceed to E-Acceptance Confirmation →</button>
+      </div>`;
     return;
   }
 
   const docRows=docs.map((d,i)=>`
-    <div class="rib-doc-row ${S.s2Confirmed[i]?'confirmed':''}" onclick="${S.s2Confirmed[i]?'':('openRibDoc('+i+')')}">
+    <div class="rib-doc-row ${S.s2Confirmed[i]?'confirmed':''}" onclick="${S.s2Confirmed[i]?'':('openRibDoc('+i+')')}" style="${S.s2Confirmed[i]?'cursor:default;':''}">
       <div class="rib-tick ${S.s2Confirmed[i]?'ok':''}">${S.s2Confirmed[i]?'✓':''}</div>
       <div class="rib-doc-name">${d.name}${d.note?` <span style="font-size:10px;color:#9aa0a6;">(${d.note})</span>`:''}</div>
       ${d.amended&&!S.s2Confirmed[i]?'<span class="rib-doc-amend">AMENDED</span>':''}
-      <span style="font-size:11px;font-weight:600;${S.s2Confirmed[i]?'color:#137333;':'color:#9aa0a6;'}">${S.s2Confirmed[i]?'Confirmed ✓':'Tap to Confirm'}</span>
+      <span style="font-size:11px;font-weight:600;${S.s2Confirmed[i]?'color:#137333;':'color:#9aa0a6;'}">${S.s2Confirmed[i]?'Confirmed':'Pending'}</span>
     </div>`).join('');
 
-  document.getElementById('s2Right').innerHTML=`<div style="width:100%;max-width:520px;">
-    <div style="background:#e8f0fe;border:1px solid #c5d9f9;border-radius:8px;padding:12px 14px;margin-bottom:16px;">
-      <div style="font-size:12px;font-weight:700;color:#1967d2;margin-bottom:5px;">Sales Officer — Guidance</div>
-      <div style="font-size:12px;color:#1967d2;line-height:1.7;">${S.s2IsAmendment
-        ?'Direct the customer to open the HLB RIB Portal. Inform them that <strong>yellow-highlighted fields have been updated</strong>. Ask them to read each document carefully and confirm each one before submitting.'
-        :'Direct the customer to open HLB Retail Internet Banking (RIB) portal. Ask them to open and read each document below, then confirm. Once all documents are confirmed, ask them to click Submit.'
-      }</div>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div style="font-size:13px;font-weight:600;">Document Confirmation Status</div>
-      <div style="font-size:12px;color:#5f6368;background:#f1f3f4;padding:3px 10px;border-radius:10px;">${confirmedCount} / ${docs.length} confirmed</div>
-    </div>
-    <div id="ribDocListWrap" style="margin-bottom:14px;">${docRows}</div>
-    <div style="border-top:1px solid #e8eaed;padding-top:12px;">
-      ${allOk
-        ?`<div style="font-size:12px;color:#137333;font-weight:600;margin-bottom:10px;">✓ All documents confirmed — ask customer to click Submit on RIB portal, then proceed.</div>
-           <button class="btn btn-primary" onclick="submitRib()" style="width:100%;">Customer Has Submitted on RIB — Proceed →</button>`
-        :`<div style="font-size:11px;color:#9aa0a6;margin-bottom:8px;text-align:center;">Waiting for customer to read and confirm all documents on RIB portal... (${confirmedCount} / ${docs.length} done)</div>
-           <button class="btn btn-primary" disabled style="width:100%;cursor:not-allowed;background:#dadce0;color:#9aa0a6;">Waiting for Customer to Confirm All Documents</button>`
-      }
-    </div>
-  </div>`;
+  document.getElementById('s2Panel').innerHTML=`
+    <div class="step-card-flush">
+      <div class="sc-hdr">
+        <div class="sc-hdr-title">Document Confirmation${S.s2IsAmendment?` <span style="font-size:11px;font-weight:400;color:#b45309;">(Amendment)</span>`:''}</div>
+        <div class="sc-count">${confirmedCount} / ${docs.length} confirmed</div>
+      </div>
+      <div class="sc-body">
+        ${S.s2IsAmendment?`<div style="font-size:11px;color:#b45309;font-weight:500;margin-bottom:10px;display:flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>Changed fields highlighted in yellow — ask customer to review carefully.</div>`:''}
+        <div id="ribDocListWrap">${docRows}</div>
+      </div>
+      <div class="sc-ftr">
+        ${allOk
+          ?`<button class="btn btn-primary" onclick="submitRib()" style="width:100%;">Customer Has Submitted on RIB — Proceed →</button>`
+          :`<button class="btn btn-primary" disabled style="width:100%;background:#dadce0;color:#9aa0a6;cursor:not-allowed;">Waiting for Customer to Confirm All Documents (${confirmedCount}/${docs.length})</button>`
+        }
+      </div>
+    </div>`;
 }
 
 function openRibDoc(idx){
@@ -1190,84 +1157,66 @@ function submitRib(){S.s2Submitted=true;renderStep2();}
 // ═══════════════════════════════════════════════
 function renderStep3(){
   const dev=S.s3Dev; const att=S.s3Attempts;
-  const now=fmtNow(),now2=fmtNow(2);
   document.getElementById('otpWrap').style.display='none';
 
-  let lo={trigPoint:'E-Acceptance Confirmation'};
-  if(dev==='matched')   Object.assign(lo,{bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3'});
-  if(dev==='unmatched') Object.assign(lo,{bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3',remark:att>=3?'3 attempts exhausted. OTP fallback activated.':'Fingerprint not matched.'});
-  document.getElementById('s3Left').innerHTML=leftPanel(3,lo);
-
-  let rightContent='';
+  let content='';
 
   if(!dev||dev==='disconnected'){
-    rightContent=`
-      <div style="text-align:center;padding:10px 0 4px;">
-        ${devViz('connected')}
-        <div class="state-title" style="margin-top:4px;">E-Acceptance Confirmation</div>
-        <div class="state-sub">Customer has completed document review on RIB portal.<br>Complete E-Acceptance by scanning their fingerprint one final time.</div>
-        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="openScanModal('s3')">Start E-Acceptance Confirmation Scan</button>
-          <button class="btn btn-secondary btn-sm">Restart Service</button>
-        </div>
-      </div>`;
+    content=`<div class="step-card" style="text-align:center;padding:40px 24px;">
+      <div style="font-size:40px;margin-bottom:16px;">🔐</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px;">E-Acceptance Confirmation</div>
+      <div style="font-size:12px;color:#5f6368;line-height:1.7;margin-bottom:24px;max-width:380px;margin-left:auto;margin-right:auto;">Customer has completed document review on the RIB portal. Scan their fingerprint one final time to complete E-Acceptance.</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="openScanModal('s3')">Start E-Acceptance Confirmation Scan</button>
+        <button class="btn btn-secondary btn-sm">Restart Service</button>
+      </div>
+    </div>`;
   } else if(dev==='matched'){
-    rightContent=`
-      <div class="bio-result">
-        <div class="bio-result-icon">✅</div>
-        <div class="bio-result-title brt-matched">Biometric Verified — E-Acceptance Complete</div>
-        <p style="font-size:12px;color:#5f6368;margin:6px 0 16px;line-height:1.6;">Fingerprint matched successfully. The E-Acceptance process is complete.<br>Click below to record completion and proceed.</p>
-        <button class="btn btn-primary" onclick="completeEA(false)">Confirm E-Acceptance Complete →</button>
-      </div>`;
+    content=`<div class="step-card" style="text-align:center;padding:40px 24px;">
+      <div class="status-icon si-green" style="font-size:22px;">✓</div>
+      <div style="font-size:15px;font-weight:700;color:#137333;margin-bottom:8px;">Biometric Verified</div>
+      <div style="font-size:12px;color:#5f6368;line-height:1.7;margin-bottom:24px;">Fingerprint matched successfully. E-Acceptance is now complete.</div>
+      <button class="btn btn-primary" onclick="completeEA(false)">Confirm E-Acceptance Complete →</button>
+    </div>`;
   } else if(dev==='unmatched'&&att<3){
-    rightContent=`
-      <div style="text-align:center;padding:10px 0;">
-        <div class="bio-inline-result bir-unmatched" style="justify-content:center;margin-bottom:14px;">❌ Fingerprint not matched — ${att}/3 attempts used</div>
-        <div class="state-sub" style="margin-bottom:14px;">Ask the customer to carefully place their thumb on the scanner again. Ensure the thumb is flat and firmly pressed.</div>
-        <div style="display:flex;gap:8px;justify-content:center;">
-          <button class="btn btn-primary" onclick="openScanModal('s3')">Retry Scan</button>
-          <button class="btn btn-secondary btn-sm">Restart Service</button>
-        </div>
-      </div>`;
+    content=`<div class="step-card" style="text-align:center;padding:36px 24px;">
+      <div class="status-icon si-red" style="font-size:20px;color:#c5221f;">✕</div>
+      <div style="font-size:14px;font-weight:700;color:#c5221f;margin-bottom:8px;">Fingerprint Not Matched — ${att}/3 Attempts</div>
+      <div style="font-size:12px;color:#5f6368;line-height:1.7;margin-bottom:20px;max-width:340px;margin-left:auto;margin-right:auto;">Ask the customer to place their thumb flat and firmly on the scanner, then retry.</div>
+      <div style="display:flex;gap:8px;justify-content:center;">
+        <button class="btn btn-primary" onclick="openScanModal('s3')">Retry Scan</button>
+        <button class="btn btn-secondary btn-sm">Restart Service</button>
+      </div>
+    </div>`;
   } else if(dev==='unmatched'&&att>=3){
     if(S.s3OtpVerified){
-      rightContent=`
-        <div class="bio-result">
-          <div class="bio-result-icon">✅</div>
-          <div class="bio-result-title brt-matched">OTP Verified — E-Acceptance Complete</div>
-          <p style="font-size:12px;color:#5f6368;margin:6px 0 16px;line-height:1.6;">Customer successfully verified via OTP on RIB portal. E-Acceptance is recorded as complete.</p>
-          <button class="btn btn-primary" onclick="completeEA(true)">Confirm E-Acceptance Complete →</button>
-        </div>`;
+      content=`<div class="step-card" style="text-align:center;padding:40px 24px;">
+        <div class="status-icon si-green" style="font-size:22px;">✓</div>
+        <div style="font-size:15px;font-weight:700;color:#137333;margin-bottom:8px;">OTP Verified — E-Acceptance Complete</div>
+        <div style="font-size:12px;color:#5f6368;line-height:1.7;margin-bottom:24px;">Customer verified via OTP on RIB portal.</div>
+        <button class="btn btn-primary" onclick="completeEA(true)">Confirm E-Acceptance Complete →</button>
+      </div>`;
     } else if(S.s3OtpTriggered){
-      rightContent=`
-        <div class="alert-warn" style="margin-bottom:14px;">
-          <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <div><strong>OTP Dispatched — Awaiting Customer Verification</strong><br>A 6-digit OTP has been sent to the customer's registered mobile number.<br><strong>Inform the customer:</strong> Check your phone and enter the OTP on the RIB portal to complete signing.</div>
-        </div>
-        <div style="background:#f8f9fa;border:1px solid #e8eaed;border-radius:8px;padding:14px;text-align:center;">
-          <div style="font-size:24px;margin-bottom:8px;">📱</div>
-          <div style="font-size:13px;font-weight:600;color:#5f6368;margin-bottom:4px;">OTP Status: Sent — Waiting for Customer to Enter on RIB Portal</div>
-          <div style="font-size:11px;color:#9aa0a6;margin-bottom:14px;">Valid for 10 minutes · 6-digit OTP sent via SMS</div>
-          <div class="proto-ctrl"><div class="proto-ctrl-ttl">⚙ Prototype Controls</div><div class="proto-row" style="justify-content:center;">
-            <button class="pbtn ok" onclick="S.s3OtpVerified=true;renderStep3()">✓ Simulate: OTP Verified by Customer</button>
-          </div></div>
-        </div>`;
+      content=`<div class="step-card" style="text-align:center;padding:36px 24px;">
+        <div style="font-size:40px;margin-bottom:14px;">📱</div>
+        <div style="font-size:14px;font-weight:700;color:#b45309;margin-bottom:6px;">OTP Sent — Awaiting Customer Verification</div>
+        <div style="font-size:12px;color:#5f6368;line-height:1.7;margin-bottom:6px;">6-digit OTP dispatched to customer's registered mobile. Valid for 10 minutes.</div>
+        <div style="font-size:11px;color:#9aa0a6;margin-bottom:20px;">Ask customer to enter the OTP on the RIB portal to complete signing.</div>
+        <div class="proto-ctrl" style="text-align:left;"><div class="proto-ctrl-ttl">⚙ Prototype Controls</div><div class="proto-row" style="justify-content:center;">
+          <button class="pbtn ok" onclick="S.s3OtpVerified=true;renderStep3()">✓ Simulate: OTP Verified by Customer</button>
+        </div></div>
+      </div>`;
     } else {
-      rightContent=`
-        <div class="alert-err" style="margin-bottom:14px;">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <div><strong>Biometric Verification Failed — 3 Attempts Exhausted</strong><br>Fingerprint could not be captured after 3 attempts. System will initiate OTP fallback.</div>
-        </div>
-        <div style="background:#fef7e0;border:1px solid #fde68a;border-radius:8px;padding:16px;text-align:center;">
-          <div style="font-size:24px;margin-bottom:8px;">📱</div>
-          <div style="font-size:13px;font-weight:700;color:#b45309;margin-bottom:6px;">OTP Fallback</div>
-          <div style="font-size:12px;color:#92400e;line-height:1.7;margin-bottom:14px;">Click below to send a 6-digit OTP to the customer's registered mobile number.<br>Then ask the customer to enter the OTP on the RIB portal to complete signing.</div>
-          <button class="btn btn-danger" onclick="S.s3OtpTriggered=true;renderStep3()">Send OTP to Customer's Mobile</button>
-        </div>`;
+      content=`<div class="step-card" style="text-align:center;padding:36px 24px;">
+        <div class="status-icon si-red" style="font-size:20px;color:#c5221f;">✕</div>
+        <div style="font-size:14px;font-weight:700;color:#c5221f;margin-bottom:8px;">3/3 Attempts Failed — OTP Fallback</div>
+        <div style="font-size:12px;color:#5f6368;line-height:1.7;margin-bottom:22px;max-width:360px;margin-left:auto;margin-right:auto;">Fingerprint could not be captured. Send a 6-digit OTP to the customer's registered mobile — they will enter it on the RIB portal to complete signing.</div>
+        <button class="btn btn-danger" onclick="S.s3OtpTriggered=true;renderStep3()">Send OTP to Customer's Mobile</button>
+      </div>`;
     }
   }
 
-  document.getElementById('s3Right').innerHTML=`<div style="width:100%;">${rightContent}</div>`;
+  document.getElementById('s3Panel').innerHTML=content;
 }
 
 function renderRibOTPView(){
@@ -1376,64 +1325,55 @@ function renderManualBio(){
 function renderApplicantBioCard(a){
   const bio=S[a.key];
   const dev=bio.dev; const done=bio.done;
-  const now=fmtNow(),now2=fmtNow(2);
   const roleBadge=`<span class="badge ${a.role==='PRIMARY'?'bd-primary':'bd-other'}">${a.role}</span>`;
-  const nameHtml=`<span style="font-size:12px;font-weight:600;">${a.name}</span><span style="font-size:11px;color:#5f6368;margin-left:6px;">${a.id}</span>`;
+  const nameHtml=`<span style="font-size:13px;font-weight:600;">${a.name}</span><span style="font-size:11px;color:#5f6368;margin-left:8px;">${a.id}</span>`;
+  const k=`'${a.key}'`;
 
   if(done){
     let summary='';
-    if(dev==='matched') summary=`<div class="bio-inline-result bir-matched">✅ Identity Verified — Biometric matched. Result recorded.</div>`;
-    else if(dev==='unmatched') summary=`<div class="bio-inline-result bir-unmatched">⚠ Biometric Not Matched — Result recorded. Proceeding with Manual Acceptance.</div>`;
-    else if(dev==='skipped') summary=`<div class="bio-inline-result bir-skipped">— Identity Verification skipped.</div>`;
+    if(dev==='matched')   summary=`<div class="bio-inline-result bir-matched">✓ Biometric Matched — Identity verified and recorded.</div>`;
+    else if(dev==='unmatched') summary=`<div class="bio-inline-result bir-unmatched">⚠ Not Matched — Result recorded. Proceeding with Manual Acceptance.</div>`;
+    else if(dev==='skipped')   summary=`<div class="bio-inline-result bir-skipped">— Identity Verification skipped.</div>`;
     return `<div class="m-bio-person">
       <div class="m-bio-person-hdr"><div class="m-bio-person-hdr-left">${roleBadge}${nameHtml}</div></div>
       <div class="m-bio-person-body">${summary}</div>
     </div>`;
   }
 
-  // Build left and right panels
-  const leftOpts={trigPoint:'Manual Acceptance',name:a.name,nric:a.id};
-  if(dev==='matched') Object.assign(leftOpts,{bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:(bio.attempts||1)+' / 3'});
-  else if(dev==='unmatched') Object.assign(leftOpts,{bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:bio.attempts+' / 3',remark:'Biometric not matched.'});
-
-  let right='';
-  const k=`'${a.key}'`;
+  let body='';
   if(dev==='disconnected'){
-    right=devViz('disconnected')+`
-      <div class="state-title">Connect Biometric Device</div>
-      <div class="state-sub">Ensure the MyKad reader is connected via USB.<br><span style="color:#b45309;font-weight:500;">Optional — result does not block contract access.</span></div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-primary btn-sm" onclick="mBioSet(${k},'scanning')">Reconnect</button>
+    body=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span class="badge bd-gray">Not Done</span>
+      <div style="margin-left:auto;display:flex;gap:6px;">
+        <button class="btn btn-primary btn-sm" onclick="mBioSet(${k},'scanning')">Start Biometric Scan</button>
         <button class="btn btn-secondary btn-sm">Restart Service</button>
-      </div>`;
+        <button class="lnk" style="font-size:12px;" onclick="mBioSkip(${k})">Skip</button>
+      </div>
+    </div>`;
   } else if(dev==='scanning'){
-    right=devViz('scanning')+`<div class="state-title">Scanning for Devices...</div>`;
-    setTimeout(()=>{if(S[a.key].dev==='scanning'){S[a.key].dev='ready';renderManualBio();}},2000);
+    body=`<div style="font-size:12px;color:#b45309;display:flex;align-items:center;gap:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" class="spin"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Connecting to device...</div>`;
+    setTimeout(()=>{if(S[a.key].dev==='scanning'){S[a.key].dev='ready';renderManualBio();}},1500);
   } else if(dev==='ready'){
-    right=devViz('connected')+`
-      <div class="state-title">Device Connected</div>
-      <div class="state-sub">Ask the customer to place their thumb.<br><span style="color:#b45309;font-weight:500;">Result will be recorded but does not affect signing.</span></div>
+    body=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="font-size:12px;color:#137333;font-weight:500;">● Device ready</span>
       ${bio.attempts>0?attBadge(bio.attempts,3):''}
-      <div style="display:flex;gap:8px;margin-top:12px;">
+      <div style="margin-left:auto;display:flex;gap:6px;">
         <button class="btn btn-primary btn-sm" onclick="mBioSet(${k},'matched')">Simulate: Match</button>
         <button class="btn btn-secondary btn-sm" onclick="mBioFail(${k})">Simulate: Fail</button>
-      </div>`;
+        <button class="lnk" style="font-size:12px;" onclick="mBioSkip(${k})">Skip</button>
+      </div>
+    </div>`;
   } else if(dev==='matched'){
-    right=`<div class="bio-result">
-      <div class="bio-result-icon">✅</div>
-      <div class="bio-result-title brt-matched">Identity Verified</div>
-      <p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">Biometric matched. Result recorded as Manual Acceptance Verification.</p>
+    body=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div class="bio-inline-result bir-matched" style="flex:1;">✓ Biometric Matched</div>
       <button class="btn btn-primary btn-sm" onclick="mBioProceed(${k})">Confirm →</button>
     </div>`;
   } else if(dev==='unmatched'){
-    right=`<div class="bio-result">
-      <div class="bio-result-icon">⚠️</div>
-      <div class="bio-result-title brt-warn">Biometric Not Matched</div>
-      ${attBadge(bio.attempts,3)}
-      <p style="font-size:12px;color:#5f6368;margin:8px 0 14px;">Result recorded. You may retry or proceed anyway — this does not block the signing process.</p>
-      <div style="display:flex;gap:8px;justify-content:center;">
+    body=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div class="bio-inline-result bir-unmatched" style="flex:1;">✗ Not Matched ${attBadge(bio.attempts,3)}</div>
+      <div style="display:flex;gap:6px;">
         <button class="btn btn-secondary btn-sm" onclick="mBioSet(${k},'ready')">Retry</button>
-        <button class="btn btn-primary btn-sm" onclick="mBioProceed(${k})">Proceed Anyway →</button>
+        <button class="btn btn-primary btn-sm" onclick="mBioProceed(${k})">Proceed →</button>
         <button class="lnk" style="font-size:12px;" onclick="mBioSkip(${k})">Skip</button>
       </div>
     </div>`;
@@ -1444,12 +1384,7 @@ function renderApplicantBioCard(a){
       <div class="m-bio-person-hdr-left">${roleBadge}${nameHtml}</div>
       <button class="lnk" onclick="mBioSkip(${k})">Skip</button>
     </div>
-    <div class="m-bio-person-body">
-      <div class="bio-layout">
-        <div class="bio-left">${leftPanel('manual',leftOpts)}</div>
-        <div class="bio-right" style="min-height:260px;">${right}</div>
-      </div>
-    </div>
+    <div class="m-bio-person-body">${body}</div>
   </div>`;
 }
 
@@ -1577,11 +1512,9 @@ function renderScanModal(){
     btns=`<div style="font-size:12px;color:#5f6368;">Reading MyKad... please wait</div>`;
   }
 
-  const devState=scanState==='thumb-prompt'?'scanning':scanState==='verified'||scanState==='reading'?'connected':'connected';
   document.getElementById('scanModalBody').innerHTML=`
-    <div class="scan-pills">${pills}</div>
-    <div class="scan-device-area">${devViz(devState)}</div>
-    <div class="status-textbox ${s.cls}"><div class="stb-dot ${s.dot}"></div><span>${s.msg}</span></div>
+    <div class="scan-pills" style="margin-bottom:16px;">${pills}</div>
+    <div class="status-textbox ${s.cls}" style="font-size:13px;min-height:46px;margin-bottom:16px;"><div class="stb-dot ${s.dot}"></div><span>${s.msg}</span></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">${btns}</div>
     ${proto}`;
 }
