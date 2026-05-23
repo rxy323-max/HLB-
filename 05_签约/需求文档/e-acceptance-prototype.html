@@ -374,7 +374,7 @@ let S={
 // ═══════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded',()=>{
+document.addEventListener('DOMContentLoaded',function(){
   renderDLTable(DL_DOCS);
   applyScenario('ea-s1-disc',document.querySelector('.dev-btn.active'));
 });
@@ -383,31 +383,42 @@ document.addEventListener('DOMContentLoaded',()=>{
 //  TABS
 // ═══════════════════════════════════════════════
 function switchMainTab(id,el){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
   el.classList.add('active');
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
   document.getElementById('tp-'+id).classList.add('active');
+}
+
+function showAcceptanceTab(){
+  // Activate the Acceptance tab without needing a click element ref
+  var tabs=document.querySelectorAll('.tab');
+  var panels=document.querySelectorAll('.tab-panel');
+  tabs.forEach(function(t){t.classList.remove('active');});
+  panels.forEach(function(p){p.classList.remove('active');});
+  tabs[1].classList.add('active');  // 'Acceptance' is the second tab
+  document.getElementById('tp-acceptance').classList.add('active');
 }
 
 // ═══════════════════════════════════════════════
 //  DOC LIBRARY
 // ═══════════════════════════════════════════════
 function renderDLTable(docs){
-  document.getElementById('dlTableBody').innerHTML=docs.map((d,i)=>`
-    <tr>
-      <td><input type="checkbox" class="dchk"></td>
-      <td style="color:#5f6368;">${i+1}</td>
-      <td style="font-weight:500;">${d.name}</td>
-      <td><span class="badge ${d.role==='Primary'?'bd-primary':'bd-other'}">${d.role}</span></td>
-      <td class="text-muted">${d.ver} — ${d.date}</td>
-      <td><div class="act-row">
-        <span class="lnk" onclick="alert('Opening: ${d.name}')">View</span>
-        <span class="lnk" onclick="alert('Downloading: ${d.name}')">Download</span>
-      </div></td>
-    </tr>`).join('');
+  document.getElementById('dlTableBody').innerHTML=docs.map(function(d,i){
+    return '<tr>'+
+      '<td><input type="checkbox" class="dchk"></td>'+
+      '<td style="color:#5f6368;">'+(i+1)+'</td>'+
+      '<td style="font-weight:500;">'+d.name+'</td>'+
+      '<td><span class="badge '+(d.role==='Primary'?'bd-primary':'bd-other')+'">'+d.role+'</span></td>'+
+      '<td class="text-muted">'+d.ver+' — '+d.date+'</td>'+
+      '<td><div class="act-row">'+
+        '<span class="lnk" onclick="alert(\'Opening: '+d.name+'\')">View</span>'+
+        '<span class="lnk" onclick="alert(\'Downloading: '+d.name+'\')">Download</span>'+
+      '</div></td>'+
+    '</tr>';
+  }).join('');
 }
-function filterDocs(r){renderDLTable(r?DL_DOCS.filter(d=>d.role===r):DL_DOCS);}
-function searchDocs(q){renderDLTable(q?DL_DOCS.filter(d=>d.name.toLowerCase().includes(q.toLowerCase())):DL_DOCS);}
+function filterDocs(r){renderDLTable(r?DL_DOCS.filter(function(d){return d.role===r;}):DL_DOCS);}
+function searchDocs(q){renderDLTable(q?DL_DOCS.filter(function(d){return d.name.toLowerCase().indexOf(q.toLowerCase())>=0;}):DL_DOCS);}
 
 // ═══════════════════════════════════════════════
 //  MODE SWITCH
@@ -418,6 +429,7 @@ function requestModeSwitch(mode){
 }
 function applyMode(mode){
   S.mode=mode;
+  showAcceptanceTab();
   document.getElementById('tglEA').classList.toggle('active',mode==='ea');
   document.getElementById('tglManual').classList.toggle('active',mode==='manual');
   document.getElementById('panelEA').style.display=mode==='ea'?'block':'none';
@@ -518,30 +530,31 @@ function renderStep1(){
   });
 
   if(dev==='disconnected'){
-    right=devViz('disconnected')+`
-      <div class="state-title">Connect Reader</div>
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn btn-primary btn-sm" onclick="S.s1Dev='scanning';S.s1Time=Date.now();setTimeout(()=>{S.s1Dev='matched';renderStep1();},3500)">Read MyKad</button>
-        <button class="btn btn-secondary btn-sm">Restart Service</button>
-      </div>`;
+    right=devViz('disconnected')+
+      '<div class="state-title">Reader is ready</div>'+
+      '<div class="state-sub">No MyKad detected. Insert card and click Read.</div>'+
+      '<div style="display:flex;gap:8px;margin-top:16px;">'+
+        '<button class="btn btn-primary btn-sm" onclick="s1StartScan()">Read MyKad</button>'+
+        '<button class="btn btn-secondary btn-sm" onclick="s1Restart()">Restart Service</button>'+
+      '</div>';
   } else if(dev==='scanning'){
-    right=devViz('scanning')+`
-      <div class="state-title">Reading MyKad…</div>
-      <div class="state-sub">Please place your thumb on the scanner when light is On</div>`;
+    right=devViz('scanning')+
+      '<div class="state-title">Reading MyKad…</div>'+
+      '<div class="state-sub">Please place your thumb on the scanner when light is On</div>';
   } else if(dev==='matched'){
-    right=devViz('connected')+`
-      <div class="state-title">Verified OK</div>
-      <div class="state-sub">Thumbprint matched. Please remove card.</div>
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn btn-primary btn-sm" onclick="S.eaStep=2;S.s2RibDone=false;renderEAPanel()">Proceed to Step 2</button>
-      </div>`;
+    right=devViz('connected')+
+      '<div class="state-title">Verified OK. Thumbprint matched.</div>'+
+      '<div class="state-sub">Please remove card.</div>'+
+      '<div style="display:flex;gap:8px;margin-top:16px;">'+
+        '<button class="btn btn-primary btn-sm" onclick="s1Proceed()">Proceed to Step 2</button>'+
+      '</div>';
   } else if(dev==='unmatched'){
-    right=devViz('disconnected')+`
-      <div class="state-title">Verification Failed</div>
-      <div class="state-sub">Thumbprint does not match. ${att>=3?'Maximum attempts reached.':'Please try again.'}</div>
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn btn-secondary btn-sm" onclick="S.s1Attempts++;if(S.s1Attempts>=3){S.s1Dev='unmatched';}else{S.s1Dev='disconnected';}renderStep1()">Retry</button>
-      </div>`;
+    right=devViz('disconnected')+
+      '<div class="state-title">Verification Failed</div>'+
+      '<div class="state-sub">Thumbprint does not match. '+(att>=3?'Maximum attempts reached — please contact support.':'Please try again.')+' ('+att+'/3)</div>'+
+      '<div style="display:flex;gap:8px;margin-top:16px;">'+
+        (att<3?'<button class="btn btn-secondary btn-sm" onclick="s1Retry()">Retry</button>':'')+
+      '</div>';
   }
 
   document.getElementById('s1Right').innerHTML=right;
@@ -557,19 +570,19 @@ function renderStep2(){
   });
 
   if(!done){
-    document.getElementById('s2Right').innerHTML=`
-      <div class="state-title">Review at RIB</div>
-      <div class="state-sub">Redirecting to external system for document review and acceptance...</div>
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn btn-secondary btn-sm" onclick="S.s2RibDone=true;renderStep2()">✓ Completed</button>
-      </div>`;
+    document.getElementById('s2Right').innerHTML=
+      '<div class="state-title">Review at RIB</div>'+
+      '<div class="state-sub">Customer is reviewing and accepting documents in the external RIB portal.</div>'+
+      '<div style="display:flex;gap:8px;margin-top:16px;">'+
+        '<button class="btn btn-secondary btn-sm" onclick="s2MarkDone()">Mark as Completed</button>'+
+      '</div>';
   } else {
-    document.getElementById('s2Right').innerHTML=`
-      <div class="state-title">Review Complete</div>
-      <div class="state-sub">Documents reviewed and accepted at RIB.</div>
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn btn-primary btn-sm" onclick="S.eaStep=3;renderEAPanel()">Proceed to Step 3</button>
-      </div>`;
+    document.getElementById('s2Right').innerHTML=
+      '<div class="state-title">Review Complete</div>'+
+      '<div class="state-sub">Documents reviewed and accepted at RIB.</div>'+
+      '<div style="display:flex;gap:8px;margin-top:16px;">'+
+        '<button class="btn btn-primary btn-sm" onclick="s2Proceed()">Proceed to Step 3</button>'+
+      '</div>';
   }
 }
 
@@ -587,22 +600,24 @@ function renderStep3(){
   });
 
   if(dev==='disconnected'){
-    right=devViz('disconnected')+`
-      <div class="state-title">Final Confirmation</div>
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn btn-primary btn-sm" onclick="S.s3Dev='scanning';S.s3Time=Date.now();setTimeout(()=>{S.s3Dev='matched';renderStep3();},3500)">Confirm with Fingerprint</button>
-      </div>`;
+    right=devViz('disconnected')+
+      '<div class="state-title">Reader is ready</div>'+
+      '<div class="state-sub">Please place thumb on scanner to confirm E-Acceptance.</div>'+
+      '<div style="display:flex;gap:8px;margin-top:16px;">'+
+        '<button class="btn btn-primary btn-sm" onclick="s3StartScan()">Confirm with Fingerprint</button>'+
+        '<button class="btn btn-secondary btn-sm" onclick="s3Restart()">Restart Service</button>'+
+      '</div>';
   } else if(dev==='scanning'){
-    right=devViz('scanning')+`
-      <div class="state-title">Reading Fingerprint…</div>
-      <div class="state-sub">Please place your thumb on the scanner</div>`;
+    right=devViz('scanning')+
+      '<div class="state-title">Reading Fingerprint…</div>'+
+      '<div class="state-sub">Please place your thumb on the scanner when light is On</div>';
   } else if(dev==='matched'){
-    right=devViz('connected')+`
-      <div class="state-title">Verified OK</div>
-      <div class="state-sub">E-Acceptance confirmed successfully.</div>
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn btn-primary btn-sm" onclick="S.eaComplete=true;renderEAPanel()">Complete</button>
-      </div>`;
+    right=devViz('connected')+
+      '<div class="state-title">Verified OK. Thumbprint matched.</div>'+
+      '<div class="state-sub">E-Acceptance confirmed. Please remove card.</div>'+
+      '<div style="display:flex;gap:8px;margin-top:16px;">'+
+        '<button class="btn btn-primary btn-sm" onclick="s3Complete()">Complete E-Acceptance</button>'+
+      '</div>';
   }
 
   document.getElementById('s3Right').innerHTML=right;
@@ -630,21 +645,101 @@ function renderManualBio(){
           <div class="bio-left">${leftPanel(idx+1,{name:app.name,nric:app.id,bioStatus:bio.dev==='disconnected'?'Pending':bio.dev==='matched'?'Matched':'Failed',bioClass:bio.dev==='matched'?'matched':bio.dev==='unmatched'?'failed':'',retry:bio.attempts+' / 3'})}</div>
           <div class="bio-right">
             ${devViz(bio.dev)}
-            ${bio.done?`
-              <div class="state-title" style="color:#137333;">✓ Matched</div>
-              <div class="state-sub">Biometric verification successful</div>
-            `:bio.dev==='disconnected'?`
-              <div class="state-title">Ready</div>
-              <button class="btn btn-primary btn-sm" style="margin-top:16px;" onclick="S['${bioKey}'].dev='scanning';setTimeout(()=>{S['${bioKey}'].dev='matched';S['${bioKey}'].done=true;renderManualBio();},2500)">Start Scan</button>
-            `:`
-              <div class="state-title">Scanning…</div>
-            `}
+            ${bio.done?
+              '<div class="state-title" style="color:#137333;">&#10003; Matched</div>'+
+              '<div class="state-sub">Biometric verification successful</div>'
+            :bio.dev==='disconnected'?
+              '<div class="state-title">Reader is ready</div>'+
+              '<button class="btn btn-primary btn-sm" style="margin-top:16px;" onclick="manualStartScan(\''+bioKey+'\')">Start Scan</button>'
+            :
+              '<div class="state-title">Scanning…</div>'
+            }
           </div>
         </div>
       </div>
     </div>`;
   }).join('');
   document.getElementById('manualBioPanel').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════
+//  STEP 1 ACTIONS
+// ═══════════════════════════════════════════════
+function s1StartScan(){
+  S.s1Dev='scanning';
+  S.s1Time=Date.now();
+  renderStep1();
+  setTimeout(s1FinishScan, 3000);
+}
+function s1FinishScan(){
+  S.s1Dev='matched';
+  renderStep1();
+}
+function s1Restart(){
+  S.s1Dev='disconnected';
+  renderStep1();
+}
+function s1Retry(){
+  S.s1Attempts++;
+  if(S.s1Attempts>=3){
+    S.s1Dev='unmatched';
+  } else {
+    S.s1Dev='disconnected';
+  }
+  renderStep1();
+}
+function s1Proceed(){
+  S.eaStep=2;
+  S.s2RibDone=false;
+  renderEAPanel();
+}
+
+// ═══════════════════════════════════════════════
+//  STEP 2 ACTIONS
+// ═══════════════════════════════════════════════
+function s2MarkDone(){
+  S.s2RibDone=true;
+  renderStep2();
+}
+function s2Proceed(){
+  S.eaStep=3;
+  renderEAPanel();
+}
+
+// ═══════════════════════════════════════════════
+//  STEP 3 ACTIONS
+// ═══════════════════════════════════════════════
+function s3StartScan(){
+  S.s3Dev='scanning';
+  S.s3Time=Date.now();
+  renderStep3();
+  setTimeout(s3FinishScan, 3000);
+}
+function s3FinishScan(){
+  S.s3Dev='matched';
+  renderStep3();
+}
+function s3Restart(){
+  S.s3Dev='disconnected';
+  renderStep3();
+}
+function s3Complete(){
+  S.eaComplete=true;
+  renderEAPanel();
+}
+
+// ═══════════════════════════════════════════════
+//  MANUAL ACTIONS
+// ═══════════════════════════════════════════════
+function manualStartScan(key){
+  S[key].dev='scanning';
+  renderManualBio();
+  setTimeout(function(){ manualFinishScan(key); }, 2500);
+}
+function manualFinishScan(key){
+  S[key].dev='matched';
+  S[key].done=true;
+  renderManualBio();
 }
 
 // ═══════════════════════════════════════════════
