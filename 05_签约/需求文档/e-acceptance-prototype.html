@@ -74,15 +74,18 @@ tr:last-child td{border-bottom:none;}
 tr:hover td{background:#fafafa;}
 .act-row{display:flex;gap:8px;}
 
-/* ── Mode toggle ── */
-.mode-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
-.mode-row>label{font-size:13px;color:#5f6368;font-weight:500;white-space:nowrap;}
-.toggle-grp{display:flex;border:1px solid #dadce0;border-radius:6px;overflow:hidden;}
-.tgl{padding:7px 20px;font-size:13px;cursor:pointer;background:#fff;color:#5f6368;border:none;outline:none;transition:.15s;}
-.tgl.active{background:#1967d2;color:#fff;font-weight:500;}
-.tgl:not(.active):hover{background:#f8f9fa;}
-.tgl:disabled{opacity:.45;cursor:not-allowed;}
-.tgl-tip{font-size:11px;color:#9aa0a6;font-style:italic;}
+/* ── Mode Gate (one-time entry point) ── */
+.mode-gate-wrap{max-width:600px;margin:0 auto;padding:8px 0 28px;}
+.mode-gate-title{text-align:center;font-size:15px;font-weight:700;color:#202124;margin-bottom:6px;}
+.mode-gate-sub{text-align:center;font-size:12px;color:#5f6368;line-height:1.6;margin-bottom:24px;}
+.mode-gate-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.mgc{border:2px solid #e8eaed;border-radius:10px;padding:24px 20px;display:flex;flex-direction:column;gap:12px;background:#fff;transition:border-color .15s,box-shadow .15s;}
+.mgc:not(.mgc-disabled):hover{border-color:#1967d2;box-shadow:0 2px 12px rgba(25,103,210,.12);}
+.mgc.mgc-disabled{background:#f8f9fa;opacity:.55;cursor:not-allowed;}
+.mgc-icon{font-size:28px;line-height:1;}
+.mgc-title{font-size:14px;font-weight:700;color:#202124;}
+.mgc-desc{font-size:12px;color:#5f6368;line-height:1.65;flex:1;}
+.mgc-note{font-size:11px;color:#c5221f;font-style:italic;}
 
 /* ── E-Acceptance progress bar ── */
 .ea-progress{display:flex;align-items:flex-start;margin-bottom:20px;position:relative;}
@@ -379,14 +382,27 @@ tr:hover td{background:#fafafa;}
       <!-- ══ Acceptance ══ -->
       <div class="tab-panel" id="tp-acceptance">
 
-        <!-- Mode Toggle -->
-        <div class="mode-row">
-          <label>Signing Mode:</label>
-          <div class="toggle-grp">
-            <button class="tgl" id="tglEA" onclick="requestModeSwitch('ea')">E-Acceptance</button>
-            <button class="tgl active" id="tglManual" onclick="requestModeSwitch('manual')">Manual Acceptance</button>
+        <!-- Mode Gate — one-time entry, hidden after mode is selected -->
+        <div id="modeGate" style="display:none;">
+          <div class="mode-gate-wrap">
+            <div class="mode-gate-title">Select Signing Mode</div>
+            <div class="mode-gate-sub">Choose how the customer will sign the documents.<br>This cannot be changed once the process has started.</div>
+            <div class="mode-gate-cards">
+              <div class="mgc" id="mgcEA">
+                <div class="mgc-icon">🖐</div>
+                <div class="mgc-title">E-Acceptance</div>
+                <div class="mgc-desc">Fully electronic. Customer verifies identity via biometric and reviews &amp; signs documents through RIB Portal.</div>
+                <div class="mgc-note" id="mgcEANote" style="display:none;">Not available — application has guarantor(s)</div>
+                <button class="btn btn-primary btn-sm" id="btnSelectEA" onclick="selectMode('ea')">Select E-Acceptance →</button>
+              </div>
+              <div class="mgc">
+                <div class="mgc-icon">📝</div>
+                <div class="mgc-title">Manual Acceptance</div>
+                <div class="mgc-desc">Physical signature. Download signing documents, have each applicant sign on paper, then upload signed copies.</div>
+                <button class="btn btn-secondary btn-sm" onclick="selectMode('manual')">Select Manual Acceptance →</button>
+              </div>
+            </div>
           </div>
-          <span class="tgl-tip" id="eaTip" style="display:none;">Not available — application has guarantor(s)</span>
         </div>
 
         <!-- ══════════════ E-ACCEPTANCE PANEL ══════════════ -->
@@ -612,8 +628,13 @@ tr:hover td{background:#fafafa;}
   <div class="dev-panel" id="devPanel">
     <div class="dev-title">Scenarios — v9</div>
 
+    <div class="dev-group">Entry Point</div>
+    <button class="dev-btn" onclick="applyScenario('gate',this)">⓪ Mode Gate — no guarantor</button>
+    <button class="dev-btn" onclick="applyScenario('m-gate',this)">⓪ Mode Gate — with guarantor</button>
+    <div class="dev-sep"></div>
+
     <div class="dev-group">E-Acceptance · Step 1 Identity Verification</div>
-    <button class="dev-btn active" onclick="applyScenario('ea-s1-disc',this)">Disconnected</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s1-disc',this)">Disconnected</button>
     <button class="dev-btn" onclick="applyScenario('ea-s1-ready',this)">Device ready</button>
     <button class="dev-btn" onclick="applyScenario('ea-s1-matched',this)">✓ Matched (1st attempt)</button>
     <button class="dev-btn" onclick="applyScenario('ea-s1-fail1',this)">✗ Failed — attempt 1/3</button>
@@ -698,7 +719,7 @@ const BIO_APPLICANTS=[
 //  STATE
 // ═══════════════════════════════════════════════
 let S={
-  mode:'manual', hasGuarantor:true,
+  mode:'ea', modeConfirmed:false, hasGuarantor:false,
   // EA flow
   eaStep:1,
   s1Dev:'disconnected', s1Attempts:0,
@@ -716,7 +737,8 @@ let S={
 // ═══════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
   renderContractDocs();
-  applyScenario('ea-s1-disc', document.querySelector('.dev-btn.active'));
+  // Start on Acceptance tab with mode gate shown
+  applyScenario('gate', null);
 });
 
 // ═══════════════════════════════════════════════
@@ -756,8 +778,16 @@ function renderContractDocs(){
 }
 
 function renderSigningDocs(){
-  const docs=S.mode==='ea'?SIGNING_DOCS_EA:SIGNING_DOCS_MANUAL;
   const badge=document.getElementById('dlSigningBadge');
+  const content=document.getElementById('dlSigningContent');
+  // If mode not yet confirmed, show placeholder
+  if(!S.modeConfirmed){
+    badge.style.display='none';
+    document.getElementById('dlSigningSub').textContent='Select a signing mode in the Acceptance tab to generate documents';
+    content.innerHTML='<div style="background:#f8f9fa;border:1px dashed #dadce0;border-radius:6px;padding:20px 16px;font-size:12px;color:#9aa0a6;text-align:center;line-height:1.8;">Signing documents will appear here once a signing mode is confirmed in the Acceptance tab.</div>';
+    return;
+  }
+  const docs=S.mode==='ea'?SIGNING_DOCS_EA:SIGNING_DOCS_MANUAL;
   badge.style.display='inline-flex';
   badge.textContent=S.mode==='ea'?'E-Acceptance':'Manual';
   badge.className='badge '+(S.mode==='ea'?'bd-blue':'bd-purple');
@@ -817,24 +847,39 @@ function openHistory(name,ver,date,multiVer){
 // ═══════════════════════════════════════════════
 //  MODE SWITCH
 // ═══════════════════════════════════════════════
-function requestModeSwitch(mode){
-  if(mode===S.mode)return;
-  if(mode==='manual'&&S.mode==='ea'&&!S.eaComplete){openModal('modalSwitchConfirm');return;}
+// One-time gate selection — called from mode gate cards
+function selectMode(mode){
   if(mode==='ea'&&S.hasGuarantor)return;
   applyMode(mode);
 }
+// Mid-flow switch (EA → Manual only, via confirm modal or auto)
 function confirmSwitchToManual(){closeModal('modalSwitchConfirm');applyMode('manual');}
-function forceManualSwitch(){applyMode('manual');}  // auto-switch, no confirm needed
+function forceManualSwitch(){applyMode('manual');}
+
 function applyMode(mode){
   S.mode=mode;
-  document.getElementById('tglEA').classList.toggle('active',mode==='ea');
-  document.getElementById('tglManual').classList.toggle('active',mode==='manual');
+  S.modeConfirmed=true;
+  document.getElementById('modeGate').style.display='none';
   document.getElementById('panelEA').style.display=mode==='ea'?'block':'none';
   document.getElementById('panelManual').style.display=mode==='manual'?'block':'none';
   if(mode==='ea')renderEAPanel();
   if(mode==='manual'){renderManualBio();renderManualDocs();}
   updateFooter();
   renderSigningDocs();
+}
+
+// Show the mode gate (before any mode is confirmed)
+function renderGate(){
+  const disabled=S.hasGuarantor;
+  const mgcEA=document.getElementById('mgcEA');
+  if(mgcEA) mgcEA.classList.toggle('mgc-disabled',disabled);
+  const note=document.getElementById('mgcEANote');
+  if(note) note.style.display=disabled?'block':'none';
+  const btnEA=document.getElementById('btnSelectEA');
+  if(btnEA) btnEA.disabled=disabled;
+  document.getElementById('modeGate').style.display='block';
+  document.getElementById('panelEA').style.display='none';
+  document.getElementById('panelManual').style.display='none';
 }
 
 // ═══════════════════════════════════════════════
@@ -1312,7 +1357,7 @@ function applyScenario(key,btn){
   if(btn)btn.classList.add('active');
 
   const fresh={
-    mode:'ea', hasGuarantor:false,
+    mode:'ea', modeConfirmed:true, hasGuarantor:false,
     eaStep:1, s1Dev:'disconnected', s1Attempts:0,
     s2RibDone:false, s3Dev:'disconnected', s3Attempts:0,
     eaComplete:false, amendmentRequired:false, smsSent:false, eaViaOTP:false,
@@ -1322,6 +1367,9 @@ function applyScenario(key,btn){
   S=Object.assign({},fresh);
 
   const map={
+    // Gate — mode not yet selected
+    'gate':         {mode:'ea',modeConfirmed:false,hasGuarantor:false},
+    'm-gate':       {mode:'manual',modeConfirmed:false,hasGuarantor:true},
     // Step 1
     'ea-s1-disc':   {},
     'ea-s1-ready':  {s1Dev:'ready'},
@@ -1370,10 +1418,14 @@ function applyScenario(key,btn){
   document.getElementById('eaStatusHeader').textContent=S.eaComplete?'Completed':'—';
   document.getElementById('eaStatusHeader').style.color=S.eaComplete?'#137333':'';
   document.getElementById('amendmentVal').textContent=S.amendmentRequired?'Yes':'--';
-  document.getElementById('tglEA').disabled=S.hasGuarantor;
-  document.getElementById('eaTip').style.display=S.hasGuarantor?'inline':'none';
 
-  applyMode(S.mode);
+  // Show gate or flow depending on whether mode has been confirmed
+  if(S.modeConfirmed){
+    applyMode(S.mode);
+  } else {
+    renderGate();
+    renderSigningDocs();
+  }
   // Switch to Acceptance tab
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===1));
   document.getElementById('tp-doclib').classList.remove('active');
