@@ -60,6 +60,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 .inp-search{border:1px solid #dadce0;border-radius:4px;padding:5px 10px;font-size:12px;width:200px;outline:none;}
 .inp-search:focus{border-color:#1967d2;}
 .lnk{color:#1967d2;font-size:12px;cursor:pointer;background:none;border:none;padding:0;font-family:inherit;}
+/* ── Doc Library sections ── */
+.dl-sec-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:12px;}
+.dl-sec-title{font-size:13px;font-weight:700;color:#202124;display:flex;align-items:center;gap:8px;}
+.dl-sec-sub{font-size:11px;color:#80868b;margin-top:3px;}
+.dl-section{margin-top:24px;padding-top:18px;border-top:2px solid #e8eaed;}
 .lnk:hover{text-decoration:underline;}
 .lnk.disabled{color:#9aa0a6;pointer-events:none;}
 table{width:100%;border-collapse:collapse;}
@@ -330,23 +335,45 @@ tr:hover td{background:#fafafa;}
 
       <!-- ══ Document Library ══ -->
       <div class="tab-panel active" id="tp-doclib">
-        <div class="dl-toolbar">
-          <label>Role:</label>
-          <select class="sel-sm" onchange="filterDocs(this.value)"><option value="">All</option><option>Primary</option><option>Other</option></select>
-          <label style="margin-left:8px;">Search:</label>
-          <input class="inp-search" type="text" placeholder="Document name..." oninput="searchDocs(this.value)">
-          <button class="btn btn-secondary btn-sm" style="margin-left:auto;" onclick="alert('Batch downloading selected documents...')">Batch Download</button>
+
+        <!-- ── Contract Documents ── -->
+        <div class="dl-sec-hdr">
+          <div>
+            <div class="dl-sec-title">Contract Documents</div>
+            <div class="dl-sec-sub">Supporting documents for this application — available before and after signing, regardless of signing mode</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+            <label style="font-size:12px;color:#5f6368;">Role:</label>
+            <select class="sel-sm" onchange="filterDocs(this.value)"><option value="">All</option><option>Primary</option><option>Other</option></select>
+            <input class="inp-search" type="text" placeholder="Search..." oninput="searchDocs(this.value)" style="width:150px;">
+            <button class="btn btn-secondary btn-sm" onclick="alert('Batch downloading selected documents...')">Batch Download</button>
+          </div>
         </div>
         <table>
           <thead><tr>
-            <th style="width:32px;"><input type="checkbox" onclick="document.querySelectorAll('.dchk').forEach(c=>c.checked=this.checked)"></th>
+            <th style="width:32px;"><input type="checkbox" onclick="document.querySelectorAll('.dchk-c').forEach(c=>c.checked=this.checked)"></th>
             <th style="width:36px;">No.</th><th>Document</th>
             <th style="width:90px;">Role</th>
             <th style="width:195px;">Latest Version</th>
             <th style="width:210px;">Action</th>
           </tr></thead>
-          <tbody id="dlTableBody"></tbody>
+          <tbody id="contractDocsBody"></tbody>
         </table>
+
+        <!-- ── Signing Documents ── -->
+        <div class="dl-section">
+          <div class="dl-sec-hdr">
+            <div>
+              <div class="dl-sec-title">
+                Signing Documents
+                <span id="dlSigningBadge" class="badge bd-blue" style="display:none;">—</span>
+              </div>
+              <div class="dl-sec-sub" id="dlSigningSub">Mode-specific documents prepared for customer signing — version history tracked here</div>
+            </div>
+          </div>
+          <div id="dlSigningContent"></div>
+        </div>
+
       </div>
 
       <!-- ══ Acceptance ══ -->
@@ -425,7 +452,12 @@ tr:hover td{background:#fafafa;}
                 <div class="cb-sub" id="eaCompleteSub">Customer GGBOUND completed E-Acceptance on 20-05-2026 16:50:29 via Biometric. Signed documents attached.</div>
               </div>
             </div>
-            <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#5f6368;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                Signed documents archived to Document Library.
+                <button class="lnk" onclick="viewDocLib()">View in Document Library →</button>
+              </div>
               <button class="btn btn-secondary btn-sm" onclick="openEALog()">View E-Acceptance Log</button>
             </div>
             <div id="amendmentSection" style="display:none;">
@@ -624,13 +656,22 @@ tr:hover td{background:#fafafa;}
 // ═══════════════════════════════════════════════
 //  DATA
 // ═══════════════════════════════════════════════
-const DL_DOCS=[
+// Contract Documents — mode-agnostic, always visible
+const CONTRACT_DOCS=[
   {id:1,name:'Letter of Undertaking',role:'Other',ver:'v1',date:'2026-05-18 22:12:13'},
   {id:2,name:'HP Application Form',role:'Primary',ver:'v1',date:'2026-05-19 18:37:47'},
+  {id:6,name:'HpEconsentLogAsp',role:'Other',ver:'v1',date:'2026-05-19 11:04:18'},
+];
+// Signing Documents — generated per signing mode; History tracked here
+const SIGNING_DOCS_EA=[
   {id:3,name:'HP Agreement with T&C',role:'Primary',ver:'v1',date:'2026-05-18 22:12:14'},
   {id:4,name:'HP Agreement Second Schedule',role:'Primary',ver:'v1',date:'2026-05-18 22:12:14'},
   {id:5,name:'Product Disclosure Sheet',role:'Primary',ver:'v1',date:'2026-05-18 22:12:14'},
-  {id:6,name:'HpEconsentLogAsp',role:'Other',ver:'v1',date:'2026-05-19 11:04:18'},
+];
+const SIGNING_DOCS_MANUAL=[
+  {id:3,name:'HP Agreement with T&C',role:'Primary',ver:'v1',date:'2026-05-18 22:12:14'},
+  {id:4,name:'HP Agreement Second Schedule',role:'Primary',ver:'v1',date:'2026-05-18 22:12:14'},
+  {id:5,name:'Product Disclosure Sheet',role:'Primary',ver:'v1',date:'2026-05-18 22:12:14'},
 ];
 const MANUAL_DOCS=[
   {name:'HP Application Form.pdf',ver:'v1',id:'DTFF02026042978618',date:'2026-05-18 18:49:42'},
@@ -674,7 +715,7 @@ let S={
 //  INIT
 // ═══════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
-  renderDLTable(DL_DOCS);
+  renderContractDocs();
   applyScenario('ea-s1-disc', document.querySelector('.dev-btn.active'));
 });
 
@@ -691,32 +732,85 @@ function switchMainTab(id,el){
 // ═══════════════════════════════════════════════
 //  DOC LIBRARY
 // ═══════════════════════════════════════════════
-function renderDLTable(docs){
-  document.getElementById('dlTableBody').innerHTML=docs.map((d,i)=>`
+let _dlFilter='',_dlSearch='';
+function filterDocs(r){_dlFilter=r;renderContractDocs();}
+function searchDocs(q){_dlSearch=q;renderContractDocs();}
+
+function renderContractDocs(){
+  let docs=CONTRACT_DOCS;
+  if(_dlFilter) docs=docs.filter(d=>d.role===_dlFilter);
+  if(_dlSearch) docs=docs.filter(d=>d.name.toLowerCase().includes(_dlSearch.toLowerCase()));
+  document.getElementById('contractDocsBody').innerHTML=docs.map((d,i)=>`
     <tr>
-      <td><input type="checkbox" class="dchk"></td>
+      <td><input type="checkbox" class="dchk-c"></td>
       <td style="color:#5f6368;">${i+1}</td>
       <td style="font-weight:500;">${d.name}</td>
       <td><span class="badge ${d.role==='Primary'?'bd-primary':'bd-other'}">${d.role}</span></td>
       <td class="text-muted">${d.ver} — ${d.date}</td>
       <td><div class="act-row">
-        <span class="lnk disabled">Generate</span>
-        <span class="lnk" onclick="alert('Opening: ${d.name}')">View</span>
+        <span class="lnk" onclick="alert('Viewing: ${d.name}')">View</span>
         <span class="lnk" onclick="alert('Downloading: ${d.name}')">Download</span>
-        <span class="lnk" onclick="openHistory('${d.name}','${d.ver}','${d.date}')">History</span>
+        <span class="lnk" onclick="openHistory('${d.name}','${d.ver}','${d.date}',false)">History</span>
       </div></td>
     </tr>`).join('');
 }
-function filterDocs(r){renderDLTable(r?DL_DOCS.filter(d=>d.role===r):DL_DOCS);}
-function searchDocs(q){renderDLTable(q?DL_DOCS.filter(d=>d.name.toLowerCase().includes(q.toLowerCase())):DL_DOCS);}
-function openHistory(name,ver,date){
+
+function renderSigningDocs(){
+  const docs=S.mode==='ea'?SIGNING_DOCS_EA:SIGNING_DOCS_MANUAL;
+  const badge=document.getElementById('dlSigningBadge');
+  badge.style.display='inline-flex';
+  badge.textContent=S.mode==='ea'?'E-Acceptance':'Manual';
+  badge.className='badge '+(S.mode==='ea'?'bd-blue':'bd-purple');
+  const rows=docs.map((d,i)=>{
+    const amd=S.amendmentRequired?AMD_DOCS.find(a=>a.name.replace('.pdf','')===d.name):null;
+    const ver=amd?amd.ver:d.ver;
+    const dt=amd&&S.smsSent?fmtNow():d.date;
+    const multiVer=!!amd;
+    const amendBadge=amd&&amd.changed?'<span class="badge bd-orange" style="margin-left:6px;font-size:10px;">Amended</span>':'';
+    return `<tr>
+      <td><input type="checkbox" class="dchk-s"></td>
+      <td style="color:#5f6368;">${i+1}</td>
+      <td style="font-weight:500;">${d.name}${amendBadge}</td>
+      <td><span class="badge ${d.role==='Primary'?'bd-primary':'bd-other'}">${d.role}</span></td>
+      <td class="text-muted">${ver} — ${dt}</td>
+      <td><div class="act-row">
+        <span class="lnk" onclick="alert('Viewing: ${d.name}')">View</span>
+        <span class="lnk" onclick="alert('Downloading: ${d.name}')">Download</span>
+        <span class="lnk" onclick="openHistory('${d.name}','${ver}','${dt}',${multiVer})">History</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('dlSigningContent').innerHTML=`<table>
+    <thead><tr>
+      <th style="width:32px;"><input type="checkbox" onclick="document.querySelectorAll('.dchk-s').forEach(c=>c.checked=this.checked)"></th>
+      <th style="width:36px;">No.</th><th>Document</th>
+      <th style="width:90px;">Role</th>
+      <th style="width:195px;">Latest Version</th>
+      <th style="width:210px;">Action</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+// History modal — 4th param: whether this doc has amendment versions
+function openHistory(name,ver,date,multiVer){
   document.getElementById('historyTitle').textContent='History — '+name;
-  document.getElementById('historyBody').innerHTML=`<tr>
-    <td style="padding:7px 10px;font-size:12px;border-bottom:1px solid #f1f3f4;">${ver}</td>
-    <td style="padding:7px 10px;font-size:12px;border-bottom:1px solid #f1f3f4;">${date}</td>
-    <td style="padding:7px 10px;font-size:12px;border-bottom:1px solid #f1f3f4;">System</td>
-    <td style="padding:7px 10px;font-size:12px;border-bottom:1px solid #f1f3f4;">Initial Generation</td>
-    <td style="padding:7px 10px;font-size:12px;border-bottom:1px solid #f1f3f4;"><span class="lnk">View</span> · <span class="lnk">Download</span></td></tr>`;
+  const s='padding:7px 10px;font-size:12px;border-bottom:1px solid #f1f3f4;';
+  let rows=`<tr>
+    <td style="${s}">${ver}</td>
+    <td style="${s}">${date}</td>
+    <td style="${s}">System</td>
+    <td style="${s}">${multiVer?'Amendment — Field changes detected':'Initial Generation'}</td>
+    <td style="${s}"><span class="lnk">View</span> · <span class="lnk">Download</span></td>
+  </tr>`;
+  if(multiVer) rows+=`<tr>
+    <td style="${s}">v1</td>
+    <td style="${s}">2026-05-18 22:12:14</td>
+    <td style="${s}">System</td>
+    <td style="${s}">Initial Generation</td>
+    <td style="${s}"><span class="lnk">View</span> · <span class="lnk">Download</span></td>
+  </tr>`;
+  document.getElementById('historyBody').innerHTML=rows;
   openModal('modalHistory');
 }
 
@@ -740,6 +834,7 @@ function applyMode(mode){
   if(mode==='ea')renderEAPanel();
   if(mode==='manual'){renderManualBio();renderManualDocs();}
   updateFooter();
+  renderSigningDocs();
 }
 
 // ═══════════════════════════════════════════════
@@ -1031,6 +1126,7 @@ function triggerSMS(){
   document.getElementById('smsNote').textContent='SMS sent. Awaiting customer acceptance via eTracker.';
   document.getElementById('logSmsStatus').textContent='Sent – Pending Response';
   document.getElementById('logSmsDate').textContent=fmtNow();
+  renderSigningDocs(); // refresh DL signing section — v2 dates now show actual send time
   alert('Amendment SMS sent via Infobip to customer.\n"HLB: Dear customer, please review and accept changes via www.hlb.com.my/etracker"');
 }
 
@@ -1291,6 +1387,12 @@ function applyScenario(key,btn){
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
+function viewDocLib(){
+  // Switch main tab to Document Library
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  document.getElementById('tp-acceptance').classList.remove('active');
+  document.getElementById('tp-doclib').classList.add('active');
+}
 function fmtNow(offset=0){const d=new Date(Date.now()+offset*1000);return d.toISOString().replace('T',' ').substring(0,19);}
 </script>
 </body>
