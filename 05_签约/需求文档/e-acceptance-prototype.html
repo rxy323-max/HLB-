@@ -733,7 +733,7 @@ let S={
   // EA flow
   eaStep:1,
   s1Dev:'disconnected', s1Attempts:0,
-  s2RibDone:false,
+  s2RibStatus:'waiting',          // 'waiting' | 'submitted'
   s3Dev:'disconnected', s3Attempts:0,
   eaComplete:false, amendmentRequired:false, smsSent:false,
   eaViaOTP:false,
@@ -1001,13 +1001,17 @@ function renderStep1(){
     setTimeout(()=>{if(S.s1Dev==='scanning'){S.s1Dev='ready';renderStep1();}},2000);
   } else if(dev==='ready'){
     right=devViz('connected')+`
-      <div class="state-title">Reader is ready</div>
-      <div class="state-sub">Place thumb firmly on the scanner.${att>0?' <strong>'+att+'/3 previous attempt(s) failed.</strong>':''}</div>
+      <div class="state-title">MyKad Read — Scan Fingerprint</div>
+      <div class="state-sub">MyKad identity confirmed. Ask the customer to place their thumb firmly on the scanner.${att>0?' <strong>'+att+'/3 previous attempt(s) failed.</strong>':''}</div>
       ${att>0?attBadge(att,3):''}
       <div style="display:flex;gap:8px;margin-top:12px;">
-        <button class="btn btn-primary btn-sm" onclick="S.s1Dev='matched';renderStep1()">Verify ✓</button>
-        <button class="btn btn-secondary btn-sm" onclick="simS1Fail()">Verify ✗ (fail)</button>
+        <button class="btn btn-primary btn-sm" onclick="s1StartFP('matched')">Scan Fingerprint ✓</button>
+        <button class="btn btn-secondary btn-sm" onclick="s1StartFP('fail')">Scan Fingerprint ✗ (fail)</button>
       </div>`;
+  } else if(dev==='scanning-fp'){
+    right=devViz('scanning')+`
+      <div class="state-title">Scanning Fingerprint...</div>
+      <div class="state-sub">Hold thumb firmly on the scanner. Do not remove until the light changes.</div>`;
   } else if(dev==='matched'){
     leftOpts={bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3'};
     right=`<div class="bio-result">
@@ -1048,7 +1052,18 @@ function renderStep1(){
   document.getElementById('s1Right').innerHTML=right;
 }
 
-function simS1Fail(){S.s1Attempts++;S.s1Dev='unmatched';renderStep1();}
+// Trigger fingerprint scan with pending outcome; scanning-fp state auto-advances in 1.5s
+function s1StartFP(outcome){
+  S.s1Dev='scanning-fp';
+  renderStep1();
+  setTimeout(()=>{
+    if(S.s1Dev==='scanning-fp'){
+      if(outcome==='fail'){S.s1Attempts++;S.s1Dev='unmatched';}
+      else{S.s1Dev='matched';}
+      renderStep1();
+    }
+  },1500);
+}
 function retryS1(){S.s1Dev='ready';renderEAPanel();}
 
 // ═══════════════════════════════════════════════
@@ -1057,25 +1072,42 @@ function retryS1(){S.s1Dev='ready';renderEAPanel();}
 function renderStep2(){
   document.getElementById('s2Left').innerHTML=leftPanel(2,{bioStatus:'Matched',bioClass:'matched',retry:S.s1Attempts+' / 3',trigPoint:'Letter Printing E-Acceptance'});
   const el=document.getElementById('s2Right');
-  if(!S.s2RibDone){
+  const docs=['Product Disclosure Sheet','HP Agreement Second Schedule','HP Agreement with T&C'];
+  const globeSvg=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`;
+  const docSvg=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1967d2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+  const chkSvg=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`;
+
+  if(S.s2RibStatus==='waiting'){
     el.innerHTML=`<div class="rib-panel">
-      <div class="rib-header" style="display:flex;align-items:center;gap:7px;justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg> Customer Reviewing at RIB Portal</div>
+      <div class="rib-header" style="display:flex;align-items:center;gap:7px;justify-content:center;">${globeSvg} Customer Reviewing at RIB Portal</div>
+      <div style="font-size:11px;color:#80868b;text-align:center;margin-bottom:10px;">Customer reviews and accepts each document before submitting</div>
       <div class="rib-doc-list">
-        ${['HP Agreement with T&C','HP Agreement Second Schedule','Product Disclosure Sheet'].map(d=>`<div class="rib-doc-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1967d2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>${d}</span></div>`).join('')}
+        ${docs.map(d=>`<div class="rib-doc-item">${docSvg}<span style="flex:1;">${d}</span><span style="font-size:10px;color:#9aa0a6;">Pending</span></div>`).join('')}
       </div>
-      <div class="rib-waiting"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" class="spin"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> Waiting for customer to review and accept all documents...</div>
+      <div class="rib-waiting"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" class="spin"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> Waiting for customer to review and submit all documents...</div>
       <div style="display:flex;gap:8px;justify-content:center;">
         <button class="btn btn-secondary btn-sm">Resend RIB Link</button>
-        <button class="btn btn-primary btn-sm" onclick="S.s2RibDone=true;renderStep2()">Customer Accepted ✓</button>
+        <button class="btn btn-primary btn-sm" onclick="s2CustomerSubmit()">Customer Submitted ✓</button>
       </div>
     </div>`;
   } else {
-    el.innerHTML=`<div class="rib-ok"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      <div><div style="font-weight:600;font-size:13px;color:#137333;margin-bottom:2px;">Customer completed review and acceptance at RIB Portal</div>
-      <div style="font-size:12px;color:#3c4043;">1st Signing Complete — Acceptance Flag confirmed.</div></div>
-    </div>
-    <div style="text-align:center;margin-top:10px;">
-      <button class="btn btn-primary" onclick="goStep3()">Proceed to E-Acceptance Confirmation →</button>
+    el.innerHTML=`<div class="rib-panel">
+      <div class="rib-ok" style="margin-bottom:12px;"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <div>
+          <div style="font-weight:600;font-size:13px;color:#137333;margin-bottom:2px;">Customer submitted at RIB Portal</div>
+          <div style="font-size:12px;color:#3c4043;">All 3 documents reviewed and accepted. Acceptance flag confirmed.</div>
+        </div>
+      </div>
+      <div class="rib-doc-list" style="margin-bottom:12px;">
+        ${docs.map(d=>`<div class="rib-doc-item">${chkSvg}<span style="flex:1;">${d}</span><span style="font-size:10px;color:#137333;font-weight:600;">Accepted</span></div>`).join('')}
+      </div>
+      <div style="background:#f8f9fa;border:1px solid #e8eaed;border-radius:6px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#5f6368;line-height:1.65;">
+        <div style="font-weight:600;color:#202124;margin-bottom:4px;">RIB Portal message shown to customer:</div>
+        "Thank you. Your bank officer will now verify your identity to complete E-Acceptance. Please follow their instructions."
+      </div>
+      <div style="text-align:center;">
+        <button class="btn btn-primary" onclick="goStep3()">Proceed to E-Acceptance Confirmation →</button>
+      </div>
     </div>`;
   }
 }
@@ -1100,13 +1132,17 @@ function renderStep3(){
       </div>`;
   } else if(dev==='ready'){
     right=devViz('connected')+`
-      <div class="state-title">Reader is ready</div>
-      <div class="state-sub">Place thumb on the scanner to confirm E-Acceptance.${att>0?' <strong>'+att+'/3 previous attempt(s) failed.</strong>':''}</div>
+      <div class="state-title">MyKad Read — Scan Fingerprint</div>
+      <div class="state-sub">MyKad identity confirmed. Ask the customer to place their thumb firmly on the scanner to complete E-Acceptance.${att>0?' <strong>'+att+'/3 previous attempt(s) failed.</strong>':''}</div>
       ${att>0?attBadge(att,3):''}
       <div style="display:flex;gap:8px;margin-top:12px;">
-        <button class="btn btn-primary btn-sm" onclick="S.s3Dev='matched';renderStep3()">Verify ✓</button>
-        <button class="btn btn-secondary btn-sm" onclick="simS3Fail()">Verify ✗ (fail)</button>
+        <button class="btn btn-primary btn-sm" onclick="s3StartFP('matched')">Scan Fingerprint ✓</button>
+        <button class="btn btn-secondary btn-sm" onclick="s3StartFP('fail')">Scan Fingerprint ✗ (fail)</button>
       </div>`;
+  } else if(dev==='scanning-fp'){
+    right=devViz('scanning')+`
+      <div class="state-title">Scanning Fingerprint...</div>
+      <div class="state-sub">Hold thumb firmly on the scanner. Do not remove until the light changes.</div>`;
   } else if(dev==='matched'){
     leftOpts={...leftOpts,bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3'};
     right=`<div class="bio-result">
@@ -1142,8 +1178,19 @@ function renderStep3(){
   document.getElementById('s3Right').innerHTML=right;
 }
 
-function simS3Fail(){S.s3Attempts++;S.s3Dev='unmatched';renderStep3();}
+function s3StartFP(outcome){
+  S.s3Dev='scanning-fp';
+  renderStep3();
+  setTimeout(()=>{
+    if(S.s3Dev==='scanning-fp'){
+      if(outcome==='fail'){S.s3Attempts++;S.s3Dev='unmatched';}
+      else{S.s3Dev='matched';}
+      renderStep3();
+    }
+  },1500);
+}
 function retryS3(){S.s3Dev='ready';renderStep3();}
+function s2CustomerSubmit(){S.s2RibStatus='submitted';renderStep2();}
 
 function goStep2(){S.eaStep=2;renderEAPanel();}
 function goStep3(){S.eaStep=3;S.s3Dev='disconnected';renderEAPanel();}
@@ -1369,7 +1416,7 @@ function applyScenario(key,btn){
   const fresh={
     mode:'ea', modeConfirmed:true, hasGuarantor:false,
     eaStep:1, s1Dev:'disconnected', s1Attempts:0,
-    s2RibDone:false, s3Dev:'disconnected', s3Attempts:0,
+    s2RibStatus:'waiting', s3Dev:'disconnected', s3Attempts:0,
     eaComplete:false, amendmentRequired:false, smsSent:false, eaViaOTP:false,
     mBioPrimary:{dev:'disconnected',done:false,attempts:0},
     mBioGuarantor:{dev:'disconnected',done:false,attempts:0},
@@ -1389,12 +1436,12 @@ function applyScenario(key,btn){
     'ea-s1-fail3':  {s1Dev:'unmatched',s1Attempts:3},
     // Step 2
     'ea-s2-wait':   {eaStep:2,s1Dev:'matched',s1Attempts:1},
-    'ea-s2-done':   {eaStep:2,s1Dev:'matched',s1Attempts:1,s2RibDone:true},
+    'ea-s2-done':   {eaStep:2,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted'},
     // Step 3
-    'ea-s3-ready':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibDone:true,s3Dev:'ready'},
-    'ea-s3-fail1':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibDone:true,s3Dev:'unmatched',s3Attempts:1},
-    'ea-s3-fail2':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibDone:true,s3Dev:'unmatched',s3Attempts:2},
-    'ea-s3-otp':    {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibDone:true,s3Dev:'unmatched',s3Attempts:3},
+    'ea-s3-ready':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'ready'},
+    'ea-s3-fail1':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'unmatched',s3Attempts:1},
+    'ea-s3-fail2':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'unmatched',s3Attempts:2},
+    'ea-s3-otp':    {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'unmatched',s3Attempts:3},
     'ea-complete':  {eaComplete:true},
     'ea-amendment': {eaComplete:true,amendmentRequired:true},
     // Manual no guarantor
