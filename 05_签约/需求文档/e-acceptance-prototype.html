@@ -169,7 +169,7 @@ tr:hover td{background:#fafafa;}
 .state-title{font-size:15px;font-weight:700;margin-bottom:5px;text-align:center;}
 .state-sub{font-size:12px;color:#5f6368;text-align:center;line-height:1.6;margin-bottom:14px;max-width:300px;}
 .bio-result{text-align:center;padding:10px 0;}
-.bio-result-icon{font-size:36px;margin-bottom:6px;}
+.bio-result-icon{width:44px;height:44px;display:block;margin:0 auto 10px;}
 .bio-result-title{font-size:14px;font-weight:700;margin-bottom:4px;}
 .brt-matched{color:#137333;}
 .brt-failed{color:#c5221f;}
@@ -389,14 +389,14 @@ tr:hover td{background:#fafafa;}
             <div class="mode-gate-sub">Choose how the customer will sign the documents.<br>This cannot be changed once the process has started.</div>
             <div class="mode-gate-cards">
               <div class="mgc" id="mgcEA">
-                <div class="mgc-icon">🖐</div>
+                <div class="mgc-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1967d2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M7 10H4M7 14H4M20 10h-3M20 14h-3M10 7V4M14 7V4M10 20v-3M14 20v-3"/></svg></div>
                 <div class="mgc-title">E-Acceptance</div>
                 <div class="mgc-desc">Fully electronic. Customer verifies identity via biometric and reviews &amp; signs documents through RIB Portal.</div>
                 <div class="mgc-note" id="mgcEANote" style="display:none;">Not available — application has guarantor(s)</div>
                 <button class="btn btn-primary btn-sm" id="btnSelectEA" onclick="selectMode('ea')">Select E-Acceptance →</button>
               </div>
               <div class="mgc">
-                <div class="mgc-icon">📝</div>
+                <div class="mgc-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></div>
                 <div class="mgc-title">Manual Acceptance</div>
                 <div class="mgc-desc">Physical signature. Download signing documents, have each applicant sign on paper, then upload signed copies.</div>
                 <button class="btn btn-secondary btn-sm" onclick="selectMode('manual')">Select Manual Acceptance →</button>
@@ -629,8 +629,8 @@ tr:hover td{background:#fafafa;}
     <div class="dev-title">Scenarios — v9</div>
 
     <div class="dev-group">Entry Point</div>
-    <button class="dev-btn" onclick="applyScenario('gate',this)">⓪ Mode Gate — no guarantor</button>
-    <button class="dev-btn" onclick="applyScenario('m-gate',this)">⓪ Mode Gate — with guarantor</button>
+    <button class="dev-btn" onclick="applyScenario('gate',this)">[ Gate ] No guarantor</button>
+    <button class="dev-btn" onclick="applyScenario('m-gate',this)">[ Gate ] With guarantor</button>
     <div class="dev-sep"></div>
 
     <div class="dev-group">E-Acceptance · Step 1 Identity Verification</div>
@@ -674,6 +674,16 @@ tr:hover td{background:#fafafa;}
 </div>
 
 <script>
+// ═══════════════════════════════════════════════
+//  ICON CONSTANTS (SVG — no emoji)
+// ═══════════════════════════════════════════════
+const ICO_OK=`<svg class="bio-result-icon" viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`;
+const ICO_FAIL=`<svg class="bio-result-icon" viewBox="0 0 24 24" fill="none" stroke="#c5221f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+const ICO_WARN=`<svg class="bio-result-icon" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+// Small inline icons (13×13)
+const ICO_OK_SM=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#137333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`;
+const ICO_WARN_SM=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+
 // ═══════════════════════════════════════════════
 //  DATA
 // ═══════════════════════════════════════════════
@@ -1001,7 +1011,7 @@ function renderStep1(){
   } else if(dev==='matched'){
     leftOpts={bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3'};
     right=`<div class="bio-result">
-      <div class="bio-result-icon">✅</div>
+      ${ICO_OK}
       <div class="bio-result-title brt-matched">Verified OK. Thumbprint matched.</div>
       <p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">Please remove card. Customer may proceed to review and sign at RIB Portal.</p>
       <button class="btn btn-primary" onclick="goStep2()">Proceed to Step 2 →</button>
@@ -1015,7 +1025,7 @@ function renderStep1(){
           <div><strong>Maximum attempts reached (3/3).</strong><br>Verification failed. System requires this application to proceed via Manual Acceptance.</div>
         </div>
         <div class="bio-result">
-          <div class="bio-result-icon">❌</div>
+          ${ICO_FAIL}
           <div class="bio-result-title brt-failed">Biometric Verification Failed</div>
           <p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">E-Acceptance is no longer available for this session.</p>
           <button class="btn btn-danger" onclick="forceManualSwitch()">Proceed with Manual Acceptance</button>
@@ -1023,7 +1033,7 @@ function renderStep1(){
     } else {
       const rem=3-att;
       right=`<div class="bio-result">
-        <div class="bio-result-icon">❌</div>
+        ${ICO_FAIL}
         <div class="bio-result-title brt-failed">Biometric Not Matched</div>
         ${attBadge(att,3)}
         <p style="font-size:12px;color:#5f6368;margin:8px 0 14px;">${rem} attempt(s) remaining before automatic switch to Manual Acceptance.</p>
@@ -1049,9 +1059,9 @@ function renderStep2(){
   const el=document.getElementById('s2Right');
   if(!S.s2RibDone){
     el.innerHTML=`<div class="rib-panel">
-      <div class="rib-header">🌐 Customer Reviewing at RIB Portal</div>
+      <div class="rib-header" style="display:flex;align-items:center;gap:7px;justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg> Customer Reviewing at RIB Portal</div>
       <div class="rib-doc-list">
-        ${['HP Agreement with T&C','HP Agreement Second Schedule','Product Disclosure Sheet'].map(d=>`<div class="rib-doc-item"><span style="color:#1967d2;">📄</span><span>${d}</span></div>`).join('')}
+        ${['HP Agreement with T&C','HP Agreement Second Schedule','Product Disclosure Sheet'].map(d=>`<div class="rib-doc-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1967d2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>${d}</span></div>`).join('')}
       </div>
       <div class="rib-waiting"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" class="spin"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> Waiting for customer to review and accept all documents...</div>
       <div style="display:flex;gap:8px;justify-content:center;">
@@ -1100,7 +1110,7 @@ function renderStep3(){
   } else if(dev==='matched'){
     leftOpts={...leftOpts,bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3'};
     right=`<div class="bio-result">
-      <div class="bio-result-icon">✅</div>
+      ${ICO_OK}
       <div class="bio-result-title brt-matched">Verified OK. Thumbprint matched.</div>
       <p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">Please remove card. E-Acceptance process fully completed.</p>
       <button class="btn btn-primary" onclick="completeEA(false)">Complete E-Acceptance →</button>
@@ -1110,7 +1120,7 @@ function renderStep3(){
     if(att>=3){
       leftOpts={...leftOpts,remark:'3 biometric attempts exhausted. OTP fallback activated.'};
       right=`<div class="bio-result">
-        <div class="bio-result-icon">⚠️</div>
+        ${ICO_WARN}
         <div class="bio-result-title brt-warn">Biometric Verification Failed — OTP Fallback</div>
         ${attBadge(att,3)}
         <p style="font-size:12px;color:#5f6368;margin:8px 0 8px;">3 attempts exhausted. OTP has been sent to customer's registered mobile.</p>
@@ -1120,7 +1130,7 @@ function renderStep3(){
       const rem=3-att;
       leftOpts={...leftOpts,remark:'Biometric not matched. '+rem+' attempt(s) remaining.'};
       right=`<div class="bio-result">
-        <div class="bio-result-icon">❌</div>
+        ${ICO_FAIL}
         <div class="bio-result-title brt-failed">Biometric Not Matched</div>
         ${attBadge(att,3)}
         <p style="font-size:12px;color:#5f6368;margin:8px 0 14px;">${rem} attempt(s) remaining. OTP fallback activates after ${att>=2?'the next':'${rem===2?"2 more":"1 more"}'} failure.</p>
@@ -1217,8 +1227,8 @@ function renderApplicantBioCard(a){
 
   if(done){
     let summary='';
-    if(dev==='matched') summary=`<div class="bio-inline-result bir-matched">✅ Identity Verified — Biometric matched. Result recorded.</div>`;
-    else if(dev==='unmatched') summary=`<div class="bio-inline-result bir-unmatched">⚠ Biometric Not Matched — Result recorded. Proceeding with Manual Acceptance.</div>`;
+    if(dev==='matched') summary=`<div class="bio-inline-result bir-matched">${ICO_OK_SM} Identity Verified — Biometric matched. Result recorded.</div>`;
+    else if(dev==='unmatched') summary=`<div class="bio-inline-result bir-unmatched">${ICO_WARN_SM} Biometric Not Matched — Result recorded. Proceeding with Manual Acceptance.</div>`;
     else if(dev==='skipped') summary=`<div class="bio-inline-result bir-skipped">— Identity Verification skipped.</div>`;
     return `<div class="m-bio-person">
       <div class="m-bio-person-hdr"><div class="m-bio-person-hdr-left">${roleBadge}${nameHtml}</div></div>
@@ -1255,14 +1265,14 @@ function renderApplicantBioCard(a){
       </div>`;
   } else if(dev==='matched'){
     right=`<div class="bio-result">
-      <div class="bio-result-icon">✅</div>
+      ${ICO_OK}
       <div class="bio-result-title brt-matched">Identity Verified</div>
       <p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">Biometric matched. Result recorded as Manual Acceptance Verification.</p>
       <button class="btn btn-primary btn-sm" onclick="mBioProceed(${k})">Confirm →</button>
     </div>`;
   } else if(dev==='unmatched'){
     right=`<div class="bio-result">
-      <div class="bio-result-icon">⚠️</div>
+      ${ICO_WARN}
       <div class="bio-result-title brt-warn">Biometric Not Matched</div>
       ${attBadge(bio.attempts,3)}
       <p style="font-size:12px;color:#5f6368;margin:8px 0 14px;">Result recorded. You may retry or proceed anyway — this does not block the signing process.</p>
