@@ -301,6 +301,18 @@ tr:hover td{background:#fafafa;}
 .dev-btn.active{background:#1967d2;color:#fff;}
 
 .text-muted{color:#9aa0a6;font-size:12px;}
+
+/* ── Manual person card (unified bio + docs) ── */
+.mp-card{border:1px solid #e8eaed;border-radius:8px;margin-bottom:14px;overflow:hidden;}
+.mp-card:last-child{margin-bottom:0;}
+.mp-hdr{background:#f8f9fa;padding:11px 16px;border-bottom:1px solid #e8eaed;display:flex;align-items:center;justify-content:space-between;}
+.mp-hdr-left{display:flex;align-items:center;gap:8px;}
+.mp-name{font-size:13px;font-weight:600;}
+.mp-id{font-size:11px;color:#5f6368;margin-left:2px;}
+.mp-body{padding:16px;}
+.mp-section-label{font-size:10px;font-weight:700;color:#9aa0a6;letter-spacing:.7px;text-transform:uppercase;margin-bottom:8px;}
+.mp-docs-wrap{margin-top:14px;padding-top:14px;border-top:1px solid #f1f3f4;}
+.mp-top-row{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-bottom:12px;}
 </style>
 </head>
 <body>
@@ -520,40 +532,15 @@ tr:hover td{background:#fafafa;}
 
         <!-- ══════════════ MANUAL ACCEPTANCE PANEL ══════════════ -->
         <div id="panelManual" style="display:none;">
-
-          <!-- Section 1: Identity Verification -->
-          <div class="m-section" id="mSec1">
-            <div class="m-section-hdr">
-              <div class="m-section-hdr-left">
-                <div class="m-sec-num" id="mSec1Num">1</div>
-                <div>
-                  <div class="m-sec-title">Identity Verification <span class="badge bd-purple" style="font-size:10px;margin-left:4px;">Optional</span></div>
-                  <div class="m-sec-sub">Biometric verification per applicant — Manual Acceptance Verification type. Result recorded; does not block signing.</div>
-                </div>
-              </div>
-              <button class="lnk" id="mBioSkipAllBtn" onclick="skipAllManualBio()">Skip All</button>
-            </div>
-            <div class="m-section-body" id="mSec1Body">
-              <div id="mBioContent"><!-- rendered by JS --></div>
-            </div>
+          <!-- Top action row: skip all + switch to EA -->
+          <div class="mp-top-row">
+            <button class="lnk" id="skipAllBtn" onclick="skipAllManualBio()">Skip All Biometric</button>
+            <button class="lnk" id="manualSwitchEABtn" style="display:none;" onclick="switchToEACheck()">Switch to E-Acceptance</button>
           </div>
-
-          <!-- Section 2: Signing Package -->
-          <div class="m-section" id="mSec2">
-            <div class="m-section-hdr">
-              <div class="m-section-hdr-left">
-                <div class="m-sec-num" id="mSec2Num">2</div>
-                <div>
-                  <div class="m-sec-title">Signing Package</div>
-                  <div class="m-sec-sub" id="mSec2Sub">Download documents for physical signature — completion recorded via Document Centre</div>
-                </div>
-              </div>
-            </div>
-            <div class="m-section-body">
-              <div id="manualSigningBody"><!-- rendered by renderManualDocs() --></div>
-            </div>
-          </div>
-
+          <!-- Person cards (bio + docs per person) -->
+          <div id="manualPersonCards"><!-- rendered by renderManualPanel() --></div>
+          <!-- DC status banner -->
+          <div id="manualDCStatus" style="margin-top:14px;"><!-- rendered by renderManualPanel() --></div>
         </div><!-- end panelManual -->
 
       </div><!-- end tp-acceptance -->
@@ -619,19 +606,36 @@ tr:hover td{background:#fafafa;}
   </div>
 </div>
 
-<!-- ═══ MODAL: Switch Confirm ═══ -->
+<!-- ═══ MODAL: EA → Manual Confirm ═══ -->
 <div class="modal-overlay" id="modalSwitchConfirm">
   <div class="modal modal-sm">
     <div class="modal-hdr"><h3>Switch to Manual Acceptance?</h3><button class="modal-x" onclick="closeModal('modalSwitchConfirm')">✕</button></div>
     <div class="modal-body">
       <div class="alert-warn"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span>Switching to Manual Acceptance will end the E-Acceptance process. This action cannot be undone for this application.</span>
+        <span>The current E-Acceptance session will be terminated. Progress so far will be recorded in EA Log, but <strong>cannot be resumed</strong> — E-Acceptance must restart from Step 1 if switched back.</span>
       </div>
-      <p style="font-size:13px;color:#5f6368;">Confirm switch to Manual Acceptance?</p>
+      <p style="font-size:13px;color:#5f6368;margin-top:8px;">Confirm switch to Manual Acceptance?</p>
     </div>
     <div class="modal-ftr">
       <button class="btn btn-secondary btn-sm" onclick="closeModal('modalSwitchConfirm')">Cancel</button>
       <button class="btn btn-danger btn-sm" onclick="confirmSwitchToManual()">Switch to Manual</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Manual → EA Confirm ═══ -->
+<div class="modal-overlay" id="modalSwitchToEA">
+  <div class="modal modal-sm">
+    <div class="modal-hdr"><h3>Switch to E-Acceptance?</h3><button class="modal-x" onclick="closeModal('modalSwitchToEA')">✕</button></div>
+    <div class="modal-body">
+      <div class="alert-warn"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Switching to E-Acceptance will <strong>restart from Step 1</strong>. Manual Acceptance biometric progress will be cleared.</span>
+      </div>
+      <p style="font-size:13px;color:#5f6368;margin-top:8px;">Confirm switch to E-Acceptance?</p>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modalSwitchToEA')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmSwitchToEA()">Switch to E-Acceptance</button>
     </div>
   </div>
 </div>
@@ -737,9 +741,19 @@ const EA_LOG={
   amendment:{type:'Hirer Amendment Acceptance (1st)',pds:'Y',ss:'Y',hpa:'Y',app4:'—',status:'Completed',dt:'20/05/2026 05:30 PM',remark:'Biometric Acceptance'},
   bank:{type:'Bank Acceptance',pds:'—',ss:'—',hpa:'—',app4:'—',status:'Completed',dt:'21/05/2026 09:00 AM',remark:'Funded'},
 };
-const BIO_APPLICANTS=[
-  {name:'GGBOUND',id:'60-12-2308243',role:'PRIMARY',key:'mBioPrimary'},
-  {name:'MASLIZAWATI BINTI MOHAMAD',id:'60-12-2597236',role:'GUARANTOR',key:'mBioGuarantor'},
+// Per-person data for Manual Acceptance (bio + their specific signing docs)
+const MANUAL_PERSONS=[
+  {name:'GGBOUND',id:'60-12-2308243',role:'PRIMARY',key:'mBioPrimary',
+   docs:[
+     {name:'HP Agreement with T&C',ver:'v1',date:'2026-05-18 22:12:14'},
+     {name:'HP Agreement Second Schedule',ver:'v1',date:'2026-05-18 22:12:14'},
+     {name:'Product Disclosure Sheet',ver:'v1',date:'2026-05-18 22:12:14'},
+   ]},
+  {name:'MASLIZAWATI BINTI MOHAMAD',id:'60-12-2597236',role:'GUARANTOR',key:'mBioGuarantor',
+   docs:[
+     {name:'HP Agreement with T&C',ver:'v1',date:'2026-05-18 22:12:14'},
+     {name:'HP Agreement Second Schedule',ver:'v1',date:'2026-05-18 22:12:14'},
+   ]},
 ];
 
 // ═══════════════════════════════════════════════
@@ -880,9 +894,34 @@ function selectMode(mode){
   if(mode==='ea'&&S.hasGuarantor)return;
   applyMode(mode);
 }
-// Mid-flow switch (EA → Manual only, via confirm modal or auto)
-function confirmSwitchToManual(){closeModal('modalSwitchConfirm');applyMode('manual');}
-function forceManualSwitch(){applyMode('manual');}
+
+// EA → Manual: reset EA flow state, preserve EA Log
+function confirmSwitchToManual(){
+  closeModal('modalSwitchConfirm');
+  S.eaStep=1;S.s1Dev='disconnected';S.s1Attempts=0;
+  S.s2RibStatus='waiting';S.s3Dev='disconnected';S.s3Attempts=0;
+  applyMode('manual');
+}
+// Auto-forced switch (3/3 bio failure)
+function forceManualSwitch(){
+  S.eaStep=1;S.s1Dev='disconnected';S.s1Attempts=0;
+  S.s2RibStatus='waiting';S.s3Dev='disconnected';S.s3Attempts=0;
+  applyMode('manual');
+}
+
+// Manual → EA: validate conditions then show confirm
+function switchToEACheck(){
+  if(S.hasGuarantor||S.manualDCUploaded)return;
+  openModal('modalSwitchToEA');
+}
+// Manual → EA: confirmed — reset manual bio, restart EA from Step 1
+function confirmSwitchToEA(){
+  closeModal('modalSwitchToEA');
+  S.mBioPrimary={dev:'disconnected',done:false,attempts:0};
+  S.mBioGuarantor={dev:'disconnected',done:false,attempts:0};
+  S.manualDCUploaded=false;
+  applyMode('ea');
+}
 
 function applyMode(mode){
   S.mode=mode;
@@ -891,7 +930,7 @@ function applyMode(mode){
   document.getElementById('panelEA').style.display=mode==='ea'?'block':'none';
   document.getElementById('panelManual').style.display=mode==='manual'?'block':'none';
   if(mode==='ea')renderEAPanel();
-  if(mode==='manual'){renderManualBio();renderManualDocs();}
+  if(mode==='manual')renderManualPanel();
   updateFooter();
   renderSigningDocs();
 }
@@ -1023,8 +1062,7 @@ function renderStep1(){
       <div class="state-sub">MyKad identity confirmed. Ask the customer to place their thumb firmly on the scanner.${att>0?' <strong>'+att+'/3 previous attempt(s) failed.</strong>':''}</div>
       ${att>0?attBadge(att,3):''}
       <div style="display:flex;gap:8px;margin-top:12px;">
-        <button class="btn btn-primary btn-sm" onclick="s1StartFP('matched')">Scan Fingerprint ✓</button>
-        <button class="btn btn-secondary btn-sm" onclick="s1StartFP('fail')">Scan Fingerprint ✗ (fail)</button>
+        <button class="btn btn-primary btn-sm" onclick="s1StartFP('matched')">Scan Fingerprint</button>
       </div>`;
   } else if(dev==='scanning-fp'){
     right=devViz('scanning')+`
@@ -1157,8 +1195,7 @@ function renderStep3(){
       <div class="state-sub">MyKad identity confirmed. Ask the customer to place their thumb firmly on the scanner to complete E-Acceptance.${att>0?' <strong>'+att+'/3 previous attempt(s) failed.</strong>':''}</div>
       ${att>0?attBadge(att,3):''}
       <div style="display:flex;gap:8px;margin-top:12px;">
-        <button class="btn btn-primary btn-sm" onclick="s3StartFP('matched')">Scan Fingerprint ✓</button>
-        <button class="btn btn-secondary btn-sm" onclick="s3StartFP('fail')">Scan Fingerprint ✗ (fail)</button>
+        <button class="btn btn-primary btn-sm" onclick="s3StartFP('matched')">Scan Fingerprint</button>
       </div>`;
   } else if(dev==='scanning-fp'){
     right=devViz('scanning')+`
@@ -1265,154 +1302,106 @@ function openEALog(){
 }
 
 // ═══════════════════════════════════════════════
-//  MANUAL — BIOMETRIC (per-applicant)
+//  MANUAL — UNIFIED PANEL (bio + docs per person)
 // ═══════════════════════════════════════════════
-function getActiveBioApplicants(){
-  const all=BIO_APPLICANTS;
-  return S.hasGuarantor?all:[all[0]];
-}
-
-function renderManualBio(){
-  const applicants=getActiveBioApplicants();
-  const allDone=applicants.every(a=>S[a.key].done);
-  const allSkipped=applicants.every(a=>S[a.key].dev==='skipped');
-
-  const numEl=document.getElementById('mSec1Num');
-  numEl.className='m-sec-num '+(allSkipped?'skipped':allDone?'done':'');
-  numEl.textContent=allSkipped?'—':(allDone?'✓':'1');
-  document.getElementById('mBioSkipAllBtn').style.display=allDone?'none':'inline';
-
-  document.getElementById('mBioContent').innerHTML=
-    applicants.map(a=>renderApplicantBioCard(a)).join('');
-}
-
-function renderApplicantBioCard(a){
-  const bio=S[a.key];
-  const dev=bio.dev; const done=bio.done;
-  const now=fmtNow(),now2=fmtNow(2);
-  const roleBadge=`<span class="badge ${a.role==='PRIMARY'?'bd-primary':'bd-other'}">${a.role}</span>`;
-  const nameHtml=`<span style="font-size:12px;font-weight:600;">${a.name}</span><span style="font-size:11px;color:#5f6368;margin-left:6px;">${a.id}</span>`;
-
-  if(done){
-    let summary='';
-    if(dev==='matched') summary=`<div class="bio-inline-result bir-matched">${ICO_OK_SM} Identity Verified — Biometric matched. Result recorded.</div>`;
-    else if(dev==='unmatched') summary=`<div class="bio-inline-result bir-unmatched">${ICO_WARN_SM} Biometric Not Matched — Result recorded. Proceeding with Manual Acceptance.</div>`;
-    else if(dev==='skipped') summary=`<div class="bio-inline-result bir-skipped">— Identity Verification skipped.</div>`;
-    return `<div class="m-bio-person">
-      <div class="m-bio-person-hdr"><div class="m-bio-person-hdr-left">${roleBadge}${nameHtml}</div></div>
-      <div class="m-bio-person-body">${summary}</div>
-    </div>`;
-  }
-
-  // Build left and right panels
-  const leftOpts={trigPoint:'Manual Acceptance',name:a.name,nric:a.id};
-  if(dev==='matched') Object.assign(leftOpts,{bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:(bio.attempts||1)+' / 3'});
-  else if(dev==='unmatched') Object.assign(leftOpts,{bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:bio.attempts+' / 3',remark:'Biometric not matched.'});
-
-  let right='';
-  const k=`'${a.key}'`;
-  if(dev==='disconnected'){
-    right=devViz('disconnected')+`
-      <div class="state-title">Connect Biometric Device</div>
-      <div class="state-sub">Ensure the MyKad reader is connected via USB.<br><span style="color:#b45309;font-weight:500;">Optional — result does not block contract access.</span></div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-primary btn-sm" onclick="mBioSet(${k},'scanning')">Start Scan</button>
-        <button class="btn btn-secondary btn-sm">Restart Service</button>
-      </div>`;
-  } else if(dev==='scanning'){
-    right=devViz('scanning')+`<div class="state-title">Reading MyKad...</div><div class="state-sub">Reading card data. Please do not remove the MyKad.</div>`;
-    setTimeout(()=>{if(S[a.key].dev==='scanning'){S[a.key].dev='ready';renderManualBio();}},2000);
-  } else if(dev==='ready'){
-    right=devViz('connected')+`
-      <div class="state-title">MyKad Read — Scan Fingerprint</div>
-      <div class="state-sub">MyKad confirmed. Ask applicant to place their thumb on the scanner.<br><span style="color:#b45309;font-weight:500;">Result will be recorded but does not affect signing.</span></div>
-      ${bio.attempts>0?attBadge(bio.attempts,3):''}
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button class="btn btn-primary btn-sm" onclick="mBioStartFP(${k},'matched')">Scan Fingerprint ✓</button>
-        <button class="btn btn-secondary btn-sm" onclick="mBioStartFP(${k},'fail')">Scan Fingerprint ✗ (fail)</button>
-      </div>`;
-  } else if(dev==='scanning-fp'){
-    right=devViz('scanning')+`
-      <div class="state-title">Scanning Fingerprint...</div>
-      <div class="state-sub">Hold thumb firmly on the scanner. Do not remove until the light changes.</div>`;
-  } else if(dev==='matched'){
-    right=`<div class="bio-result">
-      ${ICO_OK}
-      <div class="bio-result-title brt-matched">Identity Verified</div>
-      <p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">Biometric matched. Result recorded as Manual Acceptance Verification.</p>
-      <button class="btn btn-primary btn-sm" onclick="mBioProceed(${k})">Confirm →</button>
-    </div>`;
-  } else if(dev==='unmatched'){
-    right=`<div class="bio-result">
-      ${ICO_WARN}
-      <div class="bio-result-title brt-warn">Biometric Not Matched</div>
-      ${attBadge(bio.attempts,3)}
-      <p style="font-size:12px;color:#5f6368;margin:8px 0 14px;">Result recorded. You may retry or proceed anyway — this does not block the signing process.</p>
-      <div style="display:flex;gap:8px;justify-content:center;">
-        <button class="btn btn-secondary btn-sm" onclick="mBioSet(${k},'ready')">Retry</button>
-        <button class="btn btn-primary btn-sm" onclick="mBioProceed(${k})">Proceed Anyway →</button>
-        <button class="lnk" style="font-size:12px;" onclick="mBioSkip(${k})">Skip</button>
-      </div>
-    </div>`;
-  }
-
-  return `<div class="m-bio-person">
-    <div class="m-bio-person-hdr">
-      <div class="m-bio-person-hdr-left">${roleBadge}${nameHtml}</div>
-      <button class="lnk" onclick="mBioSkip(${k})">Skip</button>
-    </div>
-    <div class="m-bio-person-body">
-      <div class="bio-layout">
-        <div class="bio-left">${leftPanel('manual',leftOpts)}</div>
-        <div class="bio-right" style="min-height:260px;">${right}</div>
-      </div>
-    </div>
-  </div>`;
-}
-
-function mBioSet(key,dev){S[key].dev=dev;renderManualBio();}
-function mBioStartFP(key,outcome){
-  S[key].dev='scanning-fp';
-  renderManualBio();
-  setTimeout(()=>{
-    if(S[key].dev==='scanning-fp'){
-      if(outcome==='fail'){S[key].attempts=(S[key].attempts||0)+1;S[key].dev='unmatched';}
-      else{S[key].dev='matched';}
-      renderManualBio();
-    }
-  },1500);
-}
-function mBioFail(key){S[key].attempts=(S[key].attempts||0)+1;S[key].dev='unmatched';renderManualBio();}
-function mBioProceed(key){S[key].done=true;renderManualBio();updateFooter();}
-function mBioSkip(key){S[key].dev='skipped';S[key].done=true;renderManualBio();updateFooter();}
-function skipAllManualBio(){getActiveBioApplicants().forEach(a=>mBioSkip(a.key));}
-
-// ═══════════════════════════════════════════════
-//  MANUAL — DOCUMENTS
-// ═══════════════════════════════════════════════
-function renderManualDocs(){
+function renderManualPanel(){
+  const persons=S.hasGuarantor?MANUAL_PERSONS:[MANUAL_PERSONS[0]];
   const uploaded=S.manualDCUploaded;
-  // Update section number style and sub-text
-  document.getElementById('mSec2Num').className='m-sec-num'+(uploaded?' done':'');
-  document.getElementById('mSec2Sub').textContent=uploaded
-    ?'Signed documents received at Document Centre — acceptance complete'
-    :'Download documents for physical signature — completion recorded via Document Centre';
+  const allDone=persons.every(p=>S[p.key].done);
 
-  // Status banner
+  // Top row: skip all visibility
+  const skipBtn=document.getElementById('skipAllBtn');
+  if(skipBtn) skipBtn.style.display=allDone?'none':'inline';
+
+  // Switch to EA link: only if no guarantor and DC not uploaded
+  const eaBtn=document.getElementById('manualSwitchEABtn');
+  if(eaBtn) eaBtn.style.display=(!S.hasGuarantor&&!uploaded)?'inline':'none';
+
+  // Render person cards
+  document.getElementById('manualPersonCards').innerHTML=persons.map(p=>renderPersonCard(p,uploaded)).join('');
+
+  // DC status banner
   const statusBanner=uploaded
     ?`<div class="dc-status-banner dc-status-complete">${ICO_OK_SM}<span><strong>Manual Acceptance Complete</strong> — Signed documents received at Document Centre.</span></div>`
-    :`<div class="dc-status-banner dc-status-pending"><span class="dc-status-dot"></span><span><strong>Pending</strong> — Awaiting upload of signed documents at Document Centre.</span></div>`;
+    :`<div class="dc-status-banner dc-status-pending"><span class="dc-status-dot"></span><span><strong>Pending</strong> — Awaiting upload of signed documents at <strong>Document Centre</strong>.</span></div>`;
+  document.getElementById('manualDCStatus').innerHTML=statusBanner;
+}
 
-  // Instruction note (only when pending)
-  const note=uploaded?''
-    :`<div class="ma-doc-note">Download the latest version of each document below. Have all applicants sign on paper, then upload signed copies to <strong>Document Centre</strong> in the application page to complete acceptance.</div>`;
+function renderPersonCard(p,uploaded){
+  const bio=S[p.key];
+  const dev=bio.dev; const done=bio.done;
+  const now=fmtNow(),now2=fmtNow(2);
+  const roleBadge=`<span class="badge ${p.role==='PRIMARY'?'bd-primary':'bd-other'}">${p.role}</span>`;
 
-  // Doc rows
+  // ── Bio section ──
+  let bioContent='';
+  if(done){
+    if(dev==='matched')
+      bioContent=`<div class="bio-inline-result bir-matched">${ICO_OK_SM} Identity Verified — Biometric matched. Result recorded.</div>`;
+    else if(dev==='unmatched')
+      bioContent=`<div class="bio-inline-result bir-unmatched">${ICO_WARN_SM} Biometric Not Matched — Result recorded. Proceeding with Manual Acceptance.</div>`;
+    else if(dev==='skipped')
+      bioContent=`<div class="bio-inline-result bir-skipped">— Identity Verification skipped.</div>`;
+  } else {
+    const k=`'${p.key}'`;
+    const leftOpts={trigPoint:'Manual Acceptance',name:p.name,nric:p.id};
+    if(dev==='matched') Object.assign(leftOpts,{bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:(bio.attempts||1)+' / 3'});
+    else if(dev==='unmatched') Object.assign(leftOpts,{bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:bio.attempts+' / 3',remark:'Biometric not matched.'});
+    let right='';
+    if(dev==='disconnected'){
+      right=devViz('disconnected')+`
+        <div class="state-title">Connect Biometric Device</div>
+        <div class="state-sub">Ensure the MyKad reader is connected via USB.<br><span style="color:#b45309;font-weight:500;">Optional — result does not block signing.</span></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary btn-sm" onclick="mBioSet(${k},'scanning')">Start Scan</button>
+          <button class="btn btn-secondary btn-sm">Restart Service</button>
+        </div>`;
+    } else if(dev==='scanning'){
+      right=devViz('scanning')+`<div class="state-title">Reading MyKad...</div><div class="state-sub">Reading card data. Please do not remove the MyKad.</div>`;
+      setTimeout(()=>{if(S[p.key].dev==='scanning'){S[p.key].dev='ready';renderManualPanel();}},2000);
+    } else if(dev==='ready'){
+      right=devViz('connected')+`
+        <div class="state-title">MyKad Read — Scan Fingerprint</div>
+        <div class="state-sub">MyKad confirmed. Ask applicant to place their thumb on the scanner.<br><span style="color:#b45309;font-weight:500;">Result will be recorded but does not affect signing.</span></div>
+        ${bio.attempts>0?attBadge(bio.attempts,3):''}
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn btn-primary btn-sm" onclick="mBioStartFP(${k},'matched')">Scan Fingerprint</button>
+        </div>`;
+    } else if(dev==='scanning-fp'){
+      right=devViz('scanning')+`
+        <div class="state-title">Scanning Fingerprint...</div>
+        <div class="state-sub">Hold thumb firmly on the scanner. Do not remove until the light changes.</div>`;
+    } else if(dev==='matched'){
+      right=`<div class="bio-result">
+        ${ICO_OK}
+        <div class="bio-result-title brt-matched">Identity Verified</div>
+        <p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">Biometric matched. Result recorded as Manual Acceptance Verification.</p>
+        <button class="btn btn-primary btn-sm" onclick="mBioProceed(${k})">Confirm →</button>
+      </div>`;
+    } else if(dev==='unmatched'){
+      right=`<div class="bio-result">
+        ${ICO_WARN}
+        <div class="bio-result-title brt-warn">Biometric Not Matched</div>
+        ${attBadge(bio.attempts,3)}
+        <p style="font-size:12px;color:#5f6368;margin:8px 0 14px;">Result recorded. You may retry or proceed anyway — this does not block the signing process.</p>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button class="btn btn-secondary btn-sm" onclick="mBioSet(${k},'ready')">Retry</button>
+          <button class="btn btn-primary btn-sm" onclick="mBioProceed(${k})">Proceed Anyway →</button>
+          <button class="lnk" style="font-size:12px;" onclick="mBioSkip(${k})">Skip</button>
+        </div>
+      </div>`;
+    }
+    bioContent=`<div class="bio-layout">
+      <div class="bio-left">${leftPanel('manual',leftOpts)}</div>
+      <div class="bio-right" style="min-height:260px;">${right}</div>
+    </div>`;
+  }
+
+  // ── Docs section ──
   const FILE_ICON=`<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
   const DL_ICON=`<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
   const VIEW_ICON=`<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-
-  const docRows=SIGNING_DOCS_MANUAL.map(d=>`
+  const docRows=p.docs.map(d=>`
     <div class="ma-doc-row">
       <div class="ma-doc-info">
         <div class="ma-doc-icon">${FILE_ICON}</div>
@@ -1427,7 +1416,41 @@ function renderManualDocs(){
       </div>
     </div>`).join('');
 
-  document.getElementById('manualSigningBody').innerHTML=statusBanner+note+docRows;
+  return `<div class="mp-card">
+    <div class="mp-hdr">
+      <div class="mp-hdr-left">${roleBadge}<span class="mp-name">${p.name}</span><span class="mp-id">${p.id}</span></div>
+      ${!done?`<button class="lnk" onclick="mBioSkip('${p.key}')">Skip Bio</button>`:''}
+    </div>
+    <div class="mp-body">
+      <div class="mp-section-label">Identity Verification <span style="font-weight:400;color:#b45309;font-style:italic;font-size:10px;text-transform:none;letter-spacing:0;">Optional</span></div>
+      ${bioContent}
+      <div class="mp-docs-wrap">
+        <div class="mp-section-label">Documents to Sign (${p.docs.length})</div>
+        ${uploaded?'': `<div class="ma-doc-note" style="margin-bottom:10px;">Download and have this applicant sign on paper. Upload signed copy to <strong>Document Centre</strong> to complete acceptance.</div>`}
+        ${docRows}
+      </div>
+    </div>
+  </div>`;
+}
+
+function mBioSet(key,dev){S[key].dev=dev;renderManualPanel();}
+function mBioStartFP(key,outcome){
+  S[key].dev='scanning-fp';
+  renderManualPanel();
+  setTimeout(()=>{
+    if(S[key].dev==='scanning-fp'){
+      if(outcome==='fail'){S[key].attempts=(S[key].attempts||0)+1;S[key].dev='unmatched';}
+      else{S[key].dev='matched';}
+      renderManualPanel();
+    }
+  },1500);
+}
+function mBioProceed(key){S[key].done=true;renderManualPanel();updateFooter();}
+function mBioSkip(key){S[key].dev='skipped';S[key].done=true;renderManualPanel();updateFooter();}
+function skipAllManualBio(){
+  const persons=S.hasGuarantor?MANUAL_PERSONS:[MANUAL_PERSONS[0]];
+  persons.forEach(p=>{S[p.key].dev='skipped';S[p.key].done=true;});
+  renderManualPanel();updateFooter();
 }
 
 // ═══════════════════════════════════════════════
