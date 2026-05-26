@@ -33,21 +33,16 @@
 
 ### 高优先级（下次会话先做）
 
-- [ ] **EA Step 1: `ready` 状态渲染**（设备已连接，等待扫描，显示"Place MyKad to scan"）
-- [ ] **EA Step 1: 失败 3/3 → 强制切 Manual**（auto-switch banner + `forceManualSwitch()`）
-- [ ] **EA Step 1: Remarks 文本框**（失败时必填，才能继续）
-- [ ] **EA Step 3: OTP 兜底流程**（3/3 失败 → 发 SMS → 6位 OTP 输入 → 验证成功）
-- [ ] **Amendment 流程**（EA 完成后变更文档高亮 + SMS 通知客户）
+- [ ] **EA Step 1: Remarks 文本框**（失败时必填，才能继续重试；目前失败后可直接重试）
+- [ ] **leftPanel 补齐**：Triggering Point、Trigger Counter、Remarks 行
+- [ ] **Amendment 流程**（EA 完成后变更文档高亮 + SMS 通知客户；代码已有框架但未测试）
+- [ ] **Document History 弹窗完善**（openHistory 多版本显示已有框架，需验证）
 
 ### 中优先级
 
-- [ ] **Manual: Skip 选项**（单人/双人均可跳过生物识别）
-- [ ] **leftPanel 补齐**：Triggering Point、Trigger Counter、Remarks 行
-- [ ] **attempt-badge 警告样式**（2/3 时 orange，3/3 时 red）
-- [ ] **Switch to Manual 确认弹窗**（EA 进行中切换时二次确认，`modalSwitchConfirm` 已有 HTML 但逻辑待连接）
-- [ ] **Document History 弹窗**（openHistory 函数已有，需完善多版本显示）
+- [ ] **attempt-badge 样式**（2/3 时 orange，3/3 时 red — 已有 CSS 类，确认逻辑正确）
 
-### 已完成（本 session-v9 主要变更）
+### 已完成（本 session-v9 所有变更）
 
 - [x] bio-layout 两栏 CSS 恢复
 - [x] devViz() SVG 设备图（disconnected/scanning/connected 三态）
@@ -60,13 +55,20 @@
 - [x] EA Step 2 RIB 详细流程（3份文件 → Submit → 指纹确认提示）
 - [x] s2RibStatus 替换 s2RibDone（'waiting' | 'submitted'）
 - [x] 去除 emoji，改用 SVG 线框图标（ICO_OK/ICO_FAIL/ICO_WARN 及 SM 变体）
-- [x] **Manual Acceptance — Option A**：
-  - Section 2 改名为 "Signing Package"
-  - 移除 Confirm 按钮（Manual 模式下隐藏）
-  - DC 状态横幅（Pending / Complete）
-  - 文档列表 View/Download only，无上传
-  - 新增 `manualDCUploaded` 状态字段
-  - Dev Tool 新增 `m-dc-uploaded` 场景（模拟 DC 上传完成）
+- [x] Manual Acceptance — Option A：DC 状态横幅，无 Confirm 按钮，DC 上传模拟
+- [x] **模式切换重设计**：
+  - EA→Manual：清 EA flow state，保留 EA Log，更新弹窗文案
+  - Manual→EA：有条件允许（无担保人 + DC 未上传），新增 `modalSwitchToEA`
+  - `forceManualSwitch()` 也同步重置 EA state
+  - Manual panel 顶部显示 "Switch to E-Acceptance" 条件链接
+- [x] **指纹按钮简化**：Step 1/Step 3/Manual bio 的 ready 状态只显示单个 Scan Fingerprint 按钮，失败场景走 Dev Tool
+- [x] **Manual 人员卡重组**：
+  - 移除 Section 1 + Section 2 双区块结构
+  - 改为每人一张 `.mp-card` 卡片，包含：bio 验证区 + 该人需签的文件列表
+  - `MANUAL_PERSONS` 数据：Primary 签 3 份，Guarantor 签 2 份
+  - 顶部：Skip All Biometric 链接 + Switch to EA 链接
+  - 底部：DC 状态横幅（Pending / Complete）
+  - `renderManualPanel()` + `renderPersonCard()` 替代原来的两个函数
 
 ---
 
