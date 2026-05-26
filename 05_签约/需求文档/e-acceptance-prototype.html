@@ -548,7 +548,7 @@ tr:hover td{background:#fafafa;}
   </div><!-- end content -->
 
   <div class="footer">
-    <button class="btn btn-secondary">Cancel</button>
+    <button class="btn btn-secondary" onclick="alert('Return to case list — navigate back in the real system.')">Cancel</button>
     <button class="btn btn-primary" id="btnConfirm" disabled onclick="confirmProceed()">Confirm &amp; Proceed</button>
   </div>
 </div><!-- end main -->
@@ -768,6 +768,7 @@ let S={
   s3Dev:'disconnected', s3Attempts:0,
   eaComplete:false, amendmentRequired:false, smsSent:false,
   eaViaOTP:false,
+  s1Remarks:'',                    // officer remarks on Step 1 failure (required to retry)
   // Manual flow
   manualDCUploaded:false,         // true when Document Centre upload is simulated
   mBioPrimary:{dev:'disconnected',done:false,attempts:0},
@@ -1077,7 +1078,8 @@ function renderStep1(){
       <button class="btn btn-primary" onclick="goStep2()">Proceed to Step 2 →</button>
     </div>`;
   } else if(dev==='unmatched'){
-    leftOpts={bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3',remark:'Biometric not matched.'};
+    const rmkText=S.s1Remarks?'Biometric not matched. '+S.s1Remarks:'Biometric not matched.';
+    leftOpts={bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3',remark:rmkText};
     if(att>=3){
       right=`
         <div class="auto-switch-banner">
@@ -1092,13 +1094,18 @@ function renderStep1(){
         </div>`;
     } else {
       const rem=3-att;
+      const hasRmk=S.s1Remarks.trim().length>0;
       right=`<div class="bio-result">
         ${ICO_FAIL}
         <div class="bio-result-title brt-failed">Biometric Not Matched</div>
         ${attBadge(att,3)}
-        <p style="font-size:12px;color:#5f6368;margin:8px 0 14px;">${rem} attempt(s) remaining before automatic switch to Manual Acceptance.</p>
+        <p style="font-size:12px;color:#5f6368;margin:8px 0 10px;">${rem} attempt(s) remaining. Please enter remarks before retrying.</p>
+        <div style="width:100%;max-width:300px;margin:0 auto 12px;text-align:left;">
+          <label style="font-size:12px;color:#5f6368;display:block;margin-bottom:4px;">Remarks <span style="color:#c5221f;font-weight:600;">*</span> Required to retry</label>
+          <textarea id="s1RemarksInput" rows="2" style="width:100%;border:1px solid ${hasRmk?'#dadce0':'#f5c6cb'};border-radius:5px;padding:7px 10px;font-size:12px;resize:none;outline:none;font-family:inherit;" placeholder="e.g. Customer finger has minor cut, retrying with other hand..." oninput="s1RemarksChanged(this.value)">${S.s1Remarks}</textarea>
+        </div>
         <div style="display:flex;gap:8px;justify-content:center;">
-          <button class="btn btn-primary btn-sm" onclick="retryS1()">Retry (${rem} left)</button>
+          <button class="btn btn-primary btn-sm" id="s1RetryBtn" ${hasRmk?'':'disabled'} onclick="retryS1()">Retry (${rem} left)</button>
           <button class="btn btn-danger btn-sm" onclick="openModal('modalSwitchConfirm')">Switch to Manual Acceptance</button>
         </div>
       </div>`;
@@ -1120,7 +1127,16 @@ function s1StartFP(outcome){
     }
   },1500);
 }
-function retryS1(){S.s1Dev='ready';renderEAPanel();}
+function s1RemarksChanged(val){
+  S.s1Remarks=val;
+  // Re-enable/disable retry button without full re-render
+  const btn=document.getElementById('s1RetryBtn');
+  const inp=document.getElementById('s1RemarksInput');
+  const ok=val.trim().length>0;
+  if(btn) btn.disabled=!ok;
+  if(inp) inp.style.borderColor=ok?'#dadce0':'#f5c6cb';
+}
+function retryS1(){S.s1Dev='ready';S.s1Remarks='';renderEAPanel();}
 
 // ═══════════════════════════════════════════════
 //  STEP 2 — RIB Portal
@@ -1500,7 +1516,7 @@ function applyScenario(key,btn){
     eaStep:1, s1Dev:'disconnected', s1Attempts:0,
     s2RibStatus:'waiting', s3Dev:'disconnected', s3Attempts:0,
     eaComplete:false, amendmentRequired:false, smsSent:false, eaViaOTP:false,
-    manualDCUploaded:false,
+    s1Remarks:'', manualDCUploaded:false,
     mBioPrimary:{dev:'disconnected',done:false,attempts:0},
     mBioGuarantor:{dev:'disconnected',done:false,attempts:0},
   };
