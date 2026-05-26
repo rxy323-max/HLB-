@@ -222,6 +222,20 @@ tr:hover td{background:#fafafa;}
 .ma-id{font-size:12px;color:#5f6368;}
 .doc-cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .doc-card{border:1px solid #e8eaed;border-radius:8px;padding:12px;}
+/* ── Manual Section 2 — Signing Package ── */
+.dc-status-banner{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:14px;border:1px solid;}
+.dc-status-complete{background:#e6f4ea;border-color:#a8d5b5;color:#137333;}
+.dc-status-pending{background:#f8f9fa;border-color:#e8eaed;color:#5f6368;}
+.dc-status-dot{width:8px;height:8px;border-radius:50%;background:#9aa0a6;display:inline-block;flex-shrink:0;}
+.ma-doc-note{font-size:12px;color:#5f6368;margin-bottom:12px;line-height:1.6;padding:0 2px;}
+.ma-doc-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid #e8eaed;border-radius:6px;margin-bottom:8px;background:#fff;}
+.ma-doc-row:last-child{margin-bottom:0;}
+.ma-doc-info{display:flex;align-items:center;gap:10px;}
+.ma-doc-icon{width:32px;height:32px;border-radius:6px;background:#f0f2f5;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ma-doc-icon svg{width:16px;height:16px;fill:none;stroke:#5f6368;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.ma-doc-name{font-size:13px;font-weight:500;}
+.ma-doc-date{font-size:11px;color:#9aa0a6;margin-top:2px;}
+.ma-doc-actions{display:flex;gap:6px;flex-shrink:0;}
 .dc-hdr{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;}
 .dc-icon{width:28px;height:28px;background:#f1f3f4;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .dc-icon svg{width:14px;height:14px;fill:none;stroke:#5f6368;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
@@ -524,20 +538,19 @@ tr:hover td{background:#fafafa;}
             </div>
           </div>
 
-          <!-- Section 2: Signing Documents -->
+          <!-- Section 2: Signing Package -->
           <div class="m-section" id="mSec2">
             <div class="m-section-hdr">
               <div class="m-section-hdr-left">
                 <div class="m-sec-num" id="mSec2Num">2</div>
                 <div>
-                  <div class="m-sec-title">Signing Documents</div>
-                  <div class="m-sec-sub">Latest version — download for wet signature, upload signed copies via Document Centre</div>
+                  <div class="m-sec-title">Signing Package</div>
+                  <div class="m-sec-sub" id="mSec2Sub">Download documents for physical signature — completion recorded via Document Centre</div>
                 </div>
               </div>
             </div>
             <div class="m-section-body">
-              <div class="ma-instruction">Please download the latest version of each document below. Have each applicant sign on paper and upload the signed copies to Document Centre after completion. Version history is available in Document Library.</div>
-              <div id="manualApplicants"><!-- rendered by JS --></div>
+              <div id="manualSigningBody"><!-- rendered by renderManualDocs() --></div>
             </div>
           </div>
 
@@ -669,6 +682,10 @@ tr:hover td{background:#fafafa;}
     <button class="dev-btn" onclick="applyScenario('m-g-p-matched',this)">Primary ✓ done · Guarantor active</button>
     <button class="dev-btn" onclick="applyScenario('m-g-both-matched',this)">Both ✓ Matched</button>
     <button class="dev-btn" onclick="applyScenario('m-g-skip',this)">Both: Skipped</button>
+
+    <div class="dev-sep"></div>
+    <div class="dev-group">Manual — Completion (via Document Centre)</div>
+    <button class="dev-btn" onclick="applyScenario('m-dc-uploaded',this)">Simulate: DC upload received</button>
   </div>
   <button class="dev-fab" onclick="document.getElementById('devPanel').classList.toggle('open')" title="Scenarios">⚙</button>
 </div>
@@ -737,7 +754,8 @@ let S={
   s3Dev:'disconnected', s3Attempts:0,
   eaComplete:false, amendmentRequired:false, smsSent:false,
   eaViaOTP:false,
-  // Manual bio per-applicant
+  // Manual flow
+  manualDCUploaded:false,         // true when Document Centre upload is simulated
   mBioPrimary:{dev:'disconnected',done:false,attempts:0},
   mBioGuarantor:{dev:'disconnected',done:false,attempts:0},
 };
@@ -1373,38 +1391,61 @@ function skipAllManualBio(){getActiveBioApplicants().forEach(a=>mBioSkip(a.key))
 //  MANUAL — DOCUMENTS
 // ═══════════════════════════════════════════════
 function renderManualDocs(){
-  const applicants=[{role:'PRIMARY',name:'GGBOUND',id:'60-12-2308243'}];
-  if(S.hasGuarantor)applicants.push({role:'GUARANTOR',name:'MASLIZAWATI BINTI MOHAMAD',id:'60-12-2597236'});
-  document.getElementById('manualApplicants').innerHTML=applicants.map((a,i)=>`
-    <div class="ma-applicant">
-      ${i>0?'<div class="ma-divider"></div>':''}
-      <div class="ma-hdr">
-        <span class="badge ${a.role==='PRIMARY'?'bd-primary':'bd-other'}">${a.role}</span>
-        <span class="ma-name">${a.name}</span>
-        <span class="ma-id">${a.id}</span>
+  const uploaded=S.manualDCUploaded;
+  // Update section number style and sub-text
+  document.getElementById('mSec2Num').className='m-sec-num'+(uploaded?' done':'');
+  document.getElementById('mSec2Sub').textContent=uploaded
+    ?'Signed documents received at Document Centre — acceptance complete'
+    :'Download documents for physical signature — completion recorded via Document Centre';
+
+  // Status banner
+  const statusBanner=uploaded
+    ?`<div class="dc-status-banner dc-status-complete">${ICO_OK_SM}<span><strong>Manual Acceptance Complete</strong> — Signed documents received at Document Centre.</span></div>`
+    :`<div class="dc-status-banner dc-status-pending"><span class="dc-status-dot"></span><span><strong>Pending</strong> — Awaiting upload of signed documents at Document Centre.</span></div>`;
+
+  // Instruction note (only when pending)
+  const note=uploaded?''
+    :`<div class="ma-doc-note">Download the latest version of each document below. Have all applicants sign on paper, then upload signed copies to <strong>Document Centre</strong> in the application page to complete acceptance.</div>`;
+
+  // Doc rows
+  const FILE_ICON=`<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+  const DL_ICON=`<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+  const VIEW_ICON=`<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+
+  const docRows=SIGNING_DOCS_MANUAL.map(d=>`
+    <div class="ma-doc-row">
+      <div class="ma-doc-info">
+        <div class="ma-doc-icon">${FILE_ICON}</div>
+        <div>
+          <div class="ma-doc-name">${d.name} <span class="vbadge">${d.ver}</span>${uploaded?` <span class="badge bd-green" style="font-size:10px;margin-left:4px;">Signed</span>`:''}</div>
+          <div class="ma-doc-date">${d.date}</div>
+        </div>
       </div>
-      <div class="doc-cards-grid">${MANUAL_DOCS.map(d=>`
-        <div class="doc-card">
-          <div class="dc-hdr"><div class="dc-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-            <div><div class="dc-name">${d.name} <span class="vbadge">${d.ver}</span></div><div class="dc-meta">${d.id}<br>${d.date}</div></div>
-          </div>
-          <div class="dc-actions">
-            <button class="btn-outline-sm" onclick="alert('Viewing: ${d.name}')"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</button>
-            <button class="btn-outline-sm" onclick="alert('Downloading: ${d.name}')"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download</button>
-          </div>
-        </div>`).join('')}
+      <div class="ma-doc-actions">
+        <button class="btn-outline-sm" onclick="alert('Viewing: ${d.name}')">${VIEW_ICON}View</button>
+        <button class="btn-outline-sm" onclick="alert('Downloading: ${d.name}')">${DL_ICON}Download</button>
       </div>
     </div>`).join('');
+
+  document.getElementById('manualSigningBody').innerHTML=statusBanner+note+docRows;
 }
 
 // ═══════════════════════════════════════════════
 //  FOOTER
 // ═══════════════════════════════════════════════
 function updateFooter(){
-  document.getElementById('btnConfirm').disabled=(S.mode==='ea'&&!S.eaComplete);
+  const btn=document.getElementById('btnConfirm');
+  if(S.mode==='manual'){
+    // Manual: no confirm action in Acceptance tab — completion is via Document Centre
+    btn.style.display='none';
+  } else {
+    btn.style.display='';
+    btn.disabled=!S.eaComplete;
+  }
 }
 function confirmProceed(){
-  alert(S.mode==='ea'?'E-Acceptance confirmed. Application proceeds to next workflow step.':'Manual Acceptance confirmed. Please upload signed documents via Document Centre.');
+  // EA only — Manual has no confirm button
+  alert('E-Acceptance confirmed. Application proceeds to next workflow step.');
 }
 
 // ═══════════════════════════════════════════════
@@ -1436,6 +1477,7 @@ function applyScenario(key,btn){
     eaStep:1, s1Dev:'disconnected', s1Attempts:0,
     s2RibStatus:'waiting', s3Dev:'disconnected', s3Attempts:0,
     eaComplete:false, amendmentRequired:false, smsSent:false, eaViaOTP:false,
+    manualDCUploaded:false,
     mBioPrimary:{dev:'disconnected',done:false,attempts:0},
     mBioGuarantor:{dev:'disconnected',done:false,attempts:0},
   };
@@ -1479,6 +1521,9 @@ function applyScenario(key,btn){
     'm-g-skip':     {mode:'manual',hasGuarantor:true,
                      mBioPrimary:{dev:'skipped',done:true,attempts:0},
                      mBioGuarantor:{dev:'skipped',done:true,attempts:0}},
+    // Manual — Document Centre upload received
+    'm-dc-uploaded':{mode:'manual',manualDCUploaded:true,
+                     mBioPrimary:{dev:'matched',done:true,attempts:1}},
   };
 
   const patch=map[key]||{};
