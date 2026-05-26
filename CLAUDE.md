@@ -33,14 +33,11 @@
 
 ### 高优先级（下次会话先做）
 
-- [ ] **EA Step 1: Remarks 文本框**（失败时必填，才能继续重试；目前失败后可直接重试）
-- [ ] **leftPanel 补齐**：Triggering Point、Trigger Counter、Remarks 行
-- [ ] **Amendment 流程**（EA 完成后变更文档高亮 + SMS 通知客户；代码已有框架但未测试）
-- [ ] **Document History 弹窗完善**（openHistory 多版本显示已有框架，需验证）
+— 暂无高优先级待办 —
 
 ### 中优先级
 
-- [ ] **attempt-badge 样式**（2/3 时 orange，3/3 时 red — 已有 CSS 类，确认逻辑正确）
+— 暂无 —
 
 ### 已完成（本 session-v9 所有变更）
 
@@ -56,6 +53,12 @@
 - [x] s2RibStatus 替换 s2RibDone（'waiting' | 'submitted'）
 - [x] 去除 emoji，改用 SVG 线框图标（ICO_OK/ICO_FAIL/ICO_WARN 及 SM 变体）
 - [x] Manual Acceptance — Option A：DC 状态横幅，无 Confirm 按钮，DC 上传模拟
+- [x] **EA Step 1: Remarks 文本框**：失败（1/3、2/3）时显示必填 textarea；Retry 按钮禁用直到填写；左侧面板同步显示；retryS1() 清空 remarks
+- [x] **leftPanel 补齐**：Triggering Point、Trigger Counter、Remarks 行均正确渲染；失败时 Remarks 行显示 officer 输入内容
+- [x] **Amendment 流程**：renderAmendment() + triggerSMS() 完整；Dev Tool `ea-amendment` 场景可验证
+- [x] **Document History 弹窗**：openHistory() 支持 multiVer（amendment 后显示 v1+v2 两行）
+- [x] **attempt-badge 样式**：ab-warn（1-2/3 橙色）+ ab-danger（3/3 红色）逻辑正确
+- [x] **Cancel 按钮**：添加 onclick 占位 alert
 - [x] **模式切换重设计**：
   - EA→Manual：清 EA flow state，保留 EA Log，更新弹窗文案
   - Manual→EA：有条件允许（无担保人 + DC 未上传），新增 `modalSwitchToEA`
