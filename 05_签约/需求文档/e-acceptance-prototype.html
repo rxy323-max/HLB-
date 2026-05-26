@@ -997,7 +997,7 @@ function renderStep1(){
         <button class="btn btn-secondary btn-sm">Restart Service</button>
       </div>`;
   } else if(dev==='scanning'){
-    right=devViz('scanning')+`<div class="state-title">Reading MyKad...</div><div class="state-sub">Please place your thumb on the scanner when light is On</div>`;
+    right=devViz('scanning')+`<div class="state-title">Reading MyKad...</div><div class="state-sub">Reading card data. Please do not remove the MyKad.</div>`;
     setTimeout(()=>{if(S.s1Dev==='scanning'){S.s1Dev='ready';renderStep1();}},2000);
   } else if(dev==='ready'){
     right=devViz('connected')+`
@@ -1125,11 +1125,14 @@ function renderStep3(){
   if(dev==='disconnected'){
     right=devViz('disconnected')+`
       <div class="state-title">No MyKad detected</div>
-      <div class="state-sub">Insert card into the reader to begin E-Acceptance confirmation.</div>
+      <div class="state-sub">Insert the customer's MyKad into the reader to begin E-Acceptance confirmation.</div>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-primary btn-sm" onclick="S.s3Dev='ready';renderStep3()">Read MyKad</button>
+        <button class="btn btn-primary btn-sm" onclick="S.s3Dev='scanning';renderStep3()">Read MyKad</button>
         <button class="btn btn-secondary btn-sm">Restart Service</button>
       </div>`;
+  } else if(dev==='scanning'){
+    right=devViz('scanning')+`<div class="state-title">Reading MyKad...</div><div class="state-sub">Reading card data. Please do not remove the MyKad.</div>`;
+    setTimeout(()=>{if(S.s3Dev==='scanning'){S.s3Dev='ready';renderStep3();}},2000);
   } else if(dev==='ready'){
     right=devViz('connected')+`
       <div class="state-title">MyKad Read — Scan Fingerprint</div>
@@ -1299,17 +1302,21 @@ function renderApplicantBioCard(a){
         <button class="btn btn-secondary btn-sm">Restart Service</button>
       </div>`;
   } else if(dev==='scanning'){
-    right=devViz('scanning')+`<div class="state-title">Reading MyKad...</div><div class="state-sub">Please place your thumb on the scanner when light is On</div>`;
+    right=devViz('scanning')+`<div class="state-title">Reading MyKad...</div><div class="state-sub">Reading card data. Please do not remove the MyKad.</div>`;
     setTimeout(()=>{if(S[a.key].dev==='scanning'){S[a.key].dev='ready';renderManualBio();}},2000);
   } else if(dev==='ready'){
     right=devViz('connected')+`
-      <div class="state-title">Reader is ready</div>
-      <div class="state-sub">Place thumb on the scanner.<br><span style="color:#b45309;font-weight:500;">Result will be recorded but does not affect signing.</span></div>
+      <div class="state-title">MyKad Read — Scan Fingerprint</div>
+      <div class="state-sub">MyKad confirmed. Ask applicant to place their thumb on the scanner.<br><span style="color:#b45309;font-weight:500;">Result will be recorded but does not affect signing.</span></div>
       ${bio.attempts>0?attBadge(bio.attempts,3):''}
       <div style="display:flex;gap:8px;margin-top:12px;">
-        <button class="btn btn-primary btn-sm" onclick="mBioSet(${k},'matched')">Verify ✓</button>
-        <button class="btn btn-secondary btn-sm" onclick="mBioFail(${k})">Verify ✗ (fail)</button>
+        <button class="btn btn-primary btn-sm" onclick="mBioStartFP(${k},'matched')">Scan Fingerprint ✓</button>
+        <button class="btn btn-secondary btn-sm" onclick="mBioStartFP(${k},'fail')">Scan Fingerprint ✗ (fail)</button>
       </div>`;
+  } else if(dev==='scanning-fp'){
+    right=devViz('scanning')+`
+      <div class="state-title">Scanning Fingerprint...</div>
+      <div class="state-sub">Hold thumb firmly on the scanner. Do not remove until the light changes.</div>`;
   } else if(dev==='matched'){
     right=`<div class="bio-result">
       ${ICO_OK}
@@ -1346,6 +1353,17 @@ function renderApplicantBioCard(a){
 }
 
 function mBioSet(key,dev){S[key].dev=dev;renderManualBio();}
+function mBioStartFP(key,outcome){
+  S[key].dev='scanning-fp';
+  renderManualBio();
+  setTimeout(()=>{
+    if(S[key].dev==='scanning-fp'){
+      if(outcome==='fail'){S[key].attempts=(S[key].attempts||0)+1;S[key].dev='unmatched';}
+      else{S[key].dev='matched';}
+      renderManualBio();
+    }
+  },1500);
+}
 function mBioFail(key){S[key].attempts=(S[key].attempts||0)+1;S[key].dev='unmatched';renderManualBio();}
 function mBioProceed(key){S[key].done=true;renderManualBio();updateFooter();}
 function mBioSkip(key){S[key].dev='skipped';S[key].done=true;renderManualBio();updateFooter();}
