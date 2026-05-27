@@ -212,6 +212,17 @@ tr:hover td{background:#fafafa;}
 .amd-doc-card.changed{border-color:#fbbf24;}
 .changed-pill{position:absolute;top:-8px;right:8px;background:#ea4335;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;}
 .amd-sms-row{margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.amd-changes-grid{background:#fafafa;border-radius:6px;padding:8px 12px;margin:8px 0 12px;}
+.amd-change-row{display:grid;grid-template-columns:150px 1fr 20px 1fr;align-items:center;gap:6px;font-size:12px;padding:5px 0;border-bottom:1px solid #f1f3f4;}
+.amd-change-row:last-child{border-bottom:none;}
+.amd-field{color:#5f6368;font-weight:500;}
+.amd-old{color:#5f6368;text-decoration:line-through;}
+.amd-arrow{color:#9aa0a6;text-align:center;font-size:11px;}
+.amd-new{color:#137333;font-weight:600;}
+.amd-step-row{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid #f1f3f4;margin-top:4px;gap:12px;flex-wrap:wrap;}
+.amd-step-label{font-size:12px;color:#5f6368;}
+.amd-waiting-steps{font-size:12px;color:#3c4043;line-height:2;padding:8px 0;}
+.amd-waiting-steps span{display:block;}
 
 /* ── Manual doc cards ── */
 .ma-instruction{background:#f8f9fa;border-radius:6px;padding:10px 14px;font-size:12px;color:#3c4043;line-height:1.6;margin-bottom:14px;}
@@ -483,29 +494,8 @@ tr:hover td{background:#fafafa;}
               </div>
               <button class="btn btn-secondary btn-sm" onclick="openEALog()">View E-Acceptance Log</button>
             </div>
-            <div id="amendmentSection" style="display:none;">
-              <div class="amendment-wrap">
-                <div class="amendment-hdr">
-                  <div class="amendment-hdr-title">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    Amendment — Action Required
-                  </div>
-                  <span class="badge bd-orange">Pending Customer Acceptance</span>
-                </div>
-                <div class="amendment-body">
-                  <div class="amd-info-grid">
-                    <div class="amd-info-item"><label>SMS Infobip Status</label><span id="amdSmsStatus">—</span></div>
-                    <div class="amd-info-item"><label>Send Date</label><span id="amdSmsDate">—</span></div>
-                    <div class="amd-info-item"><label>Customer Acceptance</label><span id="amdCustStatus">Pending</span></div>
-                  </div>
-                  <p style="font-size:12px;color:#5f6368;margin-bottom:10px;">Documents with field changes are highlighted. Customer reviews changes and accepts via eTracker link sent by SMS.</p>
-                  <div class="amd-doc-cards" id="amdDocCards"></div>
-                  <div class="amd-sms-row">
-                    <button class="btn btn-secondary btn-sm" id="btnTriggerSMS" onclick="triggerSMS()">Trigger Amendment SMS</button>
-                    <span class="text-muted" id="smsNote">Enabled before Infobip response is received.</span>
-                  </div>
-                </div>
-              </div>
+            <div id="amendmentSection" style="display:none;margin-top:16px;">
+              <div id="eaAmendmentContent"></div>
             </div>
           </div>
 
@@ -513,6 +503,8 @@ tr:hover td{background:#fafafa;}
 
         <!-- ══════════════ MANUAL ACCEPTANCE PANEL ══════════════ -->
         <div id="panelManual" style="display:none;">
+          <!-- Amendment section (shown when CILT active) -->
+          <div id="manualAmendmentSection" style="display:none;margin-bottom:16px;"></div>
           <!-- Top action row: skip all + switch to EA -->
           <div class="mp-top-row">
             <button class="lnk" id="skipAllBtn" onclick="skipAllManualBio()">Proceed All Offline</button>
@@ -530,6 +522,9 @@ tr:hover td{background:#fafafa;}
     <button class="btn btn-secondary" onclick="alert('Return to case list — navigate back in the real system.')">Cancel</button>
     <button class="btn btn-primary" id="btnConfirm" disabled onclick="confirmProceed()">Confirm &amp; Proceed</button>
   </div>
+  <style>
+    .footer{display:flex;align-items:center;justify-content:flex-end;gap:10px;}
+  </style>
 </div><!-- end main -->
 
 <!-- ═══ MODAL: EA Log ═══ -->
@@ -649,7 +644,13 @@ tr:hover td{background:#fafafa;}
     <button class="dev-btn" onclick="applyScenario('ea-s3-fail2',this)">✗ Failed — attempt 2/3</button>
     <button class="dev-btn" onclick="applyScenario('ea-s3-otp',this)">✗ Max retries → Send OTP step</button>
     <button class="dev-btn" onclick="applyScenario('ea-complete',this)">✓ E-Acceptance Completed</button>
-    <button class="dev-btn" onclick="applyScenario('ea-amendment',this)">✓ Completed + Amendment</button>
+
+    <div class="dev-sep"></div>
+    <div class="dev-group">E-Acceptance · Amendment (CILT)</div>
+    <button class="dev-btn" onclick="applyScenario('ea-amendment',this)">CILT approved — Action Required</button>
+    <button class="dev-btn" onclick="applyScenario('ea-amendment-ready',this)">Ready — Pending Notification</button>
+    <button class="dev-btn" onclick="applyScenario('ea-amendment-sent',this)">SMS Sent — Awaiting Customer</button>
+    <button class="dev-btn" onclick="applyScenario('ea-amendment-done',this)">✓ Customer Confirmed</button>
 
     <div class="dev-sep"></div>
     <div class="dev-group">Manual — No Guarantor</div>
@@ -665,6 +666,13 @@ tr:hover td{background:#fafafa;}
     <button class="dev-btn" onclick="applyScenario('m-g-p-matched',this)">Primary ✓ done · Guarantor active</button>
     <button class="dev-btn" onclick="applyScenario('m-g-both-matched',this)">Both ✓ Matched</button>
     <button class="dev-btn" onclick="applyScenario('m-g-skip',this)">Both: Skipped</button>
+
+    <div class="dev-sep"></div>
+    <div class="dev-group">Manual · Amendment (CILT)</div>
+    <button class="dev-btn" onclick="applyScenario('m-amendment',this)">CILT approved — Action Required</button>
+    <button class="dev-btn" onclick="applyScenario('m-amendment-ready',this)">Ready — Pending Notification</button>
+    <button class="dev-btn" onclick="applyScenario('m-amendment-sent',this)">SMS Sent — Awaiting Customer</button>
+    <button class="dev-btn" onclick="applyScenario('m-amendment-done',this)">✓ Customer Confirmed</button>
 
   </div>
   <button class="dev-fab" onclick="document.getElementById('devPanel').classList.toggle('open')" title="Scenarios">⚙</button>
@@ -712,6 +720,11 @@ const AMD_DOCS=[
   {name:'HP Agreement Second Schedule.pdf',ver:'v2',changed:true,fields:'APR, Duration, Installment Count'},
   {name:'Product Disclosure Sheet.pdf',ver:'v2',changed:false,fields:''},
 ];
+const AMD_CHANGES=[
+  {field:'Loan Amount',       old:'RM 45,000', new:'RM 48,000'},
+  {field:'Monthly Instalment',old:'RM 850',    new:'RM 905'},
+  {field:'Loan Duration',     old:'60 months', new:'63 months'},
+];
 const EA_LOG={
   initial:{type:'Hirer Initial Acceptance',pds:'Y',ss:'Y',hpa:'Y',app4:'—',status:'Completed',dt:'20/05/2026 04:50 PM',remark:'Biometric Acceptance'},
   amendment:{type:'Hirer Amendment Acceptance (1st)',pds:'Y',ss:'Y',hpa:'Y',app4:'—',status:'Completed',dt:'20/05/2026 05:30 PM',remark:'Biometric Acceptance'},
@@ -742,7 +755,7 @@ let S={
   s1Dev:'disconnected', s1Attempts:0,
   s2RibStatus:'waiting',          // 'waiting' | 'submitted'
   s3Dev:'disconnected', s3Attempts:0,
-  eaComplete:false, amendmentRequired:false, smsSent:false,
+  eaComplete:false, amendmentRequired:false, amendmentStep:'none', smsSent:false,
   eaViaOTP:false,
   s1Remarks:'',                    // officer remarks on Step 1 failure (required to retry)
   // Manual flow
@@ -950,8 +963,9 @@ function renderEAPanel(){
   } else {
     document.getElementById('eaCompleteSub').textContent=
       'Customer GGBOUND completed E-Acceptance on 20-05-2026 16:50:29 via '+(S.eaViaOTP?'OTP':'Biometric')+'. Signed documents attached.';
-    document.getElementById('amendmentSection').style.display=S.amendmentRequired?'block':'none';
-    if(S.amendmentRequired)renderAmendment();
+    const showAmd=S.amendmentRequired&&S.amendmentStep!=='none';
+    document.getElementById('amendmentSection').style.display=showAmd?'block':'none';
+    if(showAmd)renderAmendment();
   }
 }
 
@@ -1272,33 +1286,62 @@ function completeEA(viaOTP){
 // ═══════════════════════════════════════════════
 //  AMENDMENT
 // ═══════════════════════════════════════════════
-function renderAmendment(){
-  document.getElementById('amdSmsStatus').textContent=S.smsSent?'Sent – Pending Response':'—';
-  document.getElementById('amdSmsDate').textContent=S.smsSent?fmtNow():'—';
-  document.getElementById('btnTriggerSMS').disabled=S.smsSent;
-  document.getElementById('smsNote').textContent=S.smsSent?'SMS sent. Awaiting customer acceptance via eTracker.':'Enabled before Infobip response is received.';
-  document.getElementById('amdDocCards').innerHTML=AMD_DOCS.map(d=>`
-    <div class="amd-doc-card ${d.changed?'changed':''}">
-      ${d.changed?'<span class="changed-pill">Changed</span>':''}
-      <div style="font-size:12px;font-weight:600;margin-bottom:4px;">${d.name} <span class="vbadge">${d.ver}</span></div>
-      <div style="font-size:11px;color:${d.changed?'#c5221f':'#9aa0a6'};margin-bottom:10px;">${d.changed?'Fields changed: '+d.fields:'No changes detected'}</div>
-      <div style="display:flex;gap:5px;">
-        <button class="btn-outline-sm"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</button>
-        <button class="btn-outline-sm"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download</button>
+function renderAmendmentSectionHTML(){
+  const step=S.amendmentStep;
+  const ICO_AMD=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+  const ICO_WAIT=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1967d2" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+  const ICO_DONE=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#137333" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`;
+  const badges={'cilt-approved':['bd-orange','Action Required'],'ready':['bd-orange','Ready — Pending Notification'],'sent':['bd-blue','Awaiting Customer'],'confirmed':['bd-green','Confirmed']};
+  const [badgeClass,badgeLabel]=badges[step]||['bd-orange',''];
+  const changesHtml=`<div class="amd-changes-grid">`+AMD_CHANGES.map(c=>`<div class="amd-change-row"><span class="amd-field">${c.field}</span><span class="amd-old">${c.old}</span><span class="amd-arrow">→</span><span class="amd-new">${c.new}</span></div>`).join('')+`</div>`;
+  let bodyHtml='',ico=ICO_AMD;
+  if(step==='cilt-approved'){
+    bodyHtml=`<p style="font-size:12px;color:#5f6368;margin:0 0 4px;">CILT ref: CILT-2026-001 &nbsp;·&nbsp; Approved 20-05-2026</p>
+      <p style="font-size:12px;color:#3c4043;margin:0 0 6px;">A new contract version (v2) has been generated with the following changes. Customer must review and re-confirm remotely — no in-person visit required.</p>
+      ${changesHtml}
+      <div class="amd-step-row">
+        <span class="amd-step-label">Step 1 of 2 — Set status before sending notification.</span>
+        <button class="btn btn-primary btn-sm" onclick="setAmendmentReady()">Set to "Ready for Amendment Acceptance" →</button>
+      </div>`;
+  } else if(step==='ready'){
+    bodyHtml=`<p style="font-size:12px;color:#137333;font-weight:600;margin:0 0 8px;">Status: Ready for Amendment Acceptance ✓</p>
+      ${changesHtml}
+      <div class="amd-step-row">
+        <div><span class="amd-step-label">Step 2 of 2 — Send re-signing notification.</span><br>
+        <span style="font-size:12px;color:#3c4043;">Customer: <strong>GGBOUND</strong> &nbsp;·&nbsp; +60 12-230 8243</span></div>
+        <button class="btn btn-primary btn-sm" onclick="sendAmendmentSMS()">Send Re-signing Notification →</button>
+      </div>`;
+  } else if(step==='sent'){
+    ico=ICO_WAIT;
+    bodyHtml=`<p style="font-size:12px;color:#5f6368;margin:0 0 8px;">Notification sent to <strong>GGBOUND</strong> (+60 12-230 8243) at <strong>${fmtNow()}</strong></p>
+      <div class="amd-waiting-steps">
+        <span>1. Customer opens SMS link → logs in to e-Tracker</span>
+        <span>2. Clicks <strong>"Review Now"</strong> — changed fields highlighted in yellow</span>
+        <span>3. Ticks agreement checkbox → clicks <strong>"Confirm"</strong></span>
       </div>
-    </div>`).join('');
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+        <span style="font-size:12px;color:#5f6368;">Status updates automatically when customer confirms.</span>
+        <button class="btn btn-secondary btn-sm">Resend SMS</button>
+      </div>`;
+  } else if(step==='confirmed'){
+    ico=ICO_DONE;
+    bodyHtml=`<p style="font-size:13px;color:#137333;font-weight:600;margin:0 0 4px;">Customer confirmed via e-Tracker</p>
+      <p style="font-size:12px;color:#5f6368;margin:0 0 12px;">GGBOUND &nbsp;·&nbsp; 20-05-2026 17:02:41 &nbsp;·&nbsp; CILT-2026-001</p>
+      <p style="font-size:12px;color:#3c4043;margin:0;">Document Library updated — v2 contract now active. You may confirm and proceed.</p>`;
+  }
+  return `<div class="amendment-wrap"><div class="amendment-hdr"><div class="amendment-hdr-title">${ico} Amendment (CILT)</div><span class="badge ${badgeClass}">${badgeLabel}</span></div><div class="amendment-body">${bodyHtml}</div></div>`;
 }
-function triggerSMS(){
-  S.smsSent=true;
-  document.getElementById('amdSmsStatus').textContent='Sent – Pending Response';
-  document.getElementById('amdSmsDate').textContent=fmtNow();
-  document.getElementById('btnTriggerSMS').disabled=true;
-  document.getElementById('smsNote').textContent='SMS sent. Awaiting customer acceptance via eTracker.';
-  document.getElementById('logSmsStatus').textContent='Sent – Pending Response';
-  document.getElementById('logSmsDate').textContent=fmtNow();
-  renderSigningDocs(); // refresh DL signing section — v2 dates now show actual send time
-  alert('Amendment SMS sent via Infobip to customer.\n"HLB: Dear customer, please review and accept changes via www.hlb.com.my/etracker"');
+function renderAmendment(){
+  const el=document.getElementById('eaAmendmentContent');
+  if(el)el.innerHTML=renderAmendmentSectionHTML();
 }
+function setAmendmentReady(){S.amendmentStep='ready';refreshAmendmentPanel();}
+function sendAmendmentSMS(){S.amendmentStep='sent';S.smsSent=true;refreshAmendmentPanel();}
+function refreshAmendmentPanel(){
+  if(S.mode==='ea')renderEAPanel(); else renderManualPanel();
+  updateFooter();
+}
+function triggerSMS(){sendAmendmentSMS();}
 
 // ── EA Log ──
 function openEALog(){
@@ -1307,7 +1350,13 @@ function openEALog(){
     const r=EA_LOG[k];
     return `<tr>${[r.type,r.pds,r.ss,r.hpa,r.app4].map((v,i)=>`<td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;${i>0?'text-align:center;':''}" class="${v==='Y'?'flag-y':v==='—'&&i>0?'flag-n':''}">${v}</td>`).join('')}<td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;text-align:center;"><span class="badge bd-green" style="font-size:10px;">${r.status}</span></td><td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;white-space:nowrap;">${r.dt}</td><td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;">${r.remark}</td></tr>`;
   }).join('');
-  document.getElementById('modalSmsBtn').style.display=S.amendmentRequired?'inline-flex':'none';
+  // Sync SMS fields in log modal
+  const smsStep=S.amendmentStep;
+  document.getElementById('logSmsStatus').textContent=S.smsSent?(smsStep==='confirmed'?'Confirmed':'Sent – Pending Response'):'—';
+  document.getElementById('logSmsDate').textContent=S.smsSent?fmtNow():'—';
+  // Show SMS button only when amendment is pending and SMS not yet sent
+  const showSmsBtn=S.amendmentRequired&&S.amendmentStep!=='none'&&!S.smsSent;
+  document.getElementById('modalSmsBtn').style.display=showSmsBtn?'inline-flex':'none';
   openModal('modalEALog');
 }
 
@@ -1317,6 +1366,13 @@ function openEALog(){
 function renderManualPanel(){
   const persons=S.hasGuarantor?MANUAL_PERSONS:[MANUAL_PERSONS[0]];
   const allDone=persons.every(p=>S[p.key].done);
+  // Amendment section
+  const amdEl=document.getElementById('manualAmendmentSection');
+  if(amdEl){
+    const showAmd=S.amendmentRequired&&S.amendmentStep!=='none';
+    amdEl.style.display=showAmd?'block':'none';
+    if(showAmd)amdEl.innerHTML=renderAmendmentSectionHTML();
+  }
 
   // Top row: skip all visibility
   const skipBtn=document.getElementById('skipAllBtn');
@@ -1471,17 +1527,21 @@ function skipAllManualBio(){
 // ═══════════════════════════════════════════════
 function updateFooter(){
   const btn=document.getElementById('btnConfirm');
+  btn.style.display=''; // always visible
+  const amdDone=!S.amendmentRequired||(S.amendmentStep==='confirmed');
   if(S.mode==='manual'){
-    // Manual: no confirm action in Acceptance tab — completion is via Document Centre
-    btn.style.display='none';
+    // Manual: enabled only when amendment confirmed; otherwise always disabled
+    btn.disabled=!(S.amendmentRequired&&S.amendmentStep==='confirmed');
   } else {
-    btn.style.display='';
-    btn.disabled=!S.eaComplete;
+    // EA: enabled when EA complete AND (no amendment OR amendment confirmed)
+    btn.disabled=!(S.eaComplete&&amdDone);
   }
 }
 function confirmProceed(){
-  // EA only — Manual has no confirm button
-  alert('E-Acceptance confirmed. Application proceeds to next workflow step.');
+  const msg=S.amendmentRequired
+    ?'Amendment confirmed. Application proceeds to next workflow step.'
+    :'E-Acceptance confirmed. Application proceeds to next workflow step.';
+  alert(msg);
 }
 
 // ═══════════════════════════════════════════════
@@ -1512,7 +1572,7 @@ function applyScenario(key,btn){
     mode:'ea', modeConfirmed:true, hasGuarantor:false,
     eaStep:1, s1Dev:'disconnected', s1Attempts:0,
     s2RibStatus:'waiting', s3Dev:'disconnected', s3Attempts:0,
-    eaComplete:false, amendmentRequired:false, smsSent:false, eaViaOTP:false,
+    eaComplete:false, amendmentRequired:false, amendmentStep:'none', smsSent:false, eaViaOTP:false,
     s1Remarks:'',
     mBioPrimary:{dev:'disconnected',done:false,attempts:0},
     mBioGuarantor:{dev:'disconnected',done:false,attempts:0},
@@ -1538,8 +1598,11 @@ function applyScenario(key,btn){
     'ea-s3-fail1':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'unmatched',s3Attempts:1},
     'ea-s3-fail2':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'unmatched',s3Attempts:2},
     'ea-s3-otp':    {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'unmatched',s3Attempts:3},
-    'ea-complete':  {eaComplete:true},
-    'ea-amendment': {eaComplete:true,amendmentRequired:true},
+    'ea-complete':        {eaComplete:true},
+    'ea-amendment':       {eaComplete:true,amendmentRequired:true,amendmentStep:'cilt-approved'},
+    'ea-amendment-ready': {eaComplete:true,amendmentRequired:true,amendmentStep:'ready'},
+    'ea-amendment-sent':  {eaComplete:true,amendmentRequired:true,amendmentStep:'sent',smsSent:true},
+    'ea-amendment-done':  {eaComplete:true,amendmentRequired:true,amendmentStep:'confirmed',smsSent:true},
     // Manual no guarantor
     'm-ng-disc':    {mode:'manual'},
     'm-ng-ready':   {mode:'manual',mBioPrimary:{dev:'ready',done:false,attempts:0}},
@@ -1557,6 +1620,15 @@ function applyScenario(key,btn){
     'm-g-skip':     {mode:'manual',hasGuarantor:true,
                      mBioPrimary:{dev:'skipped',done:true,attempts:0},
                      mBioGuarantor:{dev:'skipped',done:true,attempts:0}},
+    // Manual amendment
+    'm-amendment':       {mode:'manual',amendmentRequired:true,amendmentStep:'cilt-approved',
+                          mBioPrimary:{dev:'matched',done:true,attempts:1}},
+    'm-amendment-ready': {mode:'manual',amendmentRequired:true,amendmentStep:'ready',
+                          mBioPrimary:{dev:'matched',done:true,attempts:1}},
+    'm-amendment-sent':  {mode:'manual',amendmentRequired:true,amendmentStep:'sent',smsSent:true,
+                          mBioPrimary:{dev:'matched',done:true,attempts:1}},
+    'm-amendment-done':  {mode:'manual',amendmentRequired:true,amendmentStep:'confirmed',smsSent:true,
+                          mBioPrimary:{dev:'matched',done:true,attempts:1}},
   };
 
   const patch=map[key]||{};
