@@ -39,6 +39,8 @@
 
 — 暂无 —
 
+
+
 ### 已完成（本 session-v9 所有变更）
 
 - [x] bio-layout 两栏 CSS 恢复
@@ -72,6 +74,15 @@
   - 顶部：Skip All Biometric 链接 + Switch to EA 链接
   - 底部：DC 状态横幅（Pending / Complete）
   - `renderManualPanel()` + `renderPersonCard()` 替代原来的两个函数
+- [x] **Manual bio "Proceed Offline" 重命名 + 强制警告**：
+  - "Skip Bio" → "Proceed Offline"（卡片头部按钮）
+  - "Skip All Biometric" → "Proceed All Offline"（顶部操作栏）
+  - unmatched 状态 "Skip" 链接 → "Proceed Offline"
+  - disconnected 状态新增 "Proceed Offline" 链接
+  - skipped 完成态改为橙色警告框：说明需补件上传 Document Centre
+  - 添加 "↺ Restart in-system verification" 链接（可逆性）
+  - 新增 `mBioRestart(key)` 函数：重置 bio 状态到 disconnected
+  - section 标签 "Optional" → "Physical report required if offline"
 
 ---
 
