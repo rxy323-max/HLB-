@@ -464,25 +464,6 @@ tr:hover td{background:#fafafa;}
               <div class="bio-left" id="s3Left"></div>
               <div class="bio-right" id="s3Right"></div>
             </div>
-            <div id="otpWrap" style="display:none;justify-content:center;margin-top:14px;">
-              <div class="otp-panel">
-                <div class="otp-title">Fingerprint Verification Failed — OTP Fallback</div>
-                <div class="otp-sub">3 biometric attempts exhausted. System has sent a 6-digit OTP to customer's registered mobile.<br>Enter OTP as displayed on RIB Portal.</div>
-                <div class="otp-inputs">
-                  <input class="otp-input" maxlength="1" oninput="otpNext(this)">
-                  <input class="otp-input" maxlength="1" oninput="otpNext(this)">
-                  <input class="otp-input" maxlength="1" oninput="otpNext(this)">
-                  <input class="otp-input" maxlength="1" oninput="otpNext(this)">
-                  <input class="otp-input" maxlength="1" oninput="otpNext(this)">
-                  <input class="otp-input" maxlength="1" oninput="otpNext(this)">
-                </div>
-                <div style="display:flex;gap:8px;justify-content:center;">
-                  <button class="btn btn-primary btn-sm" onclick="verifyOTP()">Verify OTP</button>
-                  <button class="btn btn-secondary btn-sm">Resend OTP</button>
-                </div>
-                <div id="otpResult" style="margin-top:8px;text-align:center;font-size:12px;"></div>
-              </div>
-            </div>
           </div>
 
           <!-- Complete -->
@@ -539,8 +520,6 @@ tr:hover td{background:#fafafa;}
           </div>
           <!-- Person cards (bio + docs per person) -->
           <div id="manualPersonCards"><!-- rendered by renderManualPanel() --></div>
-          <!-- DC status banner -->
-          <div id="manualDCStatus" style="margin-top:14px;"><!-- rendered by renderManualPanel() --></div>
         </div><!-- end panelManual -->
 
       </div><!-- end tp-acceptance -->
@@ -668,7 +647,7 @@ tr:hover td{background:#fafafa;}
     <button class="dev-btn" onclick="applyScenario('ea-s3-ready',this)">Device ready</button>
     <button class="dev-btn" onclick="applyScenario('ea-s3-fail1',this)">✗ Failed — attempt 1/3</button>
     <button class="dev-btn" onclick="applyScenario('ea-s3-fail2',this)">✗ Failed — attempt 2/3</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s3-otp',this)">✗ Max retries → OTP fallback</button>
+    <button class="dev-btn" onclick="applyScenario('ea-s3-otp',this)">✗ Max retries → Send OTP step</button>
     <button class="dev-btn" onclick="applyScenario('ea-complete',this)">✓ E-Acceptance Completed</button>
     <button class="dev-btn" onclick="applyScenario('ea-amendment',this)">✓ Completed + Amendment</button>
 
@@ -687,9 +666,6 @@ tr:hover td{background:#fafafa;}
     <button class="dev-btn" onclick="applyScenario('m-g-both-matched',this)">Both ✓ Matched</button>
     <button class="dev-btn" onclick="applyScenario('m-g-skip',this)">Both: Skipped</button>
 
-    <div class="dev-sep"></div>
-    <div class="dev-group">Manual — Completion (via Document Centre)</div>
-    <button class="dev-btn" onclick="applyScenario('m-dc-uploaded',this)">Simulate: DC upload received</button>
   </div>
   <button class="dev-fab" onclick="document.getElementById('devPanel').classList.toggle('open')" title="Scenarios">⚙</button>
 </div>
@@ -770,7 +746,6 @@ let S={
   eaViaOTP:false,
   s1Remarks:'',                    // officer remarks on Step 1 failure (required to retry)
   // Manual flow
-  manualDCUploaded:false,         // true when Document Centre upload is simulated
   mBioPrimary:{dev:'disconnected',done:false,attempts:0},
   mBioGuarantor:{dev:'disconnected',done:false,attempts:0},
 };
@@ -912,7 +887,7 @@ function forceManualSwitch(){
 
 // Manual → EA: validate conditions then show confirm
 function switchToEACheck(){
-  if(S.hasGuarantor||S.manualDCUploaded)return;
+  if(S.hasGuarantor)return;
   openModal('modalSwitchToEA');
 }
 // Manual → EA: confirmed — reset manual bio, restart EA from Step 1
@@ -920,7 +895,6 @@ function confirmSwitchToEA(){
   closeModal('modalSwitchToEA');
   S.mBioPrimary={dev:'disconnected',done:false,attempts:0};
   S.mBioGuarantor={dev:'disconnected',done:false,attempts:0};
-  S.manualDCUploaded=false;
   applyMode('ea');
 }
 
@@ -1050,10 +1024,7 @@ function renderStep1(){
     right=devViz('disconnected')+`
       <div class="state-title">No MyKad detected</div>
       <div class="state-sub">Insert the customer's MyKad into the reader, then click Read MyKad.</div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-primary btn-sm" onclick="S.s1Dev='scanning';renderStep1()">Read MyKad</button>
-        <button class="btn btn-secondary btn-sm">Restart Service</button>
-      </div>`;
+      <button class="btn btn-primary btn-sm" onclick="S.s1Dev='scanning';renderStep1()">Read MyKad</button>`;
   } else if(dev==='scanning'){
     right=devViz('scanning')+`<div class="state-title">Reading MyKad...</div><div class="state-sub">Reading card data. Please do not remove the MyKad.</div>`;
     setTimeout(()=>{if(S.s1Dev==='scanning'){S.s1Dev='ready';renderStep1();}},2000);
@@ -1191,17 +1162,39 @@ function renderStep3(){
   const dev=S.s3Dev; const att=S.s3Attempts;
   const now=fmtNow(),now2=fmtNow(2);
   let leftOpts={trigPoint:'E-Acceptance Confirmation'},right='';
-  const otp=document.getElementById('otpWrap');
-  otp.style.display='none';
+
+  // OTP entry state — replaces right panel entirely
+  if(dev==='otp-sent'){
+    leftOpts={...leftOpts,bioStatus:'OTP Sent',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:'3 / 3',remark:'Biometric failed 3/3. OTP fallback activated.'};
+    right=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;padding:8px 0;">
+      <div class="otp-panel" style="width:100%;max-width:340px;">
+        <div class="otp-title">OTP Verification</div>
+        <div class="otp-sub">6-digit OTP sent to customer's registered mobile.<br>Ask the customer to enter the code shown on their phone.</div>
+        <div class="otp-inputs">
+          <input class="otp-input" maxlength="1" oninput="otpNext(this)">
+          <input class="otp-input" maxlength="1" oninput="otpNext(this)">
+          <input class="otp-input" maxlength="1" oninput="otpNext(this)">
+          <input class="otp-input" maxlength="1" oninput="otpNext(this)">
+          <input class="otp-input" maxlength="1" oninput="otpNext(this)">
+          <input class="otp-input" maxlength="1" oninput="otpNext(this)">
+        </div>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button class="btn btn-primary btn-sm" onclick="verifyOTP()">Verify OTP</button>
+          <button class="btn btn-secondary btn-sm">Resend OTP</button>
+        </div>
+        <div id="otpResult" style="margin-top:8px;text-align:center;font-size:12px;"></div>
+      </div>
+    </div>`;
+    document.getElementById('s3Left').innerHTML=leftPanel(3,leftOpts);
+    document.getElementById('s3Right').innerHTML=right;
+    return;
+  }
 
   if(dev==='disconnected'){
     right=devViz('disconnected')+`
       <div class="state-title">No MyKad detected</div>
       <div class="state-sub">Insert the customer's MyKad into the reader to begin E-Acceptance confirmation.</div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-primary btn-sm" onclick="S.s3Dev='scanning';renderStep3()">Read MyKad</button>
-        <button class="btn btn-secondary btn-sm">Restart Service</button>
-      </div>`;
+      <button class="btn btn-primary btn-sm" onclick="S.s3Dev='scanning';renderStep3()">Read MyKad</button>`;
   } else if(dev==='scanning'){
     right=devViz('scanning')+`<div class="state-title">Reading MyKad...</div><div class="state-sub">Reading card data. Please do not remove the MyKad.</div>`;
     setTimeout(()=>{if(S.s3Dev==='scanning'){S.s3Dev='ready';renderStep3();}},2000);
@@ -1228,14 +1221,14 @@ function renderStep3(){
   } else if(dev==='unmatched'){
     leftOpts={...leftOpts,bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3'};
     if(att>=3){
-      leftOpts={...leftOpts,remark:'3 biometric attempts exhausted. OTP fallback activated.'};
+      leftOpts={...leftOpts,remark:'3 biometric attempts exhausted. OTP fallback available.'};
       right=`<div class="bio-result">
         ${ICO_WARN}
-        <div class="bio-result-title brt-warn">Biometric Verification Failed — OTP Fallback</div>
+        <div class="bio-result-title brt-warn">Biometric Verification Failed</div>
         ${attBadge(att,3)}
-        <p style="font-size:12px;color:#5f6368;margin:8px 0 8px;">3 attempts exhausted. OTP has been sent to customer's registered mobile.</p>
+        <p style="font-size:12px;color:#5f6368;margin:8px 0 14px;">3 attempts exhausted. Send a one-time passcode to the customer's registered mobile as an alternative.</p>
+        <button class="btn btn-primary btn-sm" onclick="sendOTP()">Send OTP to Customer →</button>
       </div>`;
-      otp.style.display='flex';
     } else {
       const rem=3-att;
       leftOpts={...leftOpts,remark:'Biometric not matched. '+rem+' attempt(s) remaining.'};
@@ -1243,7 +1236,7 @@ function renderStep3(){
         ${ICO_FAIL}
         <div class="bio-result-title brt-failed">Biometric Not Matched</div>
         ${attBadge(att,3)}
-        <p style="font-size:12px;color:#5f6368;margin:8px 0 14px;">${rem} attempt(s) remaining. OTP fallback activates after ${att>=2?'the next':'${rem===2?"2 more":"1 more"}'} failure.</p>
+        <p style="font-size:12px;color:#5f6368;margin:8px 0 14px;">${rem} attempt(s) remaining. OTP fallback activates after ${att>=2?'the next':rem===2?'2 more failures':'1 more failure'}.</p>
         <button class="btn btn-primary btn-sm" onclick="retryS3()">Retry (${rem} left)</button>
       </div>`;
     }
@@ -1251,6 +1244,7 @@ function renderStep3(){
   document.getElementById('s3Left').innerHTML=leftPanel(3,leftOpts);
   document.getElementById('s3Right').innerHTML=right;
 }
+function sendOTP(){S.s3Dev='otp-sent';renderStep3();}
 
 function s3StartFP(outcome){
   S.s3Dev='scanning-fp';
@@ -1322,28 +1316,21 @@ function openEALog(){
 // ═══════════════════════════════════════════════
 function renderManualPanel(){
   const persons=S.hasGuarantor?MANUAL_PERSONS:[MANUAL_PERSONS[0]];
-  const uploaded=S.manualDCUploaded;
   const allDone=persons.every(p=>S[p.key].done);
 
   // Top row: skip all visibility
   const skipBtn=document.getElementById('skipAllBtn');
   if(skipBtn) skipBtn.style.display=allDone?'none':'inline';
 
-  // Switch to EA link: only if no guarantor and DC not uploaded
+  // Switch to EA link: only if no guarantor
   const eaBtn=document.getElementById('manualSwitchEABtn');
-  if(eaBtn) eaBtn.style.display=(!S.hasGuarantor&&!uploaded)?'inline':'none';
+  if(eaBtn) eaBtn.style.display=(!S.hasGuarantor)?'inline':'none';
 
   // Render person cards
-  document.getElementById('manualPersonCards').innerHTML=persons.map(p=>renderPersonCard(p,uploaded)).join('');
-
-  // DC status banner
-  const statusBanner=uploaded
-    ?`<div class="dc-status-banner dc-status-complete">${ICO_OK_SM}<span><strong>Manual Acceptance Complete</strong> — Signed documents received at Document Centre.</span></div>`
-    :`<div class="dc-status-banner dc-status-pending"><span class="dc-status-dot"></span><span><strong>Pending</strong> — Awaiting upload of signed documents at <strong>Document Centre</strong>.</span></div>`;
-  document.getElementById('manualDCStatus').innerHTML=statusBanner;
+  document.getElementById('manualPersonCards').innerHTML=persons.map(p=>renderPersonCard(p)).join('');
 }
 
-function renderPersonCard(p,uploaded){
+function renderPersonCard(p){
   const bio=S[p.key];
   const dev=bio.dev; const done=bio.done;
   const now=fmtNow(),now2=fmtNow(2);
@@ -1379,7 +1366,6 @@ function renderPersonCard(p,uploaded){
         <div class="state-sub">Ensure the MyKad reader is connected via USB.<br><span style="color:#b45309;font-weight:500;">If device unavailable, proceed offline — physical report required for disbursement.</span></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <button class="btn btn-primary btn-sm" onclick="mBioSet(${k},'scanning')">Start Scan</button>
-          <button class="btn btn-secondary btn-sm">Restart Service</button>
           <button class="lnk" style="font-size:12px;" onclick="mBioSkip(${k})">Proceed Offline</button>
         </div>`;
     } else if(dev==='scanning'){
@@ -1432,7 +1418,7 @@ function renderPersonCard(p,uploaded){
       <div class="ma-doc-info">
         <div class="ma-doc-icon">${FILE_ICON}</div>
         <div>
-          <div class="ma-doc-name">${d.name} <span class="vbadge">${d.ver}</span>${uploaded?` <span class="badge bd-green" style="font-size:10px;margin-left:4px;">Signed</span>`:''}</div>
+          <div class="ma-doc-name">${d.name} <span class="vbadge">${d.ver}</span></div>
           <div class="ma-doc-date">${d.date}</div>
         </div>
       </div>
@@ -1452,7 +1438,7 @@ function renderPersonCard(p,uploaded){
       ${bioContent}
       <div class="mp-docs-wrap">
         <div class="mp-section-label">Documents to Sign (${p.docs.length})</div>
-        ${uploaded?'': `<div class="ma-doc-note" style="margin-bottom:10px;">Download and have this applicant sign on paper. Upload signed copy to <strong>Document Centre</strong> to complete acceptance.</div>`}
+        <div class="ma-doc-note" style="margin-bottom:10px;">Download and have this applicant sign on paper. Upload signed copy to <strong>Document Centre</strong> to complete acceptance.</div>
         ${docRows}
       </div>
     </div>
@@ -1527,7 +1513,7 @@ function applyScenario(key,btn){
     eaStep:1, s1Dev:'disconnected', s1Attempts:0,
     s2RibStatus:'waiting', s3Dev:'disconnected', s3Attempts:0,
     eaComplete:false, amendmentRequired:false, smsSent:false, eaViaOTP:false,
-    s1Remarks:'', manualDCUploaded:false,
+    s1Remarks:'',
     mBioPrimary:{dev:'disconnected',done:false,attempts:0},
     mBioGuarantor:{dev:'disconnected',done:false,attempts:0},
   };
@@ -1571,9 +1557,6 @@ function applyScenario(key,btn){
     'm-g-skip':     {mode:'manual',hasGuarantor:true,
                      mBioPrimary:{dev:'skipped',done:true,attempts:0},
                      mBioGuarantor:{dev:'skipped',done:true,attempts:0}},
-    // Manual — Document Centre upload received
-    'm-dc-uploaded':{mode:'manual',manualDCUploaded:true,
-                     mBioPrimary:{dev:'matched',done:true,attempts:1}},
   };
 
   const patch=map[key]||{};
