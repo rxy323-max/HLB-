@@ -406,6 +406,52 @@ tr:hover td{background:#fafafa;}
   </div>
 </div>
 
+<!-- ══ MODAL: Amend OCR Field (Sales) ══ -->
+<div class="modal-overlay" id="modalAmend">
+  <div class="modal modal-sm">
+    <div class="modal-hdr"><h3>&#9998; Amend OCR Result</h3><button class="modal-x" onclick="closeModal('modalAmend')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="alert-warn" style="margin-bottom:14px;">
+        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Verify the physical document first, then correct the OCR value. This amendment is logged.</span>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Field</div>
+      <div style="font-size:13px;font-weight:700;color:#202124;margin-bottom:12px;" id="amendModalLabel">—</div>
+      <div style="font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">OCR Extracted (possibly incorrect)</div>
+      <div style="font-size:13px;color:#c5221f;font-weight:600;padding:6px 10px;background:#fce8e6;border-radius:4px;margin-bottom:14px;" id="amendModalOrig">—</div>
+      <div style="font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Corrected Value (from physical document)</div>
+      <input type="text" id="amendModalInput" style="width:100%;border:1.5px solid #1967d2;border-radius:6px;padding:8px 10px;font-size:13px;outline:none;" placeholder="Enter correct value">
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modalAmend')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveAmendment()">Save Amendment</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Modify OCR Field (CRA) ══ -->
+<div class="modal-overlay" id="modalCraEdit">
+  <div class="modal modal-sm">
+    <div class="modal-hdr"><h3>&#9998; Modify Field Value</h3><button class="modal-x" onclick="closeModal('modalCraEdit')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="alert-info" style="margin-bottom:14px;">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>Modify after manual verification of the physical document. CRA is responsible for the final accuracy of all disbursement data.</span>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Field</div>
+      <div style="font-size:13px;font-weight:700;color:#202124;margin-bottom:12px;" id="craEditModalLabel">—</div>
+      <div style="font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Current OCR Value</div>
+      <div style="font-size:13px;color:#c5221f;font-weight:600;padding:6px 10px;background:#fce8e6;border-radius:4px;margin-bottom:14px;" id="craEditModalOrig">—</div>
+      <div style="font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Verified Correct Value</div>
+      <input type="text" id="craEditModalInput" style="width:100%;border:1.5px solid #1967d2;border-radius:6px;padding:8px 10px;font-size:13px;outline:none;" placeholder="Enter verified value">
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modalCraEdit')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveCraEdit()">Confirm &amp; Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ DEV TOOL ══ -->
 <div class="dev-tool">
   <div class="dev-panel" id="devPanel">
@@ -417,6 +463,7 @@ tr:hover td{background:#fafafa;}
     <button class="dev-btn" onclick="applyScenario('s-app-ocr',this)">&#9314; OCR Running (3/6 done)</button>
     <button class="dev-btn" onclick="applyScenario('s-app-done',this)">&#9315; All clear — ready to submit</button>
     <button class="dev-btn" onclick="applyScenario('s-app-alert',this)">&#9315; Done with 1 alert flag</button>
+    <button class="dev-btn" onclick="applyScenario('s-app-detail',this)">&#9998; Amend OCR — Payslip detail</button>
 
     <div class="dev-sep"></div>
     <div class="dev-group">Sales — Disbursement</div>
@@ -466,6 +513,10 @@ let S={
   batchConfirmed:false,
   focusFileId:'f4',
   defectFixed:0,
+  ocrAmendments:{},    // Sales: {fileId:{fieldLabel:{orig,amended}}}
+  craModifications:{}, // CRA:   {fieldLabel:{orig,modified}}
+  amendLabel:'',
+  amendFileId:'',
 };
 
 // ═══════════════════════════════════════════════
@@ -820,6 +871,160 @@ function renderRegions(data){
 }
 
 // ═══════════════════════════════════════════════
+//  AMEND / MODIFY FUNCTIONS
+// ═══════════════════════════════════════════════
+function openAmendModal(label,orig,fileId){
+  document.getElementById('amendModalLabel').textContent=label;
+  document.getElementById('amendModalOrig').textContent=orig;
+  document.getElementById('amendModalInput').value=orig;
+  S.amendLabel=label; S.amendFileId=fileId;
+  openModal('modalAmend');
+}
+function saveAmendment(){
+  var v=document.getElementById('amendModalInput').value.trim();
+  if(!v)return;
+  if(!S.ocrAmendments[S.amendFileId])S.ocrAmendments[S.amendFileId]={};
+  S.ocrAmendments[S.amendFileId][S.amendLabel]={orig:document.getElementById('amendModalOrig').textContent,amended:v};
+  closeModal('modalAmend');render();
+}
+function clearAmendments(fileId){
+  S.ocrAmendments[fileId||'f2']={};render();
+}
+function clearCraMods(){
+  S.craModifications={};render();
+}
+function openCraEditModal(label,orig){
+  document.getElementById('craEditModalLabel').textContent=label;
+  document.getElementById('craEditModalOrig').textContent=orig;
+  document.getElementById('craEditModalInput').value=orig;
+  S.amendLabel=label;
+  openModal('modalCraEdit');
+}
+function saveCraEdit(){
+  var v=document.getElementById('craEditModalInput').value.trim();
+  if(!v)return;
+  S.craModifications[S.amendLabel]={orig:document.getElementById('craEditModalOrig').textContent,modified:v};
+  closeModal('modalCraEdit');render();
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: SALES — APP — OCR DETAIL (Amendable)
+// ═══════════════════════════════════════════════
+function renderSAppOcrDetail(){
+  const fileId='f2';
+  const amds=S.ocrAmendments[fileId]||{};
+  const hasAmds=Object.keys(amds).length>0;
+  const netAmended=amds['net_pay_amount'];
+
+  // Region 1: fields with Amend buttons on cross-validated fields
+  const r1=PAYSLIP_OCR.fields.map(f=>{
+    const amd=amds[f.label];
+    const isXval=f.cls==='xval';
+    const tag=f.tag?`&nbsp;<span class="badge bd-blue" style="font-size:10px;">${f.tag}</span>`:'';
+    let vHtml;
+    if(amd){
+      vHtml=`<span style="color:#9aa0a6;text-decoration:line-through;font-size:11px;">${f.val}</span>&nbsp;&rarr;&nbsp;<strong style="color:#137333;">${amd.amended}</strong>&nbsp;<span class="badge bd-green" style="font-size:10px;">Amended &#10003;</span>`;
+    } else if(isXval){
+      vHtml=`<span class="fg-value ${f.cls}">${f.val}${tag}</span>&nbsp;<button class="btn btn-sm" style="padding:2px 8px;font-size:11px;border:1px solid #b45309;color:#b45309;background:#fffbeb;" onclick="openAmendModal('${f.label}','${f.val}','${fileId}')">&#9998; Amend</button>`;
+    } else {
+      vHtml=`<span class="fg-value ${f.cls||''}">${f.val}</span>`;
+    }
+    return`<div class="fg-row"><div class="fg-cell fg-label">${f.label}</div><div class="fg-cell">${vHtml}</div></div>`;
+  }).join('');
+
+  // Region 2: Consistency (unchanged)
+  const r2=PAYSLIP_OCR.consistency.map(c=>`<div class="check-row">
+    <span class="check-icon">${I_OK}</span>
+    <div class="check-body"><div class="check-label">${c.label}</div><div class="check-detail">${c.detail}</div></div>
+    <span class="check-result">${badge('Match','bd-green')}</span>
+  </div>`).join('');
+
+  // Region 3: Formula — update cross-check result if net_pay_amount was amended
+  const formula3=PAYSLIP_OCR.formula.map(c=>{
+    if(netAmended&&c.label.includes('Bank Statement'))
+      return{...c,res:'pass',formula:'Net '+netAmended.amended+' vs Bank credit RM 5,200 — amended to match ✓'};
+    return c;
+  });
+  const r3Ov=formula3.some(c=>c.res==='fail')?'fail':formula3.some(c=>c.res==='alert')?'alert':'pass';
+  const r3=formula3.map(c=>`<div class="check-row ${c.res==='fail'?'cr-fail':c.res==='alert'?'cr-alert':''}">
+    <span class="check-icon">${c.res==='pass'?I_OK:c.res==='alert'?I_WARN:I_FAIL}</span>
+    <div class="check-body"><div class="check-label">${c.label}</div><div class="check-formula">${c.formula}</div></div>
+    <span class="check-result">${badge(c.res==='pass'?'Pass':c.res==='alert'?'Alert':'Fail',c.res==='pass'?'bd-green':c.res==='alert'?'bd-orange':'bd-red')}</span>
+  </div>`).join('');
+
+  // Region 4: Eyeball (unchanged)
+  const r4=PAYSLIP_OCR.eyeball.map(c=>`<div class="check-row cr-eye">
+    <span class="check-icon">${I_OK}</span>
+    <div class="check-body"><div class="check-label">${c.label}</div><div class="check-detail">${c.note}</div></div>
+    <span class="check-result">${badge('Pass','bd-green')}</span>
+  </div>`).join('');
+
+  const ovBadge=hasAmds&&r3Ov==='pass'?badge('Amended — Pass','bd-green'):badge('Alert — Region 3','bd-orange');
+
+  return`${caseHeader()}
+  ${salesTabBar('app')}
+  <div class="tab-body">
+    ${salesStepBar(4)}
+    <div class="detail-hdr">
+      <div class="detail-hdr-left">
+        <div class="detail-title">Payslip_Oct2025.pdf &mdash; OCR Detail</div>
+        <div class="detail-meta">Primary Applicant &bull; Applicant Income &bull; AI: Payslip (94% confidence) &bull; Sales review &amp; amend</div>
+      </div>
+      <div class="detail-hdr-right">
+        ${ovBadge}
+        ${hasAmds?`<button class="btn btn-sm" style="background:#fef7e0;color:#b45309;border:1px solid #fde68a;" onclick="clearAmendments('f2')">&#8635; Clear</button>`:''}
+        <button class="btn btn-secondary btn-sm" onclick="applyScenario('s-app-alert',null)">&larr; Back to Results</button>
+      </div>
+    </div>
+    ${hasAmds
+      ?`<div class="alert-ok" style="margin-bottom:14px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg><span><strong>1 field amended.</strong> Amendment logged with your user ID. CED will see both the original OCR value and your corrected value.</span></div>`
+      :`<div class="alert-warn" style="margin-bottom:14px;"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Cross-validated fields are flagged below. If OCR misread a value, verify against the physical document and click <strong>Amend</strong>.</span></div>`}
+    <div class="detail-layout">
+      <div class="detail-preview">
+        <div class="detail-preview-label">Document Preview</div>
+        ${pdfMock('payslip')}
+        <div style="font-size:11px;color:#9aa0a6;margin-top:8px;text-align:center;">Page 1 of 1</div>
+        <div style="margin-top:12px;font-size:11px;color:#5f6368;line-height:1.7;padding:0 4px;">
+          <div style="font-weight:700;color:#202124;margin-bottom:4px;">Cross-file Links</div>
+          <div style="background:#f0f7ff;border:1px solid #c5d8f8;border-radius:5px;padding:8px;">
+            <div style="color:#1967d2;font-weight:600;margin-bottom:4px;">Payslip &rarr; Bank Statement</div>
+            ${netAmended
+              ?`<div>Amended: <strong>${netAmended.amended}</strong></div><div style="color:#137333;">Bank credit: RM 5,200 &mdash; match &#10003;</div>`
+              :`<div>Net Pay: RM 5,800</div><div style="color:#b45309;">Bank credit: RM 5,200</div><div style="color:#b45309;">Diff: RM 600 &#8593;</div>`}
+          </div>
+          <div style="background:#f0f7ff;border:1px solid #c5d8f8;border-radius:5px;padding:8px;margin-top:6px;">
+            <div style="color:#1967d2;font-weight:600;margin-bottom:4px;">Payslip &rarr; EPF</div>
+            <div style="color:#137333;">Employer 12% &#10003;</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="region-section">
+          <div class="region-hdr"><span class="region-title">Region 1 &mdash; Extracted Fields</span>${hasAmds?badge('1 Amended','bd-orange'):''}</div>
+          <div class="field-grid">${r1}</div>
+        </div>
+        <div class="region-section">
+          <div class="region-hdr"><span class="region-title">Region 2 &mdash; Consistency Checks</span>${badge('Pass','bd-green')}</div>
+          <div class="check-rows">${r2}</div>
+        </div>
+        <div class="region-section">
+          <div class="region-hdr"><span class="region-title">Region 3 &mdash; Formula / Date / Fix Value</span>${badge(r3Ov==='pass'?'Pass':r3Ov==='alert'?'Alert':'Fail',r3Ov==='pass'?'bd-green':r3Ov==='alert'?'bd-orange':'bd-red')}</div>
+          <div class="check-rows">${r3}</div>
+        </div>
+        <div class="region-section">
+          <div class="region-hdr"><span class="region-title">Region 4 &mdash; Exist / Eyeball Check</span>${badge('Pass','bd-green')}</div>
+          <div class="check-rows">${r4}</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid #f1f3f4;">
+      <button class="btn btn-secondary" onclick="applyScenario('s-app-alert',null)">&larr; Back to Results</button>
+      <button class="btn btn-primary" onclick="applyScenario('s-app-alert',null)">Done &mdash; Return to Review &rarr;</button>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
 //  CROSS-VALIDATION PANEL RENDERER
 // ═══════════════════════════════════════════════
 function renderCrossValPanel(checks,title){
@@ -1075,7 +1280,8 @@ function renderSAppDone(withAlert){
           </div>
           <div style="display:flex;gap:8px;padding-left:22px;">
             <button class="btn btn-secondary btn-sm">${I_UP} Replace File</button>
-            <button class="btn btn-sm" style="background:#fef7e0;color:#b45309;border:1px solid #fde68a;" onclick="this.closest('div').previousSibling.style.opacity='.45'">Acknowledge &amp; Continue</button>
+            <button class="btn btn-sm" style="background:#e8f0fe;color:#1967d2;border:1px solid #c5d8f8;" onclick="applyScenario('s-app-detail',null)">&#9998; View &amp; Amend Fields</button>
+            <button class="btn btn-sm" style="background:#fef7e0;color:#b45309;border:1px solid #fde68a;" onclick="this.closest('div').previousSibling.previousSibling.style.opacity='.45'">Acknowledge &amp; Continue</button>
           </div>
         </div>`).join('')}
       </div>`:'';
@@ -1397,9 +1603,86 @@ function openSingleDefect(fid){
 }
 
 // ═══════════════════════════════════════════════
+//  RENDER: CRA — VEHICLE INVOICE REGIONS (Modifiable)
+// ═══════════════════════════════════════════════
+function renderCraVehicleRegions(){
+  const mods=S.craModifications;
+  const hasMods=Object.keys(mods).length>0;
+
+  // Region 1: fval fields get Modify button
+  const r1=VEHICLE_OCR.fields.map(f=>{
+    const mod=mods[f.label];
+    const isFval=f.cls==='fval';
+    const tag=f.tag?`&nbsp;<span class="badge bd-red" style="font-size:10px;">${f.tag}</span>`:'';
+    let vHtml;
+    if(mod){
+      vHtml=`<span style="color:#9aa0a6;text-decoration:line-through;font-size:11px;">${f.val}</span>&nbsp;&rarr;&nbsp;<strong style="color:#137333;">${mod.modified}</strong>&nbsp;<span class="badge bd-green" style="font-size:10px;">Modified &#10003;</span>`;
+    } else if(isFval){
+      vHtml=`<span class="fg-value ${f.cls}">${f.val}${tag}</span>&nbsp;<button class="btn btn-sm" style="padding:2px 8px;font-size:11px;border:1px solid #c5221f;color:#c5221f;background:#fce8e6;" onclick="openCraEditModal('${f.label}','${f.val}')">&#9998; Modify</button>`;
+    } else {
+      vHtml=`<span class="fg-value ${f.cls||''}">${f.val}</span>`;
+    }
+    return`<div class="fg-row"><div class="fg-cell fg-label">${f.label}</div><div class="fg-cell">${vHtml}</div></div>`;
+  }).join('');
+
+  // Region 2: Consistency (unchanged)
+  const allConsOk=VEHICLE_OCR.consistency.every(c=>c.res==='pass');
+  const r2=VEHICLE_OCR.consistency.map(c=>`<div class="check-row">
+    <span class="check-icon">${c.res==='pass'?I_OK:I_FAIL}</span>
+    <div class="check-body"><div class="check-label">${c.label}</div><div class="check-detail">${c.detail||''}</div></div>
+    <span class="check-result">${badge(c.res==='pass'?'Match':'Mismatch',c.res==='pass'?'bd-green':'bd-red')}</span>
+  </div>`).join('');
+
+  // Region 3: re-evaluate Booking Fee formula if modified
+  const bookingMod=mods['booking_fee'];
+  const formula3=VEHICLE_OCR.formula.map(function(c){
+    if(bookingMod&&c.label.indexOf('Booking Fee')>=0)
+      return{res:'pass',label:c.label,formula:bookingMod.modified+' ≤ RM 1,810 (181,000 ×1%) — Pass ✓'};
+    return c;
+  });
+  const r3Ov=formula3.some(c=>c.res==='fail')?'fail':formula3.some(c=>c.res==='alert')?'alert':'pass';
+  const r3=formula3.map(c=>`<div class="check-row ${c.res==='fail'?'cr-fail':c.res==='alert'?'cr-alert':''}">
+    <span class="check-icon">${c.res==='pass'?I_OK:c.res==='alert'?I_WARN:I_FAIL}</span>
+    <div class="check-body"><div class="check-label">${c.label}</div><div class="check-formula">${c.formula}</div></div>
+    <span class="check-result">${badge(c.res==='pass'?'Pass':c.res==='alert'?'Alert':'Fail',c.res==='pass'?'bd-green':c.res==='alert'?'bd-orange':'bd-red')}</span>
+  </div>`).join('');
+
+  // Region 4: Eyeball (unchanged)
+  const r4=VEHICLE_OCR.eyeball.map(c=>`<div class="check-row cr-eye">
+    <span class="check-icon">${I_OK}</span>
+    <div class="check-body"><div class="check-label">${c.label}</div><div class="check-detail">${c.note}</div></div>
+    <span class="check-result">${badge('Pass','bd-green')}</span>
+  </div>`).join('');
+
+  return`
+  <div class="region-section">
+    <div class="region-hdr"><span class="region-title">Region 1 &mdash; Extracted Fields</span>${hasMods?badge('1 Modified','bd-orange'):badge('1 Fail field','bd-red')}</div>
+    <div class="field-grid">${r1}</div>
+  </div>
+  <div class="region-section">
+    <div class="region-hdr"><span class="region-title">Region 2 &mdash; Consistency Checks</span>${badge(allConsOk?'Pass':'Fail',allConsOk?'bd-green':'bd-red')}</div>
+    <div class="check-rows">${r2}</div>
+  </div>
+  <div class="region-section">
+    <div class="region-hdr"><span class="region-title">Region 3 &mdash; Formula / Date / Fix Value</span>${badge(r3Ov==='pass'?'Pass':r3Ov==='alert'?'Alert':'Fail',r3Ov==='pass'?'bd-green':r3Ov==='alert'?'bd-orange':'bd-red')}</div>
+    <div class="check-rows">${r3}</div>
+  </div>
+  <div class="region-section">
+    <div class="region-hdr"><span class="region-title">Region 4 &mdash; Exist / Eyeball Check</span>${badge('Pass','bd-green')}</div>
+    <div class="check-rows">${r4}</div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
 //  RENDER: CRA — VEHICLE INVOICE DETAIL
 // ═══════════════════════════════════════════════
 function renderCraDetail(){
+  const hasMods=Object.keys(S.craModifications).length>0;
+  const bookingMod=S.craModifications['booking_fee'];
+  const ovBadge=bookingMod?badge('Modified — Re-verify','bd-orange'):badge('FAIL — Hard Rule','bd-red');
+  const bottomBanner=bookingMod
+    ?`<div class="alert-ok" style="margin-top:14px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg><span><strong>Booking fee corrected to ${bookingMod.modified}.</strong> Rule check now passes. CRA verification complete &mdash; proceed to approve disbursement.</span></div>`
+    :`<div class="alert-err" style="margin-top:14px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><span><strong>Hard Rule Violation:</strong> Booking fee RM 2,000 exceeds the 1% OTR maximum (RM 1,810). Verify physical document &mdash; if OCR misread the value, click <strong>Modify</strong>. If the document is incorrect, issue a defect to Sales.</span></div>`;
   return`${caseHeader()}
   <div class="tabs">
     <div class="tab" onclick="applyScenario('cra-list',null)" style="cursor:pointer;">&larr; File List</div>
@@ -1409,10 +1692,11 @@ function renderCraDetail(){
     <div class="detail-hdr">
       <div class="detail-hdr-left">
         <div class="detail-title">Vehicle_Invoice_HLB.pdf</div>
-        <div class="detail-meta">CRA HP Form &amp; Funding Docs &bull; AI: Vehicle Invoice (97% confidence)</div>
+        <div class="detail-meta">CRA HP Form &amp; Funding Docs &bull; AI: Vehicle Invoice (97% confidence) &bull; CRA verify &amp; modify</div>
       </div>
       <div class="detail-hdr-right">
-        ${badge('FAIL — Hard Rule','bd-red')}
+        ${ovBadge}
+        ${hasMods?`<button class="btn btn-sm" style="background:#fef7e0;color:#b45309;border:1px solid #fde68a;" onclick="clearCraMods()">&#8635; Clear</button>`:''}
         <button class="btn btn-danger btn-sm" onclick="openSingleDefect('d2')">Issue Defect</button>
         <button class="btn btn-secondary btn-sm" onclick="openFilePreview('d2')">${I_EYE} Preview Source</button>
       </div>
@@ -1429,19 +1713,17 @@ function renderCraDetail(){
             <div>Chassis: match &#10003;</div>
             <div>Model: match &#10003;</div>
           </div>
-          <div style="background:#fef2f2;border:1px solid #f5c6cb;border-radius:5px;padding:8px;margin-top:6px;">
-            <div style="color:#c5221f;font-weight:600;margin-bottom:4px;">Invoice &rarr; Booking Fee Rule</div>
-            <div style="color:#c5221f;">RM 2,000 &gt; RM 1,810</div>
-            <div style="color:#c5221f;">HARD RULE FAIL</div>
+          <div style="background:${bookingMod?'#e6f4ea':'#fef2f2'};border:1px solid ${bookingMod?'#a8d5b5':'#f5c6cb'};border-radius:5px;padding:8px;margin-top:6px;">
+            <div style="color:${bookingMod?'#137333':'#c5221f'};font-weight:600;margin-bottom:4px;">Invoice &rarr; Booking Fee Rule</div>
+            ${bookingMod
+              ?`<div>${bookingMod.modified} &le; RM 1,810</div><div style="color:#137333;">Pass &#10003;</div>`
+              :`<div style="color:#c5221f;">RM 2,000 &gt; RM 1,810</div><div style="color:#c5221f;">HARD RULE FAIL</div>`}
           </div>
         </div>
       </div>
-      <div>${renderRegions(VEHICLE_OCR)}</div>
+      <div>${renderCraVehicleRegions()}</div>
     </div>
-    <div class="alert-err" style="margin-top:14px;">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-      <span><strong>Hard Rule Violation:</strong> Booking fee RM 2,000 exceeds the 1% OTR maximum (RM 1,810). Disbursement cannot proceed until Sales re-uploads a corrected invoice.</span>
-    </div>
+    ${bottomBanner}
   </div>`;
 }
 
@@ -1551,6 +1833,9 @@ function updateFooter(){
   } else if(sc==='s-app-alert'){
     L.innerHTML=`<span style="color:#b45309;">&#9888; 1 alert &mdash; review or acknowledge before submitting</span>`;
     R.innerHTML=`${s}Save Draft</button>${p}Submit to CED (with note) &rarr;</button>`;
+  } else if(sc==='s-app-detail'){
+    L.innerHTML=`<span style="color:#b45309;">&#9998; Review OCR fields &mdash; amend any misread value against the physical document</span>`;
+    R.innerHTML=`<button class="btn btn-secondary" onclick="applyScenario('s-app-alert',null)">&larr; Back to Results</button><button class="btn btn-primary" onclick="applyScenario('s-app-alert',null)">Done &mdash; Return to Review &rarr;</button>`;
   } else if(sc==='s-dis-upload'){
     L.innerHTML=`<span style="color:#9aa0a6;">Checking uploaded files...</span>`;
     R.innerHTML=`${s}Save Draft</button>${pd}Confirm Classification</button>`;
@@ -1567,9 +1852,17 @@ function updateFooter(){
   } else if(sc==='ced-list'||sc==='ced-detail'){
     L.innerHTML=`<span style="color:#5f6368;">Reviewing application documents for ${CASE.aa}</span>`;
     R.innerHTML=`${s}Request More Info from Sales</button>${p}Approve Application &rarr;</button>`;
-  } else if(sc==='cra-list'||sc==='cra-detail'){
+  } else if(sc==='cra-list'){
     L.innerHTML=`<span style="color:#c5221f;">1 Hard Rule Fail detected &mdash; issue defect before approval</span>`;
     R.innerHTML=`<button class="btn btn-danger" onclick="applyScenario('cra-defect-build',null)">Issue Defect Note</button>${pd}Approve Disbursement</button>`;
+  } else if(sc==='cra-detail'){
+    if(S.craModifications['booking_fee']){
+      L.innerHTML=`<span style="color:#137333;">&#10003; Booking fee corrected &mdash; all rules now pass</span>`;
+      R.innerHTML=`<button class="btn btn-secondary btn-sm" onclick="applyScenario('cra-defect-build',null)">Issue Defect</button><button class="btn btn-primary" onclick="applyScenario('cra-list',null)">Approve Disbursement &rarr;</button>`;
+    } else {
+      L.innerHTML=`<span style="color:#c5221f;">Hard Rule Fail &mdash; modify field value or issue defect to Sales</span>`;
+      R.innerHTML=`<button class="btn btn-danger" onclick="applyScenario('cra-defect-build',null)">Issue Defect Note</button>${pd}Approve Disbursement</button>`;
+    }
   } else if(sc==='cra-defect-build'){
     L.innerHTML=`<span style="color:#5f6368;">Drafting defect note — be specific so Sales can fix without calling CRA</span>`;
     R.innerHTML=`${s}Cancel</button><button class="btn btn-danger" onclick="applyScenario('cra-defect-sent',null)">Send Defect Note &rarr;</button>`;
@@ -1592,6 +1885,7 @@ function render(){
   else if(sc==='s-app-ocr')     html=renderSAppOcr();
   else if(sc==='s-app-done')    html=renderSAppDone(false);
   else if(sc==='s-app-alert')   html=renderSAppDone(true);
+  else if(sc==='s-app-detail')  html=renderSAppOcrDetail();
   else if(sc==='s-dis-upload')  html=renderSDisUpload();
   else if(sc==='s-dis-classify')html=renderSDisClassify();
   else if(sc==='s-dis-done')    html=renderSDisDone();
