@@ -34,15 +34,37 @@
 
 ### 高优先级（下次会话先做）
 
-— 暂无高优先级待办 —
-
-### 中优先级
-
 — 暂无 —
+
+### 中优先级（可选继续迭代）
+
+- [ ] 为 CED 的 Income Computation Tab 增加 "Sales amended" 状态同步（目前 Income Tab 里 CED 看不到 Sales 改了哪里）
+- [ ] 加 CRA list 的 OCR Summary Strip 点击"Review 1 Alert"直接跳转到对应文件的动作
+- [ ] Classification 页面增加置信度分级视觉（红/橙/绿 badge 而不是只有 %）
 
 ---
 
 ## AIOCR 已完成变更（session-v9）
+
+### 本轮（Jira 综合分析 → 原型改造，commit 02c0907）
+
+- [x] **重复按钮全部清理**：
+  - 删 s-app-detail 底部 Back/Done 行（footer 已有）
+  - 删 cra-defect-build 底部 Cancel/Send 行（footer 已有）
+  - 删 CED detail 底部两个按钮（footer 已有）
+  - 删 CRA list 顶部 "Issue Defect Note (2 items)" 批量按钮（与行内按钮重复）
+  - 删 Step 4 文件表格行的 "Review OCR" 和 "Replace File"（Readiness panel 已有）
+- [x] **OCR Summary Strip**：4 格摘要栏（文件数/OCR状态/验证结果/下一步），在 Sales Step 4、CED 文件列表、CRA 文件列表均显示
+- [x] **结构化 Alert 卡片**：Submission Readiness 的 Alert 项从纯文字升级为 Rule + 对比值网格 + 操作按钮组；Amended 状态自动变绿
+- [x] **re-validation feedback**：Amendment 保存后状态 banner 显示 "Net Pay vs BS — Alert → Pass ✓"
+- [x] **3-Tab OCR Detail**：Sales s-app-detail 和 CED detail 均新增 3 个 Tab
+  - OCR Fields（原有布局）
+  - Income Computation（月份来源、收入科目分类、计算结果、EPF 验证）
+  - Compliance Check（水印扫描、文件真实性、年限要求）
+- [x] **CED Detail 改进**：Amendment 通知横幅（如 Sales 已修改，CED 看到"请核实"提示）；footer 与 ced-list 分离，各有独立 CTA
+- [x] **Jira 325 条缺陷综合分析报告**：三份 AI 分析（Jira/Workbuddy/GPT）综合形成修改方案文档
+
+
 
 - [x] 4步 Pipeline 进度条（salesStepBar）
 - [x] Upload 页：去除预成 AI Classification 列，状态文字重命名
