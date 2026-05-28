@@ -299,6 +299,31 @@ tr:hover td{background:#fafafa;}
 .cross-val-chain{background:#f0f7ff;border:1px solid #c5d8f8;border-radius:6px;padding:10px 14px;font-size:11px;color:#1967d2;margin-top:8px;}
 .cross-val-chain-title{font-weight:700;margin-bottom:4px;}
 .cross-val-row{padding:3px 0;display:flex;align-items:center;gap:6px;}
+
+/* ── OCR Summary Strip ── */
+.ocr-sum-strip{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border:1px solid #e8eaed;border-radius:8px;margin-bottom:14px;overflow:hidden;}
+.oss-item{padding:10px 16px;border-right:1px solid #e8eaed;}
+.oss-item:last-child{border-right:none;}
+.oss-label{font-size:10px;font-weight:700;color:#80868b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.oss-val{font-size:13px;font-weight:700;color:#202124;line-height:1.4;}
+.oss-val.ov-green{color:#137333;}.oss-val.ov-warn{color:#b45309;}.oss-val.ov-red{color:#c5221f;}.oss-val.ov-blue{color:#1967d2;}
+
+/* ── Detail Inner Tabs ── */
+.dtabs{display:flex;background:#f8f9fa;border:1px solid #e8eaed;border-radius:6px 6px 0 0;overflow:hidden;margin-bottom:0;}
+.dtab{padding:8px 16px;font-size:12px;font-weight:500;cursor:pointer;color:#5f6368;border-bottom:2px solid transparent;transition:.15s;border-right:1px solid #e8eaed;white-space:nowrap;}
+.dtab:last-child{border-right:none;}
+.dtab.active{color:#1967d2;border-bottom-color:#1967d2;background:#fff;}
+.dtab:hover:not(.active){color:#202124;background:#f0f2f5;}
+.dtab-body{background:#fff;border:1px solid #e8eaed;border-top:none;border-radius:0 0 6px 6px;padding:16px;margin-bottom:14px;}
+
+/* ── Income Computation Tab ── */
+.inc-src-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f1f3f4;font-size:12px;}
+.inc-src-row:last-child{border-bottom:none;}
+.inc-sec-hdr{font-size:10px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.5px;padding:5px 10px;background:#f0f2f5;border-radius:4px;margin:10px 0 6px;}
+.inc-row{display:grid;grid-template-columns:1fr 110px 150px;gap:6px;padding:5px 10px;font-size:12px;align-items:center;border-bottom:1px solid #f1f3f4;}
+.inc-row:last-child{border-bottom:none;}
+.inc-row.muted{opacity:.55;}
+.inc-total{display:grid;grid-template-columns:1fr 110px 150px;gap:6px;padding:8px 10px;font-size:13px;font-weight:700;background:#e6f4ea;border-radius:4px;margin-top:8px;}
 </style>
 </head>
 <body>
@@ -517,6 +542,7 @@ let S={
   craModifications:{}, // CRA:   {fieldLabel:{orig,modified}}
   amendLabel:'',
   amendFileId:'',
+  detailTab:'ocr',     // 'ocr' | 'income' | 'compliance'
 };
 
 // ═══════════════════════════════════════════════
@@ -708,6 +734,43 @@ const QUICK_FIELDS={
 };
 
 // ═══════════════════════════════════════════════
+//  INCOME COMPUTATION DATA
+// ═══════════════════════════════════════════════
+const INCOME_COMPUTATION={
+  sources:[
+    {month:'October 2025', file:'Payslip_Oct2025.pdf', status:'included'},
+    {month:'September 2025',file:'Payslip_Sep2025.pdf',status:'included'},
+    {month:'August 2025',  file:'— (not uploaded)',    status:'missing'},
+  ],
+  items:[
+    {cat:'Fixed',    label:'Basic Salary',          monthly:'RM 5,500', note:'Included',                   ok:true},
+    {cat:'Fixed',    label:'Fixed Allowance',        monthly:'RM 0',     note:'None detected in payslip',   ok:true},
+    {cat:'Variable', label:'Overtime Pay',           monthly:'RM 500',   note:'Excluded — variable income', ok:false},
+    {cat:'Variable', label:'Performance / Bonus',    monthly:'RM 0',     note:'Not detected',               ok:false},
+    {cat:'Deduction',label:'EPF Employee (11%)',     monthly:'(RM 748)', note:'Statutory deduction',        ok:true},
+    {cat:'Deduction',label:'SOCSO',                  monthly:'(RM 29.40)',note:'Statutory deduction',       ok:true},
+  ],
+  result:{
+    fixed_monthly:'RM 5,500',
+    epf_employer:'12% employer contribution confirmed ✓',
+    alert:'2 months payslip used. Standard requires 3 consecutive months — result is preliminary.',
+  },
+};
+
+// ═══════════════════════════════════════════════
+//  COMPLIANCE CHECK DATA
+// ═══════════════════════════════════════════════
+const COMPLIANCE_CHECK_DATA=[
+  {type:'Watermark Scan',     file:'Payslip_Oct2025.pdf',     result:'pass',  detail:'No VOID or cancellation watermark detected'},
+  {type:'Watermark Scan',     file:'Payslip_Sep2025.pdf',     result:'pass',  detail:'No VOID or cancellation watermark detected'},
+  {type:'Watermark Scan',     file:'CIMB_Statement_Q4.pdf',   result:'pass',  detail:'No VOID watermark; bank-issued format confirmed'},
+  {type:'Scan Quality',       file:'CIMB_Statement_Q4.pdf',   result:'alert', detail:'Possible Cam Scanner signature on page 2 — confirm original scan is of acceptable quality'},
+  {type:'Document Authenticity',file:'Mykad_Ahmad.pdf',       result:'pass',  detail:'Both front and back copy present; IC format valid; no evidence of tampering'},
+  {type:'Year Requirement',   file:'Form BE 2024',            result:'alert', detail:'Only Year 2024 uploaded. Policy requires 2 consecutive years — Form BE 2023 is missing'},
+  {type:'Document Age',       file:'EPF_Statement_2025.pdf',  result:'pass',  detail:'Statement dated 2025, within acceptable 6-month window'},
+];
+
+// ═══════════════════════════════════════════════
 //  CROSS-VALIDATION DATA
 // ═══════════════════════════════════════════════
 const CED_CROSS_VAL=[
@@ -871,6 +934,108 @@ function renderRegions(data){
 }
 
 // ═══════════════════════════════════════════════
+//  OCR SUMMARY STRIP
+// ═══════════════════════════════════════════════
+function renderOcrSummaryStrip(passC,alertC,failC,total){
+  var totalDone=passC+alertC+failC;
+  var hasIssues=alertC>0||failC>0;
+  var nextAction=failC>0?('Replace '+failC+' failed file'+(failC>1?'s':'')):
+    alertC>0?('Review '+alertC+' alert'+(alertC>1?'s':'')+' before submitting'):
+    'Ready to submit';
+  var nextCls=failC>0?'ov-red':alertC>0?'ov-warn':'ov-green';
+  var valHtml=passC+' Pass'+(alertC>0?' &bull; <span style="color:#b45309;">'+alertC+' Alert</span>':'')+(failC>0?' &bull; <span style="color:#c5221f;">'+failC+' Fail</span>':'');
+  return'<div class="ocr-sum-strip">'+
+    '<div class="oss-item"><div class="oss-label">Documents</div><div class="oss-val">'+totalDone+' / '+total+' processed</div></div>'+
+    '<div class="oss-item"><div class="oss-label">OCR Complete</div><div class="oss-val ov-green">'+totalDone+' files &#10003;</div></div>'+
+    '<div class="oss-item"><div class="oss-label">Validation</div><div class="oss-val '+(hasIssues?'ov-warn':'ov-green')+'">'+valHtml+'</div></div>'+
+    '<div class="oss-item"><div class="oss-label">Next Action</div><div class="oss-val '+nextCls+'">'+nextAction+'</div></div>'+
+  '</div>';
+}
+
+// ═══════════════════════════════════════════════
+//  DETAIL INNER TAB HELPERS
+// ═══════════════════════════════════════════════
+function setDetailTab(t){S.detailTab=t;render();}
+
+function renderDetailTabBar(active){
+  var tabs=[['ocr','OCR Fields'],['income','Income Computation'],['compliance','Compliance Check']];
+  return'<div class="dtabs">'+tabs.map(function(t){
+    var badgeHtml='';
+    if(t[0]==='compliance'){
+      var alerts=COMPLIANCE_CHECK_DATA.filter(function(c){return c.result==='alert';}).length;
+      if(alerts)badgeHtml='&nbsp;<span class="badge bd-orange" style="font-size:10px;">'+alerts+'</span>';
+    }
+    if(t[0]==='income'){
+      var missing=INCOME_COMPUTATION.sources.filter(function(s){return s.status==='missing';}).length;
+      if(missing)badgeHtml='&nbsp;<span class="badge bd-orange" style="font-size:10px;">!</span>';
+    }
+    return'<div class="dtab '+(active===t[0]?'active':'')+'" onclick="setDetailTab(\''+t[0]+'\')">'+t[1]+badgeHtml+'</div>';
+  }).join('')+'</div>';
+}
+
+function renderIncomeComputationTab(){
+  var amds=S.ocrAmendments['f2']||{};
+  var netAmended=amds['net_pay_amount'];
+  var computedFixed=netAmended?netAmended.amended:INCOME_COMPUTATION.result.fixed_monthly;
+  var srcRows=INCOME_COMPUTATION.sources.map(function(s){
+    return'<div class="inc-src-row">'+
+      '<span style="flex-shrink:0;">'+(s.status==='included'?I_OK:I_WARN)+'</span>'+
+      '<div style="flex:1;font-weight:500;">'+s.month+'</div>'+
+      '<div style="color:#5f6368;font-size:11px;">'+s.file+'</div>'+
+      badge(s.status==='included'?'Used':'Missing',s.status==='included'?'bd-green':'bd-orange')+
+    '</div>';
+  }).join('');
+  var itemRows=INCOME_COMPUTATION.items.map(function(it){
+    return'<div class="inc-row'+(it.ok?'':' muted')+'">'+
+      '<div>'+it.label+' <span style="font-size:10px;color:#9aa0a6;">('+it.cat+')</span></div>'+
+      '<div style="font-weight:'+(it.ok?'600':'400')+';color:'+(it.ok?'#202124':'#9aa0a6')+';text-align:right;">'+it.monthly+'</div>'+
+      '<div style="color:'+(it.ok?'#137333':'#9aa0a6')+';font-size:11px;">'+it.note+'</div>'+
+    '</div>';
+  }).join('');
+  var alertBanner=INCOME_COMPUTATION.sources.some(function(s){return s.status==='missing';})?
+    '<div class="alert-warn" style="margin-bottom:12px;"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span><strong>Incomplete payslip set.</strong> '+INCOME_COMPUTATION.result.alert+'</span></div>':'';
+  return'<div class="dtab-body">'+
+    '<div class="inc-sec-hdr">Source Documents</div>'+
+    '<div style="border:1px solid #e8eaed;border-radius:6px;padding:4px 10px;margin-bottom:10px;">'+srcRows+'</div>'+
+    alertBanner+
+    '<div class="inc-sec-hdr">Income Breakdown</div>'+
+    '<div style="border:1px solid #e8eaed;border-radius:6px;overflow:hidden;margin-bottom:10px;">'+
+      '<div class="inc-row" style="background:#f0f2f5;font-size:10px;font-weight:700;color:#5f6368;"><div>ITEM</div><div style="text-align:right;">MONTHLY</div><div>STATUS</div></div>'+
+      itemRows+
+    '</div>'+
+    '<div class="inc-total"><div>Computed Monthly Fixed Income</div><div style="text-align:right;color:#137333;">'+computedFixed+'</div><div style="font-size:11px;font-weight:400;color:#5f6368;">Net of statutory deductions</div></div>'+
+    '<div style="margin-top:10px;padding:10px 12px;background:#f8f9fa;border-radius:6px;font-size:11px;color:#5f6368;line-height:1.8;">'+
+      '<div><strong>EPF Employer Rate:</strong> '+INCOME_COMPUTATION.result.epf_employer+'</div>'+
+      (netAmended?'<div style="color:#137333;"><strong>Amended:</strong> Net pay corrected to '+netAmended.amended+' — Bank Statement cross-check now passes &#10003;</div>':'')+
+    '</div>'+
+  '</div>';
+}
+
+function renderComplianceCheckTab(){
+  var alertItems=COMPLIANCE_CHECK_DATA.filter(function(c){return c.result==='alert';});
+  var rows=COMPLIANCE_CHECK_DATA.map(function(c){
+    return'<div class="check-row '+(c.result==='alert'?'cr-alert':'')+'">'+
+      '<span class="check-icon">'+(c.result==='pass'?I_OK:I_WARN)+'</span>'+
+      '<div class="check-body">'+
+        '<div class="check-label">'+c.type+' &mdash; <span style="color:#5f6368;font-weight:400;">'+c.file+'</span></div>'+
+        '<div class="check-detail">'+c.detail+'</div>'+
+      '</div>'+
+      '<span class="check-result">'+badge(c.result==='pass'?'Pass':'Alert',c.result==='pass'?'bd-green':'bd-orange')+'</span>'+
+    '</div>';
+  }).join('');
+  var header=alertItems.length
+    ?'<div class="alert-warn" style="margin-bottom:12px;"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span><strong>'+alertItems.length+' compliance item'+(alertItems.length>1?'s':'')+' require attention.</strong> Verify physical documents before approving submission.</span></div>'
+    :'<div class="alert-ok" style="margin-bottom:12px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg><span>All compliance checks passed.</span></div>';
+  return'<div class="dtab-body">'+header+'<div class="check-rows">'+rows+'</div></div>';
+}
+
+// ── Acknowledge alert item (Sales) ──
+function ackAlert(el){
+  var card=el.closest('[data-ack-card]');
+  if(card){card.style.opacity='.45';card.style.pointerEvents='none';}
+}
+
+// ═══════════════════════════════════════════════
 //  AMEND / MODIFY FUNCTIONS
 // ═══════════════════════════════════════════════
 function openAmendModal(label,orig,fileId){
@@ -915,6 +1080,7 @@ function renderSAppOcrDetail(){
   const amds=S.ocrAmendments[fileId]||{};
   const hasAmds=Object.keys(amds).length>0;
   const netAmended=amds['net_pay_amount'];
+  const tab=S.detailTab||'ocr';
 
   // Region 1: fields with Amend buttons on cross-validated fields
   const r1=PAYSLIP_OCR.fields.map(f=>{
@@ -932,14 +1098,12 @@ function renderSAppOcrDetail(){
     return`<div class="fg-row"><div class="fg-cell fg-label">${f.label}</div><div class="fg-cell">${vHtml}</div></div>`;
   }).join('');
 
-  // Region 2: Consistency (unchanged)
   const r2=PAYSLIP_OCR.consistency.map(c=>`<div class="check-row">
     <span class="check-icon">${I_OK}</span>
     <div class="check-body"><div class="check-label">${c.label}</div><div class="check-detail">${c.detail}</div></div>
     <span class="check-result">${badge('Match','bd-green')}</span>
   </div>`).join('');
 
-  // Region 3: Formula — update cross-check result if net_pay_amount was amended
   const formula3=PAYSLIP_OCR.formula.map(c=>{
     if(netAmended&&c.label.includes('Bank Statement'))
       return{...c,res:'pass',formula:'Net '+netAmended.amended+' vs Bank credit RM 5,200 — amended to match ✓'};
@@ -952,7 +1116,6 @@ function renderSAppOcrDetail(){
     <span class="check-result">${badge(c.res==='pass'?'Pass':c.res==='alert'?'Alert':'Fail',c.res==='pass'?'bd-green':c.res==='alert'?'bd-orange':'bd-red')}</span>
   </div>`).join('');
 
-  // Region 4: Eyeball (unchanged)
   const r4=PAYSLIP_OCR.eyeball.map(c=>`<div class="check-row cr-eye">
     <span class="check-icon">${I_OK}</span>
     <div class="check-body"><div class="check-label">${c.label}</div><div class="check-detail">${c.note}</div></div>
@@ -961,6 +1124,66 @@ function renderSAppOcrDetail(){
 
   const ovBadge=hasAmds&&r3Ov==='pass'?badge('Amended — Pass','bd-green'):badge('Alert — Region 3','bd-orange');
 
+  // Status banner with re-validation detail
+  const statusBanner=hasAmds
+    ?`<div class="alert-ok" style="margin-bottom:14px;">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+        <span><strong>1 field amended.</strong> Amendment logged. Re-validation: ${netAmended?'Net Pay vs Bank Statement <strong style="color:#137333;">Alert &rarr; Pass &#10003;</strong>':'rules re-checked — alert still active'} &mdash; CED will see both original and corrected values.</span>
+      </div>`
+    :`<div class="alert-warn" style="margin-bottom:14px;">
+        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span><strong>OCR cross-validation conflict.</strong> Verify the physical document, then click <strong style="color:#b45309;">&#9998; Amend</strong> on the flagged field (highlighted in blue) to correct the OCR value.</span>
+      </div>`;
+
+  // Build tab content
+  let tabContent;
+  if(tab==='income'){
+    tabContent=renderIncomeComputationTab();
+  } else if(tab==='compliance'){
+    tabContent=renderComplianceCheckTab();
+  } else {
+    tabContent=`<div class="dtab-body" style="padding:0;">
+      <div class="detail-layout" style="padding:16px;">
+        <div class="detail-preview">
+          <div class="detail-preview-label">Document Preview</div>
+          ${pdfMock('payslip')}
+          <div style="font-size:11px;color:#9aa0a6;margin-top:8px;text-align:center;">Page 1 of 1</div>
+          <div style="margin-top:12px;font-size:11px;color:#5f6368;line-height:1.7;padding:0 4px;">
+            <div style="font-weight:700;color:#202124;margin-bottom:4px;">Cross-file Links</div>
+            <div style="background:#f0f7ff;border:1px solid #c5d8f8;border-radius:5px;padding:8px;">
+              <div style="color:#1967d2;font-weight:600;margin-bottom:4px;">Payslip &rarr; Bank Statement</div>
+              ${netAmended
+                ?`<div>Amended: <strong>${netAmended.amended}</strong></div><div style="color:#137333;">Bank credit: RM 5,200 &mdash; match &#10003;</div>`
+                :`<div>Net Pay: RM 5,800</div><div style="color:#b45309;">Bank credit: RM 5,200</div><div style="color:#b45309;">Diff: RM 600 &#8593;</div>`}
+            </div>
+            <div style="background:#f0f7ff;border:1px solid #c5d8f8;border-radius:5px;padding:8px;margin-top:6px;">
+              <div style="color:#1967d2;font-weight:600;margin-bottom:4px;">Payslip &rarr; EPF</div>
+              <div style="color:#137333;">Employer 12% &#10003;</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="region-section">
+            <div class="region-hdr"><span class="region-title">Region 1 &mdash; Extracted Fields</span>${hasAmds?badge('1 Amended','bd-orange'):''}</div>
+            <div class="field-grid">${r1}</div>
+          </div>
+          <div class="region-section">
+            <div class="region-hdr"><span class="region-title">Region 2 &mdash; Consistency Checks</span>${badge('Pass','bd-green')}</div>
+            <div class="check-rows">${r2}</div>
+          </div>
+          <div class="region-section">
+            <div class="region-hdr"><span class="region-title">Region 3 &mdash; Formula / Date / Fix Value</span>${badge(r3Ov==='pass'?'Pass':r3Ov==='alert'?'Alert':'Fail',r3Ov==='pass'?'bd-green':r3Ov==='alert'?'bd-orange':'bd-red')}</div>
+            <div class="check-rows">${r3}</div>
+          </div>
+          <div class="region-section">
+            <div class="region-hdr"><span class="region-title">Region 4 &mdash; Exist / Eyeball Check</span>${badge('Pass','bd-green')}</div>
+            <div class="check-rows">${r4}</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
   return`${caseHeader()}
   ${salesTabBar('app')}
   <div class="tab-body">
@@ -968,59 +1191,17 @@ function renderSAppOcrDetail(){
     <div class="detail-hdr">
       <div class="detail-hdr-left">
         <div class="detail-title">Payslip_Oct2025.pdf &mdash; OCR Detail</div>
-        <div class="detail-meta">Primary Applicant &bull; Applicant Income &bull; AI: Payslip (94% confidence) &bull; Sales review &amp; amend</div>
+        <div class="detail-meta">Primary Applicant &bull; Applicant Income &bull; AI: Payslip (94% confidence) &bull; Sales verify &amp; amend</div>
       </div>
       <div class="detail-hdr-right">
         ${ovBadge}
-        ${hasAmds?`<button class="btn btn-sm" style="background:#fef7e0;color:#b45309;border:1px solid #fde68a;" onclick="clearAmendments('f2')">&#8635; Clear</button>`:''}
-        <button class="btn btn-secondary btn-sm" onclick="applyScenario('s-app-alert',null)">&larr; Back to Results</button>
+        ${hasAmds?`<button class="btn btn-sm" style="background:#fef7e0;color:#b45309;border:1px solid #fde68a;" onclick="clearAmendments('f2')">&#8635; Clear Amendments</button>`:''}
+        <button class="btn btn-secondary btn-sm" onclick="openFilePreview('f2')">${I_EYE} Preview Source</button>
       </div>
     </div>
-    ${hasAmds
-      ?`<div class="alert-ok" style="margin-bottom:14px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg><span><strong>1 field amended.</strong> Amendment logged with your user ID. CED will see both the original OCR value and your corrected value.</span></div>`
-      :`<div class="alert-warn" style="margin-bottom:14px;"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span><strong>Action required &mdash; OCR cross-validation conflict detected.</strong> The <span style="color:#1967d2;font-weight:600;">blue ✏ Amend</span> button appears on any field flagged for cross-validation. Look up the physical document, verify the correct value, then click <strong>&#9998; Amend</strong> to correct the OCR error.</span></div>`}
-    <div class="detail-layout">
-      <div class="detail-preview">
-        <div class="detail-preview-label">Document Preview</div>
-        ${pdfMock('payslip')}
-        <div style="font-size:11px;color:#9aa0a6;margin-top:8px;text-align:center;">Page 1 of 1</div>
-        <div style="margin-top:12px;font-size:11px;color:#5f6368;line-height:1.7;padding:0 4px;">
-          <div style="font-weight:700;color:#202124;margin-bottom:4px;">Cross-file Links</div>
-          <div style="background:#f0f7ff;border:1px solid #c5d8f8;border-radius:5px;padding:8px;">
-            <div style="color:#1967d2;font-weight:600;margin-bottom:4px;">Payslip &rarr; Bank Statement</div>
-            ${netAmended
-              ?`<div>Amended: <strong>${netAmended.amended}</strong></div><div style="color:#137333;">Bank credit: RM 5,200 &mdash; match &#10003;</div>`
-              :`<div>Net Pay: RM 5,800</div><div style="color:#b45309;">Bank credit: RM 5,200</div><div style="color:#b45309;">Diff: RM 600 &#8593;</div>`}
-          </div>
-          <div style="background:#f0f7ff;border:1px solid #c5d8f8;border-radius:5px;padding:8px;margin-top:6px;">
-            <div style="color:#1967d2;font-weight:600;margin-bottom:4px;">Payslip &rarr; EPF</div>
-            <div style="color:#137333;">Employer 12% &#10003;</div>
-          </div>
-        </div>
-      </div>
-      <div>
-        <div class="region-section">
-          <div class="region-hdr"><span class="region-title">Region 1 &mdash; Extracted Fields</span>${hasAmds?badge('1 Amended','bd-orange'):''}</div>
-          <div class="field-grid">${r1}</div>
-        </div>
-        <div class="region-section">
-          <div class="region-hdr"><span class="region-title">Region 2 &mdash; Consistency Checks</span>${badge('Pass','bd-green')}</div>
-          <div class="check-rows">${r2}</div>
-        </div>
-        <div class="region-section">
-          <div class="region-hdr"><span class="region-title">Region 3 &mdash; Formula / Date / Fix Value</span>${badge(r3Ov==='pass'?'Pass':r3Ov==='alert'?'Alert':'Fail',r3Ov==='pass'?'bd-green':r3Ov==='alert'?'bd-orange':'bd-red')}</div>
-          <div class="check-rows">${r3}</div>
-        </div>
-        <div class="region-section">
-          <div class="region-hdr"><span class="region-title">Region 4 &mdash; Exist / Eyeball Check</span>${badge('Pass','bd-green')}</div>
-          <div class="check-rows">${r4}</div>
-        </div>
-      </div>
-    </div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid #f1f3f4;">
-      <button class="btn btn-secondary" onclick="applyScenario('s-app-alert',null)">&larr; Back to Results</button>
-      <button class="btn btn-primary" onclick="applyScenario('s-app-alert',null)">Done &mdash; Return to Review &rarr;</button>
-    </div>
+    ${statusBanner}
+    ${renderDetailTabBar(tab)}
+    ${tabContent}
   </div>`;
 }
 
@@ -1251,11 +1432,7 @@ function renderSAppDone(withAlert){
       <td style="font-size:12px;">${f.aiType}</td>
       <td>${st==='pass'?sp('pass','Rules Pass'):st==='alert'?sp('alert','Alert'):sp('fail','Fail')}</td>
       <td style="font-size:11px;color:#5f6368;max-width:200px;">${withAlert&&f.alertMsg?f.alertMsg:'—'}</td>
-      <td><div style="display:flex;align-items:center;gap:6px;">
-        <div class="btn-icon-sm" onclick="openFilePreview('${f.id}')" title="Quick preview">${I_EYE}</div>
-        ${(withAlert&&st==='alert'&&f.id==='f2')?`<button class="btn btn-sm" style="background:#e8f0fe;color:#1967d2;border:1px solid #c5d8f8;white-space:nowrap;font-size:11px;" onclick="applyScenario('s-app-detail',null)">&#9998; Review OCR</button>`:''}
-        ${(withAlert&&st==='fail')?`<button class="btn btn-danger btn-sm" style="font-size:11px;white-space:nowrap;">${I_UP} Replace File</button>`:''}
-      </div></td>
+      <td><div class="btn-icon-sm" onclick="openFilePreview('${f.id}')" title="Quick preview">${I_EYE}</div></td>
     </tr>`;
   }).join('');
 
@@ -1272,21 +1449,38 @@ function renderSAppDone(withAlert){
           <button class="btn btn-danger btn-sm">${I_UP} Replace File</button>
         </div>`).join('')}
       </div>`:'';
+    // Check if net_pay was amended → show amended state in alert card
+    const payslipAmended=S.ocrAmendments['f2']&&S.ocrAmendments['f2']['net_pay_amount'];
     const alertBlock=alertFiles.length?`
       <div style="border-bottom:1px solid #fde68a;">
         <div style="background:#fef7e0;padding:8px 14px;display:flex;align-items:center;gap:8px;">
           ${I_WARN}<span style="font-size:12px;font-weight:700;color:#b45309;">Alert (${alertFiles.length}) — Acknowledge to Submit</span>
-          <span style="font-size:11px;color:#b45309;margin-left:auto;">CED may follow up during review</span>
+          <span style="font-size:11px;color:#b45309;margin-left:auto;">CED will follow up during review</span>
         </div>
-        ${alertFiles.map(f=>`<div style="padding:10px 14px;">
-          <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;">
-            ${I_FILE_O}<div><div style="font-size:12px;font-weight:600;">${f.name}</div><div style="font-size:11px;color:#5f6368;margin-top:2px;">${f.alertMsg||''}</div></div>
+        ${alertFiles.map(f=>`<div data-ack-card="1" style="padding:12px 14px;${payslipAmended?'opacity:.5;pointer-events:none;':''}">
+          <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;">
+            ${payslipAmended?I_OK:I_FILE_O}
+            <div>
+              <div style="font-size:12px;font-weight:600;">${f.name} ${payslipAmended?badge('Amended — Pass','bd-green'):''}</div>
+              <div style="font-size:11px;font-weight:600;color:${payslipAmended?'#137333':'#b45309'};margin-top:2px;">
+                ${payslipAmended?'OCR field corrected. Net Pay vs Bank Statement now passes ✓':'Cross-validation Conflict — Verify &amp; amend if OCR misread'}
+              </div>
+            </div>
           </div>
-          <div style="display:flex;gap:8px;padding-left:22px;">
-            <button class="btn btn-secondary btn-sm">${I_UP} Replace File</button>
-            <button class="btn btn-sm" style="background:#e8f0fe;color:#1967d2;border:1px solid #c5d8f8;" onclick="applyScenario('s-app-detail',null)">&#9998; View &amp; Amend Fields</button>
-            <button class="btn btn-sm" style="background:#fef7e0;color:#b45309;border:1px solid #fde68a;" onclick="this.closest('div').previousSibling.previousSibling.style.opacity='.45'">Acknowledge &amp; Continue</button>
-          </div>
+          ${payslipAmended?'':`<div style="padding-left:22px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 10px;margin-bottom:10px;font-size:11px;line-height:1.8;">
+              <div><span style="color:#80868b;">Rule:</span> Net pay vs Bank Statement cross-check</div>
+              <div><span style="color:#80868b;">Severity:</span> ${badge('Alert','bd-orange')}</div>
+              <div><span style="color:#80868b;">Payslip net pay (OCR):</span> <strong>RM 5,800</strong></div>
+              <div><span style="color:#80868b;">Bank Statement credit:</span> <strong>RM 5,200</strong></div>
+              <div style="grid-column:span 2;"><span style="color:#80868b;">Difference:</span> <strong style="color:#c5221f;">RM 600 (10.3%)</strong> — OCR may have misread the payslip amount</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-secondary btn-sm">${I_UP} Replace File</button>
+              <button class="btn btn-sm" style="background:#e8f0fe;color:#1967d2;border:1px solid #c5d8f8;" onclick="applyScenario('s-app-detail',null)">&#9998; View &amp; Amend OCR Fields</button>
+              <button class="btn btn-sm" style="background:#fef7e0;color:#b45309;border:1px solid #fde68a;" onclick="ackAlert(this)">Acknowledge &amp; Continue</button>
+            </div>
+          </div>`}
         </div>`).join('')}
       </div>`:'';
     const passBlock=`<div style="background:#e6f4ea;padding:8px 14px;display:flex;align-items:center;gap:8px;">
@@ -1304,21 +1498,15 @@ function renderSAppDone(withAlert){
     </div>`;
   }
 
+  const sumStrip=renderOcrSummaryStrip(passFiles.length,alertFiles.length,failFiles.length,APP_FILES.length);
   return`${caseHeader()}
   ${salesTabBar('app')}
   <div class="tab-body">
     ${salesStepBar(4)}
-    <div class="alert-info" style="margin-bottom:14px;">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <span><strong>Sales responsibility:</strong> Review all OCR results below. If a field was misread (e.g. net pay amount doesn&rsquo;t match bank statement), click <strong>&#9998; Review OCR</strong> on that file row, verify the physical document, and amend the incorrect value. You are the first line of defence for data accuracy.</span>
-    </div>
+    ${sumStrip}
     ${readinessPanel}
-    <div class="prefill-toast">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
-      <span><strong>OCR data auto-filled</strong> into application form &mdash; Name, IC, Salary, Tax data extracted and applied. <span style="color:#1967d2;font-weight:500;cursor:pointer;">View application form &rarr;</span></span>
-    </div>
     <table>
-      <thead><tr><th>File</th><th>Document Type</th><th>OCR Status</th><th>Note</th><th>Actions</th></tr></thead>
+      <thead><tr><th>File</th><th>Document Type</th><th>OCR Status</th><th>Note</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div>`;
@@ -1496,14 +1684,10 @@ function renderCedList(){
   return`${caseHeader()}
   <div class="tabs"><div class="tab active">Application Files — OCR Summary</div></div>
   <div class="tab-body">
+    ${renderOcrSummaryStrip(5,1,0,6)}
     <div class="alert-info" style="margin-bottom:14px;">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <span>OCR results for application documents submitted by Sales. Review extracted fields and validation results before making a credit decision.</span>
-    </div>
-    <div class="progress-section" style="margin-bottom:14px;">
-      <span class="progress-label">OCR Result</span>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:83%;background:#b45309;"></div></div>
-      <span class="progress-count">5 Pass &bull; <span style="color:#b45309;">1 Alert</span></span>
+      <span><strong>CED responsibility:</strong> Review each file's OCR result. For Alert fields, verify if Sales has already amended — if not, request re-upload or acknowledge with a note. Cross-file validation results are at the bottom.</span>
     </div>
     <table>
       <thead><tr><th>File</th><th>Document Type</th><th>OCR Status</th><th>Note</th><th>Actions</th></tr></thead>
@@ -1517,6 +1701,46 @@ function renderCedList(){
 //  RENDER: CED — PAYSLIP DETAIL
 // ═══════════════════════════════════════════════
 function renderCedDetail(){
+  const tab=S.detailTab||'ocr';
+  const payslipAmended=S.ocrAmendments['f2']&&S.ocrAmendments['f2']['net_pay_amount'];
+  const ovBadge=payslipAmended?badge('Sales Amended — Verify','bd-orange'):badge('Alert — Region 3','bd-orange');
+
+  // Sales amendment notice for CED
+  const amendNotice=payslipAmended
+    ?`<div class="alert-warn" style="margin-bottom:14px;"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span><strong>Sales amended net_pay_amount:</strong> RM 5,800 &rarr; ${payslipAmended.amended}. Verify this correction against the physical payslip before approving.</span></div>`
+    :`<div class="alert-warn" style="margin-bottom:14px;"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span><strong>Alert — Region 3:</strong> Net pay RM 5,800 vs Bank Statement credit RM 5,200 (diff RM 600). Sales has not yet amended. Review Income Computation tab for the full picture.</span></div>`;
+
+  let tabContent;
+  if(tab==='income'){
+    tabContent=renderIncomeComputationTab();
+  } else if(tab==='compliance'){
+    tabContent=renderComplianceCheckTab();
+  } else {
+    tabContent=`<div class="dtab-body" style="padding:0;">
+      <div class="detail-layout" style="padding:16px;">
+        <div class="detail-preview">
+          <div class="detail-preview-label">Document Preview</div>
+          ${pdfMock('payslip')}
+          <div style="font-size:11px;color:#9aa0a6;margin-top:8px;text-align:center;">Page 1 of 1</div>
+          <div style="margin-top:12px;font-size:11px;color:#5f6368;line-height:1.7;padding:0 4px;">
+            <div style="font-weight:700;color:#202124;margin-bottom:4px;">Cross-file Links</div>
+            <div style="background:#f0f7ff;border:1px solid #c5d8f8;border-radius:5px;padding:8px;">
+              <div style="color:#1967d2;font-weight:600;margin-bottom:4px;">Payslip &rarr; Bank Statement</div>
+              ${payslipAmended
+                ?`<div>Amended: <strong>${payslipAmended.amended}</strong></div><div style="color:#137333;">Bank credit: RM 5,200 &mdash; match &#10003;</div>`
+                :`<div>Net Pay RM 5,800</div><div style="color:#b45309;">Bank credit: RM 5,200</div><div style="color:#b45309;margin-top:3px;">Diff: RM 600 &#8593;</div>`}
+            </div>
+            <div style="background:#f0f7ff;border:1px solid #c5d8f8;border-radius:5px;padding:8px;margin-top:6px;">
+              <div style="color:#1967d2;font-weight:600;margin-bottom:4px;">Payslip &rarr; EPF Statement</div>
+              <div style="color:#137333;">12% employer &#10003;</div>
+            </div>
+          </div>
+        </div>
+        <div>${renderRegions(PAYSLIP_OCR)}</div>
+      </div>
+    </div>`;
+  }
+
   return`${caseHeader()}
   <div class="tabs">
     <div class="tab" onclick="applyScenario('ced-list',null)" style="cursor:pointer;">&larr; File List</div>
@@ -1529,37 +1753,13 @@ function renderCedDetail(){
         <div class="detail-meta">Primary Applicant &bull; Applicant Income &bull; AI: Payslip (94% confidence)</div>
       </div>
       <div class="detail-hdr-right">
-        ${badge('Alert — Region 3','bd-orange')}
-        <button class="btn btn-secondary btn-sm">Request Re-upload</button>
+        ${ovBadge}
         <button class="btn btn-secondary btn-sm" onclick="openFilePreview('f2')">${I_EYE} Preview Source</button>
       </div>
     </div>
-    <div class="detail-layout">
-      <div class="detail-preview">
-        <div class="detail-preview-label">Document Preview</div>
-        ${pdfMock('payslip')}
-        <div style="font-size:11px;color:#9aa0a6;margin-top:8px;text-align:center;">Page 1 of 1</div>
-        <div style="margin-top:12px;font-size:11px;color:#5f6368;line-height:1.7;padding:0 4px;">
-          <div style="font-weight:700;color:#202124;margin-bottom:4px;">Cross-file Links</div>
-          <div style="background:#f0f7ff;border:1px solid #c5d8f8;border-radius:5px;padding:8px;">
-            <div style="color:#1967d2;font-weight:600;margin-bottom:4px;">Payslip &rarr; Bank Statement</div>
-            <div>Net Pay RM 5,800</div>
-            <div style="color:#b45309;">Bank credit: RM 5,200</div>
-            <div style="color:#b45309;margin-top:3px;">Diff: RM 600 &#8593;</div>
-          </div>
-          <div style="background:#f0f7ff;border:1px solid #c5d8f8;border-radius:5px;padding:8px;margin-top:6px;">
-            <div style="color:#1967d2;font-weight:600;margin-bottom:4px;">Payslip &rarr; EPF Statement</div>
-            <div>EPF rate check</div>
-            <div style="color:#137333;">12% employer &#10003;</div>
-          </div>
-        </div>
-      </div>
-      <div>${renderRegions(PAYSLIP_OCR)}</div>
-    </div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid #f1f3f4;">
-      <button class="btn btn-secondary">Request Additional Documents from Sales</button>
-      <button class="btn btn-primary">Acknowledge Alert &amp; Continue Review &rarr;</button>
-    </div>
+    ${amendNotice}
+    ${renderDetailTabBar(tab)}
+    ${tabContent}
   </div>`;
 }
 
@@ -1588,12 +1788,10 @@ function renderCraList(){
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <span><strong>CRA responsibility:</strong> Click any file row to open OCR detail. For fields flagged <strong>Fail</strong> or suspicious, verify the physical document — if OCR misread a value, click <strong>&#9998; Modify</strong> to correct it. If the source document is wrong, issue a defect to Sales.</span>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-      <div>
-        <div class="sec-title">Disbursement Document Review</div>
-        <div class="sec-sub">5 files &bull; 3 Pass &bull; 1 Alert &bull; 1 Fail &mdash; Click any row to view OCR detail &amp; modify fields</div>
-      </div>
-      <button class="btn btn-danger" onclick="applyScenario('cra-defect-build',null)">Issue Defect Note (2 items)</button>
+    ${renderOcrSummaryStrip(3,1,1,5)}
+    <div style="margin-bottom:10px;">
+      <div class="sec-title">Disbursement Document Review</div>
+      <div class="sec-sub">5 files &bull; Click any row to open OCR detail &bull; Use <strong>&#9998; Modify</strong> on Fail fields if OCR misread; use <strong>Issue Defect</strong> if the source document is wrong</div>
     </div>
     <div class="cra-list-wrap">${rows}</div>
     ${renderCrossValPanel(CRA_CROSS_VAL,'Cross-File Validation — Disbursement')}
@@ -1769,10 +1967,6 @@ function renderCraDefectBuild(){
         ${items}
       </div>
     </div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;">
-      <button class="btn btn-secondary" onclick="applyScenario('cra-list',null)">Cancel</button>
-      <button class="btn btn-danger" onclick="applyScenario('cra-defect-sent',null)">Send Defect Note to Sales &rarr;</button>
-    </div>
   </div>`;
 }
 
@@ -1861,9 +2055,12 @@ function updateFooter(){
     const rem=2-S.defectFixed;
     L.innerHTML=`<span style="color:${rem>0?'#b45309':'#137333'};">${rem>0?rem+' defect item'+(rem>1?'s':'')+' remaining':'All defects resolved'}</span>`;
     R.innerHTML=`${s}Save</button><button class="btn btn-primary" ${S.defectFixed>=2?'':' disabled'}>Notify CRA &rarr;</button>`;
-  } else if(sc==='ced-list'||sc==='ced-detail'){
+  } else if(sc==='ced-list'){
     L.innerHTML=`<span style="color:#5f6368;">Reviewing application documents for ${CASE.aa}</span>`;
     R.innerHTML=`${s}Request More Info from Sales</button>${p}Approve Application &rarr;</button>`;
+  } else if(sc==='ced-detail'){
+    L.innerHTML=`<span style="color:#b45309;">&#9888; Alert in Region 3 &mdash; verify physical document or request re-upload</span>`;
+    R.innerHTML=`${s}Request Re-upload from Sales</button>${p}Acknowledge Alert &amp; Continue &rarr;</button>`;
   } else if(sc==='cra-list'){
     L.innerHTML=`<span style="color:#c5221f;">1 Hard Rule Fail detected &mdash; issue defect before approval</span>`;
     R.innerHTML=`<button class="btn btn-danger" onclick="applyScenario('cra-defect-build',null)">Issue Defect Note</button>${pd}Approve Disbursement</button>`;
@@ -1924,6 +2121,7 @@ function applyScenario(key,btn){
   if(key==='s-app-classify'){S.batchConfirmed=false;S.focusFileId='f4';}
   if(key==='s-dis-defect'){S.defectFixed=0;}
   if(key==='s-dis-defect-p'){S.defectFixed=1;}
+  if(key==='s-app-detail'||key==='ced-detail'){S.detailTab='ocr';}
   document.querySelectorAll('.dev-btn').forEach(b=>b.classList.remove('dev-active'));
   if(btn)btn.classList.add('dev-active');
   render();
