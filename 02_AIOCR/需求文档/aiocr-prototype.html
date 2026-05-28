@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIOCR Prototype v1 – HLB LOAD$</title>
+<style>
+/* ── Reset ── */
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;background:#f0f2f5;color:#202124;display:flex;height:100vh;overflow:hidden;}
+
+/* ── Sidebar ── */
+.sidebar{width:56px;background:#1e2235;display:flex;flex-direction:column;align-items:center;padding:12px 0;flex-shrink:0;}
+.sb-logo{width:36px;height:36px;background:#e63946;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
+.sb-logo svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;}
+.sb-nav{display:flex;flex-direction:column;gap:4px;width:100%;}
+.sb-icon{height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#8892a4;border-left:3px solid transparent;transition:.15s;}
+.sb-icon:hover,.sb-icon.active{color:#fff;background:#2d3348;border-left-color:#4f8ef7;}
+.sb-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.sb-bottom{margin-top:auto;}
+.sb-avatar{width:32px;height:32px;border-radius:50%;background:#4a5568;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:8px auto;}
+
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.topbar{background:#fff;border-bottom:1px solid #e8eaed;height:48px;display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0;}
+.bc-tag{background:#e8f0fe;color:#1967d2;padding:4px 10px;border-radius:4px;font-size:13px;font-weight:500;white-space:nowrap;}
+.content{flex:1;overflow-y:auto;padding:16px 20px 0;}
+
+/* ── Role Switcher ── */
+.role-switcher{display:flex;gap:2px;background:#f0f2f5;border-radius:6px;padding:2px;margin-left:auto;flex-shrink:0;}
+.role-btn{padding:4px 14px;border:none;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;color:#5f6368;background:transparent;transition:.15s;}
+.role-btn.active{background:#fff;color:#1967d2;box-shadow:0 1px 3px rgba(0,0,0,.12);}
+
+/* ── Case Header ── */
+.case-hdr{background:#fff;border:1px solid #e8eaed;border-radius:8px;padding:14px 18px;margin-bottom:14px;}
+.case-title-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.case-num{font-size:16px;font-weight:700;}
+.info-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px 0;}
+.ig-item label{font-size:11px;color:#80868b;display:block;margin-bottom:2px;}
+.ig-item span{font-size:13px;font-weight:500;}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:500;white-space:nowrap;}
+.bd-gray{background:#e8eaed;color:#5f6368;}
+.bd-green{background:#e6f4ea;color:#137333;}
+.bd-blue{background:#e8f0fe;color:#1967d2;}
+.bd-orange{background:#fef7e0;color:#b45309;}
+.bd-red{background:#fce8e6;color:#c5221f;}
+.bd-purple{background:#f3e8fd;color:#7c3aed;}
+
+/* ── Tabs ── */
+.tabs{display:flex;background:#fff;border:1px solid #e8eaed;border-bottom:none;border-radius:8px 8px 0 0;flex-wrap:wrap;}
+.tab{padding:11px 18px;font-size:13px;cursor:pointer;color:#5f6368;border-bottom:3px solid transparent;transition:.15s;user-select:none;white-space:nowrap;}
+.tab.active{color:#1967d2;border-bottom-color:#1967d2;font-weight:500;}
+.tab:hover:not(.active){color:#202124;}
+.tab-body{background:#fff;border:1px solid #e8eaed;border-top:none;border-radius:0 0 8px 8px;padding:18px;}
+
+/* ── Tables ── */
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:12px;font-weight:600;color:#5f6368;padding:8px 10px;border-bottom:2px solid #e8eaed;white-space:nowrap;}
+td{padding:10px;border-bottom:1px solid #f1f3f4;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafafa;}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;transition:.15s;white-space:nowrap;}
+.btn-primary{background:#1967d2;color:#fff;}
+.btn-primary:hover{background:#1557b0;}
+.btn-primary:disabled{background:#dadce0;color:#9aa0a6;cursor:not-allowed;}
+.btn-secondary{background:#fff;color:#3c4043;border:1px solid #dadce0;}
+.btn-secondary:hover{background:#f8f9fa;}
+.btn-danger{background:#fff;color:#c5221f;border:1px solid #c5221f;}
+.btn-danger:hover{background:#fce8e6;}
+.btn-sm{padding:5px 12px;font-size:12px;}
+.lnk{color:#1967d2;font-size:12px;cursor:pointer;background:none;border:none;padding:0;font-family:inherit;}
+.lnk:hover{text-decoration:underline;}
+
+/* ── Upload Zone ── */
+.upload-zone{border:2px dashed #dadce0;border-radius:8px;padding:28px 20px;text-align:center;background:#fafafa;cursor:pointer;margin-bottom:16px;transition:.15s;}
+.upload-zone:hover{border-color:#1967d2;background:#e8f0fe;}
+.upload-zone-icon svg{width:32px;height:32px;stroke:#9aa0a6;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+.upload-zone-text{font-size:13px;color:#5f6368;margin-top:8px;}
+.upload-zone-hint{font-size:11px;color:#9aa0a6;margin-top:4px;}
+
+/* ── Progress Bar ── */
+.progress-section{display:flex;align-items:center;gap:14px;margin-bottom:16px;padding:12px 16px;background:#f8f9fa;border-radius:8px;border:1px solid #e8eaed;}
+.progress-label{font-size:12px;color:#5f6368;white-space:nowrap;}
+.progress-bar-wrap{flex:1;height:8px;background:#e8eaed;border-radius:4px;overflow:hidden;}
+.progress-bar-fill{height:100%;border-radius:4px;background:#1967d2;transition:width .4s;}
+.progress-count{font-size:12px;font-weight:600;color:#202124;white-space:nowrap;}
+
+/* ── Status Pills ── */
+.sp{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap;}
+.sp-check{background:#e8f0fe;color:#1967d2;}
+.sp-class{background:#f3e8fd;color:#7c3aed;}
+.sp-ocr{background:#fef7e0;color:#b45309;}
+.sp-pass{background:#e6f4ea;color:#137333;}
+.sp-alert{background:#fef7e0;color:#b45309;}
+.sp-fail{background:#fce8e6;color:#c5221f;}
+.sp-review{background:#fff3cd;color:#856404;}
+.sp-pend{background:#f1f3f4;color:#5f6368;}
+
+/* ── Classification Workstation ── */
+.classify-banner{background:#e8f0fe;border:1px solid #c5d8f8;border-radius:8px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap;}
+.classify-banner-title{font-size:13px;font-weight:700;color:#1967d2;}
+.classify-banner-sub{font-size:12px;color:#1967d2;margin-top:2px;}
+.classify-file-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;}
+.cfs-item{flex-shrink:0;width:90px;border:2px solid #e8eaed;border-radius:6px;padding:8px 6px;cursor:pointer;text-align:center;transition:.15s;}
+.cfs-item:hover{border-color:#9aa0a6;}
+.cfs-active{border-color:#1967d2!important;background:#e8f0fe;}
+.cfs-confirmed{border-color:#34a853!important;background:#e6f4ea;}
+.cfs-needs{border-color:#b45309!important;background:#fffbeb;}
+.cfs-icon{font-size:16px;margin-bottom:3px;}
+.cfs-name{font-size:10px;color:#3c4043;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cfs-pct{font-size:10px;color:#9aa0a6;margin-top:2px;}
+
+.classify-main{display:grid;grid-template-columns:55% 1fr;border:1px solid #e8eaed;border-radius:8px;overflow:hidden;min-height:340px;}
+.classify-preview{background:#f8f9fa;border-right:1px solid #e8eaed;display:flex;flex-direction:column;}
+.classify-preview-hdr{padding:10px 14px;border-bottom:1px solid #e8eaed;display:flex;align-items:center;justify-content:space-between;}
+.classify-preview-title{font-size:12px;font-weight:600;color:#3c4043;}
+.pdf-preview-area{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:20px;gap:8px;}
+.pdf-mock-page{width:150px;background:#fff;border:1px solid #dadce0;border-radius:3px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.09);}
+.pml{height:6px;background:#e8eaed;border-radius:3px;margin-bottom:7px;}
+.pml.w90{width:90%;}.pml.w80{width:80%;}.pml.w60{width:60%;}.pml.w50{width:50%;}.pml.w40{width:40%;}.pml.w30{width:30%;}
+.pmh{height:11px;border-radius:3px;margin-bottom:10px;}
+.classify-preview-nav{border-top:1px solid #e8eaed;padding:8px 14px;display:flex;justify-content:center;gap:8px;}
+.classify-result{padding:22px 20px;display:flex;flex-direction:column;}
+.cr-file-name{font-size:11px;color:#9aa0a6;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cr-ai-label{font-size:10px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;}
+.cr-doc-type{font-size:16px;font-weight:700;color:#202124;margin-bottom:8px;}
+.conf-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.conf-dots{display:flex;gap:3px;}
+.conf-dot{width:11px;height:11px;border-radius:50%;background:#e8eaed;}
+.cd-hi{background:#34a853;}.cd-me{background:#b45309;}.cd-lo{background:#c5221f;}
+.conf-pct{font-size:13px;font-weight:700;}
+.conf-msg{font-size:11px;margin-bottom:10px;}
+.cr-select{width:100%;border:1px solid #dadce0;border-radius:6px;padding:8px 10px;font-size:13px;background:#fff;cursor:pointer;margin-bottom:12px;outline:none;}
+.cr-select:focus{border-color:#1967d2;}
+.cr-divider{height:1px;background:#e8eaed;margin:14px 0;}
+
+/* ── OCR Processing Banner ── */
+.ocr-proc-banner{background:#f3e8fd;border:1px solid #d8b4fe;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.ocr-proc-title{font-size:13px;font-weight:700;color:#7c3aed;}
+.ocr-proc-sub{font-size:12px;color:#5b21b6;margin-top:2px;}
+
+/* ── Pre-fill Toast ── */
+.prefill-toast{background:#e6f4ea;border:1px solid #a8d5b5;border-radius:6px;padding:10px 14px;font-size:12px;color:#137333;display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;}
+.prefill-toast svg{width:14px;height:14px;fill:#137333;flex-shrink:0;margin-top:1px;}
+
+/* ── 4-Region OCR Panel ── */
+.region-section{margin-bottom:14px;}
+.region-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f3f4;margin-bottom:8px;}
+.region-title{font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.6px;}
+.field-grid{border:1px solid #e8eaed;border-radius:6px;overflow:hidden;}
+.fg-row{display:grid;grid-template-columns:190px 1fr;border-bottom:1px solid #e8eaed;background:#f8f9fa;transition:.1s;}
+.fg-row:last-child{border-bottom:none;}
+.fg-row:hover{background:#f1f3f4;}
+.fg-cell{padding:7px 12px;font-size:12px;}
+.fg-label{color:#5f6368;font-weight:500;border-right:1px solid #e8eaed;}
+.fg-value{color:#202124;}
+.fg-value.xval{color:#1967d2;}
+.fg-value.fval{color:#c5221f;font-weight:700;}
+.fg-value.eye{color:#9aa0a6;}
+.check-rows{border:1px solid #e8eaed;border-radius:6px;overflow:hidden;}
+.check-row{display:flex;align-items:flex-start;gap:10px;padding:8px 12px;border-bottom:1px solid #e8eaed;font-size:12px;background:#f8f9fa;}
+.check-row:last-child{border-bottom:none;}
+.check-row.cr-fail{background:#fef2f2;}
+.check-row.cr-alert{background:#fffbeb;}
+.check-row.cr-eye{background:#f8f9fa;}
+.check-icon{flex-shrink:0;margin-top:1px;}
+.check-body{flex:1;}
+.check-label{color:#3c4043;font-weight:500;}
+.check-detail{font-size:11px;color:#5f6368;margin-top:2px;}
+.check-formula{font-family:'SF Mono',Consolas,monospace;font-size:11px;color:#5f6368;background:#fff;padding:2px 6px;border-radius:3px;margin-top:3px;display:inline-block;border:1px solid #e8eaed;}
+.check-result{flex-shrink:0;}
+
+/* ── Alert boxes ── */
+.alert-warn{background:#fef7e0;border:1px solid #fde68a;border-radius:6px;padding:10px 14px;font-size:12px;color:#b45309;display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;}
+.alert-warn svg,.alert-err svg,.alert-info svg,.alert-ok svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;flex-shrink:0;margin-top:1px;}
+.alert-err{background:#fce8e6;border:1px solid #f5c6cb;border-radius:6px;padding:10px 14px;font-size:12px;color:#c5221f;display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;}
+.alert-info{background:#e8f0fe;border:1px solid #c5d8f8;border-radius:6px;padding:10px 14px;font-size:12px;color:#1967d2;display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;}
+.alert-ok{background:#e6f4ea;border:1px solid #a8d5b5;border-radius:6px;padding:10px 14px;font-size:12px;color:#137333;display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;}
+
+/* ── Alert acknowledge item ── */
+.ack-item{background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:12px 14px;margin-bottom:8px;}
+.ack-item-title{font-size:13px;font-weight:600;color:#b45309;display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.ack-item-body{font-size:12px;color:#92400e;line-height:1.6;}
+.ack-actions{display:flex;gap:8px;margin-top:10px;}
+
+/* ── Defect Note (CRA builds / Sales receives) ── */
+.defect-builder-wrap{border:1px solid #e8eaed;border-radius:8px;overflow:hidden;margin-bottom:14px;}
+.defect-builder-hdr{background:#fff8f0;border-bottom:1px solid #fde68a;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
+.defect-builder-title{font-size:13px;font-weight:700;color:#b45309;display:flex;align-items:center;gap:6px;}
+.defect-builder-body{padding:16px;}
+.defect-item-card{border:1px solid #e8eaed;border-radius:6px;padding:14px;margin-bottom:10px;background:#fafafa;}
+.defect-item-card:last-child{margin-bottom:0;}
+.dic-file{font-size:12px;font-weight:700;color:#202124;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e8eaed;}
+.dic-row{display:grid;grid-template-columns:100px 1fr;gap:8px;align-items:start;margin-bottom:8px;font-size:12px;}
+.dic-row:last-child{margin-bottom:0;}
+.dic-label{color:#5f6368;font-weight:500;padding-top:6px;}
+.dic-select{width:100%;border:1px solid #dadce0;border-radius:4px;padding:6px 8px;font-size:12px;background:#fff;outline:none;}
+.dic-textarea{width:100%;border:1px solid #dadce0;border-radius:4px;padding:6px 8px;font-size:12px;font-family:inherit;resize:vertical;min-height:60px;outline:none;}
+
+/* ── Defect Received (Sales side) ── */
+.defect-recv-wrap{border:2px solid #fbbf24;border-radius:8px;overflow:hidden;margin-bottom:14px;}
+.defect-recv-hdr{background:#fffbeb;border-bottom:1px solid #fde68a;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.defect-recv-title{font-size:13px;font-weight:700;color:#b45309;}
+.defect-recv-meta{font-size:11px;color:#5f6368;margin-top:2px;}
+.defect-fix-item{padding:14px 16px;border-bottom:1px solid #f1f3f4;}
+.defect-fix-item:last-child{border-bottom:none;}
+.dfi-header{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.dfi-num{width:22px;height:22px;border-radius:50%;background:#fbbf24;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.dfi-num-done{background:#34a853;}
+.dfi-filename{font-size:13px;font-weight:700;color:#202124;}
+.dfi-type-tag{font-size:11px;color:#b45309;font-weight:600;}
+.dfi-desc{font-size:12px;color:#5f6368;line-height:1.6;padding-left:30px;}
+.dfi-actions{display:flex;gap:8px;margin-top:10px;padding-left:30px;}
+.dfi-done-note{font-size:11px;color:#137333;padding-left:30px;margin-top:6px;display:flex;align-items:center;gap:5px;}
+
+/* ── CRA file list ── */
+.cra-list-wrap{border:1px solid #e8eaed;border-radius:8px;overflow:hidden;}
+.cra-file-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #f1f3f4;cursor:pointer;transition:.15s;}
+.cra-file-row:last-child{border-bottom:none;}
+.cra-file-row:hover{background:#fafafa;}
+.cra-file-icon{width:36px;height:36px;border-radius:6px;background:#f0f2f5;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cra-file-info{flex:1;min-width:0;}
+.cra-file-name{font-size:13px;font-weight:600;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cra-file-meta{font-size:11px;color:#80868b;margin-top:2px;}
+.cra-file-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+
+/* ── File action icons ── */
+.btn-icon-sm{width:28px;height:28px;border:1px solid #dadce0;border-radius:4px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;flex-shrink:0;}
+.btn-icon-sm:hover{border-color:#1967d2;background:#e8f0fe;}
+.btn-icon-sm svg{width:13px;height:13px;fill:none;stroke:#5f6368;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.btn-icon-sm:hover svg{stroke:#1967d2;}
+
+/* ── Detail layout ── */
+.detail-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.detail-hdr-left .detail-title{font-size:15px;font-weight:700;color:#202124;}
+.detail-hdr-left .detail-meta{font-size:12px;color:#5f6368;margin-top:3px;}
+.detail-hdr-right{display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;}
+.detail-layout{display:grid;grid-template-columns:200px 1fr;gap:16px;}
+.detail-preview{display:flex;flex-direction:column;align-items:center;}
+.detail-preview-label{font-size:10px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;align-self:flex-start;}
+
+/* ── Footer ── */
+.footer{background:#fff;border-top:1px solid #e8eaed;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-shrink:0;}
+.footer-left{font-size:12px;color:#5f6368;}
+.footer-right{display:flex;gap:8px;}
+
+/* ── Modals ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.18);display:flex;flex-direction:column;max-height:90vh;}
+.modal-sm{width:440px;}
+.modal-md{width:560px;max-width:95vw;}
+.modal-hdr{padding:14px 18px;border-bottom:1px solid #e8eaed;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-hdr h3{font-size:14px;font-weight:700;}
+.modal-x{width:26px;height:26px;border:none;background:#f1f3f4;border-radius:4px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:#5f6368;}
+.modal-x:hover{background:#e8eaed;}
+.modal-body{padding:16px 18px;overflow-y:auto;flex:1;}
+.modal-ftr{padding:10px 18px;border-top:1px solid #e8eaed;display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;}
+
+/* ── Dev tool ── */
+.dev-tool{position:fixed;bottom:20px;right:20px;z-index:200;}
+.dev-fab{width:40px;height:40px;border-radius:50%;background:#1e2235;color:#fff;border:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.3);}
+.dev-panel{display:none;position:absolute;bottom:50px;right:0;background:#fff;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.2);padding:12px;width:296px;border:1px solid #e8eaed;max-height:84vh;overflow-y:auto;}
+.dev-panel.open{display:block;}
+.dev-title{font-size:11px;font-weight:700;color:#9aa0a6;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase;}
+.dev-sep{height:1px;background:#e8eaed;margin:8px 0;}
+.dev-group{font-size:10px;color:#9aa0a6;font-weight:600;margin:8px 0 4px;text-transform:uppercase;letter-spacing:.4px;}
+.dev-btn{display:block;width:100%;text-align:left;padding:6px 10px;border:none;border-radius:5px;background:#f8f9fa;font-size:12px;color:#3c4043;cursor:pointer;margin-bottom:3px;}
+.dev-btn:hover{background:#e8f0fe;color:#1967d2;}
+.dev-btn.dev-active{background:#1967d2;color:#fff;}
+
+/* ── Spin ── */
+.spin{animation:spin 1.2s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── Misc ── */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.sec-title{font-size:13px;font-weight:700;color:#202124;}
+.sec-sub{font-size:11px;color:#80868b;}
+.text-muted{color:#9aa0a6;font-size:12px;}
+.cross-val-chain{background:#f0f7ff;border:1px solid #c5d8f8;border-radius:6px;padding:10px 14px;font-size:11px;color:#1967d2;margin-top:8px;}
+.cross-val-chain-title{font-weight:700;margin-bottom:4px;}
+.cross-val-row{padding:3px 0;display:flex;align-items:center;gap:6px;}
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<div class="sidebar">
+  <div class="sb-logo">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-icon active" title="Applications">
+      <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    </div>
+    <div class="sb-icon" title="Documents">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    </div>
+    <div class="sb-icon" title="Reports">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    </div>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-avatar" id="avatarLabel">SA</div>
+  </div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="topbar">
+    <span class="bc-tag">AI OCR</span>
+    <span style="color:#9aa0a6;font-size:13px;">/</span>
+    <span style="font-size:13px;color:#3c4043;font-weight:500;">AA2026052800123</span>
+    <div class="role-switcher">
+      <button class="role-btn active" id="roleBtn-sales" onclick="switchRole('sales',this)">Sales</button>
+      <button class="role-btn" id="roleBtn-ced" onclick="switchRole('ced',this)">CED</button>
+      <button class="role-btn" id="roleBtn-cra" onclick="switchRole('cra',this)">CRA</button>
+    </div>
+  </div>
+  <div class="content" id="mainContent"></div>
+  <div class="footer">
+    <div class="footer-left" id="footerLeft"></div>
+    <div class="footer-right" id="footerRight"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Batch Confirm ══ -->
+<div class="modal-overlay" id="modalBatch">
+  <div class="modal modal-md">
+    <div class="modal-hdr"><h3>Confirm 5 High-Confidence Files</h3><button class="modal-x" onclick="closeModal('modalBatch')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="alert-info" style="margin-bottom:14px;">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>5 files with AI confidence &ge;80% will be confirmed in one click. 1 file (CIMB_Statement_Q4.pdf, 61%) needs manual verification.</span>
+      </div>
+      <div style="background:#f8f9fa;border-radius:6px;padding:12px;font-size:12px;line-height:2;">
+        <div style="font-weight:700;color:#202124;margin-bottom:4px;">Files to confirm:</div>
+        <div>&#10003; &nbsp;Mykad_Ahmad.pdf &rarr; <strong>Mykad</strong> (96%)</div>
+        <div>&#10003; &nbsp;Payslip_Oct2025.pdf &rarr; <strong>Payslip</strong> (94%)</div>
+        <div>&#10003; &nbsp;Payslip_Sep2025.pdf &rarr; <strong>Payslip</strong> (95%)</div>
+        <div>&#10003; &nbsp;FormBE_2024.pdf &rarr; <strong>Form BE</strong> (92%)</div>
+        <div>&#10003; &nbsp;EPF_Statement_2025.pdf &rarr; <strong>EPF Statement</strong> (88%)</div>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modalBatch')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="doBatchConfirm()">Confirm 5 Files &#10003;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: File Preview ══ -->
+<div class="modal-overlay" id="modalPreview">
+  <div class="modal modal-md">
+    <div class="modal-hdr"><h3 id="previewTitle">File Preview</h3><button class="modal-x" onclick="closeModal('modalPreview')">&#10005;</button></div>
+    <div class="modal-body" style="display:flex;gap:16px;min-height:320px;">
+      <div style="width:180px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+        <div id="previewPdfMock"></div>
+      </div>
+      <div style="flex:1;font-size:12px;color:#5f6368;line-height:1.8;" id="previewInfo">
+        <div style="font-weight:700;color:#202124;margin-bottom:8px;">Document Information</div>
+        Preview placeholder — in production, the actual PDF renders here with page navigation.
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modalPreview')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Issue Defect (inline) ══ -->
+<div class="modal-overlay" id="modalSingleDefect">
+  <div class="modal modal-md">
+    <div class="modal-hdr"><h3>Issue Defect for File</h3><button class="modal-x" onclick="closeModal('modalSingleDefect')">&#10005;</button></div>
+    <div class="modal-body" id="modalSingleDefectBody"></div>
+    <div class="modal-ftr">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modalSingleDefect')">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="closeModal('modalSingleDefect');applyScenario('cra-defect-build',null)">Add to Defect Note</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DEV TOOL ══ -->
+<div class="dev-tool">
+  <div class="dev-panel" id="devPanel">
+    <div class="dev-title">AIOCR Scenarios</div>
+
+    <div class="dev-group">Sales — Application Submission</div>
+    <button class="dev-btn" onclick="applyScenario('s-app-upload',this)">&#9312; Upload zone (checking)</button>
+    <button class="dev-btn" onclick="applyScenario('s-app-classify',this)">&#9313; Classification Workstation</button>
+    <button class="dev-btn" onclick="applyScenario('s-app-ocr',this)">&#9314; OCR Running (3/6 done)</button>
+    <button class="dev-btn" onclick="applyScenario('s-app-done',this)">&#9315; All clear — ready to submit</button>
+    <button class="dev-btn" onclick="applyScenario('s-app-alert',this)">&#9315; Done with 1 alert flag</button>
+
+    <div class="dev-sep"></div>
+    <div class="dev-group">Sales — Disbursement</div>
+    <button class="dev-btn" onclick="applyScenario('s-dis-upload',this)">&#9312; Upload disbursement docs</button>
+    <button class="dev-btn" onclick="applyScenario('s-dis-classify',this)">&#9313; Classification (all high conf.)</button>
+    <button class="dev-btn" onclick="applyScenario('s-dis-done',this)">&#9314; Submitted to CRA</button>
+    <button class="dev-btn" onclick="applyScenario('s-dis-defect',this)">CRA Defect received — 0/2 fixed</button>
+    <button class="dev-btn" onclick="applyScenario('s-dis-defect-p',this)">CRA Defect — 1/2 fixed</button>
+
+    <div class="dev-sep"></div>
+    <div class="dev-group">CED — Application Review</div>
+    <button class="dev-btn" onclick="applyScenario('ced-list',this)">File list overview</button>
+    <button class="dev-btn" onclick="applyScenario('ced-detail',this)">Payslip detail (alert in R3)</button>
+
+    <div class="dev-sep"></div>
+    <div class="dev-group">CRA — Disbursement Review</div>
+    <button class="dev-btn" onclick="applyScenario('cra-list',this)">File list overview</button>
+    <button class="dev-btn" onclick="applyScenario('cra-detail',this)">Vehicle Invoice FAIL detail</button>
+    <button class="dev-btn" onclick="applyScenario('cra-defect-build',this)">Build defect note (2 items)</button>
+    <button class="dev-btn" onclick="applyScenario('cra-defect-sent',this)">Defect sent — awaiting Sales</button>
+  </div>
+  <button class="dev-fab" onclick="document.getElementById('devPanel').classList.toggle('open')" title="Scenarios">&#9881;</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  ICON CONSTANTS
+// ═══════════════════════════════════════════════
+const I_OK=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#137333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`;
+const I_WARN=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+const I_FAIL=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c5221f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+const I_INFO=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1967d2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+const I_EYE=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const I_UP=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1967d2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>`;
+const I_FILE_G=`<svg width="16" height="16" viewBox="0 0 24 24" fill="#34a853" opacity=".85"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8" fill="none" stroke="#fff" stroke-width="1.5"/></svg>`;
+const I_FILE_O=`<svg width="16" height="16" viewBox="0 0 24 24" fill="#b45309" opacity=".85"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8" fill="none" stroke="#fff" stroke-width="1.5"/></svg>`;
+const I_FILE_R=`<svg width="16" height="16" viewBox="0 0 24 24" fill="#c5221f" opacity=".85"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8" fill="none" stroke="#fff" stroke-width="1.5"/></svg>`;
+const I_FILE_N=`<svg width="16" height="16" viewBox="0 0 24 24" fill="#9aa0a6" opacity=".85"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8" fill="none" stroke="#fff" stroke-width="1.5"/></svg>`;
+const I_SPIN=`<svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-9-9"/></svg>`;
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let S={
+  scenario:'s-app-upload',
+  role:'sales',
+  batchConfirmed:false,
+  focusFileId:'f4',
+  defectFixed:0,
+};
+
+// ═══════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════
+const CASE={
+  aa:'AA2026052800123',
+  customer:'Ahmad Bin Abdullah',
+  ic:'870512-07-5512',
+  loan:'RM 85,000',
+  tenure:'84 months',
+  vehicle:'Toyota Camry 2.5V (2024)',
+  type:'Conventional',
+  appStatus:'Pending CED Review',
+  disStatus:'Pending Disbursement',
+};
+
+const APP_FILES=[
+  {id:'f1',name:'Mykad_Ahmad.pdf',subject:'Primary Applicant',cat:'Personal Identity',aiType:'Mykad',conf:96,initState:'confirmed',ocrSt:'pass'},
+  {id:'f2',name:'Payslip_Oct2025.pdf',subject:'Primary Applicant',cat:'Applicant Income',aiType:'Payslip',conf:94,initState:'confirmed',ocrSt:'alert',alertMsg:'Only 1 month payslip detected. CED typically requires 3 consecutive months.'},
+  {id:'f3',name:'Payslip_Sep2025.pdf',subject:'Primary Applicant',cat:'Applicant Income',aiType:'Payslip',conf:95,initState:'confirmed',ocrSt:'pass'},
+  {id:'f4',name:'CIMB_Statement_Q4.pdf',subject:'Primary Applicant',cat:'Applicant Income',aiType:'Individual Bank Statement',conf:61,initState:'needs-review',ocrSt:'pass'},
+  {id:'f5',name:'FormBE_2024.pdf',subject:'Primary Applicant',cat:'Applicant Income',aiType:'Form BE',conf:92,initState:'confirmed',ocrSt:'pass'},
+  {id:'f6',name:'EPF_Statement_2025.pdf',subject:'Primary Applicant',cat:'Applicant Income',aiType:'EPF Statement',conf:88,initState:'confirmed',ocrSt:'pass'},
+];
+
+const DIS_FILES=[
+  {id:'d1',name:'HP_Agreement_TC.pdf',cat:'CRA HP Agreement',aiType:'HP Agreement T&C',conf:99,ocrSt:'alert',alertMsg:'Page 4 missing Hirer initial signature (Manual case)',defType:'Signature Missing',defDesc:'Manual Acceptance case — Page 4 requires Hirer initial signature on every paragraph but is unsigned.'},
+  {id:'d2',name:'Vehicle_Invoice_HLB.pdf',cat:'CRA HP Form & Funding',aiType:'Vehicle Invoice',conf:97,ocrSt:'fail',failMsg:'Booking fee RM 2,000 exceeds OTR ×1% limit (RM 1,810)',defType:'Rule Violation',defDesc:'Booking fee RM 2,000 exceeds the 1% OTR cap. OTR = RM 181,000, maximum allowed booking fee = RM 1,810. Please re-obtain a corrected invoice from dealer.'},
+  {id:'d3',name:'VOC_WTL1234A.pdf',cat:'CRA Vehicle Docs',aiType:'VOC',conf:95,ocrSt:'pass'},
+  {id:'d4',name:'Insurance_CoverNote.pdf',cat:'CRA Vehicle Docs',aiType:'Insurance Cover Note',conf:91,ocrSt:'pass'},
+  {id:'d5',name:'FIS_JPJ_Result.pdf',cat:'CRA Vehicle Docs',aiType:'FIS/JPJ Result',conf:98,ocrSt:'pass'},
+];
+
+const PAYSLIP_OCR={
+  fields:[
+    {label:'payslip_month',val:'October 2025',cls:''},
+    {label:'employer_name',val:'Syarikat ABC Sdn Bhd',cls:''},
+    {label:'employee_name',val:'AHMAD BIN ABDULLAH',cls:''},
+    {label:'gross_salary',val:'RM 6,800',cls:''},
+    {label:'basic_salary',val:'RM 5,500',cls:''},
+    {label:'allowances',val:'RM 800',cls:''},
+    {label:'overtime',val:'RM 500',cls:''},
+    {label:'net_pay_amount',val:'RM 5,800',cls:'xval',tag:'Cross-validated'},
+    {label:'deduction_epf_employee',val:'RM 748',cls:''},
+    {label:'deduction_socso',val:'RM 29.40',cls:''},
+    {label:'is_commission',val:'N',cls:''},
+    {label:'is_govt_without_epf',val:'N',cls:''},
+  ],
+  consistency:[
+    {label:'Employer Name vs System Record',res:'pass',detail:'Syarikat ABC Sdn Bhd — exact match'},
+  ],
+  formula:[
+    {label:'gross = basic + allowances + overtime',res:'pass',formula:'5,500 + 800 + 500 = 6,800 ✓'},
+    {label:'net = gross − total_deductions',res:'pass',formula:'6,800 − 748 − 29.40 − 222.60 = 5,800 ✓'},
+    {label:'Payslip month count (min. 3 required)',res:'alert',formula:'1 month detected → need 2 more months'},
+    {label:'Payslip → Bank Statement: net pay cross-check',res:'alert',formula:'Net RM 5,800 vs Bank credit RM 5,200 (diff RM 600)'},
+  ],
+  eyeball:[
+    {label:'Employer stamp present',res:'pass',note:'Eyeball check — not auto-validated'},
+    {label:'Employee signature present',res:'pass',note:'Eyeball check'},
+    {label:'Document is not handwritten',res:'pass',note:'Eyeball check'},
+  ],
+};
+
+const VEHICLE_OCR={
+  fields:[
+    {label:'dealer_name',val:'ABC Motors Sdn Bhd',cls:''},
+    {label:'hirer_name',val:'Ahmad Bin Abdullah',cls:''},
+    {label:'nric_passport_no',val:'870512-07-5512',cls:''},
+    {label:'chassis_number',val:'PM1FA3BA1P1234567',cls:''},
+    {label:'engine_number',val:'2AR-FE012345',cls:''},
+    {label:'vehicle_model',val:'Toyota Camry 2.5V',cls:''},
+    {label:'otr_price',val:'RM 181,000',cls:''},
+    {label:'loan_amount',val:'RM 85,000',cls:''},
+    {label:'deposit_amount',val:'RM 96,000',cls:''},
+    {label:'booking_fee',val:'RM 2,000',cls:'fval',tag:'FAIL'},
+    {label:'invoice_date',val:'2026-05-20',cls:''},
+  ],
+  consistency:[
+    {label:'Hirer Name vs System Record',res:'pass',detail:'Ahmad Bin Abdullah — match'},
+    {label:'NRIC vs System Record',res:'pass',detail:'870512-07-5512 — match'},
+    {label:'Chassis Number vs System Record',res:'pass',detail:'PM1FA3BA1P1234567 — match'},
+  ],
+  formula:[
+    {label:'OTR = Loan + Deposit',res:'pass',formula:'85,000 + 96,000 = 181,000 ✓'},
+    {label:'Booking Fee ≤ OTR × 1%',res:'fail',formula:'RM 2,000 > RM 1,810 (181,000 × 1%) — HARD RULE FAIL'},
+  ],
+  eyeball:[
+    {label:'Invoice header contains "Invoice"',res:'pass',note:'Eyeball check'},
+    {label:'Dealer stamp present',res:'pass',note:'Eyeball check'},
+  ],
+};
+
+// ═══════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function badge(txt,cls){return`<span class="badge ${cls}">${txt}</span>`;}
+
+function sp(type,txt){
+  const map={check:['sp-check',I_SPIN],class:['sp-class',I_SPIN],ocr:['sp-ocr',I_SPIN],
+             pass:['sp-pass',I_OK],alert:['sp-alert',I_WARN],fail:['sp-fail',I_FAIL],
+             review:['sp-review',I_WARN],pend:['sp-pend','']};
+  const [cls,ico]=map[type]||['sp-pend',''];
+  return`<span class="sp ${cls}">${ico} ${txt}</span>`;
+}
+
+function confDots(pct){
+  const n=Math.round(pct/20);
+  const hi=pct>=80,me=pct>=60;
+  const cls=hi?'cd-hi':me?'cd-me':'cd-lo';
+  return Array.from({length:5},(_,i)=>`<span class="conf-dot${i<n?' '+cls:''}"></span>`).join('');
+}
+
+function pdfMock(type){
+  const s={
+    mykad:`<div class="pmh" style="background:#c8102e;width:80%;"></div>
+           <div style="display:flex;gap:8px;margin-bottom:8px;"><div style="width:36px;height:44px;background:#e8eaed;border-radius:2px;"></div>
+           <div style="flex:1;"><div class="pml w90"></div><div class="pml w60"></div><div class="pml w40"></div></div></div>
+           <div class="pml w80"></div><div class="pml w50"></div>`,
+    payslip:`<div class="pmh" style="background:#1967d2;width:70%;"></div>
+             <div class="pml w90"></div><div class="pml w80"></div><div style="height:6px;"></div>
+             <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+               <div class="pml" style="height:5px;width:100%;"></div><div class="pml" style="height:5px;width:90%;"></div>
+               <div class="pml" style="height:5px;width:80%;"></div><div class="pml" style="height:5px;width:70%;"></div>
+               <div class="pml" style="height:5px;width:90%;"></div><div class="pml" style="height:5px;width:100%;"></div>
+             </div>`,
+    invoice:`<div class="pmh" style="background:#5f6368;width:50%;"></div>
+             <div class="pml w80"></div><div class="pml w60"></div><div style="height:6px;"></div>
+             <div style="border:1px solid #e8eaed;padding:4px;border-radius:2px;">
+               <div class="pml" style="height:5px;width:100%;margin-bottom:4px;"></div>
+               <div class="pml" style="height:5px;width:80%;margin-bottom:4px;"></div>
+               <div class="pml" style="height:5px;width:90%;"></div>
+             </div>`,
+    generic:`<div class="pmh" style="background:#9aa0a6;width:60%;"></div>
+             <div class="pml w80"></div><div class="pml w60"></div>
+             <div class="pml w90"></div><div class="pml w40"></div><div class="pml w70"></div>`,
+  };
+  return`<div class="pdf-mock-page">${s[type]||s.generic}</div>`;
+}
+
+function caseHeader(){
+  const isCRA=S.role==='cra';
+  return`<div class="case-hdr">
+    <div class="case-title-row">
+      <span class="case-num">${CASE.aa}</span>
+      ${badge(isCRA?CASE.disStatus:CASE.appStatus,'bd-orange')}
+      ${badge(CASE.type,'bd-blue')}
+    </div>
+    <div class="info-grid">
+      <div class="ig-item"><label>Customer</label><span>${CASE.customer}</span></div>
+      <div class="ig-item"><label>IC / Passport</label><span>${CASE.ic}</span></div>
+      <div class="ig-item"><label>Loan Amount</label><span>${CASE.loan}</span></div>
+      <div class="ig-item"><label>Tenure</label><span>${CASE.tenure}</span></div>
+      <div class="ig-item"><label>Vehicle</label><span>${CASE.vehicle}</span></div>
+    </div>
+  </div>`;
+}
+
+function salesTabBar(active){
+  return`<div class="tabs">
+    <div class="tab ${active==='app'?'active':''}" onclick="switchTab('app',this)">Application Submission</div>
+    <div class="tab ${active==='dis'?'active':''}" onclick="switchTab('dis',this)">Disbursement</div>
+  </div>`;
+}
+
+function switchTab(tab,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if(tab==='app')applyScenario('s-app-upload',null);
+  else applyScenario('s-dis-upload',null);
+}
+
+function fileRowIconForOcr(st){
+  if(st==='pass')return I_FILE_G;
+  if(st==='alert')return I_FILE_O;
+  if(st==='fail')return I_FILE_R;
+  return I_FILE_N;
+}
+
+// ═══════════════════════════════════════════════
+//  4-REGION OCR RENDERER (reusable)
+// ═══════════════════════════════════════════════
+function renderRegions(data){
+  // Region 1: Fields
+  const r1=data.fields.map(f=>{
+    const tag=f.tag?`&nbsp;<span class="badge ${f.cls==='xval'?'bd-blue':'bd-red'}" style="font-size:10px;">${f.tag}</span>`:'';
+    return`<div class="fg-row"><div class="fg-cell fg-label">${f.label}</div><div class="fg-cell fg-value ${f.cls||''}">${f.val}${tag}</div></div>`;
+  }).join('');
+
+  // Region 2: Consistency
+  const allConsOk=data.consistency.every(c=>c.res==='pass');
+  const r2=data.consistency.map(c=>`<div class="check-row">
+    <span class="check-icon">${c.res==='pass'?I_OK:I_FAIL}</span>
+    <div class="check-body"><div class="check-label">${c.label}</div><div class="check-detail">${c.detail||''}</div></div>
+    <span class="check-result">${badge(c.res==='pass'?'Match':'Mismatch',c.res==='pass'?'bd-green':'bd-red')}</span>
+  </div>`).join('');
+
+  // Region 3: Formula/Date/Fix
+  const r3Overall=data.formula.some(c=>c.res==='fail')?'fail':data.formula.some(c=>c.res==='alert')?'alert':'pass';
+  const r3=data.formula.map(c=>`<div class="check-row ${c.res==='fail'?'cr-fail':c.res==='alert'?'cr-alert':''}">
+    <span class="check-icon">${c.res==='pass'?I_OK:c.res==='alert'?I_WARN:I_FAIL}</span>
+    <div class="check-body">
+      <div class="check-label">${c.label}</div>
+      <div class="check-formula">${c.formula}</div>
+    </div>
+    <span class="check-result">${badge(c.res==='pass'?'Pass':c.res==='alert'?'Alert':'Fail',c.res==='pass'?'bd-green':c.res==='alert'?'bd-orange':'bd-red')}</span>
+  </div>`).join('');
+
+  // Region 4: Eyeball
+  const r4=data.eyeball.map(c=>`<div class="check-row cr-eye">
+    <span class="check-icon">${I_OK}</span>
+    <div class="check-body"><div class="check-label">${c.label}</div><div class="check-detail">${c.note}</div></div>
+    <span class="check-result">${badge('Pass','bd-green')}</span>
+  </div>`).join('');
+
+  return`
+  <div class="region-section">
+    <div class="region-hdr"><span class="region-title">Region 1 — Extracted Fields</span></div>
+    <div class="field-grid">${r1}</div>
+  </div>
+  <div class="region-section">
+    <div class="region-hdr"><span class="region-title">Region 2 — Consistency Checks</span>${badge(allConsOk?'Pass':'Fail',allConsOk?'bd-green':'bd-red')}</div>
+    <div class="check-rows">${r2}</div>
+  </div>
+  <div class="region-section">
+    <div class="region-hdr"><span class="region-title">Region 3 — Formula / Date / Fix Value</span>${badge(r3Overall==='pass'?'Pass':r3Overall==='alert'?'Alert':'Fail',r3Overall==='pass'?'bd-green':r3Overall==='alert'?'bd-orange':'bd-red')}</div>
+    <div class="check-rows">${r3}</div>
+  </div>
+  <div class="region-section">
+    <div class="region-hdr"><span class="region-title">Region 4 — Exist / Eyeball Check</span>${badge('Pass','bd-green')}</div>
+    <div class="check-rows">${r4}</div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: SALES — APP — UPLOAD
+// ═══════════════════════════════════════════════
+function renderSAppUpload(){
+  const rows=APP_FILES.map((f,i)=>{
+    const checking=i<2;
+    return`<tr>
+      <td><div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:30px;height:30px;border-radius:5px;background:#f0f2f5;display:flex;align-items:center;justify-content:center;">${I_FILE_N}</div>
+        <div><div style="font-size:13px;font-weight:500;">${f.name}</div>
+        <div style="font-size:11px;color:#9aa0a6;">Uploaded just now &bull; ~2.3 MB</div></div>
+      </div></td>
+      <td style="font-size:12px;color:#5f6368;">${f.subject}</td>
+      <td style="color:#9aa0a6;font-size:12px;">—</td>
+      <td>${checking?sp('check','Checking L1–L5'):sp('pend','Pending')}</td>
+      <td><div class="btn-icon-sm">${I_EYE}</div></td>
+    </tr>`;
+  }).join('');
+
+  return`${caseHeader()}
+  ${salesTabBar('app')}
+  <div class="tab-body">
+    <div class="upload-zone">
+      <div class="upload-zone-icon"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>
+      <div class="upload-zone-text">Drop files here or <span style="color:#1967d2;font-weight:600;cursor:pointer;">Browse</span></div>
+      <div class="upload-zone-hint">PDF, JPG, PNG supported &bull; Max 10 MB per file &bull; Format &amp; integrity checks run automatically</div>
+    </div>
+    <div class="progress-section">
+      <span class="progress-label">Upload &amp; check</span>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:33%;"></div></div>
+      <span class="progress-count">2 / 6 &nbsp;&#8226;&nbsp; <span style="color:#b45309;">${I_SPIN} L1–L5 checking...</span></span>
+    </div>
+    <div class="sec-hdr"><span class="sec-title">Uploaded Files (6)</span><span class="text-muted">Remaining files queued</span></div>
+    <table>
+      <thead><tr><th>File</th><th>Subject</th><th>AI Classification</th><th>Status</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: SALES — APP — CLASSIFY WORKSTATION
+// ═══════════════════════════════════════════════
+function renderSAppClassify(){
+  const focus=APP_FILES.find(f=>f.id===S.focusFileId)||APP_FILES[3];
+  const allDone=S.batchConfirmed&&focus.initState==='confirmed';
+
+  // File strip
+  const strip=APP_FILES.map(f=>{
+    const isFocus=f.id===S.focusFileId;
+    const confirmed=S.batchConfirmed&&f.initState==='confirmed';
+    const needsReview=!S.batchConfirmed&&f.initState==='needs-review';
+    const cls=isFocus?'cfs-active':confirmed?'cfs-confirmed':needsReview?'cfs-needs':'cfs-confirmed';
+    const icon=isFocus?'&#9656;':confirmed?'&#10003;':needsReview?'!':'&#10003;';
+    const icColor=isFocus?'#1967d2':confirmed?'#137333':needsReview?'#b45309':'#137333';
+    return`<div class="cfs-item ${cls}" onclick="setFocusFile('${f.id}')">
+      <div class="cfs-icon" style="color:${icColor};">${icon}</div>
+      <div class="cfs-name" title="${f.name}">${f.name.replace('.pdf','')}</div>
+      <div class="cfs-pct">${f.conf}%</div>
+    </div>`;
+  }).join('');
+
+  const isLow=focus.conf<80;
+  const confColor=focus.conf>=80?'#137333':focus.conf>=60?'#b45309':'#c5221f';
+  const confMsg=focus.conf>=80?'High confidence — quick verify recommended':focus.conf>=60?'Medium confidence — please verify manually':'Low confidence — manual verification required';
+  const confMsgColor=focus.conf>=80?'#5f6368':focus.conf>=60?'#b45309':'#c5221f';
+
+  const docTypeOptions=['Mykad','MyPR','Passport','Payslip','Form B','Form BE','EPF Statement','Individual Bank Statement','CRA Form','EA Form','CP 58','SPGA Report','VOC','VSO','Other Documents']
+    .map(t=>`<option${t===focus.aiType?' selected':''}>${t}</option>`).join('');
+
+  const rightPanelExtra=S.batchConfirmed&&focus.initState!=='needs-review'?
+    `<div class="alert-ok" style="margin-top:12px;margin-bottom:0;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg><span>Confirmed: <strong>${focus.aiType}</strong></span></div>`:'';
+
+  return`${caseHeader()}
+  ${salesTabBar('app')}
+  <div class="tab-body">
+    <div class="classify-banner">
+      <div>
+        <div class="classify-banner-title">Step 2 — Confirm AI Classification</div>
+        <div class="classify-banner-sub">${S.batchConfirmed?'5 files confirmed &bull; 1 file still needs your attention':'5 files ready for batch confirm &bull; 1 file needs manual verification (61% confidence)'}</div>
+      </div>
+      ${!S.batchConfirmed?`<button class="btn btn-primary btn-sm" onclick="openModal('modalBatch')">Confirm 5 High-Confidence Files &rarr;</button>`:badge('5 files confirmed','bd-green')}
+    </div>
+    <div class="classify-file-strip">${strip}</div>
+    <div class="classify-main">
+      <div class="classify-preview">
+        <div class="classify-preview-hdr">
+          <span class="classify-preview-title">${focus.name}</span>
+          <span class="text-muted">Page 1 / 12</span>
+        </div>
+        <div class="pdf-preview-area">${pdfMock('generic')}<div style="font-size:11px;color:#9aa0a6;margin-top:4px;">Scroll to view all pages</div></div>
+        <div class="classify-preview-nav">
+          <button class="btn btn-secondary btn-sm">&larr; Prev</button>
+          <button class="btn btn-secondary btn-sm">Next &rarr;</button>
+        </div>
+      </div>
+      <div class="classify-result">
+        <div class="cr-file-name">${focus.name}</div>
+        <div class="cr-ai-label">AI suggests</div>
+        <div class="cr-doc-type">${focus.aiType}</div>
+        <div class="conf-row"><div class="conf-dots">${confDots(focus.conf)}</div>
+          <span class="conf-pct" style="color:${confColor};">${focus.conf}%</span></div>
+        <div style="font-size:11px;color:${confMsgColor};margin-bottom:12px;">${confMsg}</div>
+        <div style="font-size:11px;color:#5f6368;margin-bottom:6px;">Wrong type? Change classification:</div>
+        <select class="cr-select">${docTypeOptions}</select>
+        <button class="btn btn-primary" style="width:100%;" onclick="confirmFocusFile()">Confirm: ${focus.aiType} &rarr;</button>
+        ${rightPanelExtra}
+        ${S.batchConfirmed&&focus.initState==='confirmed'?`<div class="cr-divider"></div>
+          <div class="alert-ok" style="margin-bottom:0;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg><span>All 6 files confirmed. Ready to start OCR.</span></div>`:''}
+      </div>
+    </div>
+    ${S.batchConfirmed?`<div style="display:flex;justify-content:flex-end;margin-top:14px;"><button class="btn btn-primary" onclick="applyScenario('s-app-ocr',null)">Start OCR Processing &rarr;</button></div>`:''}
+  </div>`;
+}
+
+function setFocusFile(id){S.focusFileId=id;render();}
+function confirmFocusFile(){S.batchConfirmed=true;render();}
+function doBatchConfirm(){closeModal('modalBatch');S.batchConfirmed=true;render();}
+
+// ═══════════════════════════════════════════════
+//  RENDER: SALES — APP — OCR RUNNING
+// ═══════════════════════════════════════════════
+function renderSAppOcr(){
+  const stMap={f1:'pass',f2:'pass',f3:'pass',f4:'ocr',f5:'ocr',f6:'pend'};
+  const rows=APP_FILES.map(f=>{
+    const st=stMap[f.id];
+    return`<tr>
+      <td><div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:30px;height:30px;border-radius:5px;background:#f0f2f5;display:flex;align-items:center;justify-content:center;">${st==='pass'?I_FILE_G:I_FILE_N}</div>
+        <div><div style="font-size:13px;font-weight:500;">${f.name}</div>
+        <div style="font-size:11px;color:#9aa0a6;">${f.subject}</div></div>
+      </div></td>
+      <td style="font-size:12px;">${f.aiType} <span style="font-size:10px;color:#9aa0a6;">${f.conf}%</span></td>
+      <td>${st==='pass'?sp('pass','Pass'):st==='ocr'?sp('ocr','OCR Running'):sp('pend','Queued')}</td>
+      <td><div class="btn-icon-sm">${I_EYE}</div></td>
+    </tr>`;
+  }).join('');
+
+  return`${caseHeader()}
+  ${salesTabBar('app')}
+  <div class="tab-body">
+    <div class="ocr-proc-banner">
+      <div style="color:#7c3aed;">${I_SPIN}</div>
+      <div>
+        <div class="ocr-proc-title">OCR Processing in Progress</div>
+        <div class="ocr-proc-sub">3 of 6 files done &bull; Page cannot be submitted until all files complete</div>
+      </div>
+      <div style="margin-left:auto;text-align:right;">
+        <div class="progress-bar-wrap" style="width:140px;margin-bottom:4px;"><div class="progress-bar-fill" style="width:50%;background:#7c3aed;"></div></div>
+        <div style="font-size:11px;color:#7c3aed;">3 / 6 files</div>
+      </div>
+    </div>
+    <div class="prefill-toast">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+      <span><strong>Auto-filled from Mykad:</strong> Customer Name, IC Number, Mailing Address — applied to application form fields instantly.</span>
+    </div>
+    <table>
+      <thead><tr><th>File</th><th>AI Classification</th><th>OCR Status</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: SALES — APP — DONE
+// ═══════════════════════════════════════════════
+function renderSAppDone(withAlert){
+  const alertFiles=withAlert?APP_FILES.filter(f=>f.ocrSt==='alert'):[];
+  const rows=APP_FILES.map(f=>{
+    const st=withAlert?(f.ocrSt||'pass'):'pass';
+    return`<tr>
+      <td><div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:30px;height:30px;border-radius:5px;background:#f0f2f5;display:flex;align-items:center;justify-content:center;">${fileRowIconForOcr(st)}</div>
+        <div><div style="font-size:13px;font-weight:500;">${f.name}</div>
+        <div style="font-size:11px;color:#9aa0a6;">${f.subject}</div></div>
+      </div></td>
+      <td style="font-size:12px;">${f.aiType}</td>
+      <td>${st==='pass'?sp('pass','Pass'):st==='alert'?sp('alert','Alert'):sp('fail','Fail')}</td>
+      <td style="font-size:11px;color:#5f6368;max-width:200px;">${withAlert&&f.alertMsg?f.alertMsg:'—'}</td>
+      <td><div class="btn-icon-sm">${I_EYE}</div></td>
+    </tr>`;
+  }).join('');
+
+  const alertSection=withAlert&&alertFiles.length?`
+    <div style="margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:700;color:#b45309;margin-bottom:8px;">&#9888; 1 Alert to acknowledge before submission</div>
+      ${alertFiles.map(f=>`<div class="ack-item">
+        <div class="ack-item-title">${I_WARN} ${f.name} &mdash; ${f.aiType}</div>
+        <div class="ack-item-body">${f.alertMsg}</div>
+        <div style="font-size:11px;color:#5f6368;margin-top:6px;line-height:1.6;">CED will likely ask about this during review. <strong>Recommended:</strong> upload the missing months now to avoid a CED return.</div>
+        <div class="ack-actions">
+          <button class="btn btn-secondary btn-sm">${I_UP} Re-upload / Add Files</button>
+          <button class="btn btn-sm" style="background:#fef7e0;color:#b45309;border:1px solid #fde68a;" onclick="this.closest('.ack-item').style.opacity='.45'">Note &amp; Continue</button>
+        </div>
+      </div>`).join('')}
+    </div>`:`<div class="alert-ok" style="margin-bottom:14px;">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+      <span><strong>All 6 files processed.</strong> No rule violations. Ready to submit for CED review.</span>
+    </div>`;
+
+  return`${caseHeader()}
+  ${salesTabBar('app')}
+  <div class="tab-body">
+    ${alertSection}
+    <div class="progress-section">
+      <span class="progress-label">Completion</span>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${withAlert?90:100}%;background:${withAlert?'#b45309':'#34a853'};"></div></div>
+      <span class="progress-count" style="color:${withAlert?'#b45309':'#137333'};">${withAlert?'5 Pass &bull; 1 Alert':'6 / 6 All Pass'}</span>
+    </div>
+    <div class="prefill-toast">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+      <span><strong>OCR auto-filled:</strong> Name + IC (Mykad) &bull; Gross Salary, Net Pay (Payslip) &bull; Tax Year, Total Income (Form BE) &bull; EPF Employer Rate (EPF Statement)</span>
+    </div>
+    <table>
+      <thead><tr><th>File</th><th>AI Classification</th><th>OCR Status</th><th>Note</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: SALES — DIS — UPLOAD
+// ═══════════════════════════════════════════════
+function renderSDisUpload(){
+  const rows=DIS_FILES.map((f,i)=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:30px;height:30px;border-radius:5px;background:#f0f2f5;display:flex;align-items:center;justify-content:center;">${I_FILE_N}</div>
+      <div><div style="font-size:13px;font-weight:500;">${f.name}</div>
+      <div style="font-size:11px;color:#9aa0a6;">${f.cat}</div></div>
+    </div></td>
+    <td style="color:#9aa0a6;font-size:12px;">—</td>
+    <td>${i<2?sp('check','Checking L1–L5'):sp('pend','Pending')}</td>
+    <td><div class="btn-icon-sm">${I_EYE}</div></td>
+  </tr>`).join('');
+
+  return`${caseHeader()}
+  ${salesTabBar('dis')}
+  <div class="tab-body">
+    <div class="alert-info" style="margin-bottom:14px;">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>This tab is separate from Application Submission. Upload HP Agreement, Vehicle Invoice, VOC, Insurance Cover Note, and FIS/JPJ Result for CRA review.</span>
+    </div>
+    <div class="upload-zone">
+      <div class="upload-zone-icon"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>
+      <div class="upload-zone-text">Drop disbursement documents or <span style="color:#1967d2;font-weight:600;cursor:pointer;">Browse</span></div>
+      <div class="upload-zone-hint">HP Agreement &bull; Vehicle Invoice &bull; VOC &bull; Insurance Cover Note &bull; FIS/JPJ Result</div>
+    </div>
+    <div class="progress-section">
+      <span class="progress-label">Upload &amp; check</span>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:40%;"></div></div>
+      <span class="progress-count">2 / 5 &nbsp;&#8226;&nbsp; <span style="color:#b45309;">${I_SPIN} Checking...</span></span>
+    </div>
+    <table>
+      <thead><tr><th>File</th><th>AI Classification</th><th>Status</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: SALES — DIS — CLASSIFY
+// ═══════════════════════════════════════════════
+function renderSDisClassify(){
+  const rows=DIS_FILES.map(f=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:30px;height:30px;border-radius:5px;background:#f0f2f5;display:flex;align-items:center;justify-content:center;">${I_FILE_G}</div>
+      <div><div style="font-size:13px;font-weight:500;">${f.name}</div>
+      <div style="font-size:11px;color:#9aa0a6;">${f.cat}</div></div>
+    </div></td>
+    <td><span style="font-size:13px;font-weight:500;">${f.aiType}</span></td>
+    <td>${badge(f.conf+'%','bd-green')}</td>
+    <td>${sp('pass','Ready to confirm')}</td>
+    <td><div class="btn-icon-sm">${I_EYE}</div></td>
+  </tr>`).join('');
+
+  return`${caseHeader()}
+  ${salesTabBar('dis')}
+  <div class="tab-body">
+    <div class="classify-banner">
+      <div>
+        <div class="classify-banner-title">Step 2 — Confirm AI Classification</div>
+        <div class="classify-banner-sub">All 5 disbursement files have confidence &ge;88% — confirm all at once.</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="applyScenario('s-dis-done',null)">Confirm All 5 &amp; Start OCR &rarr;</button>
+    </div>
+    <table>
+      <thead><tr><th>File</th><th>AI Classification</th><th>Confidence</th><th>Status</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: SALES — DIS — DONE
+// ═══════════════════════════════════════════════
+function renderSDisDone(){
+  const rows=DIS_FILES.map(f=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:30px;height:30px;border-radius:5px;background:#f0f2f5;display:flex;align-items:center;justify-content:center;">${I_FILE_G}</div>
+      <div><div style="font-size:13px;font-weight:500;">${f.name}</div>
+      <div style="font-size:11px;color:#9aa0a6;">${f.cat}</div></div>
+    </div></td>
+    <td style="font-size:12px;">${f.aiType}</td>
+    <td>${sp('pass','Pass')}</td>
+    <td><div class="btn-icon-sm">${I_EYE}</div></td>
+  </tr>`).join('');
+
+  return`${caseHeader()}
+  ${salesTabBar('dis')}
+  <div class="tab-body">
+    <div class="alert-ok" style="margin-bottom:14px;">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+      <span><strong>All 5 disbursement files submitted to CRA.</strong> You will be notified if CRA identifies any defects. No action needed until then.</span>
+    </div>
+    <table>
+      <thead><tr><th>File</th><th>AI Classification</th><th>OCR Status</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: SALES — DIS — DEFECT RECEIVED
+// ═══════════════════════════════════════════════
+function renderSDisDefect(){
+  const fixed=S.defectFixed;
+  const defFiles=DIS_FILES.filter(f=>f.defType);
+  const items=defFiles.map((f,i)=>{
+    const done=i<fixed;
+    return`<div class="defect-fix-item">
+      <div class="dfi-header">
+        <span class="dfi-num ${done?'dfi-num-done':''}">${done?'&#10003;':i+1}</span>
+        <span class="dfi-filename">${f.name}</span>
+        ${done?badge('Fixed','bd-green'):''}
+      </div>
+      <div style="margin-left:30px;">
+        <div class="dfi-type-tag">${f.defType}</div>
+        <div class="dfi-desc" style="margin-top:4px;">${f.defDesc}</div>
+        ${!done?`<div class="dfi-actions">
+          <button class="btn btn-secondary btn-sm">${I_EYE} View Original</button>
+          <button class="btn btn-primary btn-sm" onclick="markFixed(${i})">${I_UP} Re-upload Corrected File</button>
+        </div>`:`<div class="dfi-done-note">${I_OK} Re-uploaded — rules re-running automatically</div>`}
+      </div>
+    </div>`;
+  }).join('');
+
+  const rem=defFiles.length-fixed;
+  return`${caseHeader()}
+  ${salesTabBar('dis')}
+  <div class="tab-body">
+    <div class="defect-recv-wrap">
+      <div class="defect-recv-hdr">
+        <div>
+          <div class="defect-recv-title">&#9888; CRA Defect Note — Action Required</div>
+          <div class="defect-recv-meta">Received 2026-05-28 14:22 &bull; From: Lee Mei Ling (CRA) &bull; ${defFiles.length} items</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:#5f6368;margin-bottom:2px;">Fix Progress</div>
+          <div style="font-size:18px;font-weight:700;color:${fixed===defFiles.length?'#137333':'#b45309'};">${fixed} / ${defFiles.length}</div>
+        </div>
+      </div>
+      ${items}
+    </div>
+    <div class="progress-section">
+      <span class="progress-label">Fix progress</span>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${fixed/defFiles.length*100}%;background:${fixed===defFiles.length?'#34a853':'#1967d2'};"></div></div>
+      <span class="progress-count" style="color:${fixed===defFiles.length?'#137333':'#5f6368'};">${fixed===defFiles.length?'All fixed — notifying CRA...':rem+' item'+(rem>1?'s':'')+' remaining'}</span>
+    </div>
+    ${fixed===defFiles.length?`<div class="alert-ok"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg><span>All defects resolved. CRA has been notified to re-review automatically.</span></div>`:''}
+  </div>`;
+}
+
+function markFixed(i){S.defectFixed=i+1;render();}
+
+// ═══════════════════════════════════════════════
+//  RENDER: CED — FILE LIST
+// ═══════════════════════════════════════════════
+function renderCedList(){
+  const rows=APP_FILES.map(f=>{ const st=f.ocrSt||'pass'; return`<tr>
+    <td><div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:30px;height:30px;border-radius:5px;background:#f0f2f5;display:flex;align-items:center;justify-content:center;">${fileRowIconForOcr(st)}</div>
+      <div><div style="font-size:13px;font-weight:500;">${f.name}</div>
+      <div style="font-size:11px;color:#9aa0a6;">${f.subject} &bull; ${f.cat}</div></div>
+    </div></td>
+    <td style="font-size:12px;">${f.aiType}</td>
+    <td>${st==='pass'?sp('pass','Pass'):st==='alert'?sp('alert','Alert'):sp('fail','Fail')}</td>
+    <td style="font-size:11px;color:#5f6368;max-width:160px;">${f.alertMsg||'—'}</td>
+    <td><button class="btn btn-secondary btn-sm" onclick="applyScenario('ced-detail',null)">View OCR Detail</button></td>
+  </tr>`; }).join('');
+
+  return`${caseHeader()}
+  <div class="tabs"><div class="tab active">Application Files — OCR Summary</div></div>
+  <div class="tab-body">
+    <div class="alert-info" style="margin-bottom:14px;">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>OCR results for application documents submitted by Sales. Review extracted fields and validation results before making a credit decision.</span>
+    </div>
+    <div class="progress-section" style="margin-bottom:14px;">
+      <span class="progress-label">OCR Result</span>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:83%;background:#b45309;"></div></div>
+      <span class="progress-count">5 Pass &bull; <span style="color:#b45309;">1 Alert</span></span>
+    </div>
+    <table>
+      <thead><tr><th>File</th><th>Document Type</th><th>OCR Status</th><th>Note</th><th>Actions</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: CED — PAYSLIP DETAIL
+// ═══════════════════════════════════════════════
+function renderCedDetail(){
+  return`${caseHeader()}
+  <div class="tabs">
+    <div class="tab" onclick="applyScenario('ced-list',null)" style="cursor:pointer;">&larr; File List</div>
+    <div class="tab active">Payslip — OCR Detail</div>
+  </div>
+  <div class="tab-body">
+    <div class="detail-hdr">
+      <div class="detail-hdr-left">
+        <div class="detail-title">Payslip_Oct2025.pdf</div>
+        <div class="detail-meta">Primary Applicant &bull; Applicant Income &bull; AI: Payslip (94% confidence)</div>
+      </div>
+      <div class="detail-hdr-right">
+        ${badge('Alert — Region 3','bd-orange')}
+        <button class="btn btn-secondary btn-sm">Request Re-upload</button>
+        <button class="btn btn-secondary btn-sm">${I_EYE} Preview</button>
+      </div>
+    </div>
+    <div class="detail-layout">
+      <div class="detail-preview">
+        <div class="detail-preview-label">Document Preview</div>
+        ${pdfMock('payslip')}
+        <div style="font-size:11px;color:#9aa0a6;margin-top:8px;text-align:center;">Page 1 of 1</div>
+        <div style="margin-top:12px;font-size:11px;color:#5f6368;line-height:1.7;padding:0 4px;">
+          <div style="font-weight:700;color:#202124;margin-bottom:4px;">Cross-file Links</div>
+          <div style="background:#f0f7ff;border:1px solid #c5d8f8;border-radius:5px;padding:8px;">
+            <div style="color:#1967d2;font-weight:600;margin-bottom:4px;">Payslip &rarr; Bank Statement</div>
+            <div>Net Pay RM 5,800</div>
+            <div style="color:#b45309;">Bank credit: RM 5,200</div>
+            <div style="color:#b45309;margin-top:3px;">Diff: RM 600 &#8593;</div>
+          </div>
+          <div style="background:#f0f7ff;border:1px solid #c5d8f8;border-radius:5px;padding:8px;margin-top:6px;">
+            <div style="color:#1967d2;font-weight:600;margin-bottom:4px;">Payslip &rarr; EPF Statement</div>
+            <div>EPF rate check</div>
+            <div style="color:#137333;">12% employer &#10003;</div>
+          </div>
+        </div>
+      </div>
+      <div>${renderRegions(PAYSLIP_OCR)}</div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid #f1f3f4;">
+      <button class="btn btn-secondary">Request Additional Documents from Sales</button>
+      <button class="btn btn-primary">Acknowledge Alert &amp; Continue Review &rarr;</button>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: CRA — FILE LIST
+// ═══════════════════════════════════════════════
+function renderCraList(){
+  const rows=DIS_FILES.map(f=>{ const st=f.ocrSt; return`
+    <div class="cra-file-row" onclick="applyScenario('cra-detail',null)">
+      <div class="cra-file-icon">${fileRowIconForOcr(st)}</div>
+      <div class="cra-file-info">
+        <div class="cra-file-name">${f.name}</div>
+        <div class="cra-file-meta">${f.aiType} &bull; ${f.cat}</div>
+      </div>
+      <div class="cra-file-right">
+        ${st==='pass'?sp('pass','Pass'):st==='alert'?sp('alert','Alert'):sp('fail','Fail')}
+        ${(st==='alert'||st==='fail')?`<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();openSingleDefect('${f.id}')">Issue Defect</button>`:''}
+        <div class="btn-icon-sm" onclick="event.stopPropagation();">${I_EYE}</div>
+      </div>
+    </div>`; }).join('');
+
+  return`${caseHeader()}
+  <div class="tabs"><div class="tab active">Disbursement Files — OCR Summary</div></div>
+  <div class="tab-body">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <div class="sec-title">Disbursement Document Review</div>
+        <div class="sec-sub">5 files &bull; 3 Pass &bull; 1 Alert &bull; 1 Fail &mdash; Click any row to view OCR detail</div>
+      </div>
+      <button class="btn btn-danger" onclick="applyScenario('cra-defect-build',null)">Issue Defect Note (2 items)</button>
+    </div>
+    <div class="cra-list-wrap">${rows}</div>
+  </div>`;
+}
+
+function openSingleDefect(fid){
+  const f=DIS_FILES.find(x=>x.id===fid);
+  document.getElementById('modalSingleDefectBody').innerHTML=`
+    <div class="defect-item-card">
+      <div class="dic-file">${f.name} &mdash; ${f.aiType}</div>
+      <div class="dic-row"><span class="dic-label">Issue Type</span>
+        <select class="dic-select"><option>${f.defType}</option><option>Signature Missing</option><option>Data Mismatch</option><option>Wrong Document</option><option>Rule Violation</option></select></div>
+      <div class="dic-row"><span class="dic-label">Description</span>
+        <textarea class="dic-textarea">${f.defDesc}</textarea></div>
+      <div style="font-size:11px;color:#9aa0a6;margin-top:6px;">Sales will see this description exactly — no follow-up call needed.</div>
+    </div>`;
+  openModal('modalSingleDefect');
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: CRA — VEHICLE INVOICE DETAIL
+// ═══════════════════════════════════════════════
+function renderCraDetail(){
+  return`${caseHeader()}
+  <div class="tabs">
+    <div class="tab" onclick="applyScenario('cra-list',null)" style="cursor:pointer;">&larr; File List</div>
+    <div class="tab active">Vehicle Invoice — OCR Detail</div>
+  </div>
+  <div class="tab-body">
+    <div class="detail-hdr">
+      <div class="detail-hdr-left">
+        <div class="detail-title">Vehicle_Invoice_HLB.pdf</div>
+        <div class="detail-meta">CRA HP Form &amp; Funding Docs &bull; AI: Vehicle Invoice (97% confidence)</div>
+      </div>
+      <div class="detail-hdr-right">
+        ${badge('FAIL — Hard Rule','bd-red')}
+        <button class="btn btn-danger btn-sm" onclick="openSingleDefect('d2')">Issue Defect</button>
+        <button class="btn btn-secondary btn-sm">${I_EYE} Preview</button>
+      </div>
+    </div>
+    <div class="detail-layout">
+      <div class="detail-preview">
+        <div class="detail-preview-label">Document Preview</div>
+        ${pdfMock('invoice')}
+        <div style="font-size:11px;color:#9aa0a6;margin-top:8px;text-align:center;">Page 1 of 2</div>
+        <div style="margin-top:12px;font-size:11px;color:#5f6368;line-height:1.7;padding:0 4px;">
+          <div style="font-weight:700;color:#202124;margin-bottom:4px;">Cross-file Links</div>
+          <div style="background:#f0f7ff;border:1px solid #c5d8f8;border-radius:5px;padding:8px;">
+            <div style="color:#1967d2;font-weight:600;margin-bottom:4px;">Invoice &rarr; VOC</div>
+            <div>Chassis: match &#10003;</div>
+            <div>Model: match &#10003;</div>
+          </div>
+          <div style="background:#fef2f2;border:1px solid #f5c6cb;border-radius:5px;padding:8px;margin-top:6px;">
+            <div style="color:#c5221f;font-weight:600;margin-bottom:4px;">Invoice &rarr; Booking Fee Rule</div>
+            <div style="color:#c5221f;">RM 2,000 &gt; RM 1,810</div>
+            <div style="color:#c5221f;">HARD RULE FAIL</div>
+          </div>
+        </div>
+      </div>
+      <div>${renderRegions(VEHICLE_OCR)}</div>
+    </div>
+    <div class="alert-err" style="margin-top:14px;">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      <span><strong>Hard Rule Violation:</strong> Booking fee RM 2,000 exceeds the 1% OTR maximum (RM 1,810). Disbursement cannot proceed until Sales re-uploads a corrected invoice.</span>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: CRA — BUILD DEFECT NOTE
+// ═══════════════════════════════════════════════
+function renderCraDefectBuild(){
+  const items=DIS_FILES.filter(f=>f.defType).map((f,i)=>`
+    <div class="defect-item-card">
+      <div class="dic-file">Item ${i+1}: ${f.name} &mdash; <span style="font-weight:400;color:#5f6368;">${f.aiType}</span></div>
+      <div class="dic-row"><span class="dic-label">Issue Type</span>
+        <select class="dic-select"><option>${f.defType}</option><option>Signature Missing</option><option>Data Mismatch</option><option>Wrong Document</option><option>Rule Violation</option></select></div>
+      <div class="dic-row"><span class="dic-label">Description</span>
+        <textarea class="dic-textarea">${f.defDesc}</textarea></div>
+      <div style="font-size:11px;color:#9aa0a6;margin-top:6px;">Sales will see this text exactly. Write as if you are leaving a precise note — no follow-up call.</div>
+    </div>`).join('');
+
+  return`${caseHeader()}
+  <div class="tabs"><div class="tab active">Issue Defect Note — Draft</div></div>
+  <div class="tab-body">
+    <div class="defect-builder-wrap">
+      <div class="defect-builder-hdr">
+        <div class="defect-builder-title">${I_WARN} Defect Note &mdash; 2 Items</div>
+        ${badge('Draft','bd-orange')}
+      </div>
+      <div class="defect-builder-body">
+        <div class="alert-warn" style="margin-bottom:16px;">
+          <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Once sent, Sales will be notified immediately. The system will auto-rerun validation rules when Sales re-uploads corrected files.</span>
+        </div>
+        ${items}
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button class="btn btn-secondary" onclick="applyScenario('cra-list',null)">Cancel</button>
+      <button class="btn btn-danger" onclick="applyScenario('cra-defect-sent',null)">Send Defect Note to Sales &rarr;</button>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: CRA — DEFECT SENT
+// ═══════════════════════════════════════════════
+function renderCraDefectSent(){
+  const defFiles=DIS_FILES.filter(f=>f.defType);
+  const items=defFiles.map((f,i)=>`
+    <div class="defect-fix-item">
+      <div class="dfi-header"><span class="dfi-num">${i+1}</span><span class="dfi-filename">${f.name}</span></div>
+      <div style="margin-left:30px;">
+        <div class="dfi-type-tag">${f.defType}</div>
+        <div class="dfi-desc" style="margin-top:4px;">${f.defDesc}</div>
+        <div style="margin-top:8px;font-size:11px;color:#1967d2;display:flex;align-items:center;gap:5px;">${I_INFO} Awaiting Sales re-upload...</div>
+      </div>
+    </div>`).join('');
+
+  return`${caseHeader()}
+  <div class="tabs"><div class="tab active">Defect Note — Sent</div></div>
+  <div class="tab-body">
+    <div class="alert-ok" style="margin-bottom:14px;">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+      <span><strong>Defect note sent to Sales</strong> at 2026-05-28 14:22 &bull; Assigned to: Rizal Ahmad (Sales) &bull; This page updates automatically when Sales re-uploads.</span>
+    </div>
+    <div class="defect-recv-wrap" style="border-color:#1967d2;">
+      <div class="defect-recv-hdr" style="background:#e8f0fe;border-bottom-color:#c5d8f8;">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#1967d2;">Awaiting Sales Re-upload</div>
+          <div class="defect-recv-meta">Sent 2026-05-28 14:22 &bull; 2 items to fix</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:#5f6368;margin-bottom:2px;">Re-upload Progress</div>
+          <div style="font-size:18px;font-weight:700;color:#9aa0a6;">0 / 2</div>
+        </div>
+      </div>
+      ${items}
+    </div>
+    <div class="progress-section">
+      <span class="progress-label">Awaiting re-upload</span>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:0%;"></div></div>
+      <span class="progress-count" style="color:#9aa0a6;">0 / 2 &mdash; rules will auto re-run after each re-upload</span>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  FOOTER
+// ═══════════════════════════════════════════════
+function updateFooter(){
+  const sc=S.scenario;
+  const L=document.getElementById('footerLeft');
+  const R=document.getElementById('footerRight');
+  const p=`<button class="btn btn-primary">`;
+  const s=`<button class="btn btn-secondary">`;
+  const pd=`<button class="btn btn-primary" disabled>`;
+  if(sc==='s-app-upload'){
+    L.innerHTML=`<span style="color:#9aa0a6;">L1&ndash;L5 file checks in progress &mdash; wait before classifying</span>`;
+    R.innerHTML=`${s}Save Draft</button>${pd}Confirm Classification</button>`;
+  } else if(sc==='s-app-classify'){
+    const ok=S.batchConfirmed;
+    L.innerHTML=`<span style="color:#5f6368;">Confirm all 6 classifications before OCR can begin</span>`;
+    R.innerHTML=`${s}Save Draft</button><button class="btn btn-primary" ${ok?'onclick="applyScenario(\'s-app-ocr\',null)"':' disabled'}>Start OCR</button>`;
+  } else if(sc==='s-app-ocr'){
+    L.innerHTML=`<span style="color:#7c3aed;">${I_SPIN} OCR running &mdash; submission locked</span>`;
+    R.innerHTML=`${s}Save Draft</button>${pd}Submit for Review</button>`;
+  } else if(sc==='s-app-done'){
+    L.innerHTML=`<span style="color:#137333;">&#10003; All files clear &mdash; ready to submit to CED</span>`;
+    R.innerHTML=`${s}Save Draft</button>${p}Submit to CED &rarr;</button>`;
+  } else if(sc==='s-app-alert'){
+    L.innerHTML=`<span style="color:#b45309;">&#9888; 1 alert &mdash; review or acknowledge before submitting</span>`;
+    R.innerHTML=`${s}Save Draft</button>${p}Submit to CED (with note) &rarr;</button>`;
+  } else if(sc==='s-dis-upload'){
+    L.innerHTML=`<span style="color:#9aa0a6;">Checking uploaded files...</span>`;
+    R.innerHTML=`${s}Save Draft</button>${pd}Confirm Classification</button>`;
+  } else if(sc==='s-dis-classify'){
+    L.innerHTML=`<span style="color:#5f6368;">All files high confidence &mdash; batch confirm available</span>`;
+    R.innerHTML=`${s}Save Draft</button>${p}Confirm &amp; Start OCR &rarr;</button>`;
+  } else if(sc==='s-dis-done'){
+    L.innerHTML=`<span style="color:#137333;">&#10003; Disbursement docs submitted to CRA</span>`;
+    R.innerHTML=`${s}Return to Case List</button>`;
+  } else if(sc==='s-dis-defect'||sc==='s-dis-defect-p'){
+    const rem=2-S.defectFixed;
+    L.innerHTML=`<span style="color:${rem>0?'#b45309':'#137333'};">${rem>0?rem+' defect item'+(rem>1?'s':'')+' remaining':'All defects resolved'}</span>`;
+    R.innerHTML=`${s}Save</button><button class="btn btn-primary" ${S.defectFixed>=2?'':' disabled'}>Notify CRA &rarr;</button>`;
+  } else if(sc==='ced-list'||sc==='ced-detail'){
+    L.innerHTML=`<span style="color:#5f6368;">Reviewing application documents for ${CASE.aa}</span>`;
+    R.innerHTML=`${s}Request More Info from Sales</button>${p}Approve Application &rarr;</button>`;
+  } else if(sc==='cra-list'||sc==='cra-detail'){
+    L.innerHTML=`<span style="color:#c5221f;">1 Hard Rule Fail detected &mdash; issue defect before approval</span>`;
+    R.innerHTML=`<button class="btn btn-danger" onclick="applyScenario('cra-defect-build',null)">Issue Defect Note</button>${pd}Approve Disbursement</button>`;
+  } else if(sc==='cra-defect-build'){
+    L.innerHTML=`<span style="color:#5f6368;">Drafting defect note — be specific so Sales can fix without calling CRA</span>`;
+    R.innerHTML=`${s}Cancel</button><button class="btn btn-danger" onclick="applyScenario('cra-defect-sent',null)">Send Defect Note &rarr;</button>`;
+  } else if(sc==='cra-defect-sent'){
+    L.innerHTML=`<span style="color:#1967d2;">Awaiting Sales re-upload &mdash; will be notified automatically</span>`;
+    R.innerHTML=`${s}Return to Case List</button>`;
+  } else {
+    L.innerHTML=''; R.innerHTML=`${s}Save</button>${p}Continue</button>`;
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  MAIN RENDER + SCENARIO ROUTING
+// ═══════════════════════════════════════════════
+function render(){
+  const sc=S.scenario;
+  let html='';
+  if     (sc==='s-app-upload')  html=renderSAppUpload();
+  else if(sc==='s-app-classify')html=renderSAppClassify();
+  else if(sc==='s-app-ocr')     html=renderSAppOcr();
+  else if(sc==='s-app-done')    html=renderSAppDone(false);
+  else if(sc==='s-app-alert')   html=renderSAppDone(true);
+  else if(sc==='s-dis-upload')  html=renderSDisUpload();
+  else if(sc==='s-dis-classify')html=renderSDisClassify();
+  else if(sc==='s-dis-done')    html=renderSDisDone();
+  else if(sc==='s-dis-defect')  {S.defectFixed=0; html=renderSDisDefect();}
+  else if(sc==='s-dis-defect-p'){S.defectFixed=1; html=renderSDisDefect();}
+  else if(sc==='ced-list')      html=renderCedList();
+  else if(sc==='ced-detail')    html=renderCedDetail();
+  else if(sc==='cra-list')      html=renderCraList();
+  else if(sc==='cra-detail')    html=renderCraDetail();
+  else if(sc==='cra-defect-build')html=renderCraDefectBuild();
+  else if(sc==='cra-defect-sent') html=renderCraDefectSent();
+  document.getElementById('mainContent').innerHTML=html;
+  updateFooter();
+  // Sync role buttons & avatar
+  const role=sc.startsWith('ced')?'ced':sc.startsWith('cra')?'cra':'sales';
+  S.role=role;
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.toggle('active',b.id==='roleBtn-'+role));
+  const avMap={sales:'SA',ced:'CE',cra:'CR'};
+  document.getElementById('avatarLabel').textContent=avMap[role]||'SA';
+}
+
+function applyScenario(key,btn){
+  S.scenario=key;
+  if(key==='s-app-classify'){S.batchConfirmed=false;S.focusFileId='f4';}
+  if(key==='s-dis-defect'){S.defectFixed=0;}
+  if(key==='s-dis-defect-p'){S.defectFixed=1;}
+  document.querySelectorAll('.dev-btn').forEach(b=>b.classList.remove('dev-active'));
+  if(btn)btn.classList.add('dev-active');
+  render();
+  document.getElementById('devPanel').classList.remove('open');
+  document.getElementById('mainContent').scrollTop=0;
+}
+
+function switchRole(role,btn){
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(role==='sales')applyScenario('s-app-upload',null);
+  else if(role==='ced')applyScenario('ced-list',null);
+  else if(role==='cra')applyScenario('cra-list',null);
+}
+
+// ── INIT ──
+applyScenario('s-app-upload',null);
+</script>
+</body>
+</html>
