@@ -657,6 +657,25 @@ const QUICK_FIELDS={
 };
 
 // ═══════════════════════════════════════════════
+//  CROSS-VALIDATION DATA
+// ═══════════════════════════════════════════════
+const CED_CROSS_VAL=[
+  {from:'Payslip Oct 2025',to:'Bank Statement Q4 (CIMB)',rule:'Net pay credit cross-check',res:'alert',detail:'Net pay RM 5,800 vs bank credit RM 5,200 — diff RM 600'},
+  {from:'Payslip Sep 2025',to:'Bank Statement Q4 (CIMB)',rule:'Net pay credit cross-check',res:'pass',detail:'Net pay RM 5,800 vs bank credit RM 5,800 — match'},
+  {from:'Payslip Oct+Sep',to:'EPF Statement 2025',rule:'Employer EPF contribution rate (min. 12%)',res:'pass',detail:'Employer rate 12% — match'},
+  {from:'Form BE 2024',to:'Bank Statement Q4 (CIMB)',rule:'Annual income consistency',res:'pass',detail:'Total income RM 81,600 — consistent with statement credits'},
+];
+
+const CRA_CROSS_VAL=[
+  {from:'HP Agreement T&C',to:'All Disbursement Files',rule:'AA Reference Number consistency',res:'pass',detail:'AA2026052800123 — consistent across all 5 files'},
+  {from:'Vehicle Invoice',to:'VOC (WTL 1234A)',rule:'Chassis number match',res:'pass',detail:'PM1FA3BA1P1234567 — match'},
+  {from:'Vehicle Invoice',to:'VOC (WTL 1234A)',rule:'Vehicle model match',res:'pass',detail:'Toyota Camry 2.5V — match'},
+  {from:'Vehicle Invoice',to:'Booking Fee Rule',rule:'Booking fee ≤ OTR × 1%',res:'fail',detail:'RM 2,000 > RM 1,810 (OTR RM 181,000 × 1%) — HARD RULE FAIL'},
+  {from:'VOC (WTL 1234A)',to:'Insurance Cover Note',rule:'Registration & chassis number match',res:'pass',detail:'WTL 1234A / PM1FA3BA1P1234567 — match'},
+  {from:'VOC (WTL 1234A)',to:'FIS/JPJ Result',rule:'Chassis & engine number match',res:'pass',detail:'PM1FA3BA1P1234567 / 2AR-FE012345 — match'},
+];
+
+// ═══════════════════════════════════════════════
 //  HELPERS
 // ═══════════════════════════════════════════════
 function openModal(id){document.getElementById(id).classList.add('open');}
@@ -797,6 +816,26 @@ function renderRegions(data){
   <div class="region-section">
     <div class="region-hdr"><span class="region-title">Region 4 — Exist / Eyeball Check</span>${badge('Pass','bd-green')}</div>
     <div class="check-rows">${r4}</div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  CROSS-VALIDATION PANEL RENDERER
+// ═══════════════════════════════════════════════
+function renderCrossValPanel(checks,title){
+  const overall=checks.some(c=>c.res==='fail')?'fail':checks.some(c=>c.res==='alert')?'alert':'pass';
+  const overallBadge=badge(overall==='fail'?'Fail':overall==='alert'?'Alert':'All Pass',overall==='fail'?'bd-red':overall==='alert'?'bd-orange':'bd-green');
+  const rows=checks.map(c=>`<div class="check-row ${c.res==='fail'?'cr-fail':c.res==='alert'?'cr-alert':''}">
+    <span class="check-icon">${c.res==='pass'?I_OK:c.res==='alert'?I_WARN:I_FAIL}</span>
+    <div class="check-body">
+      <div class="check-label"><span style="font-weight:600;color:#3c4043;">${c.from}</span>&nbsp;<span style="color:#9aa0a6;font-size:11px;">&rarr;</span>&nbsp;<span style="font-weight:600;color:#3c4043;">${c.to}</span></div>
+      <div class="check-detail">${c.rule} &mdash; ${c.detail}</div>
+    </div>
+    <span class="check-result">${badge(c.res==='pass'?'Pass':c.res==='alert'?'Alert':'Fail',c.res==='pass'?'bd-green':c.res==='alert'?'bd-orange':'bd-red')}</span>
+  </div>`).join('');
+  return`<div class="region-section" style="margin-top:18px;">
+    <div class="region-hdr"><span class="region-title">${title||'Cross-File Validation'}</span>${overallBadge}</div>
+    <div class="check-rows">${rows}</div>
   </div>`;
 }
 
@@ -1256,6 +1295,7 @@ function renderCedList(){
       <thead><tr><th>File</th><th>Document Type</th><th>OCR Status</th><th>Note</th><th>Actions</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
+    ${renderCrossValPanel(CED_CROSS_VAL,'Cross-File Validation — Application')}
   </div>`;
 }
 
@@ -1338,6 +1378,7 @@ function renderCraList(){
       <button class="btn btn-danger" onclick="applyScenario('cra-defect-build',null)">Issue Defect Note (2 items)</button>
     </div>
     <div class="cra-list-wrap">${rows}</div>
+    ${renderCrossValPanel(CRA_CROSS_VAL,'Cross-File Validation — Disbursement')}
   </div>`;
 }
 
