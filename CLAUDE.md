@@ -21,13 +21,14 @@
 
 | 文件 | 说明 |
 |------|------|
-| `05_签约/需求文档/e-acceptance-prototype.html` | **主原型文件（session-v9，持续迭代）** |
+| `05_签约/需求文档/e-acceptance-prototype.html` | **E-Acceptance 主原型文件（session-v9，持续迭代）** |
 | `05_签约/需求文档/_v4_reference.html` | v4 快照，保留为参考，不修改 |
+| `02_AIOCR/需求文档/aiocr-prototype.html` | **AIOCR 主原型文件（session-v9，持续迭代）** |
 | `CLAUDE.md` | 本文件，项目记忆 + 任务看板 |
 
 ---
 
-## ═══ 当前待办（任务看板）═══
+## ═══ 当前待办（AIOCR + E-Acceptance 任务看板）═══
 
 > 状态：`[ ]` 未开始 · `[~]` 进行中 · `[x]` 已完成
 
@@ -38,6 +39,33 @@
 ### 中优先级
 
 — 暂无 —
+
+---
+
+## AIOCR 已完成变更（session-v9）
+
+- [x] 4步 Pipeline 进度条（salesStepBar）
+- [x] Upload 页：去除预成 AI Classification 列，状态文字重命名
+- [x] Classification 工作站：去除 "Step 2—" 前缀，添加文件切换标签，Prev/Next 翻页
+- [x] OCR 页：去除置信度 %，"Pass"→"Rules Pass"，自动填充 toast
+- [x] Review 页：Submission Readiness 分层面板（Hard Fail / Alert / Pass）
+- [x] 放款 Upload 标签与底部文字修正
+- [x] 交叉验证面板（CED + CRA 文件列表页底部）
+- [x] **Sales OCR 字段修正（Amend）**：
+  - s-app-detail 场景：Payslip 详情页，xval 字段有 "✏ Amend" 按钮
+  - Amendment 保存后：原值划线 + 修正值 + "Amended ✓" 徽章
+  - Region 3 公式动态重算（net_pay_amount 修正后 Bank cross-check 变绿）
+  - modalAmend 弹窗 + saveAmendment() + clearAmendments()
+- [x] **CRA OCR 字段修正（Modify）**：
+  - renderCraVehicleRegions()：booking_fee fval 字段有 "✏ Modify" 按钮
+  - 修正后：原值划线 + 新值 + "Modified ✓"；Region 3 Booking Fee 规则变绿
+  - 侧边 Cross-file Links 横幅动态切换（红→绿）
+  - 底部 Hard Rule Fail 横幅变成 alert-ok 成功提示
+  - Footer "Approve Disbursement" 按钮解锁
+  - modalCraEdit 弹窗 + saveCraEdit() + clearCraMods()
+- [x] renderSAppDone alert 行新增 "✏ View & Amend Fields" 按钮
+- [x] render() 路由 + updateFooter() 新增 s-app-detail
+- [x] Dev Tool 新增 "Amend OCR — Payslip detail" 场景按钮
 
 
 
