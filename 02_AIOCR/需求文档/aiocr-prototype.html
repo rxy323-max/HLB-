@@ -254,6 +254,7 @@ tr:hover td{background:#fafafa;}
 .modal{background:#fff;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.18);display:flex;flex-direction:column;max-height:90vh;}
 .modal-sm{width:440px;}
 .modal-md{width:560px;max-width:95vw;}
+.modal-lg{width:860px;max-width:95vw;}
 .modal-hdr{padding:14px 18px;border-bottom:1px solid #e8eaed;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .modal-hdr h3{font-size:14px;font-weight:700;}
 .modal-x{width:26px;height:26px;border:none;background:#f1f3f4;border-radius:4px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:#5f6368;}
@@ -354,18 +355,25 @@ tr:hover td{background:#fafafa;}
   </div>
 </div>
 
-<!-- ══ MODAL: File Preview ══ -->
+<!-- ══ MODAL: File Preview (source + OCR fields side-by-side) ══ -->
 <div class="modal-overlay" id="modalPreview">
-  <div class="modal modal-md">
-    <div class="modal-hdr"><h3 id="previewTitle">File Preview</h3><button class="modal-x" onclick="closeModal('modalPreview')">&#10005;</button></div>
-    <div class="modal-body" style="display:flex;gap:16px;min-height:320px;">
-      <div style="width:180px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+  <div class="modal modal-lg">
+    <div class="modal-hdr">
+      <div>
+        <h3 id="previewTitle">File Preview</h3>
+        <div style="font-size:11px;color:#9aa0a6;margin-top:2px;">Source document (left) vs OCR extracted fields (right)</div>
+      </div>
+      <button class="modal-x" onclick="closeModal('modalPreview')">&#10005;</button>
+    </div>
+    <div class="modal-body" style="display:flex;gap:0;min-height:440px;padding:0;">
+      <!-- Left: PDF mock preview -->
+      <div style="width:240px;flex-shrink:0;background:#f8f9fa;border-right:1px solid #e8eaed;display:flex;flex-direction:column;align-items:center;padding:24px 20px;gap:12px;">
         <div id="previewPdfMock"></div>
+        <div style="font-size:11px;color:#9aa0a6;text-align:center;">Page 1 of N<br>Scroll to view more pages</div>
+        <div style="width:100%;background:#f0f2f5;border-radius:6px;padding:8px 10px;font-size:11px;color:#5f6368;line-height:1.6;" id="previewFileMeta"></div>
       </div>
-      <div style="flex:1;font-size:12px;color:#5f6368;line-height:1.8;" id="previewInfo">
-        <div style="font-weight:700;color:#202124;margin-bottom:8px;">Document Information</div>
-        Preview placeholder — in production, the actual PDF renders here with page navigation.
-      </div>
+      <!-- Right: OCR extracted fields -->
+      <div style="flex:1;padding:18px;overflow-y:auto;" id="previewInfo"></div>
     </div>
     <div class="modal-ftr">
       <button class="btn btn-secondary btn-sm" onclick="closeModal('modalPreview')">Close</button>
@@ -540,6 +548,102 @@ const VEHICLE_OCR={
 };
 
 // ═══════════════════════════════════════════════
+//  QUICK OCR FIELDS — for file preview modal
+// ═══════════════════════════════════════════════
+const QUICK_FIELDS={
+  f1:[
+    {label:'id_no',val:'870512-07-5512'},
+    {label:'customer_name',val:'AHMAD BIN ABDULLAH'},
+    {label:'gender',val:'Male'},
+    {label:'address_line1',val:'No 12, Jalan Maju 3, Taman Maju'},
+    {label:'address_city',val:'Petaling Jaya'},
+    {label:'address_state',val:'Selangor'},
+    {label:'address_postcode',val:'47810'},
+    {label:'has_front_back_copy',val:'Y'},
+  ],
+  f2:null,// uses PAYSLIP_OCR.fields
+  f3:[
+    {label:'payslip_month',val:'September 2025'},
+    {label:'employer_name',val:'Syarikat ABC Sdn Bhd'},
+    {label:'employee_name',val:'AHMAD BIN ABDULLAH'},
+    {label:'gross_salary',val:'RM 6,800'},
+    {label:'net_pay_amount',val:'RM 5,800'},
+    {label:'deduction_epf_employee',val:'RM 748'},
+    {label:'is_commission',val:'N'},
+  ],
+  f4:[
+    {label:'account_holder',val:'AHMAD BIN ABDULLAH'},
+    {label:'bank_name',val:'CIMB Bank Berhad'},
+    {label:'account_number',val:'****-****-5512'},
+    {label:'statement_period',val:'Jul 2025 – Sep 2025'},
+    {label:'credit_amount_oct',val:'RM 5,200'},
+    {label:'credit_amount_sep',val:'RM 5,800'},
+    {label:'credit_amount_aug',val:'RM 5,800'},
+  ],
+  f5:[
+    {label:'year_of_assessment',val:'2024'},
+    {label:'full_name',val:'AHMAD BIN ABDULLAH'},
+    {label:'ic_no',val:'870512-07-5512'},
+    {label:'total_income',val:'RM 81,600'},
+    {label:'tax_payable',val:'RM 3,200'},
+    {label:'serial_number',val:'BE24-123456789'},
+    {label:'acknowledgement_no',val:'E24-98765432'},
+    {label:'form_type',val:'Form BE'},
+  ],
+  f6:[
+    {label:'member_name',val:'AHMAD BIN ABDULLAH'},
+    {label:'ic_no',val:'870512-07-5512'},
+    {label:'employer_name',val:'Syarikat ABC Sdn Bhd'},
+    {label:'total_contribution',val:'RM 9,576'},
+    {label:'employee_contribution',val:'RM 5,976 (11%)'},
+    {label:'employer_contribution',val:'RM 3,600 (12%)'},
+    {label:'statement_year',val:'2025'},
+  ],
+  d1:[
+    {label:'aa_reference_number',val:'AA2026052800123'},
+    {label:'hirer_name',val:'Ahmad Bin Abdullah'},
+    {label:'nric_passport_no',val:'870512-07-5512'},
+    {label:'mailing_address',val:'No 12, Jalan Maju 3, 47810 PJ'},
+    {label:'financing_amount',val:'RM 85,000'},
+    {label:'monthly_installment',val:'RM 1,421.00'},
+    {label:'tenure_months',val:'84'},
+    {label:'interest_rate',val:'2.85% p.a.'},
+    {label:'page_count',val:'7 (Manual Conventional)'},
+  ],
+  d2:null,// uses VEHICLE_OCR.fields
+  d3:[
+    {label:'registration_number',val:'WTL 1234A'},
+    {label:'chassis_number',val:'PM1FA3BA1P1234567'},
+    {label:'engine_number',val:'2AR-FE012345'},
+    {label:'vehicle_make',val:'Toyota'},
+    {label:'vehicle_model',val:'Camry 2.5V'},
+    {label:'year_made',val:'2024'},
+    {label:'colour',val:'Pearl White'},
+    {label:'bdm',val:'(validated by CRA system)'},
+  ],
+  d4:[
+    {label:'insurance_company',val:'Allianz Malaysia Berhad'},
+    {label:'policy_number',val:'ALZ-2026-12345'},
+    {label:'insured_name',val:'Ahmad Bin Abdullah'},
+    {label:'vehicle_reg_no',val:'WTL 1234A'},
+    {label:'chassis_number',val:'PM1FA3BA1P1234567'},
+    {label:'cover_period_start',val:'2026-05-28'},
+    {label:'cover_period_end',val:'2027-05-27'},
+    {label:'sum_insured',val:'RM 181,000'},
+    {label:'cover_type',val:'Comprehensive'},
+    {label:'doc_type_check',val:'Cover Note (not Quotation)'},
+  ],
+  d5:[
+    {label:'serial_number',val:'AA2026052800123'},
+    {label:'registration_number',val:'WTL 1234A'},
+    {label:'chassis_number',val:'PM1FA3BA1P1234567'},
+    {label:'engine_number',val:'2AR-FE012345'},
+    {label:'status',val:'Processed'},
+    {label:'fis_date',val:'2026-05-27'},
+  ],
+};
+
+// ═══════════════════════════════════════════════
 //  HELPERS
 // ═══════════════════════════════════════════════
 function openModal(id){document.getElementById(id).classList.add('open');}
@@ -698,7 +802,7 @@ function renderSAppUpload(){
       <td style="font-size:12px;color:#5f6368;">${f.subject}</td>
       <td style="color:#9aa0a6;font-size:12px;">—</td>
       <td>${checking?sp('check','Checking L1–L5'):sp('pend','Pending')}</td>
-      <td><div class="btn-icon-sm">${I_EYE}</div></td>
+      <td><div class="btn-icon-sm" onclick="openFilePreview('${f.id}')" title="View source + OCR fields">${I_EYE}</div></td>
     </tr>`;
   }).join('');
 
@@ -817,7 +921,7 @@ function renderSAppOcr(){
       </div></td>
       <td style="font-size:12px;">${f.aiType} <span style="font-size:10px;color:#9aa0a6;">${f.conf}%</span></td>
       <td>${st==='pass'?sp('pass','Pass'):st==='ocr'?sp('ocr','OCR Running'):sp('pend','Queued')}</td>
-      <td><div class="btn-icon-sm">${I_EYE}</div></td>
+      <td><div class="btn-icon-sm" onclick="openFilePreview('${f.id}')" title="View source + OCR fields">${I_EYE}</div></td>
     </tr>`;
   }).join('');
 
@@ -862,7 +966,7 @@ function renderSAppDone(withAlert){
       <td style="font-size:12px;">${f.aiType}</td>
       <td>${st==='pass'?sp('pass','Pass'):st==='alert'?sp('alert','Alert'):sp('fail','Fail')}</td>
       <td style="font-size:11px;color:#5f6368;max-width:200px;">${withAlert&&f.alertMsg?f.alertMsg:'—'}</td>
-      <td><div class="btn-icon-sm">${I_EYE}</div></td>
+      <td><div class="btn-icon-sm" onclick="openFilePreview('${f.id}')" title="View source + OCR fields">${I_EYE}</div></td>
     </tr>`;
   }).join('');
 
@@ -915,7 +1019,7 @@ function renderSDisUpload(){
     </div></td>
     <td style="color:#9aa0a6;font-size:12px;">—</td>
     <td>${i<2?sp('check','Checking L1–L5'):sp('pend','Pending')}</td>
-    <td><div class="btn-icon-sm">${I_EYE}</div></td>
+    <td><div class="btn-icon-sm" onclick="openFilePreview('${f.id}')" title="View source + OCR fields">${I_EYE}</div></td>
   </tr>`).join('');
 
   return`${caseHeader()}
@@ -955,7 +1059,7 @@ function renderSDisClassify(){
     <td><span style="font-size:13px;font-weight:500;">${f.aiType}</span></td>
     <td>${badge(f.conf+'%','bd-green')}</td>
     <td>${sp('pass','Ready to confirm')}</td>
-    <td><div class="btn-icon-sm">${I_EYE}</div></td>
+    <td><div class="btn-icon-sm" onclick="openFilePreview('${f.id}')" title="View source + OCR fields">${I_EYE}</div></td>
   </tr>`).join('');
 
   return`${caseHeader()}
@@ -987,7 +1091,7 @@ function renderSDisDone(){
     </div></td>
     <td style="font-size:12px;">${f.aiType}</td>
     <td>${sp('pass','Pass')}</td>
-    <td><div class="btn-icon-sm">${I_EYE}</div></td>
+    <td><div class="btn-icon-sm" onclick="openFilePreview('${f.id}')" title="View source + OCR fields">${I_EYE}</div></td>
   </tr>`).join('');
 
   return`${caseHeader()}
@@ -1110,7 +1214,7 @@ function renderCedDetail(){
       <div class="detail-hdr-right">
         ${badge('Alert — Region 3','bd-orange')}
         <button class="btn btn-secondary btn-sm">Request Re-upload</button>
-        <button class="btn btn-secondary btn-sm">${I_EYE} Preview</button>
+        <button class="btn btn-secondary btn-sm" onclick="openFilePreview('f2')">${I_EYE} Preview Source</button>
       </div>
     </div>
     <div class="detail-layout">
@@ -1156,7 +1260,7 @@ function renderCraList(){
       <div class="cra-file-right">
         ${st==='pass'?sp('pass','Pass'):st==='alert'?sp('alert','Alert'):sp('fail','Fail')}
         ${(st==='alert'||st==='fail')?`<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();openSingleDefect('${f.id}')">Issue Defect</button>`:''}
-        <div class="btn-icon-sm" onclick="event.stopPropagation();">${I_EYE}</div>
+        <div class="btn-icon-sm" onclick="event.stopPropagation();openFilePreview('${f.id}')" title="View source + OCR fields">${I_EYE}</div>
       </div>
     </div>`; }).join('');
 
@@ -1206,7 +1310,7 @@ function renderCraDetail(){
       <div class="detail-hdr-right">
         ${badge('FAIL — Hard Rule','bd-red')}
         <button class="btn btn-danger btn-sm" onclick="openSingleDefect('d2')">Issue Defect</button>
-        <button class="btn btn-secondary btn-sm">${I_EYE} Preview</button>
+        <button class="btn btn-secondary btn-sm" onclick="openFilePreview('d2')">${I_EYE} Preview Source</button>
       </div>
     </div>
     <div class="detail-layout">
@@ -1423,6 +1527,61 @@ function switchRole(role,btn){
   if(role==='sales')applyScenario('s-app-upload',null);
   else if(role==='ced')applyScenario('ced-list',null);
   else if(role==='cra')applyScenario('cra-list',null);
+}
+
+// ═══════════════════════════════════════════════
+//  FILE PREVIEW MODAL
+// ═══════════════════════════════════════════════
+function openFilePreview(id){
+  const f=[...APP_FILES,...DIS_FILES].find(x=>x.id===id);
+  if(!f)return;
+  // Title
+  document.getElementById('previewTitle').textContent=f.name;
+  // PDF mock type
+  const typeMap={'Mykad':'mykad','Payslip':'payslip','Vehicle Invoice':'invoice'};
+  document.getElementById('previewPdfMock').innerHTML=pdfMock(typeMap[f.aiType]||'generic');
+  // File meta (bottom of left pane)
+  const confColor=f.conf>=80?'#137333':f.conf>=60?'#b45309':'#c5221f';
+  document.getElementById('previewFileMeta').innerHTML=
+    `<div style="font-weight:700;color:#202124;margin-bottom:6px;font-size:12px;">${f.aiType}</div>`+
+    `<div>Confidence: <strong style="color:${confColor};">${f.conf}%</strong></div>`+
+    (f.cat?`<div>Category: ${f.cat}</div>`:'');
+  // Decide which fields to show
+  const rawFields=id==='f2'?PAYSLIP_OCR.fields:id==='d2'?VEHICLE_OCR.fields:QUICK_FIELDS[id]||null;
+  const ocrDone=!!f.ocrSt;
+  // Status badge
+  const stHtml=!ocrDone
+    ?`<span style="color:#9aa0a6;">Pending OCR</span>`
+    :f.ocrSt==='pass'?`<span style="color:#137333;font-weight:700;">&#10003; Pass</span>`
+    :f.ocrSt==='alert'?`<span style="color:#b45309;font-weight:700;">&#9888; Alert</span>`
+    :`<span style="color:#c5221f;font-weight:700;">&#10007; Fail</span>`;
+  // Fields grid
+  let fieldsHtml='';
+  if(rawFields&&ocrDone){
+    const rows=rawFields.map(fl=>
+      `<div class="fg-row"><div class="fg-cell fg-label">${fl.label||''}</div>`+
+      `<div class="fg-cell fg-value ${fl.cls||''}">${fl.val||''}</div></div>`
+    ).join('');
+    fieldsHtml=`<div style="font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.6px;margin:14px 0 8px;">Extracted Fields — compare with source</div>`+
+      `<div class="field-grid" style="margin-bottom:10px;">${rows}</div>`;
+  } else if(!ocrDone){
+    fieldsHtml=`<div style="background:#f8f9fa;border-radius:6px;padding:16px;text-align:center;font-size:12px;color:#9aa0a6;margin-top:14px;">OCR not yet processed — fields will appear here after OCR runs</div>`;
+  } else {
+    fieldsHtml=`<div style="background:#f8f9fa;border-radius:6px;padding:16px;text-align:center;font-size:12px;color:#9aa0a6;margin-top:14px;">Extracted fields not available in prototype for this document type</div>`;
+  }
+  // Alert / fail banners
+  const alertBanner=f.alertMsg&&ocrDone
+    ?`<div class="alert-warn" style="margin-top:0;margin-bottom:10px;"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>${f.alertMsg}</span></div>`:'';
+  const failBanner=f.failMsg&&ocrDone
+    ?`<div class="alert-err" style="margin-top:0;margin-bottom:10px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><span>${f.failMsg}</span></div>`:'';
+  document.getElementById('previewInfo').innerHTML=
+    `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">`+
+      `<div style="font-size:13px;font-weight:700;color:#202124;">OCR Result</div>`+
+      `<div>${stHtml}</div>`+
+    `</div>`+
+    alertBanner+failBanner+fieldsHtml+
+    (ocrDone&&rawFields?`<div style="font-size:11px;color:#9aa0a6;padding-top:8px;">Tip: Cross-reference these values against the source document on the left.</div>`:'');
+  openModal('modalPreview');
 }
 
 // ── INIT ──
