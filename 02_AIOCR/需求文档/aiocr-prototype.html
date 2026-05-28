@@ -100,6 +100,19 @@ tr:hover td{background:#fafafa;}
 .sp-review{background:#fff3cd;color:#856404;}
 .sp-pend{background:#f1f3f4;color:#5f6368;}
 
+/* ── Step Pipeline Bar ── */
+.step-bar{display:flex;align-items:center;background:#fff;border:1px solid #e8eaed;border-radius:8px;padding:10px 16px;margin-bottom:14px;gap:0;}
+.step-item{display:flex;align-items:center;gap:6px;flex:1;min-width:0;}
+.step-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.step-num-done{background:#34a853;color:#fff;}
+.step-num-active{background:#1967d2;color:#fff;}
+.step-num-idle{background:#e8eaed;color:#9aa0a6;}
+.step-label{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.step-label-done{color:#137333;font-weight:500;}
+.step-label-active{color:#1967d2;font-weight:700;}
+.step-label-idle{color:#9aa0a6;}
+.step-arrow{color:#dadce0;font-size:18px;margin:0 6px;flex-shrink:0;line-height:1;}
+
 /* ── Classification Workstation ── */
 .classify-banner{background:#e8f0fe;border:1px solid #c5d8f8;border-radius:8px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap;}
 .classify-banner-title{font-size:13px;font-weight:700;color:#1967d2;}
@@ -800,8 +813,7 @@ function renderSAppUpload(){
         <div style="font-size:11px;color:#9aa0a6;">Uploaded just now &bull; ~2.3 MB</div></div>
       </div></td>
       <td style="font-size:12px;color:#5f6368;">${f.subject}</td>
-      <td style="color:#9aa0a6;font-size:12px;">—</td>
-      <td>${checking?sp('check','Checking L1–L5'):sp('pend','Pending')}</td>
+      <td>${checking?sp('check','Validating…'):sp('pend','In Queue')}</td>
       <td><div class="btn-icon-sm" onclick="openFilePreview('${f.id}')" title="View source + OCR fields">${I_EYE}</div></td>
     </tr>`;
   }).join('');
@@ -809,19 +821,20 @@ function renderSAppUpload(){
   return`${caseHeader()}
   ${salesTabBar('app')}
   <div class="tab-body">
+    ${salesStepBar(1)}
     <div class="upload-zone">
       <div class="upload-zone-icon"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>
       <div class="upload-zone-text">Drop files here or <span style="color:#1967d2;font-weight:600;cursor:pointer;">Browse</span></div>
       <div class="upload-zone-hint">PDF, JPG, PNG supported &bull; Max 10 MB per file &bull; Format &amp; integrity checks run automatically</div>
     </div>
     <div class="progress-section">
-      <span class="progress-label">Upload &amp; check</span>
+      <span class="progress-label">File Validation</span>
       <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:33%;"></div></div>
-      <span class="progress-count">2 / 6 &nbsp;&#8226;&nbsp; <span style="color:#b45309;">${I_SPIN} L1–L5 checking...</span></span>
+      <span class="progress-count">2 / 6 &nbsp;&#8226;&nbsp; <span style="color:#b45309;">${I_SPIN} Checking format, size, integrity…</span></span>
     </div>
-    <div class="sec-hdr"><span class="sec-title">Uploaded Files (6)</span><span class="text-muted">Remaining files queued</span></div>
+    <div class="sec-hdr"><span class="sec-title">Uploaded Files (6)</span><span class="text-muted">Remaining files queued for validation</span></div>
     <table>
-      <thead><tr><th>File</th><th>Subject</th><th>AI Classification</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>File</th><th>Subject</th><th>Validation</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div>`;
@@ -832,24 +845,25 @@ function renderSAppUpload(){
 // ═══════════════════════════════════════════════
 function renderSAppClassify(){
   const focus=APP_FILES.find(f=>f.id===S.focusFileId)||APP_FILES[3];
-  const allDone=S.batchConfirmed&&focus.initState==='confirmed';
+  const focusManuallyCorrected=S.batchConfirmed&&focus.initState==='needs-review';
 
   // File strip
   const strip=APP_FILES.map(f=>{
     const isFocus=f.id===S.focusFileId;
     const confirmed=S.batchConfirmed&&f.initState==='confirmed';
+    const manuallyDone=S.batchConfirmed&&f.initState==='needs-review';
     const needsReview=!S.batchConfirmed&&f.initState==='needs-review';
-    const cls=isFocus?'cfs-active':confirmed?'cfs-confirmed':needsReview?'cfs-needs':'cfs-confirmed';
-    const icon=isFocus?'&#9656;':confirmed?'&#10003;':needsReview?'!':'&#10003;';
-    const icColor=isFocus?'#1967d2':confirmed?'#137333':needsReview?'#b45309':'#137333';
+    const cls=isFocus?'cfs-active':confirmed||manuallyDone?'cfs-confirmed':needsReview?'cfs-needs':'cfs-confirmed';
+    const icon=isFocus?'&#9656;':manuallyDone?'&#9998;':confirmed?'&#10003;':needsReview?'!':'&#10003;';
+    const icColor=isFocus?'#1967d2':manuallyDone?'#b45309':confirmed?'#137333':needsReview?'#b45309':'#137333';
+    const sub=manuallyDone?'Corrected':f.conf+'%';
     return`<div class="cfs-item ${cls}" onclick="setFocusFile('${f.id}')">
       <div class="cfs-icon" style="color:${icColor};">${icon}</div>
       <div class="cfs-name" title="${f.name}">${f.name.replace('.pdf','')}</div>
-      <div class="cfs-pct">${f.conf}%</div>
+      <div class="cfs-pct">${sub}</div>
     </div>`;
   }).join('');
 
-  const isLow=focus.conf<80;
   const confColor=focus.conf>=80?'#137333':focus.conf>=60?'#b45309':'#c5221f';
   const confMsg=focus.conf>=80?'High confidence — quick verify recommended':focus.conf>=60?'Medium confidence — please verify manually':'Low confidence — manual verification required';
   const confMsgColor=focus.conf>=80?'#5f6368':focus.conf>=60?'#b45309':'#c5221f';
@@ -857,30 +871,39 @@ function renderSAppClassify(){
   const docTypeOptions=['Mykad','MyPR','Passport','Payslip','Form B','Form BE','EPF Statement','Individual Bank Statement','CRA Form','EA Form','CP 58','SPGA Report','VOC','VSO','Other Documents']
     .map(t=>`<option${t===focus.aiType?' selected':''}>${t}</option>`).join('');
 
-  const rightPanelExtra=S.batchConfirmed&&focus.initState!=='needs-review'?
-    `<div class="alert-ok" style="margin-top:12px;margin-bottom:0;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg><span>Confirmed: <strong>${focus.aiType}</strong></span></div>`:'';
+  // Show AI vs corrected note for manually-reviewed file (CIMB demo)
+  const correctionNote=focusManuallyCorrected
+    ?`<div style="background:#fff3cd;border:1px solid #fde68a;border-radius:5px;padding:7px 10px;font-size:11px;color:#92400e;margin-bottom:10px;">
+        <strong>&#9998; Manually corrected:</strong> AI suggested <em>${focus.aiType}</em> &rarr; confirmed as <strong>Form BE</strong>
+      </div>`:'';
+
+  const rightPanelExtra=S.batchConfirmed&&focus.initState!=='needs-review'
+    ?`<div class="alert-ok" style="margin-top:12px;margin-bottom:0;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg><span>Confirmed: <strong>${focus.aiType}</strong></span></div>`:'';
 
   return`${caseHeader()}
   ${salesTabBar('app')}
   <div class="tab-body">
+    ${salesStepBar(2)}
     <div class="classify-banner">
       <div>
-        <div class="classify-banner-title">Step 2 — Confirm AI Classification</div>
-        <div class="classify-banner-sub">${S.batchConfirmed?'5 files confirmed &bull; 1 file still needs your attention':'5 files ready for batch confirm &bull; 1 file needs manual verification (61% confidence)'}</div>
+        <div class="classify-banner-title">Confirm AI Classification</div>
+        <div class="classify-banner-sub">${S.batchConfirmed?'5 files auto-confirmed &bull; 1 file manually corrected':'5 files ready for batch confirm &bull; 1 file needs manual verification (61% confidence)'}</div>
       </div>
-      ${!S.batchConfirmed?`<button class="btn btn-primary btn-sm" onclick="openModal('modalBatch')">Confirm 5 High-Confidence Files &rarr;</button>`:badge('5 files confirmed','bd-green')}
+      ${!S.batchConfirmed?`<button class="btn btn-primary btn-sm" onclick="openModal('modalBatch')">Confirm 5 High-Confidence Files &rarr;</button>`:badge('6 files confirmed','bd-green')}
     </div>
+    <div style="font-size:11px;color:#9aa0a6;margin-bottom:6px;font-weight:600;">All Files — click to switch</div>
     <div class="classify-file-strip">${strip}</div>
     <div class="classify-main">
       <div class="classify-preview">
         <div class="classify-preview-hdr">
           <span class="classify-preview-title">${focus.name}</span>
-          <span class="text-muted">Page 1 / 12</span>
+          <span class="text-muted">Page 1 of 12</span>
         </div>
         <div class="pdf-preview-area">${pdfMock('generic')}<div style="font-size:11px;color:#9aa0a6;margin-top:4px;">Scroll to view all pages</div></div>
-        <div class="classify-preview-nav">
-          <button class="btn btn-secondary btn-sm">&larr; Prev</button>
-          <button class="btn btn-secondary btn-sm">Next &rarr;</button>
+        <div class="classify-preview-nav" style="gap:10px;">
+          <button class="btn btn-secondary btn-sm">&#8249; Prev Page</button>
+          <span style="font-size:12px;color:#5f6368;flex:1;text-align:center;">Page 1 / 12</span>
+          <button class="btn btn-secondary btn-sm">Next Page &#8250;</button>
         </div>
       </div>
       <div class="classify-result">
@@ -890,6 +913,7 @@ function renderSAppClassify(){
         <div class="conf-row"><div class="conf-dots">${confDots(focus.conf)}</div>
           <span class="conf-pct" style="color:${confColor};">${focus.conf}%</span></div>
         <div style="font-size:11px;color:${confMsgColor};margin-bottom:12px;">${confMsg}</div>
+        ${correctionNote}
         <div style="font-size:11px;color:#5f6368;margin-bottom:6px;">Wrong type? Change classification:</div>
         <select class="cr-select">${docTypeOptions}</select>
         <button class="btn btn-primary" style="width:100%;" onclick="confirmFocusFile()">Confirm: ${focus.aiType} &rarr;</button>
@@ -900,6 +924,20 @@ function renderSAppClassify(){
     </div>
     ${S.batchConfirmed?`<div style="display:flex;justify-content:flex-end;margin-top:14px;"><button class="btn btn-primary" onclick="applyScenario('s-app-ocr',null)">Start OCR Processing &rarr;</button></div>`:''}
   </div>`;
+}
+
+function salesStepBar(active){
+  const steps=['Upload & Validate','Confirm Classification','OCR Processing','Review & Submit'];
+  const parts=steps.map(function(lbl,i){
+    var n=i+1;
+    var done=n<active,cur=n===active;
+    var nc=done?'step-num-done':cur?'step-num-active':'step-num-idle';
+    var lc=done?'step-label-done':cur?'step-label-active':'step-label-idle';
+    var num=done?'&#10003;':String(n);
+    var arrow=i<steps.length-1?'<span class="step-arrow">›</span>':'';
+    return'<div class="step-item"><span class="step-num '+nc+'">'+num+'</span><span class="step-label '+lc+'">'+lbl+'</span></div>'+arrow;
+  }).join('');
+  return'<div class="step-bar">'+parts+'</div>';
 }
 
 function setFocusFile(id){S.focusFileId=id;render();}
@@ -919,8 +957,8 @@ function renderSAppOcr(){
         <div><div style="font-size:13px;font-weight:500;">${f.name}</div>
         <div style="font-size:11px;color:#9aa0a6;">${f.subject}</div></div>
       </div></td>
-      <td style="font-size:12px;">${f.aiType} <span style="font-size:10px;color:#9aa0a6;">${f.conf}%</span></td>
-      <td>${st==='pass'?sp('pass','Pass'):st==='ocr'?sp('ocr','OCR Running'):sp('pend','Queued')}</td>
+      <td style="font-size:12px;">${f.aiType}</td>
+      <td>${st==='pass'?sp('pass','Rules Pass'):st==='ocr'?sp('ocr','OCR Running'):sp('pend','Queued')}</td>
       <td><div class="btn-icon-sm" onclick="openFilePreview('${f.id}')" title="View source + OCR fields">${I_EYE}</div></td>
     </tr>`;
   }).join('');
@@ -928,6 +966,7 @@ function renderSAppOcr(){
   return`${caseHeader()}
   ${salesTabBar('app')}
   <div class="tab-body">
+    ${salesStepBar(3)}
     <div class="ocr-proc-banner">
       <div style="color:#7c3aed;">${I_SPIN}</div>
       <div>
@@ -941,10 +980,10 @@ function renderSAppOcr(){
     </div>
     <div class="prefill-toast">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
-      <span><strong>Auto-filled from Mykad:</strong> Customer Name, IC Number, Mailing Address — applied to application form fields instantly.</span>
+      <span><strong>OCR data auto-filled</strong> into application form &mdash; Customer Name, IC Number, Address extracted from Mykad. <span style="color:#1967d2;font-weight:500;cursor:pointer;">View application form &rarr;</span></span>
     </div>
     <table>
-      <thead><tr><th>File</th><th>AI Classification</th><th>OCR Status</th><th></th></tr></thead>
+      <thead><tr><th>File</th><th>Document Type</th><th>OCR Status</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div>`;
@@ -955,6 +994,8 @@ function renderSAppOcr(){
 // ═══════════════════════════════════════════════
 function renderSAppDone(withAlert){
   const alertFiles=withAlert?APP_FILES.filter(f=>f.ocrSt==='alert'):[];
+  const failFiles=withAlert?APP_FILES.filter(f=>f.ocrSt==='fail'):[];
+  const passFiles=APP_FILES.filter(f=>!withAlert||(f.ocrSt!=='alert'&&f.ocrSt!=='fail'));
   const rows=APP_FILES.map(f=>{
     const st=withAlert?(f.ocrSt||'pass'):'pass';
     return`<tr>
@@ -964,44 +1005,67 @@ function renderSAppDone(withAlert){
         <div style="font-size:11px;color:#9aa0a6;">${f.subject}</div></div>
       </div></td>
       <td style="font-size:12px;">${f.aiType}</td>
-      <td>${st==='pass'?sp('pass','Pass'):st==='alert'?sp('alert','Alert'):sp('fail','Fail')}</td>
+      <td>${st==='pass'?sp('pass','Rules Pass'):st==='alert'?sp('alert','Alert'):sp('fail','Fail')}</td>
       <td style="font-size:11px;color:#5f6368;max-width:200px;">${withAlert&&f.alertMsg?f.alertMsg:'—'}</td>
       <td><div class="btn-icon-sm" onclick="openFilePreview('${f.id}')" title="View source + OCR fields">${I_EYE}</div></td>
     </tr>`;
   }).join('');
 
-  const alertSection=withAlert&&alertFiles.length?`
-    <div style="margin-bottom:14px;">
-      <div style="font-size:13px;font-weight:700;color:#b45309;margin-bottom:8px;">&#9888; 1 Alert to acknowledge before submission</div>
-      ${alertFiles.map(f=>`<div class="ack-item">
-        <div class="ack-item-title">${I_WARN} ${f.name} &mdash; ${f.aiType}</div>
-        <div class="ack-item-body">${f.alertMsg}</div>
-        <div style="font-size:11px;color:#5f6368;margin-top:6px;line-height:1.6;">CED will likely ask about this during review. <strong>Recommended:</strong> upload the missing months now to avoid a CED return.</div>
-        <div class="ack-actions">
-          <button class="btn btn-secondary btn-sm">${I_UP} Re-upload / Add Files</button>
-          <button class="btn btn-sm" style="background:#fef7e0;color:#b45309;border:1px solid #fde68a;" onclick="this.closest('.ack-item').style.opacity='.45'">Note &amp; Continue</button>
+  let readinessPanel;
+  if(withAlert){
+    const failBlock=failFiles.length?`
+      <div style="border-bottom:1px solid #f5c6cb;">
+        <div style="background:#fce8e6;padding:8px 14px;display:flex;align-items:center;gap:8px;">
+          ${I_FAIL}<span style="font-size:12px;font-weight:700;color:#c5221f;">Hard Fail (${failFiles.length}) — Cannot Submit</span>
+          <span style="font-size:11px;color:#c5221f;margin-left:auto;">File must be replaced</span>
         </div>
-      </div>`).join('')}
-    </div>`:`<div class="alert-ok" style="margin-bottom:14px;">
+        ${failFiles.map(f=>`<div style="padding:10px 14px;display:flex;align-items:center;gap:10px;">
+          ${I_FILE_R}<div style="flex:1;"><div style="font-size:12px;font-weight:600;">${f.name}</div><div style="font-size:11px;color:#5f6368;margin-top:2px;">${f.failMsg||''}</div></div>
+          <button class="btn btn-danger btn-sm">${I_UP} Replace File</button>
+        </div>`).join('')}
+      </div>`:'';
+    const alertBlock=alertFiles.length?`
+      <div style="border-bottom:1px solid #fde68a;">
+        <div style="background:#fef7e0;padding:8px 14px;display:flex;align-items:center;gap:8px;">
+          ${I_WARN}<span style="font-size:12px;font-weight:700;color:#b45309;">Alert (${alertFiles.length}) — Acknowledge to Submit</span>
+          <span style="font-size:11px;color:#b45309;margin-left:auto;">CED may follow up during review</span>
+        </div>
+        ${alertFiles.map(f=>`<div style="padding:10px 14px;">
+          <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;">
+            ${I_FILE_O}<div><div style="font-size:12px;font-weight:600;">${f.name}</div><div style="font-size:11px;color:#5f6368;margin-top:2px;">${f.alertMsg||''}</div></div>
+          </div>
+          <div style="display:flex;gap:8px;padding-left:22px;">
+            <button class="btn btn-secondary btn-sm">${I_UP} Replace File</button>
+            <button class="btn btn-sm" style="background:#fef7e0;color:#b45309;border:1px solid #fde68a;" onclick="this.closest('div').previousSibling.style.opacity='.45'">Acknowledge &amp; Continue</button>
+          </div>
+        </div>`).join('')}
+      </div>`:'';
+    const passBlock=`<div style="background:#e6f4ea;padding:8px 14px;display:flex;align-items:center;gap:8px;">
+      ${I_OK}<span style="font-size:12px;font-weight:600;color:#137333;">Pass (${passFiles.length}) — Ready</span>
+      <span style="font-size:11px;color:#137333;margin-left:auto;">No issues detected</span>
+    </div>`;
+    readinessPanel=`<div style="border:1px solid #e8eaed;border-radius:8px;margin-bottom:14px;overflow:hidden;">
+      <div style="padding:10px 14px;border-bottom:1px solid #e8eaed;background:#f8f9fa;font-size:13px;font-weight:700;color:#202124;">Submission Readiness</div>
+      ${failBlock}${alertBlock}${passBlock}
+    </div>`;
+  } else {
+    readinessPanel=`<div class="alert-ok" style="margin-bottom:14px;">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
       <span><strong>All 6 files processed.</strong> No rule violations. Ready to submit for CED review.</span>
     </div>`;
+  }
 
   return`${caseHeader()}
   ${salesTabBar('app')}
   <div class="tab-body">
-    ${alertSection}
-    <div class="progress-section">
-      <span class="progress-label">Completion</span>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${withAlert?90:100}%;background:${withAlert?'#b45309':'#34a853'};"></div></div>
-      <span class="progress-count" style="color:${withAlert?'#b45309':'#137333'};">${withAlert?'5 Pass &bull; 1 Alert':'6 / 6 All Pass'}</span>
-    </div>
+    ${salesStepBar(4)}
+    ${readinessPanel}
     <div class="prefill-toast">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
-      <span><strong>OCR auto-filled:</strong> Name + IC (Mykad) &bull; Gross Salary, Net Pay (Payslip) &bull; Tax Year, Total Income (Form BE) &bull; EPF Employer Rate (EPF Statement)</span>
+      <span><strong>OCR data auto-filled</strong> into application form &mdash; Name, IC, Salary, Tax data extracted and applied. <span style="color:#1967d2;font-weight:500;cursor:pointer;">View application form &rarr;</span></span>
     </div>
     <table>
-      <thead><tr><th>File</th><th>AI Classification</th><th>OCR Status</th><th>Note</th><th></th></tr></thead>
+      <thead><tr><th>File</th><th>Document Type</th><th>OCR Status</th><th>Note</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div>`;
@@ -1017,8 +1081,7 @@ function renderSDisUpload(){
       <div><div style="font-size:13px;font-weight:500;">${f.name}</div>
       <div style="font-size:11px;color:#9aa0a6;">${f.cat}</div></div>
     </div></td>
-    <td style="color:#9aa0a6;font-size:12px;">—</td>
-    <td>${i<2?sp('check','Checking L1–L5'):sp('pend','Pending')}</td>
+    <td>${i<2?sp('check','Validating…'):sp('pend','In Queue')}</td>
     <td><div class="btn-icon-sm" onclick="openFilePreview('${f.id}')" title="View source + OCR fields">${I_EYE}</div></td>
   </tr>`).join('');
 
@@ -1040,7 +1103,7 @@ function renderSDisUpload(){
       <span class="progress-count">2 / 5 &nbsp;&#8226;&nbsp; <span style="color:#b45309;">${I_SPIN} Checking...</span></span>
     </div>
     <table>
-      <thead><tr><th>File</th><th>AI Classification</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>File</th><th>Validation</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div>`;
@@ -1432,7 +1495,7 @@ function updateFooter(){
   const s=`<button class="btn btn-secondary">`;
   const pd=`<button class="btn btn-primary" disabled>`;
   if(sc==='s-app-upload'){
-    L.innerHTML=`<span style="color:#9aa0a6;">L1&ndash;L5 file checks in progress &mdash; wait before classifying</span>`;
+    L.innerHTML=`<span style="color:#9aa0a6;">File validation in progress &mdash; wait before classifying</span>`;
     R.innerHTML=`${s}Save Draft</button>${pd}Confirm Classification</button>`;
   } else if(sc==='s-app-classify'){
     const ok=S.batchConfirmed;
