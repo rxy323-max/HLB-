@@ -366,6 +366,11 @@ tr:hover td{background:#fafafa;}
 .mdoc-rule{background:#f8f9fa;border:1px solid #e8eaed;border-radius:8px;padding:10px 12px;font-size:11.5px;color:#5f6368;}
 .mdoc-rule strong{color:#202124;}
 .mdoc-vfile{display:flex;align-items:center;gap:10px;border:1px solid #d6e8d9;background:#f4faf5;border-radius:8px;padding:8px 11px;margin-bottom:7px;}
+.mdoc-pagerange{display:flex;align-items:center;gap:5px;min-width:150px;}
+.mdoc-pr-lbl{font-size:11px;color:#5f6368;font-weight:600;}
+.mdoc-pr-in{width:42px;border:1px solid #dadce0;border-radius:5px;padding:3px 5px;font-size:12px;text-align:center;outline:none;}
+.mdoc-pr-in:focus{border-color:#1967d2;}
+.mdoc-pr-in:disabled{background:#f1f3f4;color:#9aa0a6;}
 </style>
 </head>
 <body>
@@ -608,6 +613,7 @@ let S={
   valResolved:{},      // resolved cross-val conflicts: {fileId:{ruleKey:{how,note}}}
   justFileId:'', justRule:'',
   multiDocSplit:false, // multi-doc PDF: segments confirmed
+  classifyChoice:{},   // classification dropdown override: {fileId:type}
 };
 
 // ═══════════════════════════════════════════════
@@ -1360,7 +1366,7 @@ function renderSAppOcrDetail(){
   return`${caseHeader()}
   ${salesTabBar('app')}
   <div class="tab-body">
-    ${salesStepBar(4)}
+    ${salesStepBar(3)}
     <div class="detail-hdr">
       <div class="detail-hdr-left">
         <div class="detail-title">Payslip_Oct2025.pdf &mdash; Document Detail</div>
@@ -1465,11 +1471,17 @@ function renderSAppClassify(){
   const confMsg=focus.conf>=80?'High confidence — quick verify recommended':focus.conf>=60?'Medium confidence — please verify manually':'Low confidence — manual verification required';
   const confMsgColor=focus.conf>=80?'#5f6368':focus.conf>=60?'#b45309':'#c5221f';
 
+  const chosen=S.classifyChoice[focus.id]||focus.aiType;
+  const changed=chosen!==focus.aiType;
   const docTypeOptions=['Mykad','MyPR','Passport','Payslip','Form B','Form BE','EPF Statement','Individual Bank Statement','CRA Form','EA Form','CP 58','SPGA Report','VOC','VSO','Other Documents']
-    .map(t=>`<option${t===focus.aiType?' selected':''}>${t}</option>`).join('');
+    .map(t=>`<option${t===chosen?' selected':''}>${t}</option>`).join('');
 
-  // Show AI vs corrected note for manually-reviewed file (CIMB demo)
-  const correctionNote=focusManuallyCorrected
+  // Show AI vs corrected note for manually-reviewed file (CIMB demo) or any live override
+  const correctionNote=changed
+    ?`<div style="background:#fff3cd;border:1px solid #fde68a;border-radius:5px;padding:7px 10px;font-size:11px;color:#92400e;margin-bottom:10px;">
+        <strong>&#9998; Type changed:</strong> AI suggested <em>${focus.aiType}</em> &rarr; you selected <strong>${chosen}</strong>
+      </div>`
+    :focusManuallyCorrected
     ?`<div style="background:#fff3cd;border:1px solid #fde68a;border-radius:5px;padding:7px 10px;font-size:11px;color:#92400e;margin-bottom:10px;">
         <strong>&#9998; Manually corrected:</strong> AI suggested <em>${focus.aiType}</em> &rarr; confirmed as <strong>Form BE</strong>
       </div>`:'';
@@ -1512,19 +1524,19 @@ function renderSAppClassify(){
         <div style="font-size:11px;color:${confMsgColor};margin-bottom:12px;">${confMsg}</div>
         ${correctionNote}
         <div style="font-size:11px;color:#5f6368;margin-bottom:6px;">Wrong type? Change classification:</div>
-        <select class="cr-select">${docTypeOptions}</select>
-        <button class="btn btn-primary" style="width:100%;" onclick="confirmFocusFile()">Confirm: ${focus.aiType} &rarr;</button>
+        <select class="cr-select" onchange="onClassifySelect(this)">${docTypeOptions}</select>
+        <button class="btn btn-primary" style="width:100%;" onclick="confirmFocusFile()">Confirm: ${chosen} &rarr;</button>
         ${rightPanelExtra}
         ${S.batchConfirmed&&focus.initState==='confirmed'?`<div class="cr-divider"></div>
-          <div class="alert-ok" style="margin-bottom:0;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg><span>All 6 files confirmed. Ready to start OCR.</span></div>`:''}
+          <div class="alert-ok" style="margin-bottom:0;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg><span>All 6 files confirmed. Use the <strong>Start OCR</strong> button in the footer below.</span></div>`:''}
       </div>
     </div>
-    ${S.batchConfirmed?`<div style="display:flex;justify-content:flex-end;margin-top:14px;"><button class="btn btn-primary" onclick="applyScenario('s-app-ocr',null)">Start OCR Processing &rarr;</button></div>`:''}
   </div>`;
 }
+function onClassifySelect(sel){S.classifyChoice[S.focusFileId]=sel.value;render();}
 
 function salesStepBar(active){
-  const steps=['Upload & Validate','Confirm Classification','OCR Processing','Review & Submit'];
+  const steps=['Upload & Validate','Confirm Classification','OCR &amp; Cross-Validation','Review & Submit'];
   const parts=steps.map(function(lbl,i){
     var n=i+1;
     var done=n<active,cur=n===active;
@@ -1556,13 +1568,20 @@ function renderSAppMultiDoc(){
   const opts=['Mykad','MyPR','Passport','Payslip','Form B','Form BE','EPF Statement','Individual Bank Statement','Other Documents'];
   const segRows=MULTIDOC_SEGMENTS.map(function(s,i){
     const cColor=s.conf>=80?'#137333':s.conf>=60?'#b45309':'#c5221f';
-    const sel='<select class="cr-select" style="margin:0;flex:1;">'+opts.map(function(t){return'<option'+(t===s.type?' selected':'')+'>'+t+'</option>';}).join('')+'</select>';
+    const pp=s.pages.split('–');
+    const sel='<select class="cr-select" style="margin:0;flex:1;"'+(split?' disabled':'')+'>'+opts.map(function(t){return'<option'+(t===s.type?' selected':'')+'>'+t+'</option>';}).join('')+'</select>';
+    // Self-evident editable page boundary (From / To) — no mystery button
+    const pageEdit='<div class="mdoc-pagerange">'+I_FILE_N
+      +'<span class="mdoc-pr-lbl">Pages</span>'
+      +'<input class="mdoc-pr-in" type="number" value="'+pp[0].trim()+'"'+(split?' disabled':'')+' title="Start page of this document">'
+      +'<span style="color:#9aa0a6;">–</span>'
+      +'<input class="mdoc-pr-in" type="number" value="'+pp[1].trim()+'"'+(split?' disabled':'')+' title="End page of this document">'
+    +'</div>';
     return'<div class="mdoc-seg">'
       +'<div class="mdoc-seg-no">'+(i+1)+'</div>'
-      +'<div class="mdoc-seg-pages">'+I_FILE_N+'<div><div style="font-weight:700;font-size:12px;">Pages '+s.pages+'</div><div style="font-size:10px;color:#9aa0a6;">'+s.np+' page'+(s.np>1?'s':'')+'</div></div></div>'
+      +pageEdit
       +'<div style="flex:1;display:flex;align-items:center;gap:8px;">'+sel+'</div>'
       +'<div style="display:flex;align-items:center;gap:6px;min-width:92px;justify-content:flex-end;"><span style="font-size:11px;color:'+cColor+';font-weight:700;">'+s.conf+'%</span>'+badge(s.conf>=80?'Auto':'Verify',s.conf>=80?'bd-green':'bd-orange')+'</div>'
-      +(split?'':'<button class="fix-btn" title="Adjust the page boundary of this segment">&#8645; Adjust split</button>')
     +'</div>';
   }).join('');
 
@@ -1598,12 +1617,11 @@ function renderSAppMultiDoc(){
       </div>
       <div class="classify-result" style="max-height:none;">
         <div class="cr-file-name">Detected segments (4)</div>
-        <div style="font-size:11px;color:#5f6368;margin-bottom:10px;">Each row = one document inside the PDF. Set the type and page range.</div>
+        <div style="font-size:11px;color:#5f6368;margin-bottom:10px;">Each row = one document inside the PDF. ${split?'Splits confirmed.':'Edit the <strong>From–To page numbers</strong> to move a boundary, and set each type, then confirm.'}</div>
         <div class="mdoc-seg-list">${segRows}</div>
         <div style="margin-top:12px;">${rightPanel}</div>
       </div>
     </div>
-    ${split?`<div style="display:flex;justify-content:flex-end;margin-top:14px;"><button class="btn btn-primary" onclick="applyScenario('s-app-ocr',null)">Start OCR Processing &rarr;</button></div>`:''}
   </div>`;
 }
 
@@ -1621,8 +1639,8 @@ function renderSAppOcr(){
         <div style="font-size:11px;color:#9aa0a6;">${f.subject}</div></div>
       </div></td>
       <td style="font-size:12px;">${f.aiType}</td>
-      <td>${st==='pass'?sp('pass','Rules Pass'):st==='ocr'?sp('ocr','OCR Running'):sp('pend','Queued')}</td>
-      <td><div class="btn-icon-sm" onclick="openFilePreview('${f.id}')" title="View source + OCR fields">${I_EYE}</div></td>
+      <td>${st==='pass'?sp('pass','OCR done — verify'):st==='ocr'?sp('ocr','OCR Running'):sp('pend','Queued')}</td>
+      <td style="text-align:right;white-space:nowrap;">${st==='pass'?`<button class="btn btn-sm" style="background:#e8f0fe;color:#1967d2;border:1px solid #c5d8f8;" onclick="applyScenario('s-app-detail',null)">&#9998; Review &amp; Amend</button>`:''}&nbsp;<div class="btn-icon-sm" style="display:inline-flex;" onclick="openFilePreview('${f.id}')" title="View source + OCR fields">${I_EYE}</div></td>
     </tr>`;
   }).join('');
 
@@ -1633,8 +1651,8 @@ function renderSAppOcr(){
     <div class="ocr-proc-banner">
       <div style="color:#7c3aed;">${I_SPIN}</div>
       <div>
-        <div class="ocr-proc-title">OCR Processing in Progress</div>
-        <div class="ocr-proc-sub">3 of 6 files done &bull; Page cannot be submitted until all files complete</div>
+        <div class="ocr-proc-title">OCR &amp; Cross-Validation in Progress</div>
+        <div class="ocr-proc-sub">3 of 6 files done &bull; A completed file can be reviewed right away &mdash; click <strong>&#9998; Review &amp; Amend</strong> to correct OCR misreads or resolve conflicts before all files finish</div>
       </div>
       <div style="margin-left:auto;text-align:right;">
         <div class="progress-bar-wrap" style="width:140px;margin-bottom:4px;"><div class="progress-bar-fill" style="width:50%;background:#7c3aed;"></div></div>
@@ -1743,10 +1761,12 @@ function renderSAppDone(withAlert){
     ${salesStepBar(4)}
     ${sumStrip}
     ${readinessPanel}
+    <div class="sec-title" style="margin-bottom:6px;">Per-file OCR Result</div>
     <table>
       <thead><tr><th>File</th><th>Document Type</th><th>OCR Status</th><th>Note</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
+    ${renderCrossValPanel(CED_CROSS_VAL,'Cross-File Validation — Application (逻辑解突)')}
   </div>`;
 }
 
@@ -2258,8 +2278,12 @@ function updateFooter(){
     const ok=S.batchConfirmed;
     L.innerHTML=`<span style="color:#5f6368;">Confirm all 6 classifications before OCR can begin</span>`;
     R.innerHTML=`${s}Save Draft</button><button class="btn btn-primary" ${ok?'onclick="applyScenario(\'s-app-ocr\',null)"':' disabled'}>Start OCR</button>`;
+  } else if(sc==='s-app-multidoc'){
+    const ok=S.multiDocSplit;
+    L.innerHTML=ok?`<span style="color:#137333;">&#10003; 4 virtual files created &mdash; ready for OCR</span>`:`<span style="color:#5f6368;">Confirm the document splits before OCR can begin</span>`;
+    R.innerHTML=`${s}Save Draft</button><button class="btn btn-primary" ${ok?'onclick="applyScenario(\'s-app-ocr\',null)"':' disabled'}>Start OCR</button>`;
   } else if(sc==='s-app-ocr'){
-    L.innerHTML=`<span style="color:#7c3aed;">${I_SPIN} OCR running &mdash; submission locked</span>`;
+    L.innerHTML=`<span style="color:#7c3aed;">${I_SPIN} OCR &amp; validation running &mdash; you can review a finished file now; submission stays locked until all complete</span>`;
     R.innerHTML=`${s}Save Draft</button>${pd}Submit for Review</button>`;
   } else if(sc==='s-app-done'){
     L.innerHTML=`<span style="color:#137333;">&#10003; All files clear &mdash; ready to submit to CED</span>`;
@@ -2268,8 +2292,8 @@ function updateFooter(){
     L.innerHTML=`<span style="color:#b45309;">&#9888; 1 alert &mdash; review or acknowledge before submitting</span>`;
     R.innerHTML=`${s}Save Draft</button>${p}Submit to CED (with note) &rarr;</button>`;
   } else if(sc==='s-app-detail'){
-    L.innerHTML=`<span style="color:#b45309;">&#9998; Review OCR fields &mdash; amend any misread value against the physical document</span>`;
-    R.innerHTML=`<button class="btn btn-secondary" onclick="applyScenario('s-app-alert',null)">&larr; Back to Results</button><button class="btn btn-primary" onclick="applyScenario('s-app-alert',null)">Done &mdash; Return to Review &rarr;</button>`;
+    L.innerHTML=`<span style="color:#5f6368;">Step 3 &mdash; OCR &amp; Cross-Validation &bull; amend misreads on the OCR tab, resolve conflicts on the Cross-Validation tab</span>`;
+    R.innerHTML=`<button class="btn btn-secondary" onclick="applyScenario('s-app-ocr',null)">&larr; Back to file list</button><button class="btn btn-primary" onclick="applyScenario('s-app-alert',null)">Done &mdash; Proceed to Review &rarr;</button>`;
   } else if(sc==='s-dis-upload'){
     L.innerHTML=`<span style="color:#9aa0a6;">Checking uploaded files...</span>`;
     R.innerHTML=`${s}Save Draft</button>${pd}Confirm Classification</button>`;
