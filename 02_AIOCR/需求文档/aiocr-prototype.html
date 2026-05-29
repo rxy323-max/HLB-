@@ -400,6 +400,26 @@ tr:hover td{background:#fafafa;}
 .val-box-tag{position:absolute;top:-17px;left:-2px;font-size:9px;font-weight:700;color:#fff;padding:1px 6px;border-radius:3px;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;}
 .val-doc-foot{font-size:10px;color:#9aa0a6;margin-top:8px;text-align:center;}
 @media(max-width:640px){.val-split{grid-template-columns:1fr;}.val-list{border-right:none;border-bottom:1px solid #e8eaed;}}
+
+/* ── CED Income Calculator ── */
+.ced-cols{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;}
+@media(max-width:680px){.ced-cols{grid-template-columns:1fr;}}
+.ced-card{border:1px solid #e8eaed;border-radius:8px;padding:13px 15px;margin-bottom:14px;background:#fff;}
+.ced-card-hdr{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:#202124;margin-bottom:10px;}
+.ced-ref{background:#f8f9fa;}
+.ced-ref-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #f1f3f4;}
+.ced-ref-total{font-weight:700;border-bottom:none;border-top:2px solid #e8eaed;margin-top:3px;padding-top:7px;}
+.ced-empty{text-align:center;padding:18px 10px;}
+.ced-item-list{display:flex;flex-direction:column;gap:6px;}
+.ced-item{display:flex;align-items:center;gap:9px;border:1px solid #eef0f2;border-radius:7px;padding:7px 9px;}
+.ced-item-off{opacity:.5;background:#fafafa;}
+.ced-chk{position:relative;display:inline-flex;cursor:pointer;}
+.ced-chk input{width:16px;height:16px;accent-color:#1967d2;cursor:pointer;}
+.ced-net{display:flex;justify-content:space-between;align-items:center;background:#e8f0fe;border-radius:7px;padding:9px 12px;margin-top:10px;font-size:13px;font-weight:700;color:#1967d2;}
+.ced-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.ced-metric{background:#f8f9fa;border:1px solid #eef0f2;border-radius:7px;padding:8px 10px;}
+.cm-lbl{font-size:10px;color:#80868b;text-transform:uppercase;letter-spacing:.4px;}
+.cm-val{font-size:16px;font-weight:700;color:#202124;margin-top:2px;}
 </style>
 </head>
 <body>
@@ -572,6 +592,31 @@ tr:hover td{background:#fafafa;}
   </div>
 </div>
 
+<!-- ══ MODAL: CED Income Line (add / edit) ══ -->
+<div class="modal-overlay" id="modalCedItem">
+  <div class="modal modal-sm">
+    <div class="modal-hdr"><h3 id="cedItemTitle">Income line</h3><button class="modal-x" onclick="closeModal('modalCedItem')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="alert-info" style="margin-bottom:14px;">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>CED vetting only &mdash; this affects your isolated calculator, not the Sales figures.</span>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Label</div>
+      <input type="text" id="cedItemLabel" style="width:100%;border:1.5px solid #1967d2;border-radius:6px;padding:8px 10px;font-size:13px;outline:none;margin-bottom:12px;" placeholder="e.g. Foreign allowance (FX adjusted)">
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;"><div style="font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Monthly amount (RM)</div>
+          <input type="number" id="cedItemAmt" style="width:100%;border:1.5px solid #1967d2;border-radius:6px;padding:8px 10px;font-size:13px;outline:none;" placeholder="0"></div>
+        <div style="width:130px;"><div style="font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Type</div>
+          <select id="cedItemKind" class="cr-select" style="margin:0;"><option value="income">Income</option><option value="ded">Deduction</option></select></div>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modalCedItem')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="cedSaveItem()">Save Line</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ DEV TOOL ══ -->
 <div class="dev-tool">
   <div class="dev-panel" id="devPanel">
@@ -598,7 +643,8 @@ tr:hover td{background:#fafafa;}
     <div class="dev-sep"></div>
     <div class="dev-group">CED — Application Review</div>
     <button class="dev-btn" onclick="applyScenario('ced-list',this)">File list overview</button>
-    <button class="dev-btn" onclick="applyScenario('ced-detail',this)">Payslip detail (alert in R3)</button>
+    <button class="dev-btn" onclick="applyScenario('ced-detail',this)">Payslip detail (view only)</button>
+    <button class="dev-btn" onclick="applyScenario('ced-income',this)">&#36; Income &amp; Decision (vetting)</button>
 
     <div class="dev-sep"></div>
     <div class="dev-group">CRA — Disbursement Review</div>
@@ -647,6 +693,12 @@ let S={
   valFocusBox:'',      // cross-val: which rule's bounding box is highlighted on the source
   eyeballConfirmed:{}, // {fileId:{label:true}} human Eyeball/Existence sign-off
   ocrRecovery:{},      // OCR recognition-failure recovery: {fileId:'skip'|'replaced'}
+  // ── CED Income Calculator (data-isolated from Sales) ──
+  cedImported:false,   // CED imported Sales/OCR income into its own calculator
+  cedVetted:false,     // CED saved → creator becomes CED (income officially vetted)
+  cedItems:[],         // CED's own copy of income/deduction lines (isolated)
+  dsrMethod:'declared',// 'declared' (Sales) | 'verifiable' (CED vetted) — recompute basis
+  cedEditIdx:-1,       // index being edited in modalCedItem (-1 = add)
 };
 
 // ═══════════════════════════════════════════════
@@ -1339,6 +1391,11 @@ function renderIncomeComputationTab(){
       '<div><strong>EPF Employer Rate:</strong> '+INCOME_COMPUTATION.result.epf_employer+'</div>'+
       (netAmended?'<div style="color:#137333;"><strong>Amended:</strong> Net pay corrected to '+netAmended.amended+' — Bank Statement cross-check now passes &#10003;</div>':'')+
     '</div>'+
+    // One-way read-only: after CED vets, Sales sees CED's result but cannot edit it
+    (S.role==='sales'&&S.cedVetted
+      ?'<div style="margin-top:10px;padding:10px 12px;background:#f0f7ff;border:1px solid #c5d8f8;border-radius:6px;font-size:11.5px;color:#1f3a5f;line-height:1.7;">'
+        +I_INFO+' <strong>CED Vetted Income (read-only):</strong> '+fmtRM(cedNet())+' / month. CED independently re-vetted this; your declared figures above are unchanged and remain yours. You cannot edit CED&rsquo;s result.</div>'
+      :'')+
   '</div>';
 }
 
@@ -2076,12 +2133,12 @@ function renderCedList(){
   </tr>`; }).join('');
 
   return`${caseHeader()}
-  <div class="tabs"><div class="tab active">Application Files — OCR Summary</div></div>
+  ${cedTabBar('files')}
   <div class="tab-body">
     ${renderOcrSummaryStrip(5,1,0,6)}
     <div class="alert-info" style="margin-bottom:14px;">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <span><strong>CED responsibility:</strong> Review each file's OCR result. For Alert fields, verify if Sales has already amended — if not, request re-upload or acknowledge with a note. Cross-file validation results are at the bottom.</span>
+      <span><strong>CED &mdash; document review (view only):</strong> CED <strong>cannot</strong> edit OCR / cross-validation results &mdash; only verify what Sales captured. CED&rsquo;s real work (re-vetting income, DSR, approved amount) is in the <strong>Income &amp; Decision</strong> tab.</span>
     </div>
     <table>
       <thead><tr><th>File</th><th>Document Type</th><th>OCR Status</th><th>Note</th><th>Actions</th></tr></thead>
@@ -2144,6 +2201,151 @@ function renderCedDetail(){
     ${amendNotice}
     ${renderDetailTabBar(tab,fileId)}
     ${tabContent}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  CED TAB BAR + INCOME CALCULATOR (independent vetting)
+// ═══════════════════════════════════════════════
+function cedTabBar(active){
+  return'<div class="tabs">'
+    +'<div class="tab '+(active==='files'?'active':'')+'" onclick="applyScenario(\'ced-list\',null)" style="cursor:pointer;">Application Files &mdash; OCR (view only)</div>'
+    +'<div class="tab '+(active==='income'?'active':'')+'" onclick="applyScenario(\'ced-income\',null)" style="cursor:pointer;">Income &amp; Decision'+(S.cedVetted?'&nbsp;<span class="badge bd-green" style="font-size:10px;">Vetted</span>':'')+'</div>'
+  +'</div>';
+}
+
+// Sales-side declared income (read-only reference; never overwritten)
+var SALES_DECLARED={
+  net:'RM 5,800',
+  items:[
+    {label:'Basic Salary',monthly:5500,kind:'income'},
+    {label:'Fixed Allowances',monthly:800,kind:'income'},
+    {label:'Overtime',monthly:500,kind:'income'},
+    {label:'EPF (employee)',monthly:748,kind:'ded'},
+    {label:'SOCSO',monthly:29,kind:'ded'},
+    {label:'PCB (tax)',monthly:223,kind:'ded'}
+  ]
+};
+var CED_MONTHLY_DEBT=2400; // proposed HP installment + existing commitments
+
+function cedDefaultItems(){
+  // CED imports a physically separate copy; OT defaulted OUT (not stable) to show vetting
+  return SALES_DECLARED.items.map(function(it){
+    return{label:it.label,monthly:it.monthly,kind:it.kind,counts:it.label!=='Overtime',creator:'OCR_Sales'};
+  });
+}
+function cedNet(){
+  var inc=0,ded=0;
+  S.cedItems.forEach(function(it){if(!it.counts)return;if(it.kind==='income')inc+=it.monthly;else ded+=it.monthly;});
+  return inc-ded;
+}
+function fmtRM(n){return'RM '+Number(n).toLocaleString('en-US');}
+function cedImportCalc(){S.cedImported=true;S.cedVetted=false;S.cedItems=cedDefaultItems();render();}
+function cedToggle(i){S.cedItems[i].counts=!S.cedItems[i].counts;S.cedVetted=false;render();}
+function cedRemove(i){S.cedItems.splice(i,1);S.cedVetted=false;render();}
+function cedSaveVet(){S.cedVetted=true;S.cedItems.forEach(function(it){it.creator='CED';});render();}
+function cedSetDsr(sel){S.dsrMethod=sel.value;render();}
+function cedOpenItem(i){
+  S.cedEditIdx=i;
+  var it=i>=0?S.cedItems[i]:{label:'',monthly:'',kind:'income'};
+  document.getElementById('cedItemLabel').value=it.label;
+  document.getElementById('cedItemAmt').value=it.monthly;
+  document.getElementById('cedItemKind').value=it.kind;
+  document.getElementById('cedItemTitle').textContent=i>=0?'Edit income line':'Add manual line';
+  openModal('modalCedItem');
+}
+function cedSaveItem(){
+  var label=document.getElementById('cedItemLabel').value.trim();
+  var amt=parseFloat(document.getElementById('cedItemAmt').value)||0;
+  var kind=document.getElementById('cedItemKind').value;
+  if(!label)return;
+  if(S.cedEditIdx>=0){var it=S.cedItems[S.cedEditIdx];it.label=label;it.monthly=amt;it.kind=kind;it.creator='CED';}
+  else{S.cedItems.push({label:label,monthly:amt,kind:kind,counts:true,creator:'CED'});}
+  S.cedVetted=false;closeModal('modalCedItem');render();
+}
+
+function renderCedIncome(){
+  const imported=S.cedImported;
+  const vetted=S.cedVetted;
+  const useVerifiable=S.dsrMethod==='verifiable';
+
+  // ── Sales declared reference (always read-only) ──
+  const salesRows=SALES_DECLARED.items.map(function(it){
+    return'<div class="ced-ref-row"><span>'+it.label+(it.kind==='ded'?' <span style="color:#9aa0a6;">(deduction)</span>':'')+'</span><span style="color:'+(it.kind==='ded'?'#c5221f':'#202124')+';">'+(it.kind==='ded'?'− ':'')+fmtRM(it.monthly)+'</span></div>';
+  }).join('');
+  const salesRef='<div class="ced-card ced-ref">'
+    +'<div class="ced-card-hdr">'+I_INFO+'<span>Sales / OCR declared income <span class="badge bd-blue" style="font-size:10px;">read-only</span></span></div>'
+    +salesRows
+    +'<div class="ced-ref-row ced-ref-total"><span>Declared net (monthly)</span><span>'+SALES_DECLARED.net+'</span></div>'
+    +'<div style="font-size:10px;color:#9aa0a6;margin-top:6px;">Physically isolated &mdash; your edits never overwrite this.</div>'
+  +'</div>';
+
+  // ── CED calculator ──
+  let calcBody;
+  if(!imported){
+    calcBody='<div class="ced-empty">'+I_INFO+'<div style="margin:8px 0 12px;font-size:12px;color:#5f6368;">Your calculator is empty. Import the Sales / OCR figures into your own isolated copy to start vetting.</div>'
+      +'<button class="btn btn-primary" onclick="cedImportCalc()">&#8681; Import Sales Calculator</button></div>';
+  } else {
+    const itemRows=S.cedItems.map(function(it,i){
+      const amtCol=it.kind==='ded'?'#c5221f':'#202124';
+      return'<div class="ced-item'+(it.counts?'':' ced-item-off')+'">'
+        +'<label class="ced-chk"><input type="checkbox" '+(it.counts?'checked':'')+' onclick="cedToggle('+i+')"><span></span></label>'
+        +'<div style="flex:1;"><div style="font-size:12.5px;font-weight:500;">'+it.label+'</div>'
+          +'<div style="font-size:10px;color:#9aa0a6;">'+(it.kind==='ded'?'Deduction':'Income')+' &bull; creator: <strong style="color:'+(it.creator==='CED'?'#137333':'#5f6368')+';">'+it.creator+'</strong></div></div>'
+        +'<div style="font-weight:600;color:'+amtCol+';min-width:88px;text-align:right;">'+(it.kind==='ded'?'− ':'')+fmtRM(it.monthly)+'</div>'
+        +'<button class="fix-btn" onclick="cedOpenItem('+i+')" title="Edit">&#9998;</button>'
+        +'<button class="fix-btn" style="border-color:#f5c6cb;color:#c5221f;" onclick="cedRemove('+i+')" title="Remove">&times;</button>'
+      +'</div>';
+    }).join('');
+    calcBody='<div class="ced-item-list">'+itemRows+'</div>'
+      +'<button class="btn btn-secondary btn-sm" style="margin-top:8px;" onclick="cedOpenItem(-1)">+ Add manual line</button>'
+      +'<div class="ced-net"><span>CED computed net (monthly)</span><strong>'+fmtRM(cedNet())+'</strong></div>'
+      +'<div style="display:flex;gap:8px;align-items:center;margin-top:12px;">'
+        +(vetted
+          ?'<span class="badge bd-green">&#10003; Vetted by CED</span><span style="font-size:11px;color:#137333;">Creator updated to CED &mdash; income officially vetted</span>'
+          :'<button class="btn btn-primary" onclick="cedSaveVet()">Update / Save &amp; Vet</button><span style="font-size:11px;color:#b45309;">Not yet vetted &mdash; creator still OCR_Sales</span>')
+      +'</div>';
+  }
+  const calc='<div class="ced-card">'
+    +'<div class="ced-card-hdr">'+I_EYE+'<span>CED Income Calculator <span class="badge '+(vetted?'bd-green':'bd-orange')+'" style="font-size:10px;">'+(vetted?'Vetted':imported?'Draft':'Empty')+'</span></span>'
+      +(imported?'<button class="fix-undo" style="margin-left:auto;" onclick="cedImportCalc()">&#8635; Re-import</button>':'')+'</div>'
+    +calcBody
+  +'</div>';
+
+  // ── DSR / DSCR computation ──
+  const basisNet=useVerifiable?(imported?cedNet():0):5800;
+  const dsr=basisNet>0?(CED_MONTHLY_DEBT/basisNet*100):0;
+  const mdi=basisNet-CED_MONTHLY_DEBT;
+  const dsrCol=dsr>=60?'#c5221f':dsr>=45?'#b45309':'#137333';
+  const verifiableDisabled=!vetted;
+  const decision='<div class="ced-card">'
+    +'<div class="ced-card-hdr">'+I_INFO+'<span>DSR / DSCR Computation</span></div>'
+    +'<div style="font-size:11px;color:#5f6368;margin-bottom:5px;">Computation method (income basis)</div>'
+    +'<select class="cr-select" onchange="cedSetDsr(this)">'
+      +'<option value="declared"'+(!useVerifiable?' selected':'')+'>Sales Declared Income ('+SALES_DECLARED.net+')</option>'
+      +'<option value="verifiable"'+(useVerifiable?' selected':'')+(verifiableDisabled?' disabled':'')+'>Total Verifiable Income (CED Vetted)'+(verifiableDisabled?' — vet first':'')+'</option>'
+    +'</select>'
+    +(useVerifiable&&imported?'<div style="font-size:11px;color:#137333;margin:-6px 0 10px;">Using CED-vetted net '+fmtRM(cedNet())+' &mdash; recomputed below</div>':'<div style="height:4px;"></div>')
+    +'<div class="ced-metrics">'
+      +'<div class="ced-metric"><div class="cm-lbl">Income basis</div><div class="cm-val">'+fmtRM(basisNet)+'</div></div>'
+      +'<div class="ced-metric"><div class="cm-lbl">Monthly commitments</div><div class="cm-val">'+fmtRM(CED_MONTHLY_DEBT)+'</div></div>'
+      +'<div class="ced-metric"><div class="cm-lbl">DSR</div><div class="cm-val" style="color:'+dsrCol+';">'+dsr.toFixed(1)+'%</div></div>'
+      +'<div class="ced-metric"><div class="cm-lbl">MDI (disposable)</div><div class="cm-val" style="color:'+(mdi<1500?'#c5221f':'#137333')+';">'+fmtRM(mdi)+'</div></div>'
+    +'</div>'
+    +'<div style="font-size:11px;color:#5f6368;margin-top:10px;line-height:1.6;">Approved loan / tenure are set on this basis. Switching to <strong>Total Verifiable Income</strong> after vetting recomputes DSR &amp; MDI from CED&rsquo;s net.</div>'
+  +'</div>';
+
+  return`${caseHeader()}
+  ${cedTabBar('income')}
+  <div class="tab-body">
+    <div class="alert-info" style="margin-bottom:14px;">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span><strong>Independent vetting (数据隔离).</strong> CED does not correct OCR &mdash; CED re-vets the <strong>final income, DSR and approvable amount</strong> in this isolated calculator. Importing pulls a separate copy; it never overwrites Sales.</span>
+    </div>
+    <div class="ced-cols">
+      <div>${calc}${decision}</div>
+      <div>${salesRef}</div>
+    </div>
   </div>`;
 }
 
@@ -2450,6 +2652,9 @@ function updateFooter(){
   } else if(sc==='ced-list'){
     L.innerHTML=`<span style="color:#5f6368;">Reviewing application documents for ${CASE.aa}</span>`;
     R.innerHTML=`${s}Request More Info from Sales</button>${p}Approve Application &rarr;</button>`;
+  } else if(sc==='ced-income'){
+    L.innerHTML=S.cedVetted?`<span style="color:#137333;">&#10003; Income vetted by CED &mdash; DSR / approved amount set on verified basis</span>`:`<span style="color:#b45309;">Re-vet income, then set DSR basis to Total Verifiable Income</span>`;
+    R.innerHTML=`${s}Rework to Sales</button><button class="btn btn-primary" ${S.cedVetted?'':' disabled'}>Approve Application &rarr;</button>`;
   } else if(sc==='ced-detail'){
     L.innerHTML=`<span style="color:#b45309;">&#9888; Alert in Region 3 &mdash; verify physical document or request re-upload</span>`;
     R.innerHTML=`${s}Request Re-upload from Sales</button>${p}Acknowledge Alert &amp; Continue &rarr;</button>`;
@@ -2495,6 +2700,7 @@ function render(){
   else if(sc==='s-dis-defect')  {S.defectFixed=0; html=renderSDisDefect();}
   else if(sc==='s-dis-defect-p'){S.defectFixed=1; html=renderSDisDefect();}
   else if(sc==='ced-list')      html=renderCedList();
+  else if(sc==='ced-income')    html=renderCedIncome();
   else if(sc==='ced-detail')    html=renderCedDetail();
   else if(sc==='cra-list')      html=renderCraList();
   else if(sc==='cra-detail')    html=renderCraDetail();
