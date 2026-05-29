@@ -371,6 +371,35 @@ tr:hover td{background:#fafafa;}
 .mdoc-pr-in{width:42px;border:1px solid #dadce0;border-radius:5px;padding:3px 5px;font-size:12px;text-align:center;outline:none;}
 .mdoc-pr-in:focus{border-color:#1967d2;}
 .mdoc-pr-in:disabled{background:#f1f3f4;color:#9aa0a6;}
+
+/* ── Validation engine: split-screen + bounding box ── */
+.ocr-to-val{display:flex;gap:8px;align-items:center;background:#f0f7ff;border:1px solid #c5d8f8;border-radius:6px;padding:9px 12px;font-size:11.5px;color:#1f3a5f;cursor:pointer;}
+.ocr-to-val:hover{background:#e1edff;}
+.val-summary{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.vs-chip{font-size:11px;font-weight:700;padding:3px 9px;border-radius:11px;}
+.vs-red{background:#fce8e6;color:#c5221f;} .vs-org{background:#fef7e0;color:#b45309;} .vs-grn{background:#e6f4ea;color:#137333;}
+.val-split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:0;border-top:1px solid #e8eaed;}
+.val-list{padding:14px 14px 16px;display:flex;flex-direction:column;gap:9px;border-right:1px solid #e8eaed;max-height:560px;overflow:auto;}
+.val-rule{border:1px solid #e8eaed;border-left-width:3px;border-radius:7px;padding:9px 11px;background:#fff;}
+.vr-fail{border-left-color:#c5221f;background:#fffafa;} .vr-warn{border-left-color:#e0a800;background:#fffdf6;} .vr-pass{border-left-color:#34a853;}
+.val-rule-top{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.val-sev{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:1px 6px;border-radius:4px;}
+.val-sev-hard{background:#fce8e6;color:#c5221f;} .val-sev-warn{background:#fef7e0;color:#b45309;}
+.val-dim{font-size:10px;color:#5f6368;background:#f1f3f4;padding:1px 7px;border-radius:9px;font-weight:600;}
+.val-rule-label{font-size:12.5px;font-weight:600;color:#202124;margin-bottom:3px;}
+.val-cmp{font-size:11.5px;font-family:ui-monospace,Menlo,Consolas,monospace;line-height:1.5;}
+.val-rule-foot{margin-top:5px;}
+.val-locate{font-size:10.5px;color:#1967d2;cursor:pointer;font-weight:600;border:1px solid #c5d8f8;border-radius:5px;padding:1px 7px;background:#f0f7ff;}
+.val-locate:hover,.val-locate-on{background:#1967d2;color:#fff;border-color:#1967d2;}
+.val-doc-pane{padding:14px 16px 16px;background:#fafbfc;}
+.val-doc-hdr{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#3c4043;margin-bottom:8px;}
+.val-doc-hint{margin-left:auto;font-size:10px;color:#9aa0a6;}
+.val-doc{position:relative;background:#fff;border:1px solid #e8eaed;border-radius:6px;padding:14px;min-height:300px;}
+.val-box{position:absolute;border:2px solid #b45309;border-radius:3px;background:rgba(180,83,9,.06);transition:.15s;pointer-events:none;}
+.val-box-active{background:rgba(0,0,0,.02);z-index:2;}
+.val-box-tag{position:absolute;top:-17px;left:-2px;font-size:9px;font-weight:700;color:#fff;padding:1px 6px;border-radius:3px;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;}
+.val-doc-foot{font-size:10px;color:#9aa0a6;margin-top:8px;text-align:center;}
+@media(max-width:640px){.val-split{grid-template-columns:1fr;}.val-list{border-right:none;border-bottom:1px solid #e8eaed;}}
 </style>
 </head>
 <body>
@@ -553,6 +582,7 @@ tr:hover td{background:#fafafa;}
     <button class="dev-btn" onclick="applyScenario('s-app-classify',this)">&#9313; Classification Workstation</button>
     <button class="dev-btn" onclick="applyScenario('s-app-multidoc',this)">&#9313;&#43; Multi-doc PDF split</button>
     <button class="dev-btn" onclick="applyScenario('s-app-ocr',this)">&#9314; OCR Running (3/6 done)</button>
+    <button class="dev-btn" onclick="applyScenario('s-app-recfail',this)">&#9314;&#9888; OCR Recognition Failed (Skip/Replace)</button>
     <button class="dev-btn" onclick="applyScenario('s-app-done',this)">&#9315; All clear — ready to submit</button>
     <button class="dev-btn" onclick="applyScenario('s-app-alert',this)">&#9315; Done with 1 alert flag</button>
     <button class="dev-btn" onclick="applyScenario('s-app-detail',this)">&#9998; Amend OCR — Payslip detail</button>
@@ -614,6 +644,9 @@ let S={
   justFileId:'', justRule:'',
   multiDocSplit:false, // multi-doc PDF: segments confirmed
   classifyChoice:{},   // classification dropdown override: {fileId:type}
+  valFocusBox:'',      // cross-val: which rule's bounding box is highlighted on the source
+  eyeballConfirmed:{}, // {fileId:{label:true}} human Eyeball/Existence sign-off
+  ocrRecovery:{},      // OCR recognition-failure recovery: {fileId:'skip'|'replaced'}
 };
 
 // ═══════════════════════════════════════════════
@@ -1030,7 +1063,7 @@ function setDetailTab(t){S.detailTab=t;render();}
 
 function renderDetailTabBar(active,fileId){
   fileId=fileId||'f2';
-  var tabs=[['ocr','OCR Correction'],['validation','Cross-Validation'],['income','Income Computation'],['compliance','Compliance Check']];
+  var tabs=[['ocr','OCR Correction'],['validation','Validation'],['income','Income Computation']];
   return'<div class="dtabs">'+tabs.map(function(t){
     var badgeHtml='';
     if(t[0]==='ocr'){
@@ -1042,10 +1075,6 @@ function renderDetailTabBar(active,fileId){
       var open=valOpenConflictCount(fileId);
       if(open)badgeHtml='&nbsp;<span class="badge bd-orange" style="font-size:10px;">'+open+'</span>';
     }
-    if(t[0]==='compliance'){
-      var alerts=COMPLIANCE_CHECK_DATA.filter(function(c){return c.result==='alert';}).length;
-      if(alerts)badgeHtml='&nbsp;<span class="badge bd-orange" style="font-size:10px;">'+alerts+'</span>';
-    }
     if(t[0]==='income'){
       var missing=INCOME_COMPUTATION.sources.filter(function(s){return s.status==='missing';}).length;
       if(missing)badgeHtml='&nbsp;<span class="badge bd-orange" style="font-size:10px;">!</span>';
@@ -1054,16 +1083,55 @@ function renderDetailTabBar(active,fileId){
   }).join('')+'</div>';
 }
 
-// Count unresolved cross-file conflicts for a file
-function valOpenConflictCount(fileId){
-  var data=fileId==='d2'?VEHICLE_OCR:PAYSLIP_OCR;
+// ── VALIDATION RULE ENGINE MODEL ──
+// One rule engine, three dimensions + existence/eyeball. Each rule:
+// {dim,label,cmp,res,sev,box?,resolvable?,fieldLabel?,ruleKey?,orig?,ref?}
+function buildValidationRules(fileId){
+  var amds=S.ocrAmendments[fileId]||{};
   var resolved=S.valResolved[fileId]||{};
-  var n=0;
-  data.formula.forEach(function(c){
-    if(c.xfile&&(c.res==='alert'||c.res==='fail')&&!resolved[c.label])n++;
-  });
-  return n;
+  if(fileId==='d2'){
+    var bkDone=resolved['Booking Fee ≤ OTR × 1%']||amds['booking_fee'];
+    return[
+      {dim:'File Consistency',label:'Hirer name vs System record',cmp:'Invoice (Ahmad Bin Abdullah) = System (Ahmad Bin Abdullah)',res:'pass',sev:'hard',box:'hirer'},
+      {dim:'File Consistency',label:'Chassis number: Invoice vs VOC',cmp:'Invoice (PM1FA3BA1P1234567) = VOC (PM1FA3BA1P1234567)',res:'pass',sev:'hard',box:'chassis'},
+      {dim:'Internal Logic',label:'OTR = Loan + Deposit',cmp:'85,000 + 96,000 = 181,000',res:'pass',sev:'hard'},
+      {dim:'Internal Logic',label:'Booking Fee ≤ OTR × 1%',cmp:'Booking (RM 2,000) > Max (RM 1,810) = OTR (181,000) × 1%',res:bkDone?'pass':'fail',sev:'hard',box:'booking',resolvable:true,fieldLabel:'booking_fee',ruleKey:'Booking Fee ≤ OTR × 1%',orig:'RM 2,000',ref:null},
+      {dim:'Business Validity',label:'Invoice date within acceptance window',cmp:'2026-05-20 within 30 days',res:'pass',sev:'warn'},
+      {dim:'Existence & Eyeball',label:'Dealer stamp present',res:'eye',sev:'warn',box:'stamp'},
+      {dim:'Existence & Eyeball',label:'Invoice header contains "Invoice"',res:'eye',sev:'warn'}
+    ];
+  }
+  // payslip f2
+  var netDone=resolved['Payslip → Bank Statement: net pay cross-check']||amds['net_pay_amount'];
+  return[
+    {dim:'File Consistency',label:'Employer name vs System record',cmp:'Payslip (Syarikat ABC Sdn Bhd) = System (Syarikat ABC Sdn Bhd)',res:'pass',sev:'hard',box:'employer'},
+    {dim:'File Consistency',label:'Net pay vs Bank Statement credit',cmp:'Payslip Net (RM 5,800) ≠ Bank credit (RM 5,200) — diff RM 600 (10.3%)',res:netDone?'pass':'alert',sev:'warn',box:'netpay',resolvable:true,fieldLabel:'net_pay_amount',ruleKey:'Payslip → Bank Statement: net pay cross-check',orig:'RM 5,800',ref:'RM 5,200'},
+    {dim:'Internal Logic',label:'Gross = Basic + Allowances + Overtime',cmp:'5,500 + 800 + 500 = 6,800',res:'pass',sev:'hard'},
+    {dim:'Internal Logic',label:'Net = Gross − Deductions',cmp:'6,800 − 748 − 29.40 − 222.60 = 5,800',res:'pass',sev:'hard'},
+    {dim:'Business Validity',label:'Payslip recency (min. 3 consecutive months)',cmp:'1 month detected ≠ 3 required',res:'alert',sev:'warn'},
+    {dim:'Business Validity',label:'Watermark / VOID scan',cmp:'No VOID or cancellation watermark detected',res:'pass',sev:'hard'},
+    {dim:'Existence & Eyeball',label:'Employee signature present',res:'eye',sev:'hard',box:'sig'},
+    {dim:'Existence & Eyeball',label:'Employer stamp present',res:'eye',sev:'warn',box:'stamp'},
+    {dim:'Existence & Eyeball',label:'Document is not handwritten',res:'eye',sev:'warn'}
+  ];
 }
+// Effective result: eyeball items are 'pending' until a human signs off
+function valEffRes(fileId,r){
+  if(r.res==='eye'){var eye=S.eyeballConfirmed[fileId]||{};return eye[r.label]?'pass':'pending';}
+  return r.res;
+}
+function valRank(res){return res==='fail'?0:res==='alert'?1:res==='pending'?2:3;}
+// Count open (unresolved) issues across all dimensions for the tab badge
+function valOpenConflictCount(fileId){
+  return buildValidationRules(fileId).filter(function(r){
+    var e=valEffRes(fileId,r);return e==='fail'||e==='alert'||e==='pending';
+  }).length;
+}
+function confirmEyeball(fileId,label){
+  if(!S.eyeballConfirmed[fileId])S.eyeballConfirmed[fileId]={};
+  S.eyeballConfirmed[fileId][label]=true;render();
+}
+function focusBox(fileId,key){S.valFocusBox=key;render();}
 
 // ═══════════════════════════════════════════════
 //  OCR CORRECTION VIEW — every field editable (图文纠错)
@@ -1094,36 +1162,14 @@ function renderOcrCorrectionRight(data,fileId,canEdit){
     return'<div class="fg-row fix-row"><div class="fg-cell fg-label">'+f.label+'</div><div class="fg-cell">'+vHtml+'</div></div>';
   }).join('');
 
-  // Within-document checks only (cross-file rows live in the Cross-Validation tab)
-  var inDocFormula=data.formula.filter(function(c){return !c.xfile;});
-  var r3=inDocFormula.map(function(c){
-    return'<div class="check-row '+(c.res==='fail'?'cr-fail':c.res==='alert'?'cr-alert':'')+'">'
-      +'<span class="check-icon">'+(c.res==='pass'?I_OK:c.res==='alert'?I_WARN:I_FAIL)+'</span>'
-      +'<div class="check-body"><div class="check-label">'+c.label+'</div><div class="check-formula">'+c.formula+'</div></div>'
-      +'<span class="check-result">'+badge(c.res==='pass'?'Pass':c.res==='alert'?'Alert':'Fail',c.res==='pass'?'bd-green':c.res==='alert'?'bd-orange':'bd-red')+'</span>'
-    +'</div>';
-  }).join('');
-  var r3Ov=inDocFormula.some(function(c){return c.res==='fail';})?'fail':inDocFormula.some(function(c){return c.res==='alert';})?'alert':'pass';
-  var r2=data.consistency.map(function(c){
-    return'<div class="check-row"><span class="check-icon">'+(c.res==='pass'?I_OK:I_FAIL)+'</span>'
-      +'<div class="check-body"><div class="check-label">'+c.label+'</div><div class="check-detail">'+(c.detail||'')+'</div></div>'
-      +'<span class="check-result">'+badge(c.res==='pass'?'Match':'Mismatch',c.res==='pass'?'bd-green':'bd-red')+'</span></div>';
-  }).join('');
-  var r4=data.eyeball.map(function(c){
-    return'<div class="check-row cr-eye"><span class="check-icon">'+I_OK+'</span>'
-      +'<div class="check-body"><div class="check-label">'+c.label+'</div><div class="check-detail">'+c.note+'</div></div>'
-      +'<span class="check-result">'+badge('Pass','bd-green')+'</span></div>';
-  }).join('');
-
+  var openVal=valOpenConflictCount(fileId);
   var editHint=canEdit
-    ?'<div class="fix-hint">'+I_INFO+'<span><strong>图文纠错：</strong> compare every field with the source on the left. If AI misread any value, click <strong>&#9998; Amend</strong> on that row to correct it — no field is locked.</span></div>'
-    :'<div class="fix-hint fix-hint-ro">'+I_INFO+'<span><strong>View only.</strong> CED cannot edit fields. Amendments are made by Sales. Use these values to assess fraud risk.</span></div>';
+    ?'<div class="fix-hint">'+I_INFO+'<span><strong>图文纠错 — OCR field correction.</strong> Compare every field with the source on the left. If AI misread any value, click <strong>&#9998; Amend</strong> on that row — no field is locked. Rule checks (consistency / formula / business / eyeball) live on the <strong>Validation</strong> tab.</span></div>'
+    :'<div class="fix-hint fix-hint-ro">'+I_INFO+'<span><strong>View only.</strong> CED cannot edit fields. Use these values, plus the <strong>Validation</strong> tab, to assess fraud risk.</span></div>';
 
   return editHint
     +'<div class="region-section"><div class="region-hdr"><span class="region-title">Extracted Fields'+(canEdit?' — click &#9998; to correct':'')+'</span>'+(amendedCount?badge(amendedCount+' Amended','bd-green'):badge(data.fields.length+' fields','bd-blue'))+'</div><div class="field-grid">'+r1+'</div></div>'
-    +'<div class="region-section"><div class="region-hdr"><span class="region-title">Within-document Checks</span>'+badge(r3Ov==='pass'?'Pass':r3Ov==='alert'?'Alert':'Fail',r3Ov==='pass'?'bd-green':r3Ov==='alert'?'bd-orange':'bd-red')+'</div><div class="check-rows">'+r3+'</div></div>'
-    +'<div class="region-section"><div class="region-hdr"><span class="region-title">Consistency vs System</span>'+badge('Pass','bd-green')+'</div><div class="check-rows">'+r2+'</div></div>'
-    +'<div class="region-section"><div class="region-hdr"><span class="region-title">Eyeball Check</span>'+badge('Pass','bd-green')+'</div><div class="check-rows">'+r4+'</div></div>';
+    +'<div class="region-section" style="margin-top:14px;"><div class="ocr-to-val" onclick="setDetailTab(\'validation\')">'+I_INFO+'<span>Validation engine ran on these fields &mdash; <strong>'+(openVal?openVal+' issue'+(openVal>1?'s':'')+' need attention':'all checks passed')+'</strong>. Open the <strong>Validation</strong> tab &rarr;</span></div></div>';
 }
 
 function clearOneAmendment(fileId,label){
@@ -1134,72 +1180,100 @@ function clearOneAmendment(fileId,label){
 function openConflictTab(){S.scenario='s-app-detail';S.detailTab='validation';render();document.getElementById('mainContent').scrollTop=0;}
 
 // ═══════════════════════════════════════════════
-//  CROSS-VALIDATION TAB — logic conflict resolution (逻辑解突)
+//  VALIDATION TAB — rule engine (3 dimensions) + split-screen + bounding box
 // ═══════════════════════════════════════════════
+// Bounding-box positions on the mock source (top/left/width/height in %)
+var VAL_BOX_POS={
+  employer:{t:9,l:6,w:60,h:7}, netpay:{t:60,l:50,w:42,h:8}, sig:{t:84,l:52,w:40,h:9},
+  stamp:{t:80,l:6,w:34,h:13}, booking:{t:58,l:46,w:46,h:8}, hirer:{t:20,l:6,w:55,h:6},
+  chassis:{t:42,l:6,w:64,h:6}
+};
+function valSrcType(fileId){return fileId==='d2'?'invoice':'payslip';}
+function renderValDocPane(fileId,fname){
+  var boxes='';
+  buildValidationRules(fileId).forEach(function(r){
+    if(!r.box||!VAL_BOX_POS[r.box])return;
+    var p=VAL_BOX_POS[r.box];
+    var eff=valEffRes(fileId,r);
+    var active=S.valFocusBox===r.box;
+    var col=eff==='fail'?'#c5221f':eff==='alert'||eff==='pending'?'#b45309':'#137333';
+    boxes+='<div class="val-box'+(active?' val-box-active':'')+'" style="top:'+p.t+'%;left:'+p.l+'%;width:'+p.w+'%;height:'+p.h+'%;border-color:'+col+';'+(active?'box-shadow:0 0 0 3px '+col+'33;':'')+'">'
+      +(active?'<span class="val-box-tag" style="background:'+col+';">'+r.label+'</span>':'')+'</div>';
+  });
+  return'<div class="val-doc-pane">'
+    +'<div class="val-doc-hdr">'+I_EYE+'<span>Source: <strong>'+fname+'</strong></span><span class="val-doc-hint">click a rule&rsquo;s &#128205; to highlight it here</span></div>'
+    +'<div class="val-doc">'+pdfMock(valSrcType(fileId))+boxes+'</div>'
+    +'<div class="val-doc-foot">Page 1 &bull; boxes mark the exact value each rule is checking</div>'
+  +'</div>';
+}
 function renderValidationTab(fileId,canEdit){
-  var data=fileId==='d2'?VEHICLE_OCR:PAYSLIP_OCR;
+  var fname=fileId==='d2'?'Vehicle_Invoice_HLB.pdf':'Payslip_Oct2025.pdf';
   var amds=S.ocrAmendments[fileId]||{};
   var resolved=S.valResolved[fileId]||{};
-  var conflicts=data.formula.filter(function(c){return c.xfile&&(c.res==='alert'||c.res==='fail');});
+  var rules=buildValidationRules(fileId).slice().sort(function(a,b){return valRank(valEffRes(fileId,a))-valRank(valEffRes(fileId,b));});
 
-  var cards=conflicts.map(function(c){
-    var key=c.label;
-    var isNetPay=key.indexOf('Bank Statement')>=0;
-    var fieldLabel=isNetPay?'net_pay_amount':null;
-    var fieldAmended=fieldLabel&&amds[fieldLabel];
-    var res=resolved[key];
-    var done=fieldAmended||res;
+  var nFail=0,nAlert=0,nPend=0,nPass=0;
+  rules.forEach(function(r){var e=valEffRes(fileId,r);if(e==='fail')nFail++;else if(e==='alert')nAlert++;else if(e==='pending')nPend++;else nPass++;});
 
-    // Resolved state
-    if(done){
-      var how=fieldAmended?('OCR field corrected to <strong>'+amds[fieldLabel].amended+'</strong>'):
-        res.how==='adopt'?('Adopted reference value <strong>'+res.note+'</strong>'):
-        res.how==='justify'?('Forced pass with justification: <em>'+res.note+'</em>'):
-        res.how==='replace'?'Document replacement requested — re-upload pending':'Resolved';
-      return'<div class="vc-card vc-done">'
-        +'<div class="vc-hdr">'+I_OK+'<span class="vc-title">'+c.label+'</span>'+badge('Resolved','bd-green')+'</div>'
-        +'<div class="vc-resolved">'+how+(canEdit?'&nbsp;<button class="fix-undo" onclick="reopenConflict(\''+fileId+'\',\''+key+'\')">Reopen</button>':'')+'</div>'
-      +'</div>';
-    }
+  var rows=rules.map(function(r){
+    var eff=valEffRes(fileId,r);
+    var resBadge=eff==='fail'?badge('Fail','bd-red'):eff==='alert'?badge('Alert','bd-orange'):eff==='pending'?badge('Needs check','bd-orange'):badge('Pass','bd-green');
+    var sevTag='<span class="val-sev '+(r.sev==='hard'?'val-sev-hard':'val-sev-warn')+'">'+(r.sev==='hard'?'Hard Fail':'Warning')+'</span>';
+    var icon=eff==='fail'?I_FAIL:eff==='alert'||eff==='pending'?I_WARN:I_OK;
+    var cmpCol=eff==='pass'?'#5f6368':eff==='fail'?'#c5221f':'#92400e';
+    var locate=r.box?'<span class="val-locate'+(S.valFocusBox===r.box?' val-locate-on':'')+'" onclick="focusBox(\''+fileId+'\',\''+r.box+'\')">&#128205; Locate</span>':'';
 
-    // Open conflict — comparison grid + action panel
-    var grid=isNetPay
-      ?'<div class="vc-grid">'
-        +'<div><span class="vc-k">Rule</span> Net pay vs Bank Statement credit</div>'
-        +'<div><span class="vc-k">Severity</span> '+badge('Alert','bd-orange')+'</div>'
-        +'<div><span class="vc-k">Payslip net pay (OCR)</span> <strong>RM 5,800</strong></div>'
-        +'<div><span class="vc-k">Bank Statement credit (reference)</span> <strong>RM 5,200</strong></div>'
-        +'<div style="grid-column:span 2;"><span class="vc-k">Difference</span> <strong style="color:#c5221f;">RM 600 (10.3%)</strong></div>'
-      +'</div>'
-      :'<div class="vc-grid"><div style="grid-column:span 2;"><span class="vc-k">Detail</span> '+c.formula+'</div></div>';
-
-    var actions;
-    if(!canEdit){
-      actions='<div class="vc-ro">'+I_INFO+'<span>View only — CED assesses risk; resolution is performed by Sales.</span></div>';
-    } else {
-      actions='<div class="vc-actions">';
-      if(isNetPay){
-        actions+='<button class="vc-btn vc-btn-ref" onclick="adoptReference(\''+fileId+'\',\'net_pay_amount\',\'RM 5,200\',\''+key+'\')">Adopt Reference Value (RM 5,200)</button>';
-        actions+='<button class="vc-btn vc-btn-amend" onclick="openAmendModal(\'net_pay_amount\',\'RM 5,800\',\''+fileId+'\')">&#9998; Amend OCR Value</button>';
+    // Action area for open items
+    var actions='';
+    if(eff!=='pass'){
+      if(r.resolvable&&canEdit){
+        actions='<div class="vc-actions">';
+        if(r.ref)actions+='<button class="vc-btn vc-btn-ref" onclick="adoptReference(\''+fileId+'\',\''+r.fieldLabel+'\',\''+r.ref+'\',\''+r.ruleKey+'\')">Adopt Reference ('+r.ref+')</button>';
+        actions+='<button class="vc-btn vc-btn-amend" onclick="openAmendModal(\''+r.fieldLabel+'\',\''+r.orig+'\',\''+fileId+'\')">&#9998; Amend OCR Value</button>';
+        actions+='<button class="vc-btn vc-btn-just" onclick="openJustification(\''+fileId+'\',\''+r.ruleKey+'\')">Justify &amp; Force Pass</button>';
+        actions+='<button class="vc-btn vc-btn-rep" onclick="requestReplace(\''+fileId+'\',\''+r.ruleKey+'\')">'+I_UP+' Replace Document</button>';
+        actions+='</div>';
+      } else if(r.res==='eye'&&canEdit){
+        actions='<div class="vc-actions"><button class="vc-btn vc-btn-amend" onclick="confirmEyeball(\''+fileId+'\',\''+r.label+'\')">&#10003; I verified this on the source</button></div>';
+      } else if(!canEdit){
+        actions='<div class="vc-ro">'+I_INFO+'<span>View only &mdash; resolution / sign-off is performed by Sales.</span></div>';
       }
-      actions+='<button class="vc-btn vc-btn-just" onclick="openJustification(\''+fileId+'\',\''+key+'\')">Justification &amp; Force Pass</button>';
-      actions+='<button class="vc-btn vc-btn-rep" onclick="requestReplace(\''+fileId+'\',\''+key+'\')">'+I_UP+' Replace Document</button>';
-      actions+='</div>';
+    } else if(r.res==='eye'){
+      actions='<div class="vc-resolved" style="padding-left:0;">'+I_OK+' Eyeball-confirmed'+(canEdit?'&nbsp;<button class="fix-undo" onclick="reopenEyeball(\''+fileId+'\',\''+r.label+'\')">Undo</button>':'')+'</div>';
+    } else if(r.resolvable){
+      var how=amds[r.fieldLabel]?('OCR corrected to <strong>'+amds[r.fieldLabel].amended+'</strong>'):
+        (resolved[r.ruleKey]&&resolved[r.ruleKey].how==='adopt')?('Adopted reference <strong>'+resolved[r.ruleKey].note+'</strong>'):
+        (resolved[r.ruleKey]&&resolved[r.ruleKey].how==='justify')?('Force-passed: <em>'+resolved[r.ruleKey].note+'</em>'):
+        (resolved[r.ruleKey]&&resolved[r.ruleKey].how==='replace')?'Replacement requested':'Resolved';
+      actions='<div class="vc-resolved" style="padding-left:0;">'+I_OK+' '+how+(canEdit?'&nbsp;<button class="fix-undo" onclick="reopenConflict(\''+fileId+'\',\''+r.ruleKey+'\')">Reopen</button>':'')+'</div>';
     }
 
-    return'<div class="vc-card">'
-      +'<div class="vc-hdr">'+I_WARN+'<span class="vc-title">'+c.label+'</span>'+badge(c.res==='fail'?'Fail':'Alert',c.res==='fail'?'bd-red':'bd-orange')+'</div>'
-      +'<div class="vc-sub">Data conflict between this file and another source — resolve by correcting the OCR value, adopting the reference, justifying, or replacing the document.</div>'
-      +grid+actions
+    return'<div class="val-rule '+(eff==='fail'?'vr-fail':eff==='alert'||eff==='pending'?'vr-warn':'vr-pass')+'">'
+      +'<div class="val-rule-top"><span class="check-icon">'+icon+'</span>'+sevTag+'<span class="val-dim">'+r.dim+'</span><span style="margin-left:auto;">'+resBadge+'</span></div>'
+      +'<div class="val-rule-label">'+r.label+'</div>'
+      +(r.cmp?'<div class="val-cmp" style="color:'+cmpCol+';">'+r.cmp+'</div>':'')
+      +'<div class="val-rule-foot">'+locate+'</div>'
+      +actions
     +'</div>';
   }).join('');
 
-  var head=conflicts.length===0
-    ?'<div class="alert-ok" style="margin-bottom:12px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg><span>No cross-file conflicts. All cross-validations pass.</span></div>'
-    :'<div class="alert-info" style="margin-bottom:12px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span><strong>逻辑解突 Cross-Validation:</strong> these are conflicts <em>between files</em> (or file ↔ system), not OCR typos. Each card offers richer resolution options than plain field editing.</span></div>';
+  var summary='<div class="val-summary">'
+    +'<span class="vs-chip vs-red">'+nFail+' Hard Fail</span>'
+    +'<span class="vs-chip vs-org">'+(nAlert+nPend)+' Warning / Check</span>'
+    +'<span class="vs-chip vs-grn">'+nPass+' Pass</span>'
+    +'<span style="margin-left:auto;font-size:11px;color:#5f6368;">Rule engine &bull; sorted most-severe first</span>'
+  +'</div>';
+  var head='<div class="alert-info" style="margin-bottom:12px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span><strong>Validation (规则引擎)</strong> &mdash; three dimensions: <strong>File Consistency</strong> / <strong>Internal Logic</strong> / <strong>Business Validity</strong>, plus existence &amp; eyeball. <span style="color:#c5221f;">Red = Hard Fail (blocks submit)</span>, <span style="color:#b45309;">Orange = Warning</span>, Green = Pass.</span></div>';
 
-  return'<div class="dtab-body">'+head+'<div class="vc-list">'+cards+'</div></div>';
+  return'<div class="dtab-body" style="padding:0;">'
+    +'<div style="padding:14px 16px 0;">'+head+summary+'</div>'
+    +'<div class="val-split">'
+      +'<div class="val-list">'+rows+'</div>'
+      +renderValDocPane(fileId,fname)
+    +'</div>'
+  +'</div>';
 }
+function reopenEyeball(fileId,label){if(S.eyeballConfirmed[fileId])delete S.eyeballConfirmed[fileId][label];render();}
 
 function adoptReference(fileId,label,refVal,ruleKey){
   if(!S.ocrAmendments[fileId])S.ocrAmendments[fileId]={};
@@ -1387,16 +1461,21 @@ function renderSAppOcrDetail(){
 //  CROSS-VALIDATION PANEL RENDERER
 // ═══════════════════════════════════════════════
 function renderCrossValPanel(checks,title){
+  const rank=r=>r==='fail'?0:r==='alert'?1:2;
+  const sorted=checks.slice().sort((a,b)=>rank(a.res)-rank(b.res)); // risk-priority: red → orange → green
   const overall=checks.some(c=>c.res==='fail')?'fail':checks.some(c=>c.res==='alert')?'alert':'pass';
   const overallBadge=badge(overall==='fail'?'Fail':overall==='alert'?'Alert':'All Pass',overall==='fail'?'bd-red':overall==='alert'?'bd-orange':'bd-green');
-  const rows=checks.map(c=>`<div class="check-row ${c.res==='fail'?'cr-fail':c.res==='alert'?'cr-alert':''}">
+  const rows=sorted.map(c=>{
+    const sev=c.res==='fail'?'<span class="val-sev val-sev-hard">Hard Fail</span>':c.res==='alert'?'<span class="val-sev val-sev-warn">Warning</span>':'';
+    const detailCol=c.res==='pass'?'#5f6368':c.res==='fail'?'#c5221f':'#92400e';
+    return`<div class="check-row ${c.res==='fail'?'cr-fail':c.res==='alert'?'cr-alert':''}">
     <span class="check-icon">${c.res==='pass'?I_OK:c.res==='alert'?I_WARN:I_FAIL}</span>
     <div class="check-body">
-      <div class="check-label"><span style="font-weight:600;color:#3c4043;">${c.from}</span>&nbsp;<span style="color:#9aa0a6;font-size:11px;">&rarr;</span>&nbsp;<span style="font-weight:600;color:#3c4043;">${c.to}</span></div>
-      <div class="check-detail">${c.rule} &mdash; ${c.detail}</div>
+      <div class="check-label">${sev}<span style="font-weight:600;color:#3c4043;">${c.from}</span>&nbsp;<span style="color:#9aa0a6;font-size:11px;">&rarr;</span>&nbsp;<span style="font-weight:600;color:#3c4043;">${c.to}</span></div>
+      <div class="check-detail" style="color:${detailCol};font-family:ui-monospace,Menlo,Consolas,monospace;">${c.rule} &mdash; ${c.detail}</div>
     </div>
     <span class="check-result">${badge(c.res==='pass'?'Pass':c.res==='alert'?'Alert':'Fail',c.res==='pass'?'bd-green':c.res==='alert'?'bd-orange':'bd-red')}</span>
-  </div>`).join('');
+  </div>`;}).join('');
   return`<div class="region-section" style="margin-top:18px;">
     <div class="region-hdr"><span class="region-title">${title||'Cross-File Validation'}</span>${overallBadge}</div>
     <div class="check-rows">${rows}</div>
@@ -1665,6 +1744,63 @@ function renderSAppOcr(){
     </div>
     <table>
       <thead><tr><th>File</th><th>Document Type</th><th>OCR Status</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: SALES — APP — OCR RECOGNITION FAILED (兜底)
+// ═══════════════════════════════════════════════
+function skipOcr(fileId){S.ocrRecovery[fileId]='skip';render();}
+function replaceDocOcr(fileId){S.ocrRecovery[fileId]='replaced';render();}
+function resetRecovery(fileId){delete S.ocrRecovery[fileId];render();}
+function renderSAppRecFail(){
+  // f6 (EPF) is the file whose OCR could not be read after 3 auto-retries
+  const failId='f6';
+  const rows=APP_FILES.map(f=>{
+    const isFail=f.id===failId;
+    const rec=S.ocrRecovery[f.id];
+    let statusCell,actionCell;
+    if(!isFail){
+      statusCell=sp('pass','OCR done');
+      actionCell=`<div class="btn-icon-sm" style="display:inline-flex;" onclick="openFilePreview('${f.id}')" title="Preview">${I_EYE}</div>`;
+    } else if(rec==='skip'){
+      statusCell=`<span class="sp" style="background:#ede7f6;color:#6a3fb5;">${I_INFO} Manual Override</span>`;
+      actionCell=`<span style="font-size:11px;color:#6a3fb5;">AI extraction skipped &mdash; fields handled manually downstream</span>&nbsp;<button class="fix-undo" onclick="resetRecovery('${f.id}')">Undo</button>`;
+    } else if(rec==='replaced'){
+      statusCell=`<span class="sp sp-ocr">${I_SPIN} Re-running OCR</span>`;
+      actionCell=`<span style="font-size:11px;color:#7c3aed;">New file uploaded &mdash; OCR &amp; validation re-triggered automatically</span>&nbsp;<button class="fix-undo" onclick="resetRecovery('${f.id}')">Undo</button>`;
+    } else {
+      statusCell=`<span class="sp sp-fail">${I_FAIL} Recognition Failed</span>`;
+      actionCell=`<button class="btn btn-secondary btn-sm" onclick="skipOcr('${f.id}')">Skip (Manual Override)</button>&nbsp;<button class="btn btn-primary btn-sm" onclick="replaceDocOcr('${f.id}')">${I_UP} Replace Document</button>`;
+    }
+    return`<tr>
+      <td><div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:30px;height:30px;border-radius:5px;background:#f0f2f5;display:flex;align-items:center;justify-content:center;">${isFail&&!rec?I_FILE_R:I_FILE_N}</div>
+        <div><div style="font-size:13px;font-weight:500;">${f.name}</div>
+        <div style="font-size:11px;color:#9aa0a6;">${isFail&&!rec?'AI auto-retried 3× &mdash; could not extract text (blurry / unsupported layout)':f.subject}</div></div>
+      </div></td>
+      <td style="font-size:12px;">${f.aiType}</td>
+      <td>${statusCell}</td>
+      <td style="text-align:right;white-space:nowrap;">${actionCell}</td>
+    </tr>`;
+  }).join('');
+
+  const rec=S.ocrRecovery[failId];
+  const banner=rec==='skip'
+    ?`<div class="alert-info" style="margin-bottom:14px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span><strong>1 file set to Manual Override.</strong> The system stops AI extraction for this file; its data will be checked manually. The workflow is no longer blocked.</span></div>`
+    :rec==='replaced'
+    ?`<div class="alert-ok" style="margin-bottom:14px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg><span><strong>Replacement uploaded.</strong> OCR and validation are re-running on the new file &mdash; no manual re-trigger needed.</span></div>`
+    :`<div class="alert-err" style="margin-bottom:14px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><span><strong>OCR Recognition Failed on 1 file.</strong> The system auto-retried 3 times. Choose a fallback so the flow doesn&rsquo;t stall: <strong>Skip</strong> (hand to manual) or <strong>Replace Document</strong> (re-upload a clearer file).</span></div>`;
+
+  return`${caseHeader()}
+  ${salesTabBar('app')}
+  <div class="tab-body">
+    ${salesStepBar(3)}
+    ${banner}
+    <table>
+      <thead><tr><th>File</th><th>Document Type</th><th>OCR Status</th><th>Fallback</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div>`;
@@ -2282,6 +2418,10 @@ function updateFooter(){
     const ok=S.multiDocSplit;
     L.innerHTML=ok?`<span style="color:#137333;">&#10003; 4 virtual files created &mdash; ready for OCR</span>`:`<span style="color:#5f6368;">Confirm the document splits before OCR can begin</span>`;
     R.innerHTML=`${s}Save Draft</button><button class="btn btn-primary" ${ok?'onclick="applyScenario(\'s-app-ocr\',null)"':' disabled'}>Start OCR</button>`;
+  } else if(sc==='s-app-recfail'){
+    const r=S.ocrRecovery['f6'];
+    L.innerHTML=r?`<span style="color:#137333;">&#10003; Fallback chosen &mdash; flow unblocked</span>`:`<span style="color:#c5221f;">&#9888; 1 file failed OCR &mdash; Skip or Replace to continue</span>`;
+    R.innerHTML=`${s}Save Draft</button><button class="btn btn-primary" ${r?'onclick="applyScenario(\'s-app-alert\',null)"':' disabled'}>Continue &rarr;</button>`;
   } else if(sc==='s-app-ocr'){
     L.innerHTML=`<span style="color:#7c3aed;">${I_SPIN} OCR &amp; validation running &mdash; you can review a finished file now; submission stays locked until all complete</span>`;
     R.innerHTML=`${s}Save Draft</button>${pd}Submit for Review</button>`;
@@ -2345,6 +2485,7 @@ function render(){
   else if(sc==='s-app-classify')html=renderSAppClassify();
   else if(sc==='s-app-multidoc')html=renderSAppMultiDoc();
   else if(sc==='s-app-ocr')     html=renderSAppOcr();
+  else if(sc==='s-app-recfail') html=renderSAppRecFail();
   else if(sc==='s-app-done')    html=renderSAppDone(false);
   else if(sc==='s-app-alert')   html=renderSAppDone(true);
   else if(sc==='s-app-detail')  html=renderSAppOcrDetail();
@@ -2376,6 +2517,7 @@ function applyScenario(key,btn){
   if(key==='s-dis-defect-p'){S.defectFixed=1;}
   if(key==='s-app-detail'||key==='ced-detail'){S.detailTab='ocr';}
   if(key==='s-app-multidoc'){S.multiDocSplit=false;}
+  if(key==='s-app-recfail'){S.ocrRecovery={};}
   document.querySelectorAll('.dev-btn').forEach(b=>b.classList.remove('dev-active'));
   if(btn)btn.classList.add('dev-active');
   render();
