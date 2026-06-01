@@ -24,7 +24,15 @@
 | `05_签约/需求文档/e-acceptance-prototype.html` | **E-Acceptance 主原型文件（session-v9，持续迭代）** |
 | `05_签约/需求文档/_v4_reference.html` | v4 快照，保留为参考，不修改 |
 | `02_AIOCR/需求文档/aiocr-prototype.html` | **AIOCR 主原型文件（session-v9，持续迭代）** |
+| `02_AIOCR/需求文档/aiocr-prototype_v1_定稿.html` | **AIOCR v1 定稿快照（git tag `aiocr-v1`），保留参考，不修改** |
 | `CLAUDE.md` | 本文件，项目记忆 + 任务看板 |
+
+### AIOCR v1 定稿核心能力（tag `aiocr-v1`，2026-06-01 冻结）
+- OCR 图文纠错：每字段常驻 ✏ Amend（Sales/CRA 可改，CED 只读）
+- Validation 规则引擎：三维度（File Consistency / Internal Logic / Business Validity）+ 存在性/Eyeball；左右分屏 + Bounding Box 选框联动 + 风险优先排序 + 公式化差异标红 + Hard Fail/Warning 标签；解突操作 Adopt/Amend/Justify/Replace
+- 多文件 PDF 拆分；OCR Recognition Failed 兜底（Skip→Manual Override / Replace 重跑）
+- CED Income & Decision 工作台：数据隔离、Import Sales、人工核定(Creator→CED Vetted)、DSR/MDI 按 Total Verifiable Income 重算、对 Sales 单向只读
+- Pipeline：Upload → Classify → OCR & Cross-Validation → Review & Submit
 
 ---
 
