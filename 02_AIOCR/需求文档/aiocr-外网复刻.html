@@ -297,12 +297,27 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .check-btn:hover{background:#fdf3d6;border-color:#a87c0a;}
 .done-tag{background:#1a7a43;color:#fff;border-radius:5px;padding:4px 12px;font-size:11.5px;font-weight:600;display:inline-block;}
 
-/* ── Skip with note ── */
-.skip-btn{border:none;background:none;color:#9aa1ab;font-size:11.5px;padding:4px 8px;cursor:pointer;border-left:1px solid #e5e7eb;margin-left:4px;}
-.skip-btn:hover{color:#c0392b;}
-.fd-alert.skipped{background:#f7f7f7;border-color:#e0e0e0;opacity:.8;}
-.sev-skip{background:#f0f0f0;color:#6b7280;}
-.skip-note{font-size:11.5px;color:#5b6470;font-style:italic;margin:4px 0;}
+/* ── Action button hierarchy (3 levels) ── */
+/* L1 Corrective — filled blue (primary / recommended) */
+.fd-abtn-rec{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600;}
+.fd-abtn-rec:hover{background:var(--blue-d);color:#fff;}
+/* L2 Replacement — outlined normal */
+.fd-abtn{border:1px solid #d0d5dd;background:#fff;color:#374151;border-radius:6px;padding:7px 14px;font-size:12px;}
+.fd-abtn:hover{border-color:#9aa1ab;background:#f9fafb;}
+/* L3 Justify & proceed — text-level, always last */
+.justify-btn{border:none;background:none;color:#9aa1ab;font-size:11.5px;padding:6px 10px;cursor:pointer;border-left:1px solid #e5e7eb;margin-left:6px;font-family:inherit;}
+.justify-btn:hover{color:#b45309;}
+/* Hard Fail justify gets a slightly stronger treatment */
+.sevbox-hard .justify-btn{color:#b45309;}
+/* Justify & proceed — amber card state */
+.fd-alert.justified{background:#fffbf0;border-color:#f0d080;border-left-color:#e0a800;opacity:.92;}
+.sev-just{background:#fff4e0;color:#b45309;}
+.just-note{font-size:11.5px;color:#7a5c0a;font-style:italic;margin:5px 0 2px;padding:5px 9px;background:#fef9ec;border-radius:5px;border-left:3px solid #e0b800;}
+/* Resolved (actually fixed) stays green */
+.fd-alert.resolved{background:#f1faf3;border-color:#9bd5ab;border-left-color:#1a7a43;}
+.fd-resolved-how{font-size:11.5px;color:#1a7a43;margin:4px 0;}
+/* Full button set spacing */
+.fd-alert-acts{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:10px;}
 
 /* ── NEEDS CHECK removed from label — only row highlight + Check button ── */
 .need,.checked{display:none;} /* hide old badges — replaced by row+button model */
@@ -342,8 +357,8 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'filelist', fileOpen:false, file
         addRuleOpen:false, addRuleFileId:'', addRuleEditId:null,
         editingField:null,   // {fileId,k,val} — inline field edit
         fieldOverrides:{},   // {fileId:{k:newVal}} — amended values
-        skippedAlerts:{},    // {fileId:{alertId:noteText}} — skipped with note
-        skipNoteTarget:null  // {fileId,alertId} — pending skip-note modal
+        justifiedAlerts:{},  // {fileId:{alertId:noteText}} — justified with note (merged Skip+Justification)
+        justifyTarget:null   // {fileId,alertId} — pending justify modal
 };
 
 /* ════════════════ DATA ════════════════ */
@@ -380,7 +395,7 @@ var FILE_DETAIL={
     alerts:[
       {id:'idcons', title:'Mykad - id_no Consistency', sev:'hard', dim:'File Consistency', kind:'consistency',
         cmp:'Page 1 <b>870420-49-5767</b> &nbsp;&ne;&nbsp; Page 2 <span class="bad">870420-49-5767-05</span>',
-        acts:['amend','justify','replace'], rec:'amend', locate:'id_no', page:2},
+        acts:['amend','replace'], rec:'amend', locate:'id_no', page:2},
       {id:'eyeball', title:'Eyeball Check', sev:'check', dim:'Eyeball / Existence', kind:'eyeball',
         cmp:'4 fields flagged for manual confirm: address_line1, address_line2, id_no_alt, gender',
         acts:['verifyall','replace'], rec:'verifyall', locate:'gender'}
@@ -405,10 +420,10 @@ var FILE_DETAIL={
     alerts:[
       {id:'genrules', title:'General Document Rules', sev:'hard', dim:'Business Validity', kind:'recency',
         cmp:'Contribution month <span class="bad">Jun-2025</span> &nbsp;&middot;&nbsp; Expected &le; 2 months from application_date (M-2)',
-        acts:['justify','replace'], rec:'replace', locate:'statement_date'},
+        acts:['replace'], rec:'replace', locate:'statement_date'},
       {id:'datecmp', title:'EPF Statement - statement_date Date Compare', sev:'warn', dim:'Internal Logic', kind:'datefmt',
         cmp:'statement_date <span class="bad">17-06-2025</span> &nbsp;&middot;&nbsp; Expected a valid statement date in range',
-        acts:['amend','justify','replace'], rec:'amend', locate:'statement_date'}
+        acts:['amend','replace'], rec:'amend', locate:'statement_date'}
     ],
     groups:[
       {name:'', addNew:true, fields:[
@@ -446,10 +461,10 @@ var FILE_DETAIL={
   vso:{ name:'VSO.pdf', crumb:'Collateral/Others &rsaquo; VSO', doc:'vso',
     alerts:[
       {id:'vsoname', title:'VSO - customer_name Consistency', sev:'hard', dim:'File Consistency', kind:'consistency',
-        cmp:'customer_name is not consistent across documents', acts:['amend','justify','replace'], rec:'amend', locate:'guarantor_name'},
+        cmp:'customer_name is not consistent across documents', acts:['amend','replace'], rec:'amend', locate:'guarantor_name'},
       {id:'vsoprice', title:'VSO - total_sales_price Exist', sev:'warn', dim:'Existence', kind:'exist',
         cmp:'total_sales_price <span class="bad">not present</span> &nbsp;&middot;&nbsp; document shows SELLING PRICE RM 250,000.00 &rarr; captured as net_selling_price',
-        acts:['justify','replace'], rec:'justify', locate:'total_sales_price'}
+        acts:['replace'], rec:'replace', locate:'total_sales_price'}
     ],
     groups:[
       {name:'', fields:[{k:'engine_capacity',v:'2493CC',c:100,need:true,done:true}]},
@@ -785,50 +800,58 @@ function renderDocs(){
 function actBtn(key,fileId,alertId,rec){
   var label=ACT_LABEL[key],isRec=key===rec;
   var cls='fd-abtn'+(isRec?' fd-abtn-rec':'');
-  var suf=isRec?' &middot; 建议':'';
-  if(key==='verifyall')return '<button class="'+cls+'" onclick="verifyAll(\''+fileId+'\',\''+alertId+'\')">'+label+suf+'</button>';
-  return '<button class="'+cls+'">'+label+suf+'</button>';
+  if(key==='verifyall')return '<button class="'+cls+'" onclick="verifyAll(\''+fileId+'\',\''+alertId+'\')">'+label+'</button>';
+  return '<button class="'+cls+'">'+label+'</button>';
 }
 function sevMeta(s){return s==='hard'?{t:'Hard Fail',c:'sev-hard'}:s==='warn'?{t:'Warning',c:'sev-warn'}:{t:'Needs Check',c:'sev-check'};}
 function guidanceLine(a){
-  if(a.kind==='eyeball')return 'Verify each value against the source, then <b>Verify All</b>.';
-  return 'OCR misread &rarr; <b>Amend</b> &nbsp;&middot;&nbsp; document non-compliant &rarr; <b>Replace</b> &nbsp;&middot;&nbsp; acceptable &rarr; <b>Justification</b> (note required).';
+  if(a.kind==='eyeball')return '<b>Verify All</b> to confirm all flagged fields visually. Cannot verify? Use <b>Justify &amp; proceed</b> with a reason.';
+  if(a.kind==='exist')return 'Field missing in OCR output. Check the document &mdash; <b>Amend</b> if it exists but was not recognised. Use <b>Justify &amp; proceed</b> if the field is genuinely absent and acceptable.';
+  return 'If AI misread the value: <b>Amend</b> to correct it. If the document itself is non-compliant: <b>Replace Document</b>. If the issue is acceptable: <b>Justify &amp; proceed</b> with a documented reason.';
 }
 function fdAlertCard(a,fileId){
-  var skipped=(S.skippedAlerts[fileId]||{})[a.id];
-  if(skipped!==undefined){
-    var undoSkip='<button class="cr-edit" onclick="undoSkip(\''+fileId+'\',\''+a.id+'\')">Undo</button>';
-    return '<div class="fd-alert skipped">'
-      +'<div class="fd-alert-top"><span class="sevtag sev-skip">Skipped</span><span class="dimtag">'+a.dim+'</span>'+(a.isCustom?'<span class="customtag">&#9998; Custom</span>':'<span class="systag">System</span>')+'</div>'
-      +'<div class="fd-alert-ttl" style="margin:2px 0 2px;opacity:.7;">'+a.title+'</div>'
-      +(skipped?'<div class="skip-note">Note: '+skipped+'</div>':'')
-      +'<div class="fd-alert-acts">'+undoSkip+'</div>'
+  // ── Justified state (merged: Justification + Skip → one concept) ──
+  var justified=(S.justifiedAlerts[fileId]||{})[a.id];
+  if(justified!==undefined){
+    return '<div class="fd-alert justified">'
+      +'<div class="fd-alert-top"><span class="sevtag sev-just">Justified</span><span class="dimtag">'+a.dim+'</span>'+(a.isCustom?'<span class="customtag">&#9998; Custom</span>':'<span class="systag">System</span>')+'</div>'
+      +'<div class="fd-alert-ttl">'+a.title+'</div>'
+      +(justified?'<div class="just-note">&#128221; '+justified+'</div>':'<div class="just-note" style="color:#9aa1ab;font-style:italic;">No note provided.</div>')
+      +'<div class="fd-alert-acts"><button class="fd-abtn" onclick="undoJustify(\''+fileId+'\',\''+a.id+'\')">&#8635; Undo</button></div>'
     +'</div>';
   }
+  // ── Resolved state (actually fixed) ──
   var resolved=(S.alertResolved[fileId]||{})[a.id];
   var sm=sevMeta(a.sev);
   var acts=a.acts.map(function(k){return actBtn(k,fileId,a.id,a.rec);}).join('');
+  // Justify & proceed — always last, tertiary
+  var justifyBtn='<button class="justify-btn" onclick="openJustify(\''+fileId+'\',\''+a.id+'\')">'+(a.sev==='hard'?'Justify &amp; proceed (mandatory note)':'Justify &amp; proceed')+'</button>';
   if(resolved){
+    var how=resolved.how==='adopt'?('Adopted reference <b>'+resolved.note+'</b>'):
+      resolved.how==='replace'?'Replacement requested':
+      resolved.note?('Corrected: '+resolved.note):'Resolved';
     return '<div class="fd-alert resolved">'
-      +'<div class="fd-alert-top"><span class="sevtag sev-ok">Resolved</span><span class="fd-alert-ttl">'+a.title+'</span><span class="fd-rtag">&#10003;</span></div>'
-      +(a.cmp?'<div class="fd-cmp">'+a.cmp+'</div>':'')
-      +'<div class="fd-alert-acts">'+acts+'</div>'
+      +'<div class="fd-alert-top"><span class="sevtag sev-ok">&#10003; Resolved</span><span class="dimtag">'+a.dim+'</span></div>'
+      +'<div class="fd-alert-ttl">'+a.title+'</div>'
+      +'<div class="fd-resolved-how">'+how+'</div>'
+      +'<div class="fd-alert-acts"><button class="fd-abtn" onclick="reopenAlert(\''+fileId+'\',\''+a.id+'\')">&#8635; Undo</button></div>'
     +'</div>';
   }
-  var locate=a.locate?'<span class="fd-locate" onclick="locateField(\''+fileId+'\',\''+a.locate+'\','+(a.page||1)+')">&#128205; Locate '+a.locate+(a.page?' (page '+a.page+')':'')+'</span>':'';
-  var sourceTag=a.isCustom?'<span class="customtag">&#9998; Custom rule</span>':'<span class="systag">System rule</span>';
+  var locate=a.locate?'<span class="fd-locate" onclick="locateField(\''+fileId+'\',\''+a.locate+'\','+(a.page||1)+')">&#128205; Locate</span>':'';
+  var sourceTag=a.isCustom?'<span class="customtag">&#9998; Custom</span>':'<span class="systag">System</span>';
   var customFoot=a.isCustom?'<div class="custom-rule-foot"><button class="cr-edit" onclick="openAddRule(\''+fileId+'\',\''+a.id+'\')">&#9998; Edit</button><button class="cr-del" onclick="deleteCustomRule(\''+fileId+'\',\''+a.id+'\')">&#215; Remove</button></div>':'';
   return '<div class="fd-alert sevbox-'+a.sev+(a.isCustom?' custom-rule':'')+'">'
-    +'<div class="fd-alert-top"><span class="sevtag '+sm.c+'">'+sm.t+'</span><span class="dimtag">'+a.dim+'</span>'+sourceTag+'</div>'
-    +'<div class="fd-alert-ttl" style="margin:2px 0 4px;">'+a.title+'</div>'
+    +'<div class="fd-alert-top"><span class="sevtag '+sm.c+'">'+sm.t+'</span><span class="dimtag">'+a.dim+'</span>'+sourceTag+(locate?'<span style="margin-left:auto;">'+locate+'</span>':'')+'</div>'
+    +'<div class="fd-alert-ttl">'+a.title+'</div>'
     +(a.cmp?'<div class="fd-cmp">'+a.cmp+'</div>':'')
-    +(locate?'<div class="fd-locate-row">'+locate+'</div>':'')
     +'<div class="fd-guide">'+guidanceLine(a)+'</div>'
-    +'<div class="fd-alert-acts">'+acts
-      +'<button class="skip-btn" onclick="openSkipNote(\''+fileId+'\',\''+a.id+'\')">Skip &middot; Add note</button>'
-    +'</div>'
+    +'<div class="fd-alert-acts">'+acts+justifyBtn+'</div>'
     +customFoot
   +'</div>';
+}
+function reopenAlert(fileId,alertId){
+  if(S.alertResolved[fileId])delete S.alertResolved[fileId][alertId];
+  render();
 }
 function locateField(fileId,key,page){
   S.locate={file:fileId,key:key,page:page||1};render();
@@ -895,7 +918,7 @@ function saveCustomRule(){
   if(type==='recency'&&param)cmp=field+' must be within <b>'+param+' months</b> of application_date';
   if(type==='required')cmp=field+' must be present';
   if(type==='note')cmp='<em>'+note+'</em>';
-  var acts=type==='manual'?['verifyall']:type==='note'?[]:['amend','justify','replace'];
+  var acts=type==='manual'?['verifyall']:type==='note'?[]:['amend','replace'];
   var rec=type==='manual'?'verifyall':type==='match'||type==='threshold'||type==='recency'?'amend':'justify';
   var rule={id:S.addRuleEditId||('cr-'+Date.now()),title:title,sev:rt.hasSev?sev:'check',
     dim:rt.dim,kind:type,cmp:cmp,acts:acts,rec:rec,custom:true,ruleType:type,field:field,param:param,note:note};
@@ -911,32 +934,41 @@ function deleteCustomRule(fileId,id){
   S.customRules[fileId]=S.customRules[fileId].filter(function(r){return r.id!==id;});
   render();
 }
-// ── Skip with note ──────────────────────────────────────────
-function openSkipNote(fileId,alertId){S.skipNoteTarget={fileId:fileId,alertId:alertId};render();setTimeout(function(){var i=document.getElementById('skip-note-inp');if(i)i.focus();},30);}
-function closeSkipNote(){S.skipNoteTarget=null;render();}
-function saveSkipNote(){
-  var inp=document.getElementById('skip-note-inp');
+// ── Justify & proceed (unified: replaces both Justification + Skip) ──
+function openJustify(fileId,alertId){S.justifyTarget={fileId:fileId,alertId:alertId};render();setTimeout(function(){var i=document.getElementById('justify-inp');if(i)i.focus();},30);}
+function closeJustify(){S.justifyTarget=null;render();}
+function saveJustify(){
+  var inp=document.getElementById('justify-inp');
   var note=inp?inp.value.trim():'';
-  var t=S.skipNoteTarget;
+  var t=S.justifyTarget;
   if(!t)return;
-  if(!S.skippedAlerts[t.fileId])S.skippedAlerts[t.fileId]={};
-  S.skippedAlerts[t.fileId][t.alertId]=note;
-  S.skipNoteTarget=null;render();
+  // Hard Fail requires a note
+  var allAlerts=(FILE_DETAIL[t.fileId]?FILE_DETAIL[t.fileId].alerts:[]).concat(S.customRules[t.fileId]||[]);
+  var alert=allAlerts.find(function(a){return a.id===t.alertId;});
+  if(alert&&alert.sev==='hard'&&!note){document.getElementById('justify-inp').style.borderColor='#dc2626';return;}
+  if(!S.justifiedAlerts[t.fileId])S.justifiedAlerts[t.fileId]={};
+  S.justifiedAlerts[t.fileId][t.alertId]=note||'(no note)';
+  S.justifyTarget=null;render();
 }
-function undoSkip(fileId,alertId){
-  if(S.skippedAlerts[fileId])delete S.skippedAlerts[fileId][alertId];
+function undoJustify(fileId,alertId){
+  if(S.justifiedAlerts[fileId])delete S.justifiedAlerts[fileId][alertId];
   render();
 }
-function renderSkipNoteModal(){
-  return '<div class="ov" style="z-index:80;"><div class="add-rule-modal" style="width:420px;">'
-    +'<div class="arm-hdr"><h3>Skip &middot; Add note</h3><button class="docs-x" onclick="closeSkipNote()">&times;</button></div>'
+function renderJustifyModal(){
+  var t=S.justifyTarget;
+  if(!t)return '';
+  var allAlerts=(FILE_DETAIL[t.fileId]?FILE_DETAIL[t.fileId].alerts:[]).concat(S.customRules[t.fileId]||[]);
+  var alert=allAlerts.find(function(a){return a.id===t.alertId;})||{};
+  var isHard=alert.sev==='hard';
+  return '<div class="ov" style="z-index:80;"><div class="add-rule-modal" style="width:440px;">'
+    +'<div class="arm-hdr"><h3>Justify &amp; proceed</h3><button class="docs-x" onclick="closeJustify()">&times;</button></div>'
     +'<div class="arm-body">'
-      +'<div class="arm-note">This alert will be skipped. Add a note explaining why — it is logged and visible to all reviewers. You can undo this at any time.</div>'
-      +'<div class="arm-row"><label class="arm-lbl">Note (optional but recommended)</label>'
-        +'<textarea id="skip-note-inp" class="inp" style="width:100%;min-height:70px;resize:vertical;" placeholder="e.g. AI misread the ID due to photo glare — manually verified as correct"></textarea>'
+      +'<div class="arm-note">'+(isHard?'<strong style="color:#c0392b;">Hard Fail</strong> — a justification note is <strong>required</strong> to proceed. This is logged and auditable.':'This issue will be marked as justified. A note is recommended.')+'<br><br>Justification means: <em>"I acknowledge this issue and take responsibility that it is acceptable to proceed."</em></div>'
+      +'<div class="arm-row"><label class="arm-lbl">Justification note'+(isHard?' <span style="color:#dc2626;">*required</span>':'')+'</label>'
+        +'<textarea id="justify-inp" class="inp" style="width:100%;min-height:80px;resize:vertical;" placeholder="e.g. Customer confirmed correct — ID number mismatch is due to old IC number still in system. Physical document verified."></textarea>'
       +'</div>'
     +'</div>'
-    +'<div class="arm-foot"><button class="btn" onclick="closeSkipNote()">Cancel</button><button class="btn btn-pri" onclick="saveSkipNote()">Skip this alert</button></div>'
+    +'<div class="arm-foot"><button class="btn" onclick="closeJustify()">Cancel</button><button class="btn btn-pri" onclick="saveJustify()">Justify &amp; proceed</button></div>'
   +'</div></div>';
 }
 // ── Inline field edit ──────────────────────────────────────────
@@ -1074,14 +1106,22 @@ function renderFileDetail(){
   var sorted=allAlerts.slice().sort(function(x,y){
     return ((resMap[x.id]?10:0)+(sevRank[x.sev]==null?3:sevRank[x.sev])) - ((resMap[y.id]?10:0)+(sevRank[y.sev]==null?3:sevRank[y.sev]));
   });
-  var nh=0,nw=0,nc=0;
-  allAlerts.forEach(function(a){if(resMap[a.id])return;if(a.sev==='hard')nh++;else if(a.sev==='warn')nw++;else nc++;});
+  var justMap=S.justifiedAlerts[S.fileId]||{};
+  var nh=0,nw=0,nc=0,nj=0;
+  allAlerts.forEach(function(a){
+    if(resMap[a.id])return; // resolved
+    if(justMap[a.id]){nj++;return;} // justified
+    if(a.sev==='hard')nh++;else if(a.sev==='warn')nw++;else nc++;
+  });
   var addRuleBtn='<button class="add-rule-btn" onclick="openAddRule(\''+S.fileId+'\',null)">+ Add Rule / Check</button>';
+  var statusMsg=nh?'<span class="fd-sum-block">&#9940; Cannot submit until Hard Fail resolved or justified</span>'
+    :(nh===0&&nw===0&&nc===0&&allAlerts.length?'<span class="fd-sum-ok">&#10003; All alerts cleared</span>':'<span class="fd-sum-soft">Remaining items need resolution or justification</span>');
   var summary='<div class="fd-sum">'
     +(nh?'<span class="fd-sum-chip red">'+nh+' Hard Fail</span>':'')
     +(nw?'<span class="fd-sum-chip org">'+nw+' Warning</span>':'')
     +(nc?'<span class="fd-sum-chip blue">'+nc+' Needs Check</span>':'')
-    +(nh?'<span class="fd-sum-block">&#9940; Cannot submit until Hard Fail resolved</span>':(nw+nc===0&&allAlerts.length?'<span class="fd-sum-ok">&#10003; All alerts resolved</span>':'<span class="fd-sum-soft">'+(nw+nc>0?'Can submit with justification':'No system alerts')+'</span>'))
+    +(nj?'<span class="fd-sum-chip" style="background:#fff4e0;color:#b45309;">'+nj+' Justified</span>':'')
+    +statusMsg
     +addRuleBtn
   +'</div>';
   var alertsHtml=summary+(sorted.length
@@ -1207,7 +1247,7 @@ function render(){
   if(S.fileOpen)html+=renderFileDetail();
   if(S.syncOpen)html+=renderSync();
   if(S.addRuleOpen)html+=renderAddRule();
-  if(S.skipNoteTarget)html+=renderSkipNoteModal();
+  if(S.justifyTarget)html+=renderJustifyModal();
   document.getElementById('app').innerHTML=html;
 }
 function openDocs(){S.docsOpen=true;render();}
