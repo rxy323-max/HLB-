@@ -268,6 +268,45 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .sync-ft{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--bd);}
 
 .replica-tag{position:fixed;left:54px;bottom:8px;font-size:10px;color:#fff;background:#6b7280;padding:2px 8px;border-radius:10px;z-index:60;opacity:.8;}
+
+/* ── File type pills (multi-doc) ── */
+.type-pills-cell{vertical-align:top;padding-top:10px !important;}
+.type-pill{display:inline-block;background:#e6f4ea;color:#1a7a43;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;margin:2px 2px 2px 0;line-height:1.3;text-align:center;}
+.type-conf{color:#1a7a43;font-size:10px;font-weight:400;}
+.st-proc{color:#2563eb;font-weight:600;}
+.st-fail{color:#c0392b;font-weight:600;}
+/* File list footer */
+.fl-foot{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:6px;}
+/* Cross-val passed badge */
+.alert-ok-badge{display:inline-flex;align-items:center;justify-content:center;color:#1a7a43;}
+.alert-ok-badge svg{width:20px;height:20px;}
+
+/* ── Unified field interaction ── */
+.fd-f .val-wrap{flex:1;min-width:0;}
+.field-val{cursor:pointer;display:inline-block;max-width:100%;word-break:break-all;line-height:1.5;border-radius:3px;padding:1px 4px;margin:-1px -4px;}
+.field-val:hover{background:#f0f6ff;text-decoration:underline;text-decoration-style:dotted;color:#2563eb;}
+.field-empty{color:#9aa1ab;font-style:italic;font-size:11px;}
+.field-inp{width:100%;border:1.5px solid var(--blue);border-radius:5px;padding:5px 8px;font-size:12.5px;outline:none;font-family:inherit;background:#fff;}
+.fd-f.editing{background:#f5f9ff;}
+.field-amended{font-size:12px;line-height:1.5;}
+.old-val{color:#9aa1ab;text-decoration:line-through;margin-right:4px;}
+.new-val{color:#1a7a43;font-weight:600;}
+/* Cleaned Check/Done — no badge, just control */
+.need-row{background:#fffaf0;}
+.check-btn{border:1px solid #d4a820;background:#fff;color:#a87c0a;border-radius:5px;padding:4px 12px;font-size:11.5px;white-space:nowrap;}
+.check-btn:hover{background:#fdf3d6;border-color:#a87c0a;}
+.done-tag{background:#1a7a43;color:#fff;border-radius:5px;padding:4px 12px;font-size:11.5px;font-weight:600;display:inline-block;}
+
+/* ── Skip with note ── */
+.skip-btn{border:none;background:none;color:#9aa1ab;font-size:11.5px;padding:4px 8px;cursor:pointer;border-left:1px solid #e5e7eb;margin-left:4px;}
+.skip-btn:hover{color:#c0392b;}
+.fd-alert.skipped{background:#f7f7f7;border-color:#e0e0e0;opacity:.8;}
+.sev-skip{background:#f0f0f0;color:#6b7280;}
+.skip-note{font-size:11.5px;color:#5b6470;font-style:italic;margin:4px 0;}
+
+/* ── NEEDS CHECK removed from label — only row highlight + Check button ── */
+.need,.checked{display:none;} /* hide old badges — replaced by row+button model */
+.done-btn{display:none;} /* replaced by done-tag */
 </style>
 </head>
 <body>
@@ -299,16 +338,33 @@ function railIcon(p){return '<div class="rail-ic">'+p+'</div>';}
 /* ════════════════ STATE ════════════════ */
 var S={ docsOpen:false, docsTab:'app', innerTab:'filelist', fileOpen:false, fileId:'mykad', syncOpen:false,
         fieldChecked:{}, alertResolved:{}, locate:null,
-        customRules:{},   // {fileId:[{id,title,sev,dim,kind,cmp,acts,rec},...]}
-        addRuleOpen:false, addRuleFileId:'', addRuleEditId:null };
+        customRules:{},
+        addRuleOpen:false, addRuleFileId:'', addRuleEditId:null,
+        editingField:null,   // {fileId,k,val} — inline field edit
+        fieldOverrides:{},   // {fileId:{k:newVal}} — amended values
+        skippedAlerts:{},    // {fileId:{alertId:noteText}} — skipped with note
+        skipNoteTarget:null  // {fileId,alertId} — pending skip-note modal
+};
 
 /* ════════════════ DATA ════════════════ */
+// typePills: array of {label,pages,conf} for multi-doc PDFs; or simple string
 var FILES=[
-  {id:'mykad',name:'Mykad (11).pdf',size:'0.42 MB',subject:'Applicant',cat:'Personal Identity',type:'Mykad',ocr:'Y',status:'Upload Succeeded',ocrStatus:'OCR Succeeded',desc:'',time:'28/05/26 17:33:02',src:'v_wbcocoliao'},
-  {id:'epf',name:'1147 EPF Statement.pdf',size:'0.21 MB',subject:'Applicant',cat:'Applicant Income',type:'EPF Statement',ocr:'Y',status:'Upload Succeeded',ocrStatus:'OCR Succeeded',desc:'',time:'28/05/26 17:32:18',src:'v_wbcocoliao'},
-  {id:'ec',name:'EC Form.pdf',size:'0.18 MB',subject:'Applicant',cat:'Applicant Income',type:'EC Form',ocr:'Y',status:'Upload Succeeded',ocrStatus:'OCR Succeeded',desc:'',time:'28/05/26 17:31:40',src:'v_wbcocoliao'},
-  {id:'xlsx',name:'222222.xlsx',size:'0.01 MB',subject:'Applicant',cat:'Other Documents',type:'',ocr:'N',status:'Upload Succeeded',ocrStatus:'',desc:'',time:'28/05/26 17:30:53',src:'v_wbcocoliao'},
-  {id:'consent',name:'PAPER_CONSENT_Individual_EN.pdf',size:'0.00 MB',subject:'CASE_LEVEL',cat:'Collateral/Others',type:'CRA Form',ocr:'N',status:'Upload Succeeded',ocrStatus:'',desc:'Generated from BNBS..',time:'28/05/26 17:28:10',src:'SYSTEM_GENERATED'}
+  {id:'multidoc',name:'AINA WAHIDA MYVI H.pdf',size:'0.82 MB',subject:'Applicant',cat:'Personal Identity',ocr:'Y',
+   fileStatus:'OCR Processed',ocrStatus:'Validation Succeeded',desc:'',time:'01/06/26 16:29:21',src:'SalesManager2',
+   typePills:[{label:'Mykad',pages:'1-2',conf:100},{label:'Driving License',pages:'3-3',conf:100},{label:'Payslip',pages:'4-6',conf:100},{label:'Individual Bank Statement',pages:'7-19',conf:100}]},
+  {id:'vso',name:'AINA WAHIDA @ MYVI 1.5H VSO.pdf',size:'0.42 MB',subject:'Applicant',cat:'Personal Identity',ocr:'Y',
+   fileStatus:'OCR Processing',ocrStatus:'Validation Failed',desc:'',time:'01/06/26 16:29:20',src:'SalesManager2',
+   typePills:[{label:'VSO',pages:'1-1',conf:100}]},
+  {id:'mykad',name:'Mykad (11).pdf',size:'0.42 MB',subject:'Applicant',cat:'Personal Identity',type:'Mykad',ocr:'Y',
+   fileStatus:'OCR Processed',ocrStatus:'OCR Succeeded',desc:'',time:'28/05/26 17:33:02',src:'v_wbcocoliao'},
+  {id:'epf',name:'1147 EPF Statement.pdf',size:'0.21 MB',subject:'Applicant',cat:'Applicant Income',type:'EPF Statement',ocr:'Y',
+   fileStatus:'OCR Processed',ocrStatus:'OCR Succeeded',desc:'',time:'28/05/26 17:32:18',src:'v_wbcocoliao'},
+  {id:'ec',name:'EC Form.pdf',size:'0.18 MB',subject:'Applicant',cat:'Applicant Income',type:'EC Form',ocr:'Y',
+   fileStatus:'OCR Processed',ocrStatus:'OCR Succeeded',desc:'',time:'28/05/26 17:31:40',src:'v_wbcocoliao'},
+  {id:'xlsx',name:'222222.xlsx',size:'0.01 MB',subject:'Applicant',cat:'Other Documents',type:'',ocr:'N',
+   fileStatus:'Upload Succeeded',ocrStatus:'',desc:'',time:'28/05/26 17:30:53',src:'v_wbcocoliao'},
+  {id:'consent',name:'PAPER_CONSENT_Individual_EN.pdf',size:'0.00 MB',subject:'CASE_LEVEL',cat:'Collateral/Others',type:'CRA Form',ocr:'N',
+   fileStatus:'Upload Succeeded',ocrStatus:'',desc:'Generated from BNBS..',time:'28/05/26 17:28:10',src:'SYSTEM_GENERATED'}
 ];
 var UPCATS=[
   {t:'Personal Identity',ic:IC.user,hint:'Mykad, MyPR, Passport, DL, Work Permit...'},
@@ -411,6 +467,11 @@ var FILE_DETAIL={
 };
 // Cross-Validation Results = per-file roll-up of all alerts (Alert Count + Alert Rules)
 var CROSSVAL=[
+  {orig:'AINA WAHIDA MYVI H.pdf',name:'Individual Bank Statement.pdf',subject:'Applicant',cat:'Applicant Income',type:'Individual Bank Statement',ocr:'Validation Succeeded',rules:[]},
+  {orig:'AINA WAHIDA MYVI H.pdf',name:'Payslip.pdf',subject:'Applicant',cat:'Applicant Income',type:'Payslip',ocr:'Validation Succeeded',rules:[]},
+  {orig:'AINA WAHIDA MYVI H.pdf',name:'Driving License.pdf',subject:'Applicant',cat:'Personal Identity',type:'Driving License',ocr:'Validation Failed',rules:['Driving License - id_no Consistency']},
+  {orig:'AINA WAHIDA MYVI H.pdf',name:'Mykad.pdf',subject:'Applicant',cat:'Personal Identity',type:'Mykad',ocr:'Validation Failed',rules:['Mykad - id_no Consistency']},
+  {orig:'AINA WAHIDA @ MYVI 1.5H VSO.pdf',name:'VSO.pdf',subject:'Applicant',cat:'Collateral/Others',type:'VSO',ocr:'Validation Failed',rules:['VSO - id_no Consistency','Eyeball Check']},
   {orig:'IC.pdf',name:'Driving License.pdf',subject:'Applicant',cat:'Personal Identity',type:'Driving License',ocr:'Validation Failed',rules:['Driving License - customer_name Consistency','General Document Rules']},
   {orig:'IC.pdf',name:'Mykad.pdf',subject:'Applicant',cat:'Personal Identity',type:'Mykad',ocr:'Validation Failed',rules:['Mykad - id_no Consistency','Mykad - customer_name Consistency','Eyeball Check']},
   {orig:'VOC INCOME.pdf',name:'Information On Seller.pdf',subject:'Applicant',cat:'Seller Documents',type:'Information On Seller',ocr:'Validation Failed',rules:['Information On Seller - constitution Exist','Information On Seller - date_established Exist','Information On Seller - paid_up_capital Exist','Information On Seller - signature_date Exist','Information On Seller - witness_date Exist','Information On Seller - address Exist','Information On Seller - has_company_stamp Exist','Information On Seller - is_authentic_declared Exist','Information On Seller - is_bank_authorized Exist','Information On Seller - witness_name Exist']},
@@ -585,31 +646,46 @@ function renderUpload(){
   +'</div>';
 }
 function actIcons(f){
-  var open=f.ocr==='Y'?'onclick="openFile(\''+f.id+'\')"':'';
+  var canOpen=f.ocr==='Y'&&FILE_DETAIL[f.id];
+  var open=canOpen?'onclick="openFile(\''+f.id+'\')"':'';
+  var cls=canOpen?'':'aic dis';
   return '<div class="acts">'
     +'<span class="aic" title="Quick Confirm">'+IC.ckcirc+'</span>'
-    +'<span class="aic" title="Edit" '+open+'>'+IC.edit+'</span>'
-    +'<span class="aic" title="Preview" '+open+'>'+IC.eye+'</span>'
+    +'<span class="aic '+cls+'" title="Edit" '+open+'>'+IC.edit+'</span>'
+    +'<span class="aic '+cls+'" title="Preview" '+open+'>'+IC.eye+'</span>'
     +'<span class="aic" title="Download">'+IC.dl+'</span>'
     +'<span class="aic" title="Delete">'+IC.trash+'</span>'
   +'</div>';
 }
 function renderFileList(){
   var rows=FILES.map(function(f){
-    var typeCell=f.type?'<span class="pill" style="background:#eef3fb;color:#2c5fa8;">'+f.type+'</span>':'';
-    var ocrSt=f.ocrStatus?(f.ocr==='Y'?'<span class="st-ok">'+f.ocrStatus+'</span>':f.ocrStatus):'<span class="muted">&mdash;</span>';
+    // type cell: pills for multi-doc OR simple badge
+    var typeCell='';
+    if(f.typePills&&f.typePills.length){
+      typeCell=f.typePills.map(function(p){
+        return '<span class="type-pill">'+p.label+' ('+p.pages+')<br><span class="type-conf">'+p.conf+'%</span></span>';
+      }).join('');
+    } else if(f.type){
+      typeCell='<span class="pill" style="background:#eef3fb;color:#2c5fa8;">'+f.type+'</span>';
+    }
+    // status
+    var fst=f.fileStatus||'';
+    var ost=f.ocrStatus||'';
+    var fstHtml=fst?'<span class="'+(fst==='OCR Processed'||fst==='Upload Succeeded'?'st-ok':fst==='OCR Processing'?'st-proc':'st-fail')+'">'+fst+'</span>':'<span class="muted">&mdash;</span>';
+    var ostHtml=ost?'<span class="'+(ost==='Validation Succeeded'||ost==='OCR Succeeded'?'st-ok':ost==='Validation Failed'?'st-fail':'st-proc')+'">'+ost+'</span>':'<span class="muted">&mdash;</span>';
+    var descCell='<span class="aic" title="Add justification note" style="cursor:pointer;">'+IC.edit+'</span>';
     return '<tr>'
       +'<td><input type="checkbox" class="cbx"></td>'
-      +'<td><span class="fn">'+f.name+'</span><span class="muted">('+f.size+')</span></td>'
+      +'<td><div class="fn">'+f.name+'</div><div class="muted" style="font-size:10.5px;">('+f.size+')</div></td>'
       +'<td>'+f.subject+'</td>'
-      +'<td>'+f.cat+'</td>'
-      +'<td>'+typeCell+'</td>'
+      +'<td><a class="lnk">'+f.cat+'</a></td>'
+      +'<td class="type-pills-cell">'+typeCell+'</td>'
       +'<td style="text-align:center;">'+f.ocr+'</td>'
-      +'<td><span class="st-ok">'+f.status+'</span></td>'
-      +'<td>'+ocrSt+'</td>'
-      +'<td class="muted">'+(f.desc||'')+'</td>'
-      +'<td class="muted">'+f.time+'</td>'
-      +'<td class="muted">'+f.src+'</td>'
+      +'<td>'+fstHtml+'</td>'
+      +'<td>'+ostHtml+'</td>'
+      +'<td style="text-align:center;">'+descCell+'</td>'
+      +'<td class="muted" style="font-size:11px;">'+f.time+'</td>'
+      +'<td class="muted" style="font-size:11px;">'+f.src+'</td>'
       +'<td>'+actIcons(f)+'</td>'
     +'</tr>';
   }).join('');
@@ -619,10 +695,11 @@ function renderFileList(){
       +'<select class="sel"><option>Subject</option></select>'
       +'<select class="sel"><option>Category</option></select>'
       +'<select class="sel"><option>File Status</option></select>'
-      +'<button class="btn btn-pri btn-sm">'+IC.search.replace('width="18"','').replace('height="18"','')+' Search</button>'
-      +'<button class="btn btn-sm">'+IC.refresh.replace('width="18"','').replace('height="18"','')+' Reset Filters</button>'
-      +'<button class="btn btn-sm" disabled>'+IC.dl.replace('width="18"','').replace('height="18"','')+' Download</button>'
-      +'<button class="btn btn-sm">'+IC.refresh.replace('width="18"','').replace('height="18"','')+' Refresh</button>'
+      +'<button class="btn btn-pri btn-sm">'+IC.search+' Search</button>'
+      +'<button class="btn btn-sm">'+IC.refresh+' Reset Filters</button>'
+      +'<button class="btn btn-sm" disabled>'+IC.dl+' Download</button>'
+      +'<button class="btn btn-sm">'+IC.refresh+' Confirm</button>'
+      +'<button class="btn btn-sm">'+IC.refresh+' Refresh</button>'
     +'</div>'
     +'<table>'
       +'<thead><tr>'
@@ -630,13 +707,19 @@ function renderFileList(){
       +'</tr></thead>'
       +'<tbody>'+rows+'</tbody>'
     +'</table>'
-    +'<div class="pager"><span>&lsaquo;</span><span class="pg-num">1</span><span>&rsaquo;</span><span>10 / page &#9662;</span></div>';
+    +'<div class="fl-foot">'
+      +'<div class="pager"><span>&lsaquo;</span><span class="pg-num">1</span><span>&rsaquo;</span><span>10 / page &#9662;</span></div>'
+      +'<div style="display:flex;gap:10px;">'
+        +'<button class="btn" onclick="closeDocs()">Back To List</button>'
+        +'<button class="btn btn-pri">Submit for Verification (Application)</button>'
+      +'</div>'
+    +'</div>';
 }
 function renderCrossVal(){
   var withIssues=CROSSVAL.filter(function(r){return r.rules&&r.rules.length;}).length;
   var rows=CROSSVAL.map(function(r){
     var cnt=r.rules?r.rules.length:0;
-    var countCell=cnt?'<span class="alert-cnt">'+cnt+'</span>':'';
+    var countCell=cnt?'<span class="alert-cnt">'+cnt+'</span>':'<span class="alert-ok-badge">'+IC.ckcirc+'</span>';
     var rulesCell=cnt?'<div class="alert-rules">'+r.rules.map(function(x){return '<div>'+x+'</div>';}).join('')+'</div>':'';
     var stCell=r.ocr==='Validation Failed'?'<span class="ocr-fail">Validation Failed</span>':r.ocr==='Validating'?'<span class="muted">Validating</span>':'<span class="st-ok">'+r.ocr+'</span>';
     var did=xvalDetailId(r.type);
@@ -712,6 +795,16 @@ function guidanceLine(a){
   return 'OCR misread &rarr; <b>Amend</b> &nbsp;&middot;&nbsp; document non-compliant &rarr; <b>Replace</b> &nbsp;&middot;&nbsp; acceptable &rarr; <b>Justification</b> (note required).';
 }
 function fdAlertCard(a,fileId){
+  var skipped=(S.skippedAlerts[fileId]||{})[a.id];
+  if(skipped!==undefined){
+    var undoSkip='<button class="cr-edit" onclick="undoSkip(\''+fileId+'\',\''+a.id+'\')">Undo</button>';
+    return '<div class="fd-alert skipped">'
+      +'<div class="fd-alert-top"><span class="sevtag sev-skip">Skipped</span><span class="dimtag">'+a.dim+'</span>'+(a.isCustom?'<span class="customtag">&#9998; Custom</span>':'<span class="systag">System</span>')+'</div>'
+      +'<div class="fd-alert-ttl" style="margin:2px 0 2px;opacity:.7;">'+a.title+'</div>'
+      +(skipped?'<div class="skip-note">Note: '+skipped+'</div>':'')
+      +'<div class="fd-alert-acts">'+undoSkip+'</div>'
+    +'</div>';
+  }
   var resolved=(S.alertResolved[fileId]||{})[a.id];
   var sm=sevMeta(a.sev);
   var acts=a.acts.map(function(k){return actBtn(k,fileId,a.id,a.rec);}).join('');
@@ -731,7 +824,9 @@ function fdAlertCard(a,fileId){
     +(a.cmp?'<div class="fd-cmp">'+a.cmp+'</div>':'')
     +(locate?'<div class="fd-locate-row">'+locate+'</div>':'')
     +'<div class="fd-guide">'+guidanceLine(a)+'</div>'
-    +'<div class="fd-alert-acts">'+acts+'</div>'
+    +'<div class="fd-alert-acts">'+acts
+      +'<button class="skip-btn" onclick="openSkipNote(\''+fileId+'\',\''+a.id+'\')">Skip &middot; Add note</button>'
+    +'</div>'
     +customFoot
   +'</div>';
 }
@@ -816,19 +911,83 @@ function deleteCustomRule(fileId,id){
   S.customRules[fileId]=S.customRules[fileId].filter(function(r){return r.id!==id;});
   render();
 }
+// ── Skip with note ──────────────────────────────────────────
+function openSkipNote(fileId,alertId){S.skipNoteTarget={fileId:fileId,alertId:alertId};render();setTimeout(function(){var i=document.getElementById('skip-note-inp');if(i)i.focus();},30);}
+function closeSkipNote(){S.skipNoteTarget=null;render();}
+function saveSkipNote(){
+  var inp=document.getElementById('skip-note-inp');
+  var note=inp?inp.value.trim():'';
+  var t=S.skipNoteTarget;
+  if(!t)return;
+  if(!S.skippedAlerts[t.fileId])S.skippedAlerts[t.fileId]={};
+  S.skippedAlerts[t.fileId][t.alertId]=note;
+  S.skipNoteTarget=null;render();
+}
+function undoSkip(fileId,alertId){
+  if(S.skippedAlerts[fileId])delete S.skippedAlerts[fileId][alertId];
+  render();
+}
+function renderSkipNoteModal(){
+  return '<div class="ov" style="z-index:80;"><div class="add-rule-modal" style="width:420px;">'
+    +'<div class="arm-hdr"><h3>Skip &middot; Add note</h3><button class="docs-x" onclick="closeSkipNote()">&times;</button></div>'
+    +'<div class="arm-body">'
+      +'<div class="arm-note">This alert will be skipped. Add a note explaining why — it is logged and visible to all reviewers. You can undo this at any time.</div>'
+      +'<div class="arm-row"><label class="arm-lbl">Note (optional but recommended)</label>'
+        +'<textarea id="skip-note-inp" class="inp" style="width:100%;min-height:70px;resize:vertical;" placeholder="e.g. AI misread the ID due to photo glare — manually verified as correct"></textarea>'
+      +'</div>'
+    +'</div>'
+    +'<div class="arm-foot"><button class="btn" onclick="closeSkipNote()">Cancel</button><button class="btn btn-pri" onclick="saveSkipNote()">Skip this alert</button></div>'
+  +'</div></div>';
+}
+// ── Inline field edit ──────────────────────────────────────────
+function startEdit(fileId,k,val){S.editingField={fileId:fileId,k:k,val:val};render();setTimeout(function(){var i=document.getElementById('inline-edit-input');if(i){i.focus();i.select();}},30);}
+function commitEdit(){
+  if(!S.editingField)return;
+  var inp=document.getElementById('inline-edit-input');
+  var newVal=inp?inp.value.trim():S.editingField.val;
+  if(newVal!==S.editingField.val&&newVal!==''){
+    if(!S.fieldOverrides[S.editingField.fileId])S.fieldOverrides[S.editingField.fileId]={};
+    S.fieldOverrides[S.editingField.fileId][S.editingField.k]=newVal;
+  }
+  S.editingField=null;render();
+}
+function cancelEdit(){S.editingField=null;render();}
+
 function fdRow(f,fileId){
+  var override=(S.fieldOverrides[fileId]||{})[f.k];
   var checked=((S.fieldChecked[fileId]||{})[f.k])||f.done;
   var need=f.need&&!checked;
-  var wasNeed=f.need&&checked;
   var hl=S.locate&&S.locate.file===fileId&&S.locate.key===f.k;
-  var badge=need?' <span class="need">NEEDS CHECK</span>':(wasNeed?' <span class="checked">CHECKED</span>':'');
-  var ctrl=need?'<button class="check-btn" onclick="checkField(\''+fileId+'\',\''+f.k+'\')">Check</button>'
-            :(wasNeed?'<span class="done-btn">Done</span>':'');
+  var isEditing=S.editingField&&S.editingField.fileId===fileId&&S.editingField.k===f.k;
   var c=(f.c==null?99:f.c);
+  var displayVal=override||f.v||'';
+
+  // Value cell
+  var valCell;
+  if(isEditing){
+    valCell='<input id="inline-edit-input" class="field-inp" value="'+displayVal+'"'
+      +' onkeydown="if(event.key===\'Enter\')commitEdit();if(event.key===\'Escape\')cancelEdit();"'
+      +' onblur="commitEdit()">';
+  } else if(override){
+    valCell='<span class="field-amended"><span class="old-val">'+f.v+'</span> &rarr; <span class="new-val">'+override+'</span></span>';
+  } else {
+    // clickable to edit — subtle pointer + hover underline
+    var emptyHint=(c===0&&!f.v)?'<span class="field-empty">click to enter</span>':'';
+    valCell='<span class="field-val" onclick="startEdit(\''+fileId+'\',\''+f.k+'\',\''+displayVal+'\')">'+(displayVal||emptyHint)+'</span>';
+  }
+
+  // Right side control
+  var ctrl='';
+  if(need){
+    ctrl='<button class="check-btn" onclick="checkField(\''+fileId+'\',\''+f.k+'\')">Check</button>';
+  } else if(f.need&&checked){
+    ctrl='<span class="done-tag">Done</span>';
+  }
+
   var dot=' <span class="'+(c===0?'dot-r':'dot-g')+'"></span>';
-  return '<div class="fd-f'+(need?' need-row':'')+(hl?' hl':'')+'">'
-    +'<div class="lbl">'+f.k+badge+'</div>'
-    +'<div class="val">'+(f.v||'')+'</div>'
+  return '<div class="fd-f'+(need?' need-row':'')+(hl?' hl':'')+(isEditing?' editing':'')+'">'
+    +'<div class="lbl">'+f.k+'</div>'
+    +'<div class="val-wrap">'+valCell+'</div>'
     +ctrl
     +'<div class="conf">'+c+'%'+dot+'</div>'
   +'</div>';
@@ -1048,6 +1207,7 @@ function render(){
   if(S.fileOpen)html+=renderFileDetail();
   if(S.syncOpen)html+=renderSync();
   if(S.addRuleOpen)html+=renderAddRule();
+  if(S.skipNoteTarget)html+=renderSkipNoteModal();
   document.getElementById('app').innerHTML=html;
 }
 function openDocs(){S.docsOpen=true;render();}
