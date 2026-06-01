@@ -210,6 +210,29 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .xv-foot{display:flex;align-items:center;gap:12px;margin-top:14px;padding-top:6px;}
 .xv-issues{font-size:12px;color:#5b6470;background:#eef1f4;border-radius:6px;padding:4px 12px;}
 .xv-issues.bad{color:#c0392b;background:#fdeceb;}
+
+/* ── Add Rule button + custom rule card ── */
+.add-rule-btn{border:1px dashed #2563eb;background:#f0f6ff;color:#2563eb;border-radius:6px;padding:5px 13px;font-size:12px;font-weight:600;margin-left:auto;cursor:pointer;}
+.add-rule-btn:hover{background:#2563eb;color:#fff;}
+.custom-rule{border-style:dashed !important;}
+.customtag{font-size:10px;color:#7c3aed;background:#f3efff;padding:2px 8px;border-radius:9px;font-weight:600;}
+.custom-rule-foot{display:flex;gap:8px;margin-top:9px;padding-top:9px;border-top:1px dashed #e0dbf5;}
+.cr-edit{border:1px solid #d6dae0;background:#fff;color:#5b6470;border-radius:5px;padding:4px 12px;font-size:11.5px;}
+.cr-edit:hover{border-color:var(--blue);color:var(--blue);}
+.cr-del{border:1px solid #f3bcb9;background:#fff;color:#c0392b;border-radius:5px;padding:4px 12px;font-size:11.5px;}
+.cr-del:hover{background:#fdeceb;}
+/* ── Add Rule modal ── */
+.add-rule-modal{background:#fff;border-radius:10px;width:500px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.arm-hdr{display:flex;align-items:center;padding:16px 20px 10px;border-bottom:1px solid var(--bd);}
+.arm-hdr h3{font-size:16px;font-weight:700;flex:1;}
+.arm-body{padding:14px 20px;overflow:auto;display:flex;flex-direction:column;gap:14px;}
+.arm-note{font-size:11.5px;color:#5b6470;background:#f7f8fa;border:1px solid #eef0f3;border-radius:7px;padding:9px 12px;line-height:1.6;}
+.arm-row{display:flex;flex-direction:column;gap:5px;}
+.arm-lbl{font-size:12px;font-weight:600;color:#374151;}
+.arm-hint{font-size:11px;color:#9aa1ab;}
+.arm-sevs{display:flex;gap:14px;align-items:center;}
+.arm-sev-opt{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px;}
+.arm-foot{display:flex;justify-content:flex-end;gap:10px;padding:12px 20px;border-top:1px solid var(--bd);}
 /* ── Mykad ID card mock ── */
 .idcard{width:420px;max-width:100%;background:linear-gradient(135deg,#ece4d3,#e7dcc4);border:1px solid #cbb98f;border-radius:10px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.12);}
 .idc-band{background:#7c92b5;color:#fff;font-weight:800;font-size:13px;text-align:center;border-radius:5px;padding:5px;letter-spacing:.5px;}
@@ -275,7 +298,9 @@ function railIcon(p){return '<div class="rail-ic">'+p+'</div>';}
 
 /* ════════════════ STATE ════════════════ */
 var S={ docsOpen:false, docsTab:'app', innerTab:'filelist', fileOpen:false, fileId:'mykad', syncOpen:false,
-        fieldChecked:{}, alertResolved:{}, locate:null };
+        fieldChecked:{}, alertResolved:{}, locate:null,
+        customRules:{},   // {fileId:[{id,title,sev,dim,kind,cmp,acts,rec},...]}
+        addRuleOpen:false, addRuleFileId:'', addRuleEditId:null };
 
 /* ════════════════ DATA ════════════════ */
 var FILES=[
@@ -698,19 +723,98 @@ function fdAlertCard(a,fileId){
     +'</div>';
   }
   var locate=a.locate?'<span class="fd-locate" onclick="locateField(\''+fileId+'\',\''+a.locate+'\','+(a.page||1)+')">&#128205; Locate '+a.locate+(a.page?' (page '+a.page+')':'')+'</span>':'';
-  return '<div class="fd-alert sevbox-'+a.sev+'">'
-    +'<div class="fd-alert-top"><span class="sevtag '+sm.c+'">'+sm.t+'</span><span class="dimtag">'+a.dim+'</span><span class="systag">System rule</span></div>'
+  var sourceTag=a.isCustom?'<span class="customtag">&#9998; Custom rule</span>':'<span class="systag">System rule</span>';
+  var customFoot=a.isCustom?'<div class="custom-rule-foot"><button class="cr-edit" onclick="openAddRule(\''+fileId+'\',\''+a.id+'\')">&#9998; Edit</button><button class="cr-del" onclick="deleteCustomRule(\''+fileId+'\',\''+a.id+'\')">&#215; Remove</button></div>':'';
+  return '<div class="fd-alert sevbox-'+a.sev+(a.isCustom?' custom-rule':'')+'">'
+    +'<div class="fd-alert-top"><span class="sevtag '+sm.c+'">'+sm.t+'</span><span class="dimtag">'+a.dim+'</span>'+sourceTag+'</div>'
     +'<div class="fd-alert-ttl" style="margin:2px 0 4px;">'+a.title+'</div>'
     +(a.cmp?'<div class="fd-cmp">'+a.cmp+'</div>':'')
     +(locate?'<div class="fd-locate-row">'+locate+'</div>':'')
     +'<div class="fd-guide">'+guidanceLine(a)+'</div>'
     +'<div class="fd-alert-acts">'+acts+'</div>'
+    +customFoot
   +'</div>';
 }
 function locateField(fileId,key,page){
   S.locate={file:fileId,key:key,page:page||1};render();
   var el=document.querySelector('.fd-f.hl');
   if(el&&el.scrollIntoView)el.scrollIntoView({block:'center'});
+}
+
+// ── CUSTOM RULES (B-3) ──────────────────────────────────────
+// Rule type catalogue
+var RULE_TYPES=[
+  {key:'required', label:'Required (必填)', dim:'Existence', hint:'Field or document must be present', hasSev:true, fields:true},
+  {key:'manual',   label:'Manual Check (人工核验)', dim:'Eyeball / Existence', hint:'Flag field for human sign-off', hasSev:false, fields:true},
+  {key:'match',    label:'Match (字段比对)', dim:'File Consistency', hint:'Value must equal another field or application value', hasSev:true, fields:true},
+  {key:'threshold',label:'Threshold (阈值)', dim:'Internal Logic', hint:'Numeric ≥ / ≤ / = target', hasSev:true, fields:true},
+  {key:'recency',  label:'Recency (时效)', dim:'Business Validity', hint:'Date within N months of application_date', hasSev:true, fields:true},
+  {key:'note',     label:'Custom Note (自定义提醒)', dim:'Custom', hint:'Free-text reminder for reviewer', hasSev:false, fields:false}
+];
+function openAddRule(fileId,editId){
+  S.addRuleOpen=true; S.addRuleFileId=fileId; S.addRuleEditId=editId||null;
+  render();
+  // pre-fill if editing
+  if(editId){
+    var r=(S.customRules[fileId]||[]).find(function(x){return x.id===editId;});
+    if(r){
+      document.getElementById('ar-type').value=r.ruleType||'required';
+      document.getElementById('ar-field').value=r.field||'';
+      document.getElementById('ar-param').value=r.param||'';
+      document.getElementById('ar-sev').value=r.sev||'warn';
+      document.getElementById('ar-note').value=r.note||'';
+      updateRuleTypeUI();
+    }
+  }
+}
+function closeAddRule(){S.addRuleOpen=false;render();}
+function updateRuleTypeUI(){
+  var t=document.getElementById('ar-type');if(!t)return;
+  var key=t.value;
+  var rt=RULE_TYPES.find(function(x){return x.key===key;})||RULE_TYPES[0];
+  var ph=document.getElementById('ar-param-row');
+  var sh=document.getElementById('ar-sev-row');
+  var fh=document.getElementById('ar-field-row');
+  var nh=document.getElementById('ar-note-row');
+  if(ph)ph.style.display=(key==='match'||key==='threshold'||key==='recency')?'':'none';
+  if(sh)sh.style.display=rt.hasSev?'':'none';
+  if(fh)fh.style.display=rt.fields?'':'none';
+  if(nh)nh.style.display=(key==='note')?'':'none';
+  var hnt=document.getElementById('ar-hint');
+  if(hnt)hnt.textContent=rt.hint;
+  var paramLbl=document.getElementById('ar-param-lbl');
+  if(paramLbl)paramLbl.textContent=key==='match'?'Compare field / value':key==='threshold'?'Threshold (≥ value)':key==='recency'?'Max months before application_date':'Parameter';
+}
+function saveCustomRule(){
+  var type=document.getElementById('ar-type').value;
+  var field=document.getElementById('ar-field')?document.getElementById('ar-field').value.trim():'';
+  var param=document.getElementById('ar-param')?document.getElementById('ar-param').value.trim():'';
+  var sevEl=document.querySelector('[name="ar-sev"]:checked');
+  var sev=sevEl?sevEl.value:'warn';
+  var note=document.getElementById('ar-note')?document.getElementById('ar-note').value.trim():'';
+  var rt=RULE_TYPES.find(function(x){return x.key===type;})||RULE_TYPES[0];
+  var title=field?field.replace(/_/g,' ')+(type==='required'?' Required':type==='manual'?' Manual Check':type==='match'?' Match':type==='threshold'?' Threshold':type==='recency'?' Recency':''):'Custom: '+note.slice(0,40);
+  var cmp='';
+  if(type==='match'&&param)cmp=field+' <span class="bad">≠</span> '+param+' — values must match';
+  if(type==='threshold'&&param)cmp=field+' must be ≥ <b>'+param+'</b>';
+  if(type==='recency'&&param)cmp=field+' must be within <b>'+param+' months</b> of application_date';
+  if(type==='required')cmp=field+' must be present';
+  if(type==='note')cmp='<em>'+note+'</em>';
+  var acts=type==='manual'?['verifyall']:type==='note'?[]:['amend','justify','replace'];
+  var rec=type==='manual'?'verifyall':type==='match'||type==='threshold'||type==='recency'?'amend':'justify';
+  var rule={id:S.addRuleEditId||('cr-'+Date.now()),title:title,sev:rt.hasSev?sev:'check',
+    dim:rt.dim,kind:type,cmp:cmp,acts:acts,rec:rec,custom:true,ruleType:type,field:field,param:param,note:note};
+  if(!S.customRules[S.addRuleFileId])S.customRules[S.addRuleFileId]=[];
+  if(S.addRuleEditId){
+    var idx=S.customRules[S.addRuleFileId].findIndex(function(x){return x.id===S.addRuleEditId;});
+    if(idx>=0)S.customRules[S.addRuleFileId][idx]=rule;
+  } else { S.customRules[S.addRuleFileId].push(rule); }
+  S.addRuleOpen=false; render();
+}
+function deleteCustomRule(fileId,id){
+  if(!S.customRules[fileId])return;
+  S.customRules[fileId]=S.customRules[fileId].filter(function(r){return r.id!==id;});
+  render();
 }
 function fdRow(f,fileId){
   var checked=((S.fieldChecked[fileId]||{})[f.k])||f.done;
@@ -806,20 +910,24 @@ function renderFileDetail(){
   var d=FILE_DETAIL[S.fileId]||FILE_DETAIL.ec;
   var resMap=S.alertResolved[S.fileId]||{};
   var sevRank={hard:0,warn:1,check:2};
-  var sorted=d.alerts.slice().sort(function(x,y){
+  var custom=(S.customRules[S.fileId]||[]).map(function(r){return Object.assign({},r,{isCustom:true});});
+  var allAlerts=d.alerts.concat(custom);
+  var sorted=allAlerts.slice().sort(function(x,y){
     return ((resMap[x.id]?10:0)+(sevRank[x.sev]==null?3:sevRank[x.sev])) - ((resMap[y.id]?10:0)+(sevRank[y.sev]==null?3:sevRank[y.sev]));
   });
   var nh=0,nw=0,nc=0;
-  d.alerts.forEach(function(a){if(resMap[a.id])return;if(a.sev==='hard')nh++;else if(a.sev==='warn')nw++;else nc++;});
-  var summary=d.alerts.length?'<div class="fd-sum">'
+  allAlerts.forEach(function(a){if(resMap[a.id])return;if(a.sev==='hard')nh++;else if(a.sev==='warn')nw++;else nc++;});
+  var addRuleBtn='<button class="add-rule-btn" onclick="openAddRule(\''+S.fileId+'\',null)">+ Add Rule / Check</button>';
+  var summary='<div class="fd-sum">'
     +(nh?'<span class="fd-sum-chip red">'+nh+' Hard Fail</span>':'')
     +(nw?'<span class="fd-sum-chip org">'+nw+' Warning</span>':'')
     +(nc?'<span class="fd-sum-chip blue">'+nc+' Needs Check</span>':'')
-    +(nh?'<span class="fd-sum-block">&#9940; Cannot submit until Hard Fail resolved</span>':(nw+nc===0?'<span class="fd-sum-ok">&#10003; All alerts resolved</span>':'<span class="fd-sum-soft">Can submit with justification</span>'))
-  +'</div>':'';
-  var alertsHtml=d.alerts.length
-    ? summary+sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join('')
-    : '<div class="fd-noalert">No validation alerts on this document.</div>';
+    +(nh?'<span class="fd-sum-block">&#9940; Cannot submit until Hard Fail resolved</span>':(nw+nc===0&&allAlerts.length?'<span class="fd-sum-ok">&#10003; All alerts resolved</span>':'<span class="fd-sum-soft">'+(nw+nc>0?'Can submit with justification':'No system alerts')+'</span>'))
+    +addRuleBtn
+  +'</div>';
+  var alertsHtml=summary+(sorted.length
+    ? sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join('')
+    : '<div class="fd-noalert">No validation alerts on this document.</div>');
   var locPage=(S.locate&&S.locate.file===S.fileId)?S.locate.page:1;
   var groupsHtml=d.groups.map(function(g){
     var hdr=(g.name&&g.name.length)?'<div class="fd-grp">'+g.name+(g.del?'<span class="del">Delete</span>':'')+'</div>':'';
@@ -895,12 +1003,51 @@ function renderSync(){
   +'</div></div>';
 }
 
+/* ════════════════ ADD RULE MODAL ════════════════ */
+function renderAddRule(){
+  var editing=!!S.addRuleEditId;
+  var typeOpts=RULE_TYPES.map(function(r){return '<option value="'+r.key+'">'+r.label+'</option>';}).join('');
+  return '<div class="ov" style="z-index:70;"><div class="add-rule-modal">'
+    +'<div class="arm-hdr"><h3>'+(editing?'Edit Custom Rule':'Add Rule / Check')+'</h3><button class="docs-x" onclick="closeAddRule()">&times;</button></div>'
+    +'<div class="arm-body">'
+      +'<div class="arm-note">Custom rules are attached to <strong>this file only</strong> and visible to all reviewers. They run alongside system rules. You can edit or remove them at any time.</div>'
+      +'<div class="arm-row">'
+        +'<label class="arm-lbl">Rule Type</label>'
+        +'<select id="ar-type" class="sel" style="width:100%;" onchange="updateRuleTypeUI()">'+typeOpts+'</select>'
+        +'<div id="ar-hint" class="arm-hint">Field or document must be present</div>'
+      +'</div>'
+      +'<div class="arm-row" id="ar-field-row">'
+        +'<label class="arm-lbl">Target Field</label>'
+        +'<input id="ar-field" class="inp" style="width:100%;" placeholder="e.g. total_sales_price, customer_name">'
+      +'</div>'
+      +'<div class="arm-row" id="ar-param-row" style="display:none;">'
+        +'<label id="ar-param-lbl" class="arm-lbl">Compare field / value</label>'
+        +'<input id="ar-param" class="inp" style="width:100%;" placeholder="e.g. 3  /  id_no  /  application.customer_name">'
+      +'</div>'
+      +'<div class="arm-row" id="ar-sev-row">'
+        +'<label class="arm-lbl">Severity</label>'
+        +'<div class="arm-sevs">'
+          +'<label class="arm-sev-opt"><input type="radio" name="ar-sev" value="hard"> <span class="sevtag sev-hard">Hard Fail</span></label>'
+          +'<label class="arm-sev-opt"><input type="radio" name="ar-sev" value="warn" checked> <span class="sevtag sev-warn">Warning</span></label>'
+        +'</div>'
+        +'<div style="font-size:11px;color:#9aa1ab;margin-top:4px;">Hard Fail blocks submission. Warning allows justification.</div>'
+      +'</div>'
+      +'<div class="arm-row" id="ar-note-row" style="display:none;">'
+        +'<label class="arm-lbl">Note (shown as alert message)</label>'
+        +'<textarea id="ar-note" class="inp" style="width:100%;min-height:60px;resize:vertical;" placeholder="e.g. Please confirm the guarantor signature on page 3"></textarea>'
+      +'</div>'
+    +'</div>'
+    +'<div class="arm-foot"><button class="btn" onclick="closeAddRule()">Cancel</button><button class="btn btn-pri" onclick="saveCustomRule()">'+(editing?'Save Changes':'Add Rule')+'</button></div>'
+  +'</div></div>';
+}
+
 /* ════════════════ RENDER + ACTIONS ════════════════ */
 function render(){
   var html=renderHost();
   if(S.docsOpen&&!S.fileOpen)html+=renderDocs();
   if(S.fileOpen)html+=renderFileDetail();
   if(S.syncOpen)html+=renderSync();
+  if(S.addRuleOpen)html+=renderAddRule();
   document.getElementById('app').innerHTML=html;
 }
 function openDocs(){S.docsOpen=true;render();}
