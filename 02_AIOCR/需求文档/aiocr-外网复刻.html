@@ -138,15 +138,15 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .fd-title{font-size:15px;font-weight:700;}
 .fd-crumb{font-size:11.5px;color:var(--mut);margin-top:2px;}
 .fd-top .sp{margin-left:auto;}
-.fd-split{flex:1;display:grid;grid-template-columns:minmax(0,440px) 1fr;overflow:hidden;}
-.fd-left{border-right:1px solid var(--bd);overflow:auto;padding:6px 0;}
-.fd-sec{padding:11px 16px;font-size:12px;font-weight:700;color:#b91c1c;display:flex;align-items:center;gap:7px;cursor:pointer;}
+.fd-split{flex:1;display:grid;grid-template-columns:minmax(0,500px) 1fr;overflow:hidden;}
+.fd-left{border-right:1px solid var(--bd);overflow:auto;padding:6px 0 14px;}
+.fd-sec{padding:13px 18px 9px;font-size:12px;font-weight:700;color:#b91c1c;display:flex;align-items:center;gap:7px;cursor:pointer;}
 .fd-sec .rd{width:7px;height:7px;border-radius:50%;background:var(--red);}
-.fd-grp{font-size:12px;font-weight:700;color:#374151;background:#f6f7f9;padding:8px 16px;border-top:1px solid var(--bd2);border-bottom:1px solid var(--bd2);}
+.fd-grp{font-size:12px;font-weight:700;color:#374151;background:#f6f7f9;padding:9px 18px;border-top:1px solid var(--bd2);border-bottom:1px solid var(--bd2);margin-top:2px;}
 .fd-grp .del{float:right;color:var(--red);font-weight:500;cursor:pointer;font-size:11.5px;}
-.fd-f{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid #f3f4f6;}
-.fd-f .lbl{color:#6b7280;font-size:12px;min-width:150px;}
-.fd-f .val{flex:1;font-size:12.5px;color:#111827;font-weight:500;}
+.fd-f{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid #f3f4f6;}
+.fd-f .lbl{color:#6b7280;font-size:12px;min-width:165px;line-height:1.4;}
+.fd-f .val{flex:1;font-size:12.5px;color:#111827;font-weight:500;line-height:1.4;}
 .fd-f .conf{font-size:11px;color:#374151;display:flex;align-items:center;gap:5px;}
 .fd-right{display:flex;flex-direction:column;overflow:hidden;background:#fafbfc;}
 .fd-rtop{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--bd);}
@@ -155,25 +155,47 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .fd-doc{flex:1;overflow:auto;padding:18px;display:flex;justify-content:center;}
 .fd-bottom{display:flex;justify-content:flex-end;gap:10px;padding:12px 16px;border-top:1px solid var(--bd);background:#fff;}
 
-/* ── VALIDATION ALERTS cards ── */
-.fd-alerts{padding:6px 14px 4px;}
-.fd-alert{border:1px solid #f3c969;background:#fff8e6;border-radius:8px;padding:11px 13px;margin-bottom:10px;}
-.fd-alert.resolved{border-color:#9bd5ab;background:#f1faf3;}
-.fd-alert-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
-.fd-alert-ttl{font-size:12.5px;font-weight:700;color:#c0392b;}
-.fd-alert.resolved .fd-alert-ttl{color:#1f9d57;}
-.fd-rtag{margin-left:auto;font-size:12px;font-weight:700;color:#1f9d57;}
-.fd-alert-msg{font-size:12px;color:#6b6256;margin-bottom:9px;line-height:1.5;}
-.fd-alert.resolved .fd-alert-msg{color:#5e7a68;}
+/* ── VALIDATION ALERTS cards (B-2 optimized) ── */
+.fd-alerts{padding:8px 16px 6px;}
+/* summary header */
+.fd-sum{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.fd-sum-chip{font-size:11px;font-weight:700;padding:3px 10px;border-radius:11px;}
+.fd-sum-chip.red{background:#fdeceb;color:#c0392b;} .fd-sum-chip.org{background:#fff4e0;color:#b8860b;} .fd-sum-chip.blue{background:#e8f0fe;color:#2563eb;}
+.fd-sum-block{font-size:11.5px;font-weight:700;color:#c0392b;margin-left:auto;}
+.fd-sum-ok{font-size:11.5px;font-weight:700;color:#1f9d57;margin-left:auto;}
+.fd-sum-soft{font-size:11.5px;color:#b8860b;margin-left:auto;}
+/* card */
+.fd-alert{border:1px solid #e5e7eb;border-left-width:4px;border-radius:8px;padding:13px 15px;margin-bottom:12px;background:#fff;}
+.fd-alert.sevbox-hard{border-left-color:#dc2626;background:#fffafa;border-color:#f3c4be;}
+.fd-alert.sevbox-warn{border-left-color:#e0a107;background:#fffdf6;border-color:#f3d98f;}
+.fd-alert.sevbox-check{border-left-color:#2563eb;background:#f7faff;border-color:#cfe0fb;}
+.fd-alert.resolved{border-left-color:#1f9d57;border-color:#9bd5ab;background:#f1faf3;}
+.fd-alert-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.sevtag{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;padding:2px 8px;border-radius:4px;}
+.sev-hard{background:#fdeceb;color:#c0392b;} .sev-warn{background:#fff4e0;color:#b8860b;} .sev-check{background:#e8f0fe;color:#2563eb;} .sev-ok{background:#e6f4ea;color:#1f9d57;}
+.dimtag{font-size:10px;color:#5b6470;background:#eef1f4;padding:2px 8px;border-radius:9px;font-weight:600;}
+.systag{margin-left:auto;font-size:10px;color:#9aa1ab;background:#f4f5f7;padding:2px 8px;border-radius:9px;}
+.fd-alert-ttl{font-size:13px;font-weight:700;color:#2a2f37;}
+.fd-rtag{margin-left:auto;font-size:13px;font-weight:800;color:#1f9d57;}
+.fd-cmp{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:#4b5563;background:#f8f9fb;border:1px solid #eef0f3;border-radius:6px;padding:7px 10px;margin:8px 0;line-height:1.6;}
+.fd-cmp .bad{color:#dc2626;font-weight:700;}
+.fd-locate-row{margin-bottom:8px;}
+.fd-locate{display:inline-block;font-size:11px;color:#2563eb;cursor:pointer;border:1px solid #cfe0fb;background:#f0f6ff;border-radius:6px;padding:3px 9px;font-weight:600;}
+.fd-locate:hover{background:#2563eb;color:#fff;border-color:#2563eb;}
+.fd-guide{font-size:11px;color:#7b828c;line-height:1.6;margin-bottom:10px;}
+.fd-guide b{color:#4b5563;}
 .fd-alert-acts{display:flex;gap:8px;flex-wrap:wrap;}
-.fd-abtn{border:1px solid #d6dae0;background:#fff;color:#374151;border-radius:6px;padding:6px 12px;font-size:12px;}
+.fd-abtn{border:1px solid #d6dae0;background:#fff;color:#374151;border-radius:6px;padding:7px 13px;font-size:12px;}
 .fd-abtn:hover{border-color:var(--blue);color:var(--blue);}
-.fd-noalert{padding:8px 16px 14px;font-size:12px;color:var(--lt);}
+.fd-abtn-rec{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600;}
+.fd-abtn-rec:hover{background:var(--blue-d);color:#fff;}
+.fd-noalert{padding:10px 16px 16px;font-size:12px;color:var(--lt);}
 .need{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.4px;color:#b8860b;background:#fdf3d6;border-radius:3px;padding:1px 6px;vertical-align:1px;}
 .fd-f.need-row{background:#fffaf0;}
-.check-btn{border:1px solid #cfd6df;background:#fff;color:#2563eb;border-radius:5px;padding:3px 12px;font-size:11.5px;}
+.fd-f.hl{background:#fff6cc;box-shadow:inset 3px 0 0 #e0a107;}
+.check-btn{border:1px solid #cfd6df;background:#fff;color:#2563eb;border-radius:5px;padding:4px 13px;font-size:11.5px;}
 .check-btn:hover{background:#eef4ff;border-color:var(--blue);}
-.add-item{text-align:center;padding:11px;font-size:12.5px;color:#5b6470;background:#f6f7f9;border-bottom:1px solid #f3f4f6;cursor:pointer;}
+.add-item{text-align:center;padding:12px;font-size:12.5px;color:#5b6470;background:#f6f7f9;border-bottom:1px solid #f3f4f6;cursor:pointer;}
 .add-item:hover{background:#eef1f4;color:var(--blue);}
 /* ── Mykad ID card mock ── */
 .idcard{width:420px;max-width:100%;background:linear-gradient(135deg,#ece4d3,#e7dcc4);border:1px solid #cbb98f;border-radius:10px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.12);}
@@ -240,7 +262,7 @@ function railIcon(p){return '<div class="rail-ic">'+p+'</div>';}
 
 /* ════════════════ STATE ════════════════ */
 var S={ docsOpen:false, docsTab:'app', innerTab:'filelist', fileOpen:false, fileId:'mykad', syncOpen:false,
-        fieldChecked:{}, alertResolved:{} };
+        fieldChecked:{}, alertResolved:{}, locate:null };
 
 /* ════════════════ DATA ════════════════ */
 var FILES=[
@@ -262,8 +284,12 @@ var ACT_LABEL={amend:'Amend scanned result',justify:'Justification',replace:'Rep
 var FILE_DETAIL={
   mykad:{ name:'Mykad (11).pdf', crumb:'Personal Identity &rsaquo; Mykad', doc:'mykad',
     alerts:[
-      {id:'eyeball', title:'Eyeball Check', msg:'Manual check is needed', acts:['verifyall','replace'], kind:'eyeball'},
-      {id:'idcons', title:'Mykad - id_no Consistency', msg:'id_no is not consistent', acts:['amend','justify','replace']}
+      {id:'idcons', title:'Mykad - id_no Consistency', sev:'hard', dim:'File Consistency', kind:'consistency',
+        cmp:'Page 1 <b>870420-49-5767</b> &nbsp;&ne;&nbsp; Page 2 <span class="bad">870420-49-5767-05</span>',
+        acts:['amend','justify','replace'], rec:'amend', locate:'id_no', page:2},
+      {id:'eyeball', title:'Eyeball Check', sev:'check', dim:'Eyeball / Existence', kind:'eyeball',
+        cmp:'4 fields flagged for manual confirm: address_line1, address_line2, id_no_alt, gender',
+        acts:['verifyall','replace'], rec:'verifyall', locate:'gender'}
     ],
     groups:[
       {name:'customer_info', fields:[
@@ -283,8 +309,12 @@ var FILE_DETAIL={
     ]},
   epf:{ name:'1147 EPF Statement.pdf', crumb:'Applicant Income &rsaquo; EPF Statement', doc:'epf',
     alerts:[
-      {id:'genrules', title:'General Document Rules', msg:'FAIL: Contribution month Jun-25 is older than M-2 from application_date.', acts:['justify','replace']},
-      {id:'datecmp', title:'EPF Statement - statement_date Date Compare', msg:'statement_date date is invalid', acts:['amend','justify','replace']}
+      {id:'genrules', title:'General Document Rules', sev:'hard', dim:'Business Validity', kind:'recency',
+        cmp:'Contribution month <span class="bad">Jun-2025</span> &nbsp;&middot;&nbsp; Expected &le; 2 months from application_date (M-2)',
+        acts:['justify','replace'], rec:'replace', locate:'statement_date'},
+      {id:'datecmp', title:'EPF Statement - statement_date Date Compare', sev:'warn', dim:'Internal Logic', kind:'datefmt',
+        cmp:'statement_date <span class="bad">17-06-2025</span> &nbsp;&middot;&nbsp; Expected a valid statement date in range',
+        acts:['amend','justify','replace'], rec:'amend', locate:'statement_date'}
     ],
     groups:[
       {name:'', addNew:true, fields:[
@@ -565,28 +595,52 @@ function renderDocs(){
 }
 
 /* ════════════════ FILE DETAIL ════════════════ */
-function actBtn(key,fileId,alertId){
-  var label=ACT_LABEL[key];
-  if(key==='verifyall')return '<button class="fd-abtn" onclick="verifyAll(\''+fileId+'\',\''+alertId+'\')">'+label+'</button>';
-  return '<button class="fd-abtn">'+label+'</button>';
+function actBtn(key,fileId,alertId,rec){
+  var label=ACT_LABEL[key],isRec=key===rec;
+  var cls='fd-abtn'+(isRec?' fd-abtn-rec':'');
+  var suf=isRec?' &middot; 建议':'';
+  if(key==='verifyall')return '<button class="'+cls+'" onclick="verifyAll(\''+fileId+'\',\''+alertId+'\')">'+label+suf+'</button>';
+  return '<button class="'+cls+'">'+label+suf+'</button>';
+}
+function sevMeta(s){return s==='hard'?{t:'Hard Fail',c:'sev-hard'}:s==='warn'?{t:'Warning',c:'sev-warn'}:{t:'Needs Check',c:'sev-check'};}
+function guidanceLine(a){
+  if(a.kind==='eyeball')return 'Verify each value against the source, then <b>Verify All</b>.';
+  return 'OCR misread &rarr; <b>Amend</b> &nbsp;&middot;&nbsp; document non-compliant &rarr; <b>Replace</b> &nbsp;&middot;&nbsp; acceptable &rarr; <b>Justification</b> (note required).';
 }
 function fdAlertCard(a,fileId){
   var resolved=(S.alertResolved[fileId]||{})[a.id];
-  var acts=a.acts.map(function(k){return actBtn(k,fileId,a.id);}).join('');
-  var tag=resolved?'<span class="fd-rtag">&#10003; Resolved</span>':'';
-  return '<div class="fd-alert'+(resolved?' resolved':'')+'">'
-    +'<div class="fd-alert-top"><span class="fd-alert-ttl">'+a.title+'</span>'+tag+'</div>'
-    +'<div class="fd-alert-msg">'+a.msg+'</div>'
+  var sm=sevMeta(a.sev);
+  var acts=a.acts.map(function(k){return actBtn(k,fileId,a.id,a.rec);}).join('');
+  if(resolved){
+    return '<div class="fd-alert resolved">'
+      +'<div class="fd-alert-top"><span class="sevtag sev-ok">Resolved</span><span class="fd-alert-ttl">'+a.title+'</span><span class="fd-rtag">&#10003;</span></div>'
+      +(a.cmp?'<div class="fd-cmp">'+a.cmp+'</div>':'')
+      +'<div class="fd-alert-acts">'+acts+'</div>'
+    +'</div>';
+  }
+  var locate=a.locate?'<span class="fd-locate" onclick="locateField(\''+fileId+'\',\''+a.locate+'\','+(a.page||1)+')">&#128205; Locate '+a.locate+(a.page?' (page '+a.page+')':'')+'</span>':'';
+  return '<div class="fd-alert sevbox-'+a.sev+'">'
+    +'<div class="fd-alert-top"><span class="sevtag '+sm.c+'">'+sm.t+'</span><span class="dimtag">'+a.dim+'</span><span class="systag">System rule</span></div>'
+    +'<div class="fd-alert-ttl" style="margin:2px 0 4px;">'+a.title+'</div>'
+    +(a.cmp?'<div class="fd-cmp">'+a.cmp+'</div>':'')
+    +(locate?'<div class="fd-locate-row">'+locate+'</div>':'')
+    +'<div class="fd-guide">'+guidanceLine(a)+'</div>'
     +'<div class="fd-alert-acts">'+acts+'</div>'
   +'</div>';
+}
+function locateField(fileId,key,page){
+  S.locate={file:fileId,key:key,page:page||1};render();
+  var el=document.querySelector('.fd-f.hl');
+  if(el&&el.scrollIntoView)el.scrollIntoView({block:'center'});
 }
 function fdRow(f,fileId){
   var checked=(S.fieldChecked[fileId]||{})[f.k];
   var need=f.need&&!checked;
+  var hl=S.locate&&S.locate.file===fileId&&S.locate.key===f.k;
   var badge=need?' <span class="need">NEEDS CHECK</span>':'';
   var checkBtn=need?'<button class="check-btn" onclick="checkField(\''+fileId+'\',\''+f.k+'\')">Check</button>':'';
   var dot=(f.dot||checked)?' <span class="dot-g"></span>':'';
-  return '<div class="fd-f'+(need?' need-row':'')+'">'
+  return '<div class="fd-f'+(need?' need-row':'')+(hl?' hl':'')+'">'
     +'<div class="lbl">'+f.k+badge+'</div>'
     +'<div class="val">'+(f.v||'')+'</div>'
     +checkBtn
@@ -655,9 +709,23 @@ function epfMock(){
 function docMock(t){return t==='mykad'?mykadMock():t==='epf'?epfMock():ecMock();}
 function renderFileDetail(){
   var d=FILE_DETAIL[S.fileId]||FILE_DETAIL.ec;
+  var resMap=S.alertResolved[S.fileId]||{};
+  var sevRank={hard:0,warn:1,check:2};
+  var sorted=d.alerts.slice().sort(function(x,y){
+    return ((resMap[x.id]?10:0)+(sevRank[x.sev]==null?3:sevRank[x.sev])) - ((resMap[y.id]?10:0)+(sevRank[y.sev]==null?3:sevRank[y.sev]));
+  });
+  var nh=0,nw=0,nc=0;
+  d.alerts.forEach(function(a){if(resMap[a.id])return;if(a.sev==='hard')nh++;else if(a.sev==='warn')nw++;else nc++;});
+  var summary=d.alerts.length?'<div class="fd-sum">'
+    +(nh?'<span class="fd-sum-chip red">'+nh+' Hard Fail</span>':'')
+    +(nw?'<span class="fd-sum-chip org">'+nw+' Warning</span>':'')
+    +(nc?'<span class="fd-sum-chip blue">'+nc+' Needs Check</span>':'')
+    +(nh?'<span class="fd-sum-block">&#9940; Cannot submit until Hard Fail resolved</span>':(nw+nc===0?'<span class="fd-sum-ok">&#10003; All alerts resolved</span>':'<span class="fd-sum-soft">Can submit with justification</span>'))
+  +'</div>':'';
   var alertsHtml=d.alerts.length
-    ? d.alerts.map(function(a){return fdAlertCard(a,S.fileId);}).join('')
+    ? summary+sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join('')
     : '<div class="fd-noalert">No validation alerts on this document.</div>';
+  var locPage=(S.locate&&S.locate.file===S.fileId)?S.locate.page:1;
   var groupsHtml=d.groups.map(function(g){
     var hdr=(g.name&&g.name.length)?'<div class="fd-grp">'+g.name+(g.del?'<span class="del">Delete</span>':'')+'</div>':'';
     var rows=g.fields.map(function(f){return fdRow(f,S.fileId);}).join('');
@@ -688,7 +756,7 @@ function renderFileDetail(){
           +'<button class="btn btn-sm" disabled>Confirm</button>'
         +'</div>'
         +'<div class="fd-pdftb">'
-          +'<input class="inp" style="width:48px;min-width:0;padding:4px;" value="1"> <span class="muted">of 2</span>'
+          +'<input class="inp" style="width:48px;min-width:0;padding:4px;" value="'+locPage+'"> <span class="muted">of 2</span>'
           +'<button class="mini">&minus;</button><button class="mini">+</button>'
           +'<button class="mini">&#8635;</button><button class="mini">&#8634;</button>'
           +'<select class="sel" style="min-width:140px;"><option>Automatic Zoom</option></select>'
@@ -744,7 +812,7 @@ function openDocs(){S.docsOpen=true;render();}
 function closeDocs(){S.docsOpen=false;render();}
 function setDocsTab(t){S.docsTab=t;render();}
 function setInnerTab(t){S.innerTab=t;render();}
-function openFile(id){if(id)S.fileId=id;S.fileOpen=true;render();}
+function openFile(id){if(id){S.fileId=id;S.locate=null;}S.fileOpen=true;render();}
 function closeFile(){S.fileOpen=false;render();}
 function openSync(){S.syncOpen=true;render();}
 function closeSync(){S.syncOpen=false;render();}
