@@ -155,6 +155,36 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .fd-doc{flex:1;overflow:auto;padding:18px;display:flex;justify-content:center;}
 .fd-bottom{display:flex;justify-content:flex-end;gap:10px;padding:12px 16px;border-top:1px solid var(--bd);background:#fff;}
 
+/* ── VALIDATION ALERTS cards ── */
+.fd-alerts{padding:6px 14px 4px;}
+.fd-alert{border:1px solid #f3c969;background:#fff8e6;border-radius:8px;padding:11px 13px;margin-bottom:10px;}
+.fd-alert.resolved{border-color:#9bd5ab;background:#f1faf3;}
+.fd-alert-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.fd-alert-ttl{font-size:12.5px;font-weight:700;color:#c0392b;}
+.fd-alert.resolved .fd-alert-ttl{color:#1f9d57;}
+.fd-rtag{margin-left:auto;font-size:12px;font-weight:700;color:#1f9d57;}
+.fd-alert-msg{font-size:12px;color:#6b6256;margin-bottom:9px;line-height:1.5;}
+.fd-alert.resolved .fd-alert-msg{color:#5e7a68;}
+.fd-alert-acts{display:flex;gap:8px;flex-wrap:wrap;}
+.fd-abtn{border:1px solid #d6dae0;background:#fff;color:#374151;border-radius:6px;padding:6px 12px;font-size:12px;}
+.fd-abtn:hover{border-color:var(--blue);color:var(--blue);}
+.fd-noalert{padding:8px 16px 14px;font-size:12px;color:var(--lt);}
+.need{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.4px;color:#b8860b;background:#fdf3d6;border-radius:3px;padding:1px 6px;vertical-align:1px;}
+.fd-f.need-row{background:#fffaf0;}
+.check-btn{border:1px solid #cfd6df;background:#fff;color:#2563eb;border-radius:5px;padding:3px 12px;font-size:11.5px;}
+.check-btn:hover{background:#eef4ff;border-color:var(--blue);}
+.add-item{text-align:center;padding:11px;font-size:12.5px;color:#5b6470;background:#f6f7f9;border-bottom:1px solid #f3f4f6;cursor:pointer;}
+.add-item:hover{background:#eef1f4;color:var(--blue);}
+/* ── Mykad ID card mock ── */
+.idcard{width:420px;max-width:100%;background:linear-gradient(135deg,#ece4d3,#e7dcc4);border:1px solid #cbb98f;border-radius:10px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+.idc-band{background:#7c92b5;color:#fff;font-weight:800;font-size:13px;text-align:center;border-radius:5px;padding:5px;letter-spacing:.5px;}
+.idc-row{display:flex;gap:14px;margin-top:12px;}
+.idc-no{font-size:18px;font-weight:800;color:#33425e;letter-spacing:1px;}
+.idc-nm{font-size:12px;font-weight:700;margin-top:8px;color:#2a2a2a;}
+.idc-ad{font-size:10px;color:#3a3a3a;margin-top:6px;line-height:1.5;}
+.idc-tags{font-size:11px;font-weight:700;color:#2a2a2a;margin-top:8px;}
+.idc-photo{width:96px;height:120px;background:#c9bfa6;border:1px solid #b3a784;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#8a7f63;font-size:11px;flex-shrink:0;}
+
 /* ── EC form mock ── */
 .ec{width:620px;max-width:100%;background:#fff;border:1px solid #d7dbe0;box-shadow:0 1px 6px rgba(0,0,0,.08);padding:22px 26px;font-size:11px;color:#222;line-height:1.7;font-family:'Times New Roman',serif;}
 .ec-hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #222;padding-bottom:6px;}
@@ -209,10 +239,13 @@ var IC={
 function railIcon(p){return '<div class="rail-ic">'+p+'</div>';}
 
 /* ════════════════ STATE ════════════════ */
-var S={ docsOpen:false, docsTab:'app', innerTab:'filelist', fileOpen:false, syncOpen:false };
+var S={ docsOpen:false, docsTab:'app', innerTab:'filelist', fileOpen:false, fileId:'mykad', syncOpen:false,
+        fieldChecked:{}, alertResolved:{} };
 
 /* ════════════════ DATA ════════════════ */
 var FILES=[
+  {id:'mykad',name:'Mykad (11).pdf',size:'0.42 MB',subject:'Applicant',cat:'Personal Identity',type:'Mykad',ocr:'Y',status:'Upload Succeeded',ocrStatus:'OCR Succeeded',desc:'',time:'28/05/26 17:33:02',src:'v_wbcocoliao'},
+  {id:'epf',name:'1147 EPF Statement.pdf',size:'0.21 MB',subject:'Applicant',cat:'Applicant Income',type:'EPF Statement',ocr:'Y',status:'Upload Succeeded',ocrStatus:'OCR Succeeded',desc:'',time:'28/05/26 17:32:18',src:'v_wbcocoliao'},
   {id:'ec',name:'EC Form.pdf',size:'0.18 MB',subject:'Applicant',cat:'Applicant Income',type:'EC Form',ocr:'Y',status:'Upload Succeeded',ocrStatus:'OCR Succeeded',desc:'',time:'28/05/26 17:31:40',src:'v_wbcocoliao'},
   {id:'xlsx',name:'222222.xlsx',size:'0.01 MB',subject:'Applicant',cat:'Other Documents',type:'',ocr:'N',status:'Upload Succeeded',ocrStatus:'',desc:'',time:'28/05/26 17:30:53',src:'v_wbcocoliao'},
   {id:'consent',name:'PAPER_CONSENT_Individual_EN.pdf',size:'0.00 MB',subject:'CASE_LEVEL',cat:'Collateral/Others',type:'CRA Form',ocr:'N',status:'Upload Succeeded',ocrStatus:'',desc:'Generated from BNBS..',time:'28/05/26 17:28:10',src:'SYSTEM_GENERATED'}
@@ -224,22 +257,69 @@ var UPCATS=[
   {t:'Other Application & Vehicle',ic:IC.car,hint:'CRA Form, VSO, VOC, Form 8, JK69...'},
   {t:'Seller Documents',ic:IC.file,hint:'Seller Invoice, Seller Identity, Information on seller...'}
 ];
-var EC_CUST=[
-  {k:'customer_name',v:'AINUN NADZURAH BINTI MD BAHAR'},
-  {k:'id_no',v:'881127565512'},
-  {k:'tin_no',v:'IG 22536019050'}
-];
-var EC_ANN=[
-  {k:'year_ended',v:'2024'},
-  {k:'employer_name',v:'Kementerian Kesihatan Malaysia'},
-  {k:'earning_gross_salary',v:'97606.08'},
-  {k:'total_taxable_income',v:'97606.08'},
-  {k:'deduction_pcb_tax',v:'4283.15'},
-  {k:'deduction_zakat',v:''},
-  {k:'deduction_cp38',v:'1452.00'},
-  {k:'deduction_epf',v:'12177.00'},
-  {k:'deduction_socso',v:''}
-];
+// Action keys → labels (faithful to live system)
+var ACT_LABEL={amend:'Amend scanned result',justify:'Justification',replace:'Replace Document',verifyall:'Verify All'};
+var FILE_DETAIL={
+  mykad:{ name:'Mykad (11).pdf', crumb:'Personal Identity &rsaquo; Mykad', doc:'mykad',
+    alerts:[
+      {id:'eyeball', title:'Eyeball Check', msg:'Manual check is needed', acts:['verifyall','replace'], kind:'eyeball'},
+      {id:'idcons', title:'Mykad - id_no Consistency', msg:'id_no is not consistent', acts:['amend','justify','replace']}
+    ],
+    groups:[
+      {name:'customer_info', fields:[
+        {k:'address_line2',v:'CAWANGAN SUMBER MANUSIA KEMENTAH JALAN PADANG TEMBAK',c:99,need:true},
+        {k:'id_no_alt',v:'1167853',c:99,need:true},
+        {k:'id_type_alt',v:'Army ID',c:99,dot:true},
+        {k:'state',v:'W. PERSEKUTUAN(KL)',c:99,dot:true},
+        {k:'city',v:'KUALA LUMPUR',c:99,dot:true},
+        {k:'postcode',v:'50634',c:99,dot:true},
+        {k:'customer_name',v:'MUHAMMAD FEANDY BIN ABDULLAH',c:99,dot:true},
+        {k:'address_line1',v:'MARKAS TENTERA DARAT',c:99,need:true},
+        {k:'nationality',v:'Malaysia',c:99,dot:true},
+        {k:'gender',v:'M',c:99,need:true},
+        {k:'date_of_birth',v:'20-04-1987',c:99,dot:true},
+        {k:'id_no',v:'870420495767',c:99,dot:true}
+      ]}
+    ]},
+  epf:{ name:'1147 EPF Statement.pdf', crumb:'Applicant Income &rsaquo; EPF Statement', doc:'epf',
+    alerts:[
+      {id:'genrules', title:'General Document Rules', msg:'FAIL: Contribution month Jun-25 is older than M-2 from application_date.', acts:['justify','replace']},
+      {id:'datecmp', title:'EPF Statement - statement_date Date Compare', msg:'statement_date date is invalid', acts:['amend','justify','replace']}
+    ],
+    groups:[
+      {name:'', addNew:true, fields:[
+        {k:'employee_contribution',v:'4925.00',c:99},
+        {k:'employer_contribution',v:'6940.00',c:99}
+      ]},
+      {name:'undefined', fields:[{k:'statement_date',v:'17-06-2025',c:99,dot:true}]},
+      {name:'employer_info', fields:[{k:'employer_epf_no',v:'001266896',c:99,dot:true}]},
+      {name:'customer_info', fields:[
+        {k:'epf_member_no',v:'16930542',c:99,dot:true},
+        {k:'id_no',v:'850111145554',c:99,dot:true},
+        {k:'customer_name',v:'CYNDI FOO YEN YEN',c:99,dot:true}
+      ]}
+    ]},
+  ec:{ name:'EC Form.pdf', crumb:'Applicant Income &rsaquo; EC Form', doc:'ec',
+    alerts:[],
+    groups:[
+      {name:'customer_info', fields:[
+        {k:'customer_name',v:'AINUN NADZURAH BINTI MD BAHAR',c:100,dot:true},
+        {k:'id_no',v:'881127565512',c:100,dot:true},
+        {k:'tin_no',v:'IG 22536019050',c:100,dot:true}
+      ]},
+      {name:'annual_records', del:true, fields:[
+        {k:'year_ended',v:'2024',c:100},
+        {k:'employer_name',v:'Kementerian Kesihatan Malaysia',c:100},
+        {k:'earning_gross_salary',v:'97606.08',c:100},
+        {k:'total_taxable_income',v:'97606.08',c:100},
+        {k:'deduction_pcb_tax',v:'4283.15',c:100},
+        {k:'deduction_zakat',v:'',c:100},
+        {k:'deduction_cp38',v:'1452.00',c:100},
+        {k:'deduction_epf',v:'12177.00',c:100},
+        {k:'deduction_socso',v:'',c:100}
+      ]}
+    ]}
+};
 var SYNC_ROWS=[
   {f:'Conventional/Islamic',cur:'C',ocr:'C',st:'ok'},
   {f:'Product Group',cur:'HP',ocr:'HP',st:'ok'},
@@ -404,7 +484,7 @@ function renderUpload(){
   +'</div>';
 }
 function actIcons(f){
-  var open=f.ocr==='Y'?'onclick="openFile()"':'';
+  var open=f.ocr==='Y'?'onclick="openFile(\''+f.id+'\')"':'';
   return '<div class="acts">'
     +'<span class="aic" title="Quick Confirm">'+IC.ckcirc+'</span>'
     +'<span class="aic" title="Edit" '+open+'>'+IC.edit+'</span>'
@@ -485,8 +565,48 @@ function renderDocs(){
 }
 
 /* ════════════════ FILE DETAIL ════════════════ */
-function fdField(k,v){
-  return '<div class="fd-f"><div class="lbl">'+k+'</div><div class="val">'+(v||'')+'</div><div class="conf">100% <span class="dot-g"></span></div></div>';
+function actBtn(key,fileId,alertId){
+  var label=ACT_LABEL[key];
+  if(key==='verifyall')return '<button class="fd-abtn" onclick="verifyAll(\''+fileId+'\',\''+alertId+'\')">'+label+'</button>';
+  return '<button class="fd-abtn">'+label+'</button>';
+}
+function fdAlertCard(a,fileId){
+  var resolved=(S.alertResolved[fileId]||{})[a.id];
+  var acts=a.acts.map(function(k){return actBtn(k,fileId,a.id);}).join('');
+  var tag=resolved?'<span class="fd-rtag">&#10003; Resolved</span>':'';
+  return '<div class="fd-alert'+(resolved?' resolved':'')+'">'
+    +'<div class="fd-alert-top"><span class="fd-alert-ttl">'+a.title+'</span>'+tag+'</div>'
+    +'<div class="fd-alert-msg">'+a.msg+'</div>'
+    +'<div class="fd-alert-acts">'+acts+'</div>'
+  +'</div>';
+}
+function fdRow(f,fileId){
+  var checked=(S.fieldChecked[fileId]||{})[f.k];
+  var need=f.need&&!checked;
+  var badge=need?' <span class="need">NEEDS CHECK</span>':'';
+  var checkBtn=need?'<button class="check-btn" onclick="checkField(\''+fileId+'\',\''+f.k+'\')">Check</button>':'';
+  var dot=(f.dot||checked)?' <span class="dot-g"></span>':'';
+  return '<div class="fd-f'+(need?' need-row':'')+'">'
+    +'<div class="lbl">'+f.k+badge+'</div>'
+    +'<div class="val">'+(f.v||'')+'</div>'
+    +checkBtn
+    +'<div class="conf">'+(f.c||99)+'%'+dot+'</div>'
+  +'</div>';
+}
+function verifyAll(fileId,alertId){
+  if(!S.alertResolved[fileId])S.alertResolved[fileId]={};
+  S.alertResolved[fileId][alertId]=true;
+  if(!S.fieldChecked[fileId])S.fieldChecked[fileId]={};
+  (FILE_DETAIL[fileId].groups||[]).forEach(function(g){g.fields.forEach(function(f){if(f.need)S.fieldChecked[fileId][f.k]=true;});});
+  render();
+}
+function checkField(fileId,k){
+  if(!S.fieldChecked[fileId])S.fieldChecked[fileId]={};
+  S.fieldChecked[fileId][k]=true;
+  var d=FILE_DETAIL[fileId],all=true;
+  d.groups.forEach(function(g){g.fields.forEach(function(f){if(f.need&&!S.fieldChecked[fileId][f.k])all=false;});});
+  if(all)d.alerts.forEach(function(a){if(a.kind==='eyeball'){if(!S.alertResolved[fileId])S.alertResolved[fileId]={};S.alertResolved[fileId][a.id]=true;}});
+  render();
 }
 function ecMock(){
   return '<div class="ec">'
@@ -509,11 +629,45 @@ function ecMock(){
     +'<div class="ec-row"><div>2. Arahan Potongan CP38</div><div class="ec-u" style="min-width:90px;text-align:right;">1,452.00</div></div>'
   +'</div>';
 }
+function mykadMock(){
+  return '<div class="idcard">'
+    +'<div class="idc-band">KAD PENGENALAN<br><span style="font-size:10px;">ANGKATAN TENTERA MALAYSIA</span></div>'
+    +'<div class="idc-row"><div><div class="idc-no">870420-49-5767</div>'
+      +'<div class="idc-nm">MUHAMMAD FEANDY BIN ABDULLAH</div>'
+      +'<div class="idc-ad">MARKAS TENTERA DARAT<br>CAWANGAN SUMBER MANUSIA<br>KEMENTAH JALAN PADANG TEMBAK<br>50634 KUALA LUMPUR<br>W. PERSEKUTUAN(KL)</div>'
+      +'<div class="idc-tags">DARAT &nbsp; LLP<br>ISLAM &nbsp; LELAKI</div></div>'
+      +'<div class="idc-photo">PHOTO</div></div>'
+  +'</div>';
+}
+function epfMock(){
+  return '<div class="ec" style="font-family:Arial,sans-serif;">'
+    +'<div style="display:flex;justify-content:space-between;border-bottom:2px solid #0a7d34;padding-bottom:6px;"><div style="font-weight:800;color:#0a7d34;font-size:16px;">KWSP &middot; EPF</div><div style="font-size:10px;text-align:right;">Penyata Caruman<br>Contribution Statement</div></div>'
+    +'<div style="margin-top:8px;font-size:11px;">No. Ahli (Member): <b>16930542</b> &nbsp;&nbsp; No. K/P: <b>850111-14-5554</b></div>'
+    +'<div style="font-size:11px;">Nama: <b>CYNDI FOO YEN YEN</b></div>'
+    +'<div style="font-size:11px;margin-top:4px;">Majikan (Employer EPF No.): <b>001266896</b></div>'
+    +'<div style="font-size:11px;">Tarikh Penyata (Statement date): <b>17-06-2025</b></div>'
+    +'<table style="width:100%;margin-top:10px;border-collapse:collapse;font-size:11px;">'
+      +'<tr style="background:#eaf6ee;"><td style="border:1px solid #cdd;padding:5px;">Bulan</td><td style="border:1px solid #cdd;padding:5px;text-align:right;">Caruman Pekerja</td><td style="border:1px solid #cdd;padding:5px;text-align:right;">Caruman Majikan</td></tr>'
+      +'<tr><td style="border:1px solid #cdd;padding:5px;">Jun-25</td><td style="border:1px solid #cdd;padding:5px;text-align:right;">4,925.00</td><td style="border:1px solid #cdd;padding:5px;text-align:right;">6,940.00</td></tr>'
+    +'</table>'
+  +'</div>';
+}
+function docMock(t){return t==='mykad'?mykadMock():t==='epf'?epfMock():ecMock();}
 function renderFileDetail(){
+  var d=FILE_DETAIL[S.fileId]||FILE_DETAIL.ec;
+  var alertsHtml=d.alerts.length
+    ? d.alerts.map(function(a){return fdAlertCard(a,S.fileId);}).join('')
+    : '<div class="fd-noalert">No validation alerts on this document.</div>';
+  var groupsHtml=d.groups.map(function(g){
+    var hdr=(g.name&&g.name.length)?'<div class="fd-grp">'+g.name+(g.del?'<span class="del">Delete</span>':'')+'</div>':'';
+    var rows=g.fields.map(function(f){return fdRow(f,S.fileId);}).join('');
+    var add=g.addNew?'<div class="add-item">+ Add New Item</div>':'';
+    return hdr+rows+add;
+  }).join('');
   return '<div class="ov ov-full"><div class="fd">'
     +'<div class="fd-top">'
       +'<button class="fd-back" onclick="closeFile()">&#8249;</button>'
-      +'<div><div class="fd-title">EC Form.pdf</div><div class="fd-crumb">Applicant Income &rsaquo; EC Form</div></div>'
+      +'<div><div class="fd-title">'+d.name+'</div><div class="fd-crumb">'+d.crumb+'</div></div>'
       +'<div class="sp"></div>'
       +'<button class="btn btn-sm">&#8249; Previous</button>'
       +'<button class="btn btn-sm">Next &#8250;</button>'
@@ -522,12 +676,9 @@ function renderFileDetail(){
     +'<div class="fd-split">'
       +'<div class="fd-left">'
         +'<div class="fd-sec"><span class="rd"></span> VALIDATION ALERTS</div>'
+        +'<div class="fd-alerts">'+alertsHtml+'</div>'
         +'<div class="fd-sec"><span class="rd"></span> FIELDS</div>'
-        +'<div class="fd-grp">customer_info</div>'
-        +EC_CUST.map(function(f){return fdField(f.k,f.v);}).join('')
-        +'<div class="fd-grp">annual_records <span class="del">Delete</span></div>'
-        +EC_ANN.map(function(f){return fdField(f.k,f.v);}).join('')
-        +'<div style="text-align:right;padding:10px 16px;"><a class="lnk" style="color:var(--red);">Delete</a></div>'
+        +groupsHtml
       +'</div>'
       +'<div class="fd-right">'
         +'<div class="fd-rtop">'
@@ -542,7 +693,7 @@ function renderFileDetail(){
           +'<button class="mini">&#8635;</button><button class="mini">&#8634;</button>'
           +'<select class="sel" style="min-width:140px;"><option>Automatic Zoom</option></select>'
         +'</div>'
-        +'<div class="fd-doc">'+ecMock()+'</div>'
+        +'<div class="fd-doc">'+docMock(d.doc)+'</div>'
       +'</div>'
     +'</div>'
     +'<div class="fd-bottom">'
@@ -593,7 +744,7 @@ function openDocs(){S.docsOpen=true;render();}
 function closeDocs(){S.docsOpen=false;render();}
 function setDocsTab(t){S.docsTab=t;render();}
 function setInnerTab(t){S.innerTab=t;render();}
-function openFile(){S.fileOpen=true;render();}
+function openFile(id){if(id)S.fileId=id;S.fileOpen=true;render();}
 function closeFile(){S.fileOpen=false;render();}
 function openSync(){S.syncOpen=true;render();}
 function closeSync(){S.syncOpen=false;render();}
