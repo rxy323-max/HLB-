@@ -27,6 +27,7 @@ button{font-family:inherit;cursor:pointer;}
 .req{color:var(--red);}
 .muted{color:var(--mut);}
 .dot-g{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);}
+.dot-r{display:inline-block;width:7px;height:7px;border-radius:50%;background:#e23b3b;}
 a.lnk{color:var(--blue);cursor:pointer;text-decoration:none;}
 a.lnk:hover{text-decoration:underline;}
 
@@ -193,10 +194,22 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .need{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.4px;color:#b8860b;background:#fdf3d6;border-radius:3px;padding:1px 6px;vertical-align:1px;}
 .fd-f.need-row{background:#fffaf0;}
 .fd-f.hl{background:#fff6cc;box-shadow:inset 3px 0 0 #e0a107;}
+.checked{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.4px;color:#1f9d57;background:#e6f4ea;border-radius:3px;padding:1px 6px;vertical-align:1px;}
 .check-btn{border:1px solid #cfd6df;background:#fff;color:#2563eb;border-radius:5px;padding:4px 13px;font-size:11.5px;}
 .check-btn:hover{background:#eef4ff;border-color:var(--blue);}
+.done-btn{background:#1f9d57;color:#fff;border-radius:5px;padding:4px 13px;font-size:11.5px;font-weight:600;}
 .add-item{text-align:center;padding:12px;font-size:12.5px;color:#5b6470;background:#f6f7f9;border-bottom:1px solid #f3f4f6;cursor:pointer;}
 .add-item:hover{background:#eef1f4;color:var(--blue);}
+/* ── Cross-Validation Results table ── */
+.xv-table th,.xv-table td{white-space:nowrap;}
+.xv-row-bad{background:#fffbfb;}
+.alert-cnt{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#e23b3b;color:#fff;font-size:11px;font-weight:700;}
+.alert-rules{color:#dc2626;font-size:11.5px;line-height:1.7;white-space:normal;min-width:240px;}
+.ocr-fail{color:#c0392b;font-weight:600;}
+.qmark{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border:1px solid #cbd2da;border-radius:50%;color:#9aa1ab;font-size:11px;cursor:help;}
+.xv-foot{display:flex;align-items:center;gap:12px;margin-top:14px;padding-top:6px;}
+.xv-issues{font-size:12px;color:#5b6470;background:#eef1f4;border-radius:6px;padding:4px 12px;}
+.xv-issues.bad{color:#c0392b;background:#fdeceb;}
 /* ── Mykad ID card mock ── */
 .idcard{width:420px;max-width:100%;background:linear-gradient(135deg,#ece4d3,#e7dcc4);border:1px solid #cbb98f;border-radius:10px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.12);}
 .idc-band{background:#7c92b5;color:#fff;font-weight:800;font-size:13px;text-align:center;border-radius:5px;padding:5px;letter-spacing:.5px;}
@@ -348,8 +361,41 @@ var FILE_DETAIL={
         {k:'deduction_epf',v:'12177.00',c:100},
         {k:'deduction_socso',v:'',c:100}
       ]}
+    ]},
+  vso:{ name:'VSO.pdf', crumb:'Collateral/Others &rsaquo; VSO', doc:'vso',
+    alerts:[
+      {id:'vsoname', title:'VSO - customer_name Consistency', sev:'hard', dim:'File Consistency', kind:'consistency',
+        cmp:'customer_name is not consistent across documents', acts:['amend','justify','replace'], rec:'amend', locate:'guarantor_name'},
+      {id:'vsoprice', title:'VSO - total_sales_price Exist', sev:'warn', dim:'Existence', kind:'exist',
+        cmp:'total_sales_price <span class="bad">not present</span> &nbsp;&middot;&nbsp; document shows SELLING PRICE RM 250,000.00 &rarr; captured as net_selling_price',
+        acts:['justify','replace'], rec:'justify', locate:'total_sales_price'}
+    ],
+    groups:[
+      {name:'', fields:[{k:'engine_capacity',v:'2493CC',c:100,need:true,done:true}]},
+      {name:'financial_info', fields:[
+        {k:'net_selling_price',v:'250000.00',c:100,dot:true},
+        {k:'accessories_amount',v:'',c:0},
+        {k:'road_tax',v:'',c:0},
+        {k:'registration_fee',v:'',c:0},
+        {k:'insurance_premium',v:'',c:0},
+        {k:'total_sales_price',v:'',c:0},
+        {k:'deposit_amount',v:'',c:0}
+      ]},
+      {name:'guarantor_info', fields:[{k:'guarantor_name',v:'',c:0}]}
     ]}
 };
+// Cross-Validation Results = per-file roll-up of all alerts (Alert Count + Alert Rules)
+var CROSSVAL=[
+  {orig:'IC.pdf',name:'Driving License.pdf',subject:'Applicant',cat:'Personal Identity',type:'Driving License',ocr:'Validation Failed',rules:['Driving License - customer_name Consistency','General Document Rules']},
+  {orig:'IC.pdf',name:'Mykad.pdf',subject:'Applicant',cat:'Personal Identity',type:'Mykad',ocr:'Validation Failed',rules:['Mykad - id_no Consistency','Mykad - customer_name Consistency','Eyeball Check']},
+  {orig:'VOC INCOME.pdf',name:'Information On Seller.pdf',subject:'Applicant',cat:'Seller Documents',type:'Information On Seller',ocr:'Validation Failed',rules:['Information On Seller - constitution Exist','Information On Seller - date_established Exist','Information On Seller - paid_up_capital Exist','Information On Seller - signature_date Exist','Information On Seller - witness_date Exist','Information On Seller - address Exist','Information On Seller - has_company_stamp Exist','Information On Seller - is_authentic_declared Exist','Information On Seller - is_bank_authorized Exist','Information On Seller - witness_name Exist']},
+  {orig:'VOC INCOME.pdf',name:'EPF Statement.pdf',subject:'Applicant',cat:'Applicant Income',type:'EPF Statement',ocr:'Validation Failed',rules:['EPF - customer_name Consistency','EPF - id_no Consistency','EPF - statement_date Date Compare']},
+  {orig:'VOC INCOME.pdf',name:'Individual Bank Statement.pdf',subject:'Applicant',cat:'Applicant Income',type:'Individual Bank Statement',ocr:'Validation Failed',rules:['Individual Bank Statement - customer_name Consistency','General Document Rules']},
+  {orig:'VOC INCOME.pdf',name:'Payslip.pdf',subject:'Applicant',cat:'Applicant Income',type:'Payslip',ocr:'Validation Failed',rules:['Payslip - customer_name Consistency','Payslip - id_no Consistency','Eyeball Check']},
+  {orig:'VOC INCOME.pdf',name:'VOC.pdf',subject:'Applicant',cat:'Collateral/Others',type:'VOC',ocr:'Validation Failed',rules:['VOC - chassis_no Consistency','VOC - engine_no Consistency','VOC - vehicle_model Consistency','General Document Rules','Eyeball Check']},
+  {orig:'VSO.pdf',name:'VSO.pdf',subject:'Applicant',cat:'Collateral/Others',type:'VSO',ocr:'Validation Failed',rules:['VSO - customer_name Consistency','VSO - id_no Consistency','VSO - chassis_no Exist','VSO - engine_no Exist','VSO - vehicle_model Exist','VSO - total_sales_price Exist','VSO - deposit_amount Exist','General Document Rules','Eyeball Check']}
+];
+function xvalDetailId(type){return {'Mykad':'mykad','EPF Statement':'epf','EC Form':'ec','VSO':'vso'}[type]||'mykad';}
 var SYNC_ROWS=[
   {f:'Conventional/Islamic',cur:'C',ocr:'C',st:'ok'},
   {f:'Product Group',cur:'HP',ocr:'HP',st:'ok'},
@@ -562,18 +608,51 @@ function renderFileList(){
     +'<div class="pager"><span>&lsaquo;</span><span class="pg-num">1</span><span>&rsaquo;</span><span>10 / page &#9662;</span></div>';
 }
 function renderCrossVal(){
-  // Reconstructed (no screenshot supplied yet) — flagged so user can correct
-  var rows=[
-    {from:'Mykad',to:'Application Form',rule:'Customer name match',res:'ok',detail:'AINUN NADZURAH BINTI MD BAHAR = AINUN NADZURAH BINTI MD BAHAR'},
-    {from:'EC Form',to:'Application Form',rule:'ID number match',res:'ok',detail:'881127565512 = 881127565512'},
-    {from:'EC Form',to:'Income Summary',rule:'Annual gross income consistency',res:'cf',detail:'EC 97,606.08 vs declared 95,000.00 — diff 2,606.08'}
-  ];
-  var trs=rows.map(function(r){
-    var badge=r.res==='ok'?'<span class="sync-st-ok">PASS</span>':'<span class="sync-st-cf">CONFLICT</span>';
-    return '<tr><td>'+r.from+'</td><td>'+r.to+'</td><td>'+r.rule+'</td><td class="muted">'+r.detail+'</td><td style="text-align:right;">'+badge+'</td></tr>';
+  var withIssues=CROSSVAL.filter(function(r){return r.rules&&r.rules.length;}).length;
+  var rows=CROSSVAL.map(function(r){
+    var cnt=r.rules?r.rules.length:0;
+    var countCell=cnt?'<span class="alert-cnt">'+cnt+'</span>':'';
+    var rulesCell=cnt?'<div class="alert-rules">'+r.rules.map(function(x){return '<div>'+x+'</div>';}).join('')+'</div>':'';
+    var stCell=r.ocr==='Validation Failed'?'<span class="ocr-fail">Validation Failed</span>':r.ocr==='Validating'?'<span class="muted">Validating</span>':'<span class="st-ok">'+r.ocr+'</span>';
+    var did=xvalDetailId(r.type);
+    return '<tr'+(cnt?' class="xv-row-bad"':'')+'>'
+      +'<td><input type="checkbox" class="cbx"></td>'
+      +'<td class="muted">'+r.orig+'</td>'
+      +'<td class="fn">'+r.name+'</td>'
+      +'<td>'+r.subject+'</td>'
+      +'<td>'+r.cat+'</td>'
+      +'<td>'+r.type+'</td>'
+      +'<td>'+stCell+'</td>'
+      +'<td style="text-align:center;">'+countCell+'</td>'
+      +'<td>'+rulesCell+'</td>'
+      +'<td style="text-align:center;"><span class="qmark" title="Justification">?</span></td>'
+      +'<td><div class="acts"><span class="aic" title="Download">'+IC.dl+'</span><span class="aic" title="Open &amp; resolve" onclick="openFile(\''+did+'\')">'+IC.edit+'</span></div></td>'
+    +'</tr>';
   }).join('');
-  return '<div style="background:#fff8e1;border:1px solid #ffe6a0;border-radius:7px;padding:9px 12px;font-size:12px;color:#7a6516;margin-bottom:12px;">&#9888; This tab is <strong>reconstructed</strong> (no screenshot supplied yet). Send the real Cross-Validation Results screen and I will match it exactly.</div>'
-    +'<table><thead><tr><th>From</th><th>To</th><th>Rule</th><th>Detail</th><th style="text-align:right;">Result</th></tr></thead><tbody>'+trs+'</tbody></table>';
+  return ''
+    +'<div class="filters">'
+      +'<input class="inp" placeholder="Search values">'
+      +'<select class="sel"><option>Subject</option></select>'
+      +'<select class="sel"><option>Category</option></select>'
+      +'<select class="sel"><option>OCRStatus</option></select>'
+      +'<button class="btn btn-pri btn-sm">'+IC.search+' Search</button>'
+      +'<button class="btn btn-sm">'+IC.refresh+' Reset Filters</button>'
+      +'<button class="btn btn-sm" disabled>'+IC.dl+' Download</button>'
+      +'<button class="btn btn-sm">'+IC.refresh+' Refresh</button>'
+    +'</div>'
+    +'<div style="overflow:auto;">'
+    +'<table class="xv-table">'
+      +'<thead><tr>'
+        +'<th><input type="checkbox" class="cbx"></th><th>Original File Name</th><th>File Name</th><th>Subject</th><th>Category</th><th>File Type</th><th>File OCR Status</th><th>Alert Count</th><th>Alert Rules</th><th>Justification</th><th>Action</th>'
+      +'</tr></thead>'
+      +'<tbody>'+rows+'</tbody>'
+    +'</table>'
+    +'</div>'
+    +'<div class="xv-foot">'
+      +'<span class="muted">Total '+CROSSVAL.length+' items</span>'
+      +'<span class="xv-issues'+(withIssues?' bad':'')+'">'+withIssues+' Files with issues</span>'
+      +'<button class="btn btn-pri" style="margin-left:auto;">Revalidation &amp; Submit Results</button>'
+    +'</div>';
 }
 function renderDocs(){
   return '<div class="ov ov-full"><div class="docs">'
@@ -589,7 +668,7 @@ function renderDocs(){
         +'<div class="lt-tab '+(S.innerTab==='crossval'?'active':'')+'" onclick="setInnerTab(\'crossval\')">Cross-Validation Results</div>'
       +'</div>'
       +(S.innerTab==='filelist'?renderFileList():renderCrossVal())
-      +'<div style="display:flex;justify-content:flex-end;margin-top:14px;"><button class="btn" onclick="closeDocs()" style="color:var(--blue);border-color:#bcd0f5;">Back To List</button></div>'
+      +(S.innerTab==='filelist'?'<div style="display:flex;justify-content:flex-end;margin-top:14px;"><button class="btn" onclick="closeDocs()" style="color:var(--blue);border-color:#bcd0f5;">Back To List</button></div>':'')
     +'</div>'
   +'</div></div>';
 }
@@ -634,17 +713,20 @@ function locateField(fileId,key,page){
   if(el&&el.scrollIntoView)el.scrollIntoView({block:'center'});
 }
 function fdRow(f,fileId){
-  var checked=(S.fieldChecked[fileId]||{})[f.k];
+  var checked=((S.fieldChecked[fileId]||{})[f.k])||f.done;
   var need=f.need&&!checked;
+  var wasNeed=f.need&&checked;
   var hl=S.locate&&S.locate.file===fileId&&S.locate.key===f.k;
-  var badge=need?' <span class="need">NEEDS CHECK</span>':'';
-  var checkBtn=need?'<button class="check-btn" onclick="checkField(\''+fileId+'\',\''+f.k+'\')">Check</button>':'';
-  var dot=(f.dot||checked)?' <span class="dot-g"></span>':'';
+  var badge=need?' <span class="need">NEEDS CHECK</span>':(wasNeed?' <span class="checked">CHECKED</span>':'');
+  var ctrl=need?'<button class="check-btn" onclick="checkField(\''+fileId+'\',\''+f.k+'\')">Check</button>'
+            :(wasNeed?'<span class="done-btn">Done</span>':'');
+  var c=(f.c==null?99:f.c);
+  var dot=' <span class="'+(c===0?'dot-r':'dot-g')+'"></span>';
   return '<div class="fd-f'+(need?' need-row':'')+(hl?' hl':'')+'">'
     +'<div class="lbl">'+f.k+badge+'</div>'
     +'<div class="val">'+(f.v||'')+'</div>'
-    +checkBtn
-    +'<div class="conf">'+(f.c||99)+'%'+dot+'</div>'
+    +ctrl
+    +'<div class="conf">'+c+'%'+dot+'</div>'
   +'</div>';
 }
 function verifyAll(fileId,alertId){
@@ -706,7 +788,20 @@ function epfMock(){
     +'</table>'
   +'</div>';
 }
-function docMock(t){return t==='mykad'?mykadMock():t==='epf'?epfMock():ecMock();}
+function vsoMock(){
+  return '<div class="ec" style="font-family:Arial,sans-serif;">'
+    +'<div style="text-align:center;font-weight:800;font-size:14px;border-bottom:1px solid #999;padding-bottom:5px;">VEHICLE SALES ORDER</div>'
+    +'<table style="width:100%;margin-top:8px;font-size:11px;">'
+      +'<tr><td>CHASSIS NO</td><td style="border-bottom:1px solid #777;">AGH30-9036625</td><td style="padding-left:14px;">COLOUR</td><td style="border-bottom:1px solid #777;">WHITE</td></tr>'
+      +'<tr><td style="padding-top:14px;"><b>SELLING PRICE</b></td><td style="border-bottom:1px solid #777;padding-top:14px;"><b>RM 250,000.00</b></td><td style="padding-left:14px;">SALESMAN</td><td style="border-bottom:1px solid #777;">MUN</td></tr>'
+      +'<tr><td>LOAN AMOUNT</td><td style="border-bottom:1px solid #777;">RM 199,000.00</td><td style="padding-left:14px;">HANDPHONE</td><td style="border-bottom:1px solid #777;">016-651 2201</td></tr>'
+      +'<tr><td>PERIOD</td><td style="border-bottom:1px solid #777;">&nbsp;</td></tr>'
+      +'<tr><td>INTEREST RATE</td><td style="border-bottom:1px solid #777;">&nbsp;</td></tr>'
+    +'</table>'
+    +'<div style="text-align:right;font-size:9px;color:#999;margin-top:30px;">Scanned with CamScanner</div>'
+  +'</div>';
+}
+function docMock(t){return t==='mykad'?mykadMock():t==='epf'?epfMock():t==='vso'?vsoMock():ecMock();}
 function renderFileDetail(){
   var d=FILE_DETAIL[S.fileId]||FILE_DETAIL.ec;
   var resMap=S.alertResolved[S.fileId]||{};
