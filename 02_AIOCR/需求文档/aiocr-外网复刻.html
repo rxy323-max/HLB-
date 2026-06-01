@@ -111,6 +111,51 @@ a.lnk:hover{text-decoration:underline;}
 .up-other .ttl{font-size:13px;font-weight:600;margin-bottom:8px;color:#374151;display:flex;gap:6px;justify-content:flex-start;}
 .up-other .warn{color:#e0a107;}
 
+/* ── Issue 1: OCR Processing banner + stage pills ── */
+.ocr-banner{display:flex;align-items:flex-start;gap:12px;background:#f0f4ff;border:1px solid #c5d3f6;border-radius:8px;padding:12px 16px;margin-bottom:14px;}
+.ocr-banner-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+.ocr-banner-body{flex:1;}
+.ocr-banner-title{font-size:13px;font-weight:700;color:#1e3a8a;margin-bottom:3px;}
+.ocr-banner-sub{font-size:12px;color:#3b5bdb;line-height:1.6;}
+.ocr-banner-hint{font-size:11.5px;color:#5b6470;margin-top:4px;line-height:1.5;}
+.ocr-pipeline{display:flex;align-items:center;gap:0;margin-top:8px;}
+.ocr-stage{display:flex;align-items:center;gap:5px;font-size:11px;padding:3px 10px;border-radius:4px;}
+.ocr-stage.done{background:#e6f4ea;color:#1a7a43;}
+.ocr-stage.active{background:#e8f0fe;color:#1d4ed8;font-weight:700;}
+.ocr-stage.pend{background:#f1f3f5;color:#9aa1ab;}
+.ocr-stage-arrow{color:#c5d3f6;font-size:13px;padding:0 2px;}
+/* per-row status stages */
+.stage-pill{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:3px 9px;border-radius:5px;white-space:nowrap;}
+.sp-queued{background:#f1f3f5;color:#6b7280;}
+.sp-extracting{background:#e8f0fe;color:#1d4ed8;}
+.sp-validating{background:#fef9ec;color:#b45309;}
+.sp-complete{background:#e6f4ea;color:#1a7a43;}
+.sp-failed{background:#fdeceb;color:#c0392b;}
+.sp-spin{display:inline-block;animation:spin 1.2s linear infinite;font-size:11px;}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* ── Issue 2: Semantic status chips with icons ── */
+.status-chip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:3px 9px;border-radius:5px;font-weight:500;}
+.sc-blue{background:#e8f0fe;color:#1d4ed8;}    /* processing */
+.sc-green{background:#e6f4ea;color:#1a7a43;}   /* success */
+.sc-amber{background:#fef9ec;color:#b45309;}   /* warning / in-progress */
+.sc-red{background:#fdeceb;color:#c0392b;}     /* failed */
+.sc-grey{background:#f1f3f5;color:#6b7280;}    /* neutral / uploaded */
+
+/* ── Issue 3: Verify terminology + confidence ── */
+/* Confidence dot only — no % for high-confidence, red for 0 */
+.conf-dot{display:inline-flex;align-items:center;gap:4px;font-size:11px;}
+.conf-dot .pct{color:#9aa1ab;}  /* only show if < 100% */
+/* Verify button replaces Check */
+.verify-btn{border:1px solid #d4a820;background:#fff;color:#a87c0a;border-radius:5px;padding:4px 12px;font-size:11.5px;white-space:nowrap;}
+.verify-btn:hover{background:#fdf3d6;border-color:#a87c0a;}
+.verified-tag{background:#1a7a43;color:#fff;border-radius:5px;padding:4px 12px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px;}
+/* Field layout: separate verify from confidence */
+.fd-f{display:flex;align-items:center;gap:10px;padding:11px 18px;border-bottom:1px solid #f3f4f6;flex-wrap:wrap;}
+.fd-f .lbl{font-size:12px;color:#6b7280;min-width:155px;flex-shrink:0;}
+.fd-f .val-wrap{flex:1;min-width:100px;}
+.fd-f .fd-right-ctrl{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;}
+
 /* ── list tabs + filter + table ── */
 .lt-tabs{display:flex;gap:0;border-bottom:1px solid var(--bd);margin:18px 0 12px;}
 .lt-tab{padding:10px 14px;font-size:13px;color:var(--mut);cursor:pointer;border-bottom:2px solid transparent;}
@@ -358,7 +403,8 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'filelist', fileOpen:false, file
         editingField:null,   // {fileId,k,val} — inline field edit
         fieldOverrides:{},   // {fileId:{k:newVal}} — amended values
         justifiedAlerts:{},  // {fileId:{alertId:noteText}} — justified with note (merged Skip+Justification)
-        justifyTarget:null   // {fileId,alertId} — pending justify modal
+        justifyTarget:null,  // {fileId,alertId} — pending justify modal
+        ocrView:'processing' // 'processing' | 'done' — demo toggle for banner
 };
 
 /* ════════════════ DATA ════════════════ */
@@ -672,39 +718,71 @@ function actIcons(f){
     +'<span class="aic" title="Delete">'+IC.trash+'</span>'
   +'</div>';
 }
+// Semantic status chip — color = meaning, not decoration
+function stChip(fst,ost){
+  var fstChip='<span class="muted">&mdash;</span>';
+  if(fst){var m={'OCR Processed':{c:'sc-green',i:'✓'},'Upload Succeeded':{c:'sc-green',i:'✓'},'OCR Processing':{c:'sc-blue',i:'⟳'},'Queued':{c:'sc-grey',i:'·'}};var x=m[fst]||{c:'sc-grey',i:''};fstChip='<span class="status-chip '+x.c+'">'+x.i+' '+fst+'</span>';}
+  var ostChip='<span class="muted">&mdash;</span>';
+  if(ost){var n={'Validation Succeeded':{c:'sc-green',i:'✓'},'OCR Succeeded':{c:'sc-green',i:'✓'},'Validation Failed':{c:'sc-red',i:'✗'},'Validation passed':{c:'sc-green',i:'✓'},'Validation failed':{c:'sc-red',i:'✗'},'Validating':{c:'sc-amber',i:'⟳'},'Extracting text...':{c:'sc-blue',i:'⟳'}};var y=n[ost]||{c:'sc-amber',i:'⟳'};ostChip='<span class="status-chip '+y.c+'">'+y.i+' '+ost+'</span>';}
+  return {fst:fstChip,ost:ostChip};
+}
+function renderOcrBanner(){
+  if(S.ocrView!=='processing')return '';
+  return '<div class="ocr-banner">'
+    +'<div class="ocr-banner-icon">⏳</div>'
+    +'<div class="ocr-banner-body">'
+      +'<div class="ocr-banner-title">Processing files in background — this usually takes 10–30 minutes</div>'
+      +'<div class="ocr-banner-sub">You can leave this page and return at any time. Processing will continue automatically.</div>'
+      +'<div class="ocr-pipeline">'
+        +'<span class="ocr-stage done">✓ Upload validated</span>'
+        +'<span class="ocr-stage-arrow">›</span>'
+        +'<span class="ocr-stage active"><span class="sp-spin">⟳</span> OCR text extraction</span>'
+        +'<span class="ocr-stage-arrow">›</span>'
+        +'<span class="ocr-stage pend">Cross-validation</span>'
+        +'<span class="ocr-stage-arrow">›</span>'
+        +'<span class="ocr-stage pend">Ready for review</span>'
+      +'</div>'
+      +'<div class="ocr-banner-hint">Started at 14:22 &nbsp;·&nbsp; <button class="btn btn-sm" style="padding:2px 8px;font-size:11px;" onclick="S.ocrView=\'done\';render();">Refresh status</button> &nbsp;·&nbsp; <a class="lnk" onclick="S.ocrView=\'done\';render();">Preview: jump to completed state</a></div>'
+    +'</div>'
+  +'</div>';
+}
 function renderFileList(){
   var rows=FILES.map(function(f){
-    // type cell: pills for multi-doc OR simple badge
     var typeCell='';
     if(f.typePills&&f.typePills.length){
       typeCell=f.typePills.map(function(p){
-        return '<span class="type-pill">'+p.label+' ('+p.pages+')<br><span class="type-conf">'+p.conf+'%</span></span>';
+        return '<span class="type-pill">'+p.label+' ('+p.pages+')</span>';
       }).join('');
     } else if(f.type){
       typeCell='<span class="pill" style="background:#eef3fb;color:#2c5fa8;">'+f.type+'</span>';
     }
-    // status
-    var fst=f.fileStatus||'';
-    var ost=f.ocrStatus||'';
-    var fstHtml=fst?'<span class="'+(fst==='OCR Processed'||fst==='Upload Succeeded'?'st-ok':fst==='OCR Processing'?'st-proc':'st-fail')+'">'+fst+'</span>':'<span class="muted">&mdash;</span>';
-    var ostHtml=ost?'<span class="'+(ost==='Validation Succeeded'||ost==='OCR Succeeded'?'st-ok':ost==='Validation Failed'?'st-fail':'st-proc')+'">'+ost+'</span>':'<span class="muted">&mdash;</span>';
+    // Issue 1: when in processing mode, show per-file stage
+    var sc=stChip(f.fileStatus,f.ocrStatus);
+    if(S.ocrView==='processing'){
+      var stages={'multidoc':'extracting','vso':'queued','mykad':'complete','epf':'complete','ec':'complete','xlsx':'complete','consent':'complete'};
+      var st=stages[f.id]||'complete';
+      sc.fst=st==='extracting'?'<span class="stage-pill sp-extracting"><span class="sp-spin">⟳</span> Extracting text…</span>'
+              :st==='queued'?'<span class="stage-pill sp-queued">· Queued</span>'
+              :'<span class="stage-pill sp-complete">✓ OCR done</span>';
+      sc.ost=st==='complete'?'<span class="stage-pill sp-validating">⟳ Validating…</span>':'<span class="muted">&mdash;</span>';
+    }
     var descCell='<span class="aic" title="Add justification note" style="cursor:pointer;">'+IC.edit+'</span>';
     return '<tr>'
       +'<td><input type="checkbox" class="cbx"></td>'
       +'<td><div class="fn">'+f.name+'</div><div class="muted" style="font-size:10.5px;">('+f.size+')</div></td>'
       +'<td>'+f.subject+'</td>'
-      +'<td><a class="lnk">'+f.cat+'</a></td>'
+      +'<td><a class="lnk">'+f.cat+'</a></td>'  // blue = clickable only
       +'<td class="type-pills-cell">'+typeCell+'</td>'
-      +'<td style="text-align:center;">'+f.ocr+'</td>'
-      +'<td>'+fstHtml+'</td>'
-      +'<td>'+ostHtml+'</td>'
+      +'<td style="text-align:center;font-size:12px;color:#5b6470;">'+f.ocr+'</td>'
+      +'<td>'+sc.fst+'</td>'
+      +'<td>'+sc.ost+'</td>'
       +'<td style="text-align:center;">'+descCell+'</td>'
       +'<td class="muted" style="font-size:11px;">'+f.time+'</td>'
       +'<td class="muted" style="font-size:11px;">'+f.src+'</td>'
       +'<td>'+actIcons(f)+'</td>'
     +'</tr>';
   }).join('');
-  return ''
+  return renderOcrBanner()
     +'<div class="filters">'
       +'<input class="inp" placeholder="Search values">'
       +'<select class="sel"><option>Subject</option></select>'
@@ -713,7 +791,6 @@ function renderFileList(){
       +'<button class="btn btn-pri btn-sm">'+IC.search+' Search</button>'
       +'<button class="btn btn-sm">'+IC.refresh+' Reset Filters</button>'
       +'<button class="btn btn-sm" disabled>'+IC.dl+' Download</button>'
-      +'<button class="btn btn-sm">'+IC.refresh+' Confirm</button>'
       +'<button class="btn btn-sm">'+IC.refresh+' Refresh</button>'
     +'</div>'
     +'<table>'
@@ -726,7 +803,9 @@ function renderFileList(){
       +'<div class="pager"><span>&lsaquo;</span><span class="pg-num">1</span><span>&rsaquo;</span><span>10 / page &#9662;</span></div>'
       +'<div style="display:flex;gap:10px;">'
         +'<button class="btn" onclick="closeDocs()">Back To List</button>'
-        +'<button class="btn btn-pri">Submit for Verification (Application)</button>'
+        +'<button class="btn btn-pri" '+(S.ocrView==='processing'?'disabled title="Wait for processing to complete"':'')+'>'
+          +(S.ocrView==='processing'?'⏳ Processing…':'Submit for Verification (Application)')
+        +'</button>'
       +'</div>'
     +'</div>';
 }
@@ -805,9 +884,9 @@ function actBtn(key,fileId,alertId,rec){
 }
 function sevMeta(s){return s==='hard'?{t:'Hard Fail',c:'sev-hard'}:s==='warn'?{t:'Warning',c:'sev-warn'}:{t:'Needs Check',c:'sev-check'};}
 function guidanceLine(a){
-  if(a.kind==='eyeball')return '<b>Verify All</b> to confirm all flagged fields visually. Cannot verify? Use <b>Justify &amp; proceed</b> with a reason.';
-  if(a.kind==='exist')return 'Field missing in OCR output. Check the document &mdash; <b>Amend</b> if it exists but was not recognised. Use <b>Justify &amp; proceed</b> if the field is genuinely absent and acceptable.';
-  return 'If AI misread the value: <b>Amend</b> to correct it. If the document itself is non-compliant: <b>Replace Document</b>. If the issue is acceptable: <b>Justify &amp; proceed</b> with a documented reason.';
+  if(a.kind==='eyeball')return '<strong>Verify All</strong> — manually confirm the flagged fields against the physical document. AI cannot verify these automatically. If verification is not possible, use <strong>Justify &amp; proceed</strong>.';
+  if(a.kind==='exist')return 'OCR did not detect this field. Open the source document to check &mdash; if it exists, <strong>Amend</strong> to enter the value manually. If genuinely absent, <strong>Justify &amp; proceed</strong>.';
+  return 'AI misread the value → <strong>Amend</strong> to correct. Document non-compliant → <strong>Replace Document</strong>. Issue acceptable with a reason → <strong>Justify &amp; proceed</strong>.';
 }
 function fdAlertCard(a,fileId){
   // ── Justified state (merged: Justification + Skip → one concept) ──
@@ -1008,20 +1087,28 @@ function fdRow(f,fileId){
     valCell='<span class="field-val" onclick="startEdit(\''+fileId+'\',\''+f.k+'\',\''+displayVal+'\')">'+(displayVal||emptyHint)+'</span>';
   }
 
-  // Right side control
-  var ctrl='';
-  if(need){
-    ctrl='<button class="check-btn" onclick="checkField(\''+fileId+'\',\''+f.k+'\')">Check</button>';
-  } else if(f.need&&checked){
-    ctrl='<span class="done-tag">Done</span>';
+  // Confidence display: dot only if 100%, pct shown if < 100%, red if 0
+  var confHtml;
+  if(c===0){
+    confHtml='<span class="conf-dot"><span class="dot-r"></span></span>';
+  } else if(c>=100){
+    confHtml='<span class="conf-dot"><span class="dot-g"></span></span>';
+  } else {
+    confHtml='<span class="conf-dot"><span class="dot-g"></span><span class="pct">'+c+'%</span></span>';
   }
 
-  var dot=' <span class="'+(c===0?'dot-r':'dot-g')+'"></span>';
+  // Issue 3: unified "Verify" (not "Check")
+  var rightCtrl='';
+  if(need){
+    rightCtrl='<button class="verify-btn" onclick="checkField(\''+fileId+'\',\''+f.k+'\')">Verify</button>';
+  } else if(f.need&&checked){
+    rightCtrl='<span class="verified-tag">&#10003; Verified</span>';
+  }
+
   return '<div class="fd-f'+(need?' need-row':'')+(hl?' hl':'')+(isEditing?' editing':'')+'">'
     +'<div class="lbl">'+f.k+'</div>'
     +'<div class="val-wrap">'+valCell+'</div>'
-    +ctrl
-    +'<div class="conf">'+c+'%'+dot+'</div>'
+    +'<div class="fd-right-ctrl">'+rightCtrl+confHtml+'</div>'
   +'</div>';
 }
 function verifyAll(fileId,alertId){
