@@ -368,6 +368,57 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .need,.checked{display:none;}
 .done-btn{display:none;}
 
+/* ── Classification modal ── */
+.cls-modal{background:#fff;border-radius:10px;width:1100px;max-width:96vw;height:88vh;display:flex;flex-direction:column;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;}
+.cls-hdr{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--bd);gap:4px;}
+.cls-blur-bar{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:12.5px;line-height:1.5;}
+.cls-blur-bar.fail{background:#fdeceb;color:#8b3a3a;border-bottom:1px solid #f3bcb9;}
+.cls-blur-bar.warn{background:#fef9ec;color:#7a5c0a;border-bottom:1px solid #f0d080;}
+.cls-blur-bar > span{flex:1;}
+.cls-body{flex:1;display:grid;grid-template-columns:1fr 380px;overflow:hidden;}
+.cls-thumbs-panel{overflow:auto;padding:14px 18px;border-right:1px solid var(--bd);}
+.cls-thumbs-hdr{font-size:13px;font-weight:600;color:#374151;margin-bottom:10px;}
+.cls-thumbs-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
+.cls-thumb{position:relative;border:2px solid #cfd5dd;border-radius:5px;background:#fff;cursor:pointer;overflow:hidden;aspect-ratio:1/1.3;transition:transform .12s;}
+.cls-thumb:hover{transform:translateY(-1px);}
+.cls-thumb.selected{border-width:3px;box-shadow:0 0 0 1px #fff inset;}
+.cls-thumb.has-blur{box-shadow:0 0 0 1px #dc2626 inset;}
+.thumb-mock{width:100%;height:calc(100% - 18px);padding:6px;display:flex;flex-direction:column;}
+.thumb-lines{flex:1;display:flex;flex-direction:column;gap:3px;}
+.thumb-lines > div{height:2px;background:rgba(0,0,0,.18);border-radius:1px;}
+.thumb-lines > div:nth-child(1){width:80%;}
+.thumb-lines > div:nth-child(2){width:60%;}
+.thumb-lines > div:nth-child(3){width:90%;}
+.thumb-lines > div:nth-child(4){width:50%;}
+.thumb-lines > div:nth-child(5){width:75%;}
+.cls-thumb-n{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:11px;color:#5b6470;background:#fff;padding:2px 0;border-top:1px solid #f1f3f5;}
+.cls-thumb-n.active{color:#2563eb;border-bottom:2px solid #2563eb;font-weight:600;}
+.thumb-blur-badge{position:absolute;top:3px;right:3px;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;letter-spacing:.3px;}
+.thumb-blur-badge.fail{background:#dc2626;color:#fff;}
+.thumb-blur-badge.warn{background:#e0a800;color:#fff;}
+.cls-results-panel{padding:14px 18px;background:#fafbfc;overflow:auto;}
+.cls-results-hdr{font-size:13px;font-weight:700;color:#374151;margin-bottom:10px;}
+.cls-cards{display:flex;flex-direction:column;gap:10px;}
+.cls-card{border:2px solid #cfd5dd;border-radius:8px;padding:12px 14px;background:#fff;cursor:pointer;transition:transform .12s;}
+.cls-card:hover{transform:translateY(-1px);}
+.cls-card.selected{box-shadow:0 0 0 1px rgba(0,0,0,.04);}
+.cls-card-row{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.cls-card-type{font-size:13px;font-weight:700;color:#202124;}
+.cls-card-conf{font-size:13px;font-weight:700;}
+.cls-card-range{font-size:11.5px;color:#5b6470;display:flex;align-items:center;gap:6px;}
+.cls-card-acts{font-size:11.5px;}
+.cls-card-acts .lnk{color:#5b6470;}
+.cls-card-acts .lnk:first-child{color:#2563eb;}
+.cls-card-blur{font-size:11px;line-height:1.5;margin-top:8px;padding:5px 8px;border-radius:4px;}
+.cls-card-blur.fail{background:#fdeceb;color:#8b3a3a;}
+.cls-card-blur.warn{background:#fef9ec;color:#7a5c0a;}
+.cls-add-btn{margin-top:10px;width:100%;border:1.5px dashed #2563eb;background:#f0f6ff;color:#2563eb;border-radius:7px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;}
+.cls-add-btn:hover{background:#2563eb;color:#fff;}
+.cls-add-panel{margin-top:10px;border:1.5px dashed #2563eb;background:#f0f6ff;border-radius:7px;padding:14px;}
+.cls-add-hdr{font-size:12.5px;font-weight:700;color:#2563eb;}
+.cls-add-actions{display:flex;gap:8px;margin-top:14px;}
+.cls-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 18px;border-top:1px solid var(--bd);background:#fff;}
+
 /* ── Image Quality — modal detail (no standalone panel) ── */
 .ocr-banner-warn{background:#fffaf0;border-color:#f0d080;}
 .qcd-score-row{display:flex;align-items:center;gap:14px;padding:8px 12px;background:#f8f9fa;border-radius:7px;margin-bottom:12px;}
@@ -416,7 +467,12 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'filelist', fileOpen:false, file
         justifiedAlerts:{},  // {fileId:{alertId:noteText}} — justified with note (merged Skip+Justification)
         justifyTarget:null,  // {fileId,alertId} — pending justify modal
         ocrView:'processing', // 'processing' | 'done' — demo toggle for banner
-        qcScene:'mixed'      // 'mixed'|'all-pass'|'all-fail' — quality check demo
+        classifyOpen:false,   // classification modal
+        classifyFileId:null,
+        classifSelectedSeg:0,
+        classifAddOpen:false,
+        classifAddType:'',
+        classifAddRange:''
 };
 
 /* ════════════════ DATA ════════════════ */
@@ -701,38 +757,272 @@ function sumRow(l,v){return '<div class="sum-row"><label>'+l+'</label><div class
 /* ════════════════ DOCUMENTS MODAL ════════════════ */
 // ── QUALITY DATA — attached to FILES directly, surfaced inside the file list ──
 // File quality property: pass | warn | fail; issues = [{msg,tip}]; score; override note in S.qcOverrides
-var FILE_QC={
-  multidoc:{score:96,status:'pass'},
-  vso:{score:32,status:'fail',issues:[
-    {msg:'Image is blurry — text is not readable',tip:'Place document flat, hold camera still, tap to focus before shooting'},
-    {msg:'Resolution too low (78 DPI — minimum 150 DPI required)',tip:'Scan at 300 DPI or use phone\'s high-res camera setting'}
-  ]},
-  mykad:{score:74,status:'warn',issues:[{msg:'Image sharpness is low — OCR accuracy may be reduced',tip:'Retake photo: hold camera steady, ensure even lighting'}]},
-  epf:{score:88,status:'pass'},
-  ec:{score:91,status:'pass'},
-  xlsx:{score:null,status:'na'},     // non-OCR file, skip
-  consent:{score:null,status:'na'}
+// ── CLASSIFICATIONS (replaces FILE_QC) ────────────────────────────
+// Classification happens FIRST. Each file has segments by page range.
+// Blur detection runs PER PAGE after classification confirmed.
+// Per-page blur lets us flag specific pages even within a clean segment.
+var CLASSIFICATION_COLORS={
+  Mykad:'#2563eb','Driving License':'#1a7a43',Payslip:'#e0a800',
+  'Individual Bank Statement':'#7c3aed','EPF Statement':'#7c3aed',
+  VSO:'#e0a800','EC Form':'#7c3aed',Passport:'#dc2626','Form B':'#7c3aed'
 };
-if(!S.qcOverrides)S.qcOverrides={};
+function classifColor(t){return CLASSIFICATION_COLORS[t]||'#5b6470';}
+var CLASSIFICATIONS={
+  multidoc:{confirmed:true,totalPages:19,segments:[
+    {type:'Mykad',range:'1-2',conf:99},
+    {type:'Driving License',range:'3',conf:99},
+    {type:'Payslip',range:'4-6',conf:50},
+    {type:'Individual Bank Statement',range:'7-19',conf:50}
+  ],pageBlur:{15:'fail'}},
+  vso:{confirmed:false,totalPages:1,segments:[{type:'VSO',range:'1',conf:50}],pageBlur:{1:'fail'}},
+  mykad:{confirmed:true,totalPages:2,segments:[{type:'Mykad',range:'1-2',conf:99}],pageBlur:{}},
+  epf:{confirmed:true,totalPages:1,segments:[{type:'EPF Statement',range:'1',conf:99}],pageBlur:{}},
+  ec:{confirmed:true,totalPages:1,segments:[{type:'EC Form',range:'1',conf:99}],pageBlur:{}}
+};
+if(!S.qcOverrides)S.qcOverrides={};      // {fileId: noteText} — overrides blur block for a whole file
+
+// Parse "1-3" or "5" into [start,end]
+function parseRange(r){
+  if(!r)return [0,0];
+  var p=String(r).split('-');
+  return [parseInt(p[0])||0, parseInt(p[1]||p[0])||0];
+}
+// Aggregate per-page blur to file-level summary
+// Note: returns blur even if classification not yet confirmed —
+// the AI runs both passes upfront so user can review both in the classify modal.
+function fileBlurSummary(fileId){
+  var c=CLASSIFICATIONS[fileId];
+  if(!c)return {failPages:[],warnPages:[],overridden:false};
+  var pb=c.pageBlur||{};
+  var fail=[],warn=[];
+  Object.keys(pb).forEach(function(k){
+    if(pb[k]==='fail')fail.push(parseInt(k));
+    else if(pb[k]==='warn')warn.push(parseInt(k));
+  });
+  fail.sort(function(a,b){return a-b;});warn.sort(function(a,b){return a-b;});
+  return {failPages:fail,warnPages:warn,overridden:!!(S.qcOverrides||{})[fileId]};
+}
+// Per-segment blur status (any blurry page in range → segment is flagged)
+function segmentBlur(fileId,range){
+  var c=CLASSIFICATIONS[fileId];if(!c||!c.pageBlur)return {status:'pass',pages:[]};
+  var r=parseRange(range),fail=[],warn=[];
+  for(var p=r[0];p<=r[1];p++){
+    if(c.pageBlur[p]==='fail')fail.push(p);
+    else if(c.pageBlur[p]==='warn')warn.push(p);
+  }
+  return {status:fail.length?'fail':warn.length?'warn':'pass',pages:fail.concat(warn)};
+}
+
+// ── Compat shim: fileQcStatus drives the existing detail modal / overrides flow ──
 function fileQcStatus(fileId){
-  var q=FILE_QC[fileId];if(!q)return null;
-  if((S.qcOverrides||{})[fileId])return Object.assign({},q,{status:'override'});
-  return q;
+  var c=CLASSIFICATIONS[fileId];if(!c||!c.confirmed)return null;
+  var blur=fileBlurSummary(fileId);
+  if(blur.overridden)return {status:'override',score:32,issues:buildBlurIssues(blur)};
+  if(blur.failPages.length)return {status:'fail',score:32,issues:buildBlurIssues(blur)};
+  if(blur.warnPages.length)return {status:'warn',score:72,issues:buildBlurIssues(blur)};
+  return {status:'pass',score:95};
+}
+function buildBlurIssues(blur){
+  var iss=[];
+  if(blur.failPages.length){
+    iss.push({msg:'Page '+blur.failPages.join(', ')+(blur.failPages.length>1?' are':' is')+' blurry — text is not readable',
+      tip:'Replace just these page(s), or re-scan the whole document at 300 DPI'});
+  }
+  if(blur.warnPages.length){
+    iss.push({msg:'Page '+blur.warnPages.join(', ')+' marginal — OCR accuracy may be reduced',
+      tip:'Retake with steady hands and even lighting if possible'});
+  }
+  return iss;
 }
 function qcStatusChip(fileId){
-  var q=fileQcStatus(fileId);if(!q||q.status==='na')return '';
-  if(q.status==='pass')return '<span class="stage-pill sp-complete">&#10003; Quality OK</span>';
-  if(q.status==='warn')return '<span class="stage-pill" style="background:#fef9ec;color:#b45309;cursor:pointer;" onclick="openQcDetail(\''+fileId+'\')">&#9888; Marginal quality</span>';
-  if(q.status==='override')return '<span class="stage-pill" style="background:#fffbf0;color:#b45309;cursor:pointer;" onclick="openQcDetail(\''+fileId+'\')">&#9888; Quality override</span>';
-  return '<span class="stage-pill sp-failed" style="cursor:pointer;" onclick="openQcDetail(\''+fileId+'\')">&#10007; Quality blocked</span>';
+  var c=CLASSIFICATIONS[fileId];
+  if(!c)return '';
+  if(!c.confirmed)return '<span class="stage-pill sp-extracting" style="cursor:pointer;" onclick="openClassify(\''+fileId+'\')"><span class="sp-spin">⟳</span> Classifying…</span>';
+  var blur=fileBlurSummary(fileId);
+  if(blur.overridden)return '<span class="stage-pill" style="background:#fffbf0;color:#b45309;cursor:pointer;" onclick="openClassify(\''+fileId+'\')">&#9888; Quality overridden</span>';
+  if(blur.failPages.length)return '<span class="stage-pill sp-failed" style="cursor:pointer;" onclick="openClassify(\''+fileId+'\')">&#10007; Page '+blur.failPages.join(',')+' blurry</span>';
+  if(blur.warnPages.length)return '<span class="stage-pill" style="background:#fef9ec;color:#b45309;cursor:pointer;" onclick="openClassify(\''+fileId+'\')">&#9888; '+blur.warnPages.length+' marginal page'+(blur.warnPages.length>1?'s':'')+'</span>';
+  return '';
 }
 function qcDescSummary(fileId){
-  var q=fileQcStatus(fileId);if(!q||q.status==='na'||q.status==='pass')return '';
-  if(q.status==='override')return '<span class="muted" style="font-size:11px;">Overridden by user</span>';
-  if(!q.issues||!q.issues.length)return '';
-  var first=q.issues[0].msg.replace(/ —.*$/,'').replace(/^Image is /,'');
-  return '<span style="font-size:11px;color:#b45309;" onclick="openQcDetail(\''+fileId+'\')" class="lnk">'+first+(q.issues.length>1?' +'+(q.issues.length-1)+' more':'')+'</span>';
+  var c=CLASSIFICATIONS[fileId];if(!c)return '';
+  if(!c.confirmed)return '<span style="font-size:11px;color:#1d4ed8;" onclick="openClassify(\''+fileId+'\')" class="lnk">Awaiting classification…</span>';
+  var blur=fileBlurSummary(fileId);
+  if(blur.overridden)return '<span class="muted" style="font-size:11px;">Overridden by user</span>';
+  if(blur.failPages.length)return '<span style="font-size:11px;color:#c0392b;" onclick="openClassify(\''+fileId+'\')" class="lnk">Page '+blur.failPages.join(',')+' blurry &mdash; OCR skipped for these</span>';
+  if(blur.warnPages.length)return '<span style="font-size:11px;color:#b45309;" onclick="openClassify(\''+fileId+'\')" class="lnk">Page '+blur.warnPages.join(',')+' marginal quality</span>';
+  return '';
 }
+// ── CLASSIFY MODAL ──────────────────────────────────────────
+function openClassify(fileId){
+  S.classifyOpen=true;S.classifyFileId=fileId;S.classifSelectedSeg=0;
+  S.classifAddOpen=false;S.editSegIdx=null;render();
+}
+function closeClassify(){S.classifyOpen=false;S.classifyFileId=null;render();}
+function selectSegment(idx){S.classifSelectedSeg=idx;render();}
+function removeSegment(idx){
+  var c=CLASSIFICATIONS[S.classifyFileId];
+  c.segments.splice(idx,1);
+  if(S.classifSelectedSeg>=c.segments.length)S.classifSelectedSeg=Math.max(0,c.segments.length-1);
+  render();
+}
+function modifySegment(idx){S.editSegIdx=idx;render();
+  setTimeout(function(){var i=document.getElementById('seg-range-inp');if(i)i.focus();},30);
+}
+function saveSegmentEdit(){
+  var inp=document.getElementById('seg-range-inp');
+  if(inp){
+    var c=CLASSIFICATIONS[S.classifyFileId];
+    var v=inp.value.trim();
+    if(v)c.segments[S.editSegIdx].range=v;
+  }
+  S.editSegIdx=null;render();
+}
+function openAddClassif(){S.classifAddOpen=true;render();
+  setTimeout(function(){var s=document.getElementById('cls-add-type');if(s)s.focus();},30);
+}
+function closeAddClassif(){S.classifAddOpen=false;render();}
+function confirmAddClassif(){
+  var type=document.getElementById('cls-add-type').value;
+  var range=document.getElementById('cls-add-range').value.trim();
+  if(!type||type==='--'||!range)return;
+  var c=CLASSIFICATIONS[S.classifyFileId];
+  c.segments.push({type:type,range:range,conf:null}); // manual = no AI conf
+  S.classifAddOpen=false;render();
+}
+function confirmClassification(){
+  var c=CLASSIFICATIONS[S.classifyFileId];
+  c.confirmed=true;
+  S.classifyOpen=false;render();
+}
+function overrideBlurFromClassify(){
+  S.qcOverrideTarget=S.classifyFileId;render();
+  setTimeout(function(){var i=document.getElementById('qc-note-inp');if(i)i.focus();},30);
+}
+
+// Mini page thumbnail mock — colored block per type
+function pageThumbMock(type,page){
+  var bg=type==='Mykad'?'linear-gradient(135deg,#dde6f4,#c7d6ee)':
+         type==='Driving License'?'linear-gradient(135deg,#ddead0,#c5deb0)':
+         type==='Payslip'?'linear-gradient(135deg,#fef5e0,#fae9c3)':
+         type==='Individual Bank Statement'||type==='EPF Statement'?'linear-gradient(135deg,#ede4f8,#dbcaf3)':
+         type==='VSO'?'linear-gradient(135deg,#fef5e0,#fae9c3)':'#f0f1f3';
+  return '<div class="thumb-mock" style="background:'+bg+';">'
+    +'<div class="thumb-lines"><div></div><div></div><div></div><div></div><div></div></div>'
+  +'</div>';
+}
+
+function renderClassifyModal(){
+  var fileId=S.classifyFileId;
+  if(!fileId)return '';
+  var c=CLASSIFICATIONS[fileId];
+  var file=FILES.find(function(f){return f.id===fileId;})||{name:fileId};
+  if(!c)return '';
+
+  // Build page → segment-index map for coloring
+  var pageSeg={};
+  c.segments.forEach(function(s,i){
+    var r=parseRange(s.range);
+    for(var p=r[0];p<=r[1];p++)pageSeg[p]=i;
+  });
+
+  // Page thumbnails
+  var thumbs='';
+  for(var p=1;p<=c.totalPages;p++){
+    var segIdx=pageSeg[p];
+    var seg=segIdx!=null?c.segments[segIdx]:null;
+    var color=seg?classifColor(seg.type):'#cfd5dd';
+    var isSel=segIdx===S.classifSelectedSeg;
+    var blur=(c.pageBlur||{})[p];
+    var blurBadge=blur==='fail'?'<div class="thumb-blur-badge fail">&#9888; Blurry</div>'
+                  :blur==='warn'?'<div class="thumb-blur-badge warn">&#9888; Marginal</div>':'';
+    thumbs+='<div class="cls-thumb'+(isSel?' selected':'')+(blur==='fail'?' has-blur':'')+'" onclick="selectSegment('+(segIdx!=null?segIdx:0)+')" style="border-color:'+color+';">'
+      +pageThumbMock(seg?seg.type:'',p)
+      +blurBadge
+      +'<div class="cls-thumb-n'+(isSel?' active':'')+'">'+p+'</div>'
+    +'</div>';
+  }
+
+  // Classification cards
+  var cards=c.segments.map(function(s,i){
+    var color=classifColor(s.type);
+    var isSel=i===S.classifSelectedSeg;
+    var conf=s.conf===null?'Manual':s.conf+'%';
+    var confCol=s.conf===null?'#5b6470':s.conf>=90?'#1a7a43':'#e0a800';
+    var segB=segmentBlur(fileId,s.range);
+    var blurInfo=segB.status==='fail'
+      ?'<div class="cls-card-blur fail">&#9888; Page '+segB.pages.join(',')+' blurry &mdash; OCR will skip these page(s)</div>'
+      :segB.status==='warn'
+      ?'<div class="cls-card-blur warn">&#9888; Page '+segB.pages.join(',')+' marginal quality</div>':'';
+    var rangeCell=(S.editSegIdx===i)
+      ?'<input id="seg-range-inp" class="inp" style="padding:3px 7px;font-size:11.5px;width:80px;" value="'+s.range+'" onkeydown="if(event.key===\'Enter\')saveSegmentEdit();if(event.key===\'Escape\'){S.editSegIdx=null;render();}" onblur="saveSegmentEdit()">'
+      :s.range;
+    return '<div class="cls-card'+(isSel?' selected':'')+'" onclick="selectSegment('+i+')" style="border-color:'+color+';">'
+      +'<div class="cls-card-row"><span class="cls-card-type">'+s.type+'</span><span class="cls-card-conf" style="color:'+confCol+';">'+conf+'</span></div>'
+      +'<div class="cls-card-row" style="margin-top:8px;">'
+        +'<span class="cls-card-range">Page Range: '+rangeCell+'</span>'
+        +'<span class="cls-card-acts">'
+          +'<a class="lnk" onclick="event.stopPropagation();modifySegment('+i+')">Modify</a>'
+          +'<a class="lnk" onclick="event.stopPropagation();removeSegment('+i+')" style="margin-left:14px;color:#5b6470;">Remove</a>'
+        +'</span>'
+      +'</div>'
+      +blurInfo
+    +'</div>';
+  }).join('');
+
+  // Add panel (dashed) or button
+  var typeOpts=Object.keys(CLASSIFICATION_COLORS).map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('');
+  var addBlock=S.classifAddOpen
+    ?'<div class="cls-add-panel">'
+      +'<div class="cls-add-hdr">&#43; Add Manual Classification / Split Point</div>'
+      +'<div style="margin:10px 0 4px;font-size:12px;color:#374151;">File Type</div>'
+      +'<select id="cls-add-type" class="sel" style="width:100%;"><option value="--">-- Please Select --</option>'+typeOpts+'</select>'
+      +'<div style="margin:10px 0 4px;font-size:12px;color:#374151;">Page Range (e.g. 1, 3-5, 8)</div>'
+      +'<input id="cls-add-range" class="inp" style="width:100%;" placeholder="e.g. 4-6">'
+      +'<div class="cls-add-actions">'
+        +'<button class="btn btn-pri btn-sm" onclick="confirmAddClassif()">Confirm Add</button>'
+        +'<button class="btn btn-sm" onclick="closeAddClassif()">Cancel</button>'
+      +'</div>'
+    +'</div>'
+    :'<button class="cls-add-btn" onclick="openAddClassif()">&#43; Add Split Point / Classification</button>';
+
+  // Bottom blur warning bar — encourages action before confirm
+  var blur=fileBlurSummary(fileId);
+  var blurBar='';
+  if(blur.failPages.length){
+    blurBar='<div class="cls-blur-bar fail">'
+      +'<span><b>&#9888; '+blur.failPages.length+' page'+(blur.failPages.length>1?'s':'')+' detected as blurry</b> &mdash; AI may fabricate content. Replace these pages or override with a justification before OCR runs.</span>'
+      +'<button class="justify-btn" style="padding:5px 10px;" onclick="overrideBlurFromClassify()">Proceed anyway &middot; Add note</button>'
+    +'</div>';
+  } else if(blur.warnPages.length){
+    blurBar='<div class="cls-blur-bar warn">&#9888; '+blur.warnPages.length+' page'+(blur.warnPages.length>1?'s':'')+' marginal quality &mdash; OCR will run but accuracy may be lower.</div>';
+  }
+
+  return '<div class="ov" style="z-index:85;"><div class="cls-modal">'
+    +'<div class="cls-hdr">'
+      +'<button class="fd-back" style="margin-right:10px;" onclick="closeClassify()">&#8249;</button>'
+      +'<div><strong style="font-size:14px;">'+file.name+'</strong><span class="muted" style="margin-left:10px;font-size:12px;">'+c.totalPages+' pages total</span></div>'
+      +'<button class="docs-x" style="margin-left:auto;" onclick="closeClassify()">&times;</button>'
+    +'</div>'
+    +blurBar
+    +'<div class="cls-body">'
+      +'<div class="cls-thumbs-panel">'
+        +'<div class="cls-thumbs-hdr">File Preview: '+c.totalPages+' pages</div>'
+        +'<div class="cls-thumbs-grid">'+thumbs+'</div>'
+      +'</div>'
+      +'<div class="cls-results-panel">'
+        +'<div class="cls-results-hdr">AI Classification Result</div>'
+        +'<div class="cls-cards">'+cards+'</div>'
+        +addBlock
+      +'</div>'
+    +'</div>'
+    +'<div class="cls-foot">'
+      +'<button class="btn" onclick="closeClassify()">Cancel</button>'
+      +'<button class="btn btn-pri" onclick="confirmClassification()">Confirm &amp; Close</button>'
+    +'</div>'
+  +'</div></div>';
+}
+
 // QC detail modal (on-demand, not always-shown)
 function openQcDetail(fileId){S.qcDetailFor=fileId;render();}
 function closeQcDetail(){S.qcDetailFor=null;render();}
@@ -811,13 +1101,32 @@ function renderUpload(){
   +'</div>';
 }
 function actIcons(f){
-  var canOpen=f.ocr==='Y'&&FILE_DETAIL[f.id];
-  var open=canOpen?'onclick="openFile(\''+f.id+'\')"':'';
-  var cls=canOpen?'':'aic dis';
+  if(f.ocr!=='Y'){
+    return '<div class="acts">'
+      +'<span class="aic dis" title="Quick Confirm">'+IC.ckcirc+'</span>'
+      +'<span class="aic dis" title="Edit">'+IC.edit+'</span>'
+      +'<span class="aic dis" title="Preview">'+IC.eye+'</span>'
+      +'<span class="aic" title="Download">'+IC.dl+'</span>'
+      +'<span class="aic" title="Delete">'+IC.trash+'</span>'
+    +'</div>';
+  }
+  var c=CLASSIFICATIONS[f.id];
+  // Pen: contextual — Classification first, then Field Edit after classification is confirmed
+  var penOpen='', penTitle='Edit';
+  if(c&&!c.confirmed){
+    penOpen='onclick="openClassify(\''+f.id+'\')"';
+    penTitle='Classify & split this file';
+  } else if(FILE_DETAIL[f.id]){
+    penOpen='onclick="openFile(\''+f.id+'\')"';
+    penTitle='Open OCR fields';
+  }
+  var canPreview=FILE_DETAIL[f.id];
+  var previewOpen=canPreview?'onclick="openFile(\''+f.id+'\')"':'';
+  var previewCls=canPreview?'':'dis';
   return '<div class="acts">'
     +'<span class="aic" title="Quick Confirm">'+IC.ckcirc+'</span>'
-    +'<span class="aic '+cls+'" title="Edit" '+open+'>'+IC.edit+'</span>'
-    +'<span class="aic '+cls+'" title="Preview" '+open+'>'+IC.eye+'</span>'
+    +'<span class="aic" title="'+penTitle+'" '+penOpen+'>'+IC.edit+'</span>'
+    +'<span class="aic '+previewCls+'" title="Preview" '+previewOpen+'>'+IC.eye+'</span>'
     +'<span class="aic" title="Download">'+IC.dl+'</span>'
     +'<span class="aic" title="Delete">'+IC.trash+'</span>'
   +'</div>';
@@ -831,8 +1140,12 @@ function stChip(fst,ost){
   return {fst:fstChip,ost:ostChip};
 }
 function renderOcrBanner(){
-  // Quality-blocked files (count from FILE_QC minus overrides)
-  var qcBlocked=Object.keys(FILE_QC).filter(function(k){return FILE_QC[k].status==='fail'&&!((S.qcOverrides||{})[k]);}).length;
+  // Count pending classifications & blocked-by-blur files
+  var classifPending=Object.keys(CLASSIFICATIONS).filter(function(k){return !CLASSIFICATIONS[k].confirmed;}).length;
+  var qcBlocked=Object.keys(CLASSIFICATIONS).filter(function(k){
+    var c=CLASSIFICATIONS[k];if(!c.confirmed)return false;
+    var b=fileBlurSummary(k);return b.failPages.length&&!b.overridden;
+  }).length;
   if(S.ocrView!=='processing'){
     // Done state: if there are still blocks, show a slim banner; otherwise nothing
     if(qcBlocked){
@@ -846,21 +1159,29 @@ function renderOcrBanner(){
     }
     return '';
   }
-  // Processing state: 4-stage pipeline (Quality is stage 2)
-  var qcStageHtml=qcBlocked
+  // Processing state: 5-stage pipeline — Upload → Classify → Quality → OCR → Cross-Val
+  var classifStageHtml=classifPending
+    ?'<span class="ocr-stage active"><span class="sp-spin">⟳</span> Classifying &mdash; '+classifPending+' pending</span>'
+    :'<span class="ocr-stage done">&#10003; Classified</span>';
+  var qcStageHtml=classifPending
+    ?'<span class="ocr-stage pend">Quality check</span>'
+    :qcBlocked
     ?'<span class="ocr-stage" style="background:#fdeceb;color:#c0392b;font-weight:700;">&#10007; Quality &mdash; '+qcBlocked+' blocked</span>'
     :'<span class="ocr-stage done">&#10003; Quality check</span>';
+  var ocrActive=!classifPending&&!qcBlocked;
   return '<div class="ocr-banner'+(qcBlocked?' ocr-banner-warn':'')+'">'
     +'<div class="ocr-banner-icon">'+(qcBlocked?'&#9888;':'⏳')+'</div>'
     +'<div class="ocr-banner-body">'
-      +'<div class="ocr-banner-title">'+(qcBlocked?'Processing — some files need attention':'Processing files in background — this usually takes 10–30 minutes')+'</div>'
+      +'<div class="ocr-banner-title">'+(qcBlocked?'Processing — some files need attention':classifPending?'Processing — '+classifPending+' file'+(classifPending>1?'s':'')+' awaiting classification':'Processing files in background — this usually takes 10–30 minutes')+'</div>'
       +'<div class="ocr-banner-sub">You can leave this page and return at any time. Processing will continue automatically.</div>'
       +'<div class="ocr-pipeline">'
-        +'<span class="ocr-stage done">&#10003; Upload validated</span>'
+        +'<span class="ocr-stage done">&#10003; Upload</span>'
+        +'<span class="ocr-stage-arrow">›</span>'
+        +classifStageHtml
         +'<span class="ocr-stage-arrow">›</span>'
         +qcStageHtml
         +'<span class="ocr-stage-arrow">›</span>'
-        +'<span class="ocr-stage '+(qcBlocked?'pend':'active')+'">'+(qcBlocked?'OCR text extraction':'<span class="sp-spin">⟳</span> OCR text extraction')+'</span>'
+        +'<span class="ocr-stage '+(ocrActive?'active':'pend')+'">'+(ocrActive?'<span class="sp-spin">⟳</span> ':'')+'OCR extraction</span>'
         +'<span class="ocr-stage-arrow">›</span>'
         +'<span class="ocr-stage pend">Cross-validation</span>'
       +'</div>'
@@ -880,17 +1201,22 @@ function renderFileList(){
     }
     // Pipeline stages: File Status = upstream stage (Quality / OCR), File OCR Status = downstream (Validation)
     var sc=stChip(f.fileStatus,f.ocrStatus);
+    var classif=CLASSIFICATIONS[f.id];
+    var pending=classif&&!classif.confirmed;
     var qcSt=fileQcStatus(f.id);
     var qcBlocked=qcSt&&qcSt.status==='fail';
     var qcOverridden=qcSt&&qcSt.status==='override';
     var qcWarn=qcSt&&qcSt.status==='warn';
-    if(S.ocrView==='processing'){
+
+    if(pending){
+      // Step 1: classification not yet confirmed — block everything downstream
+      sc.fst='<span class="stage-pill sp-extracting" style="cursor:pointer;" onclick="openClassify(\''+f.id+'\')"><span class="sp-spin">⟳</span> Classifying…</span>';
+      sc.ost='<span class="muted">&mdash; pending classification</span>';
+    } else if(S.ocrView==='processing'){
       if(qcBlocked){
-        // Quality FAIL → OCR never runs, show block status
-        sc.fst=qcStatusChip(f.id);
-        sc.ost='<span class="muted">&mdash; OCR skipped</span>';
+        sc.fst='<span class="stage-pill sp-complete">&#10003; Classified</span><br>'+qcStatusChip(f.id);
+        sc.ost='<span class="muted">&mdash; OCR skipped on blurry pages</span>';
       } else if(qcOverridden){
-        // Override → OCR runs but flag the quality concern alongside
         sc.fst='<span class="stage-pill sp-extracting"><span class="sp-spin">⟳</span> Extracting text…</span><br>'+qcStatusChip(f.id);
         sc.ost='<span class="muted">&mdash;</span>';
       } else {
@@ -899,14 +1225,13 @@ function renderFileList(){
         var stChip2=st==='extracting'?'<span class="stage-pill sp-extracting"><span class="sp-spin">⟳</span> Extracting text…</span>'
                 :st==='queued'?'<span class="stage-pill sp-queued">· Queued</span>'
                 :'<span class="stage-pill sp-complete">✓ OCR done</span>';
-        // For warn quality, append the marginal chip beneath OCR stage
         sc.fst=qcWarn?(stChip2+'<br>'+qcStatusChip(f.id)):stChip2;
         sc.ost=st==='complete'?'<span class="stage-pill sp-validating">⟳ Validating…</span>':'<span class="muted">&mdash;</span>';
       }
     } else {
       if(qcBlocked){
-        sc.fst=qcStatusChip(f.id);
-        sc.ost='<span class="muted">&mdash; OCR skipped</span>';
+        sc.fst='<span class="stage-pill sp-complete">&#10003; Classified</span><br>'+qcStatusChip(f.id);
+        sc.ost='<span class="muted">&mdash; OCR skipped on blurry pages</span>';
       } else if(qcOverridden||qcWarn){
         sc.fst=(sc.fst||'')+'<br>'+qcStatusChip(f.id);
       }
@@ -1484,6 +1809,7 @@ function render(){
   if(S.justifyTarget)html+=renderJustifyModal();
   if(S.qcOverrideTarget)html+=renderQcOverrideModal();
   if(S.qcDetailFor)html+=renderQcDetailModal();
+  if(S.classifyOpen)html+=renderClassifyModal();
   document.getElementById('app').innerHTML=html;
 }
 function openDocs(){S.docsOpen=true;render();}
