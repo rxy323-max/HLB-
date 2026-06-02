@@ -364,9 +364,42 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 /* Full button set spacing */
 .fd-alert-acts{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:10px;}
 
-/* ── NEEDS CHECK removed from label — only row highlight + Check button ── */
-.need,.checked{display:none;} /* hide old badges — replaced by row+button model */
-.done-btn{display:none;} /* replaced by done-tag */
+/* ── NEEDS CHECK removed from label — only row highlight + Verify button ── */
+.need,.checked{display:none;}
+.done-btn{display:none;}
+
+/* ── Image Quality Check ── */
+.qc-section{margin-top:16px;border:1px solid var(--bd);border-radius:8px;padding:14px;background:#fff;}
+.qc-section-hdr{font-size:14px;font-weight:700;color:#202124;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.qc-hdr-note{font-size:11.5px;font-weight:400;color:#9aa1ab;}
+.qc-sum{font-size:12.5px;padding:9px 13px;border-radius:7px;margin-bottom:10px;line-height:1.5;}
+.qc-sum-pass{background:#e6f4ea;color:#1a7a43;border:1px solid #a8d5b5;}
+.qc-sum-warn{background:#fef9ec;color:#b45309;border:1px solid #f0d080;}
+.qc-sum-fail{background:#fdeceb;color:#c0392b;border:1px solid #f3bcb9;}
+.qc-list{display:flex;flex-direction:column;gap:8px;}
+.qc-card{border:1px solid var(--bd);border-left-width:4px;border-radius:8px;padding:10px 13px;}
+.qc-pass{border-left-color:#1a7a43;background:#fafff9;}
+.qc-warn{border-left-color:#e0a800;background:#fffdf6;}
+.qc-fail{border-left-color:#dc2626;background:#fffafa;}
+.qc-override{border-left-color:#b45309;background:#fffbf0;border-style:dashed;}
+.qc-row{display:flex;align-items:center;gap:10px;}
+.qc-ic{font-size:16px;flex-shrink:0;width:22px;text-align:center;}
+.qc-pass .qc-ic{color:#1a7a43;} .qc-warn .qc-ic{color:#e0a800;} .qc-fail .qc-ic{color:#dc2626;} .qc-override .qc-ic{color:#b45309;}
+.qc-body{flex:1;}
+.qc-name{font-size:12.5px;font-weight:600;color:#202124;}
+.qc-cat{font-size:11px;color:#9aa1ab;}
+.qc-score-chip{font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;white-space:nowrap;}
+.qc-label{font-size:11px;font-weight:700;color:#5b6470;margin:8px 0 4px;text-transform:uppercase;letter-spacing:.4px;}
+.qc-issues{margin:6px 0;padding-left:2px;}
+.qc-issue{display:flex;align-items:flex-start;gap:6px;font-size:12px;color:#374151;line-height:1.6;margin-bottom:3px;}
+.qc-issue-dot{color:#dc2626;font-size:8px;margin-top:4px;flex-shrink:0;}
+.qc-warn .qc-issue-dot{color:#e0a800;}
+.qc-tips{margin:4px 0 8px;padding-left:2px;}
+.qc-tip{font-size:11.5px;color:#5b8a3c;line-height:1.6;margin-bottom:2px;}
+.qc-rule{font-size:11.5px;color:#8b3a3a;background:#fef2f2;border:1px solid #fad4d4;border-radius:5px;padding:7px 10px;margin:6px 0 8px;line-height:1.5;}
+.qc-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px;}
+.qc-note-hint{font-size:11px;color:#9aa1ab;font-style:italic;}
+.qc-override-note{font-size:11.5px;color:#7a5c0a;font-style:italic;margin:6px 0 4px;padding:5px 9px;background:#fef9ec;border-radius:5px;border-left:3px solid #e0b800;}
 </style>
 </head>
 <body>
@@ -404,7 +437,8 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'filelist', fileOpen:false, file
         fieldOverrides:{},   // {fileId:{k:newVal}} — amended values
         justifiedAlerts:{},  // {fileId:{alertId:noteText}} — justified with note (merged Skip+Justification)
         justifyTarget:null,  // {fileId,alertId} — pending justify modal
-        ocrView:'processing' // 'processing' | 'done' — demo toggle for banner
+        ocrView:'processing', // 'processing' | 'done' — demo toggle for banner
+        qcScene:'mixed'      // 'mixed'|'all-pass'|'all-fail' — quality check demo
 };
 
 /* ════════════════ DATA ════════════════ */
@@ -687,6 +721,97 @@ function renderHost(){
 function sumRow(l,v){return '<div class="sum-row"><label>'+l+'</label><div class="v">'+(v||'&mdash;')+'</div></div>';}
 
 /* ════════════════ DOCUMENTS MODAL ════════════════ */
+// ── QUALITY CHECK staged file data (3 demo scenarios) ──────────
+var QC_STAGED={
+  'all-pass':[
+    {name:'Mykad_scan.pdf',   cat:'Personal Identity', score:92, status:'pass'},
+    {name:'Payslip_Nov.pdf',  cat:'Applicant Income',  score:88, status:'pass'}
+  ],
+  'mixed':[
+    {name:'Payslip_photo.jpg', cat:'Applicant Income',  score:72, status:'warn',
+      issues:[{msg:'Image sharpness is low — OCR accuracy may be reduced',tip:'Retake photo: hold camera steady, ensure even lighting'}]},
+    {name:'Bank_scan.jpg',     cat:'Applicant Income',  score:24, status:'fail',
+      issues:[
+        {msg:'Image is blurry — text is not readable',tip:'Use a flatbed scanner, or hold camera still and tap to focus'},
+        {msg:'Resolution too low (68 DPI — minimum 150 DPI required)',tip:'Scan at 300 DPI or use your phone\'s high-res camera setting'}
+      ]},
+    {name:'Mykad_scan.pdf',   cat:'Personal Identity', score:95, status:'pass'}
+  ],
+  'all-fail':[
+    {name:'IC_photo_dark.jpg',   cat:'Personal Identity', score:18, status:'fail',
+      issues:[
+        {msg:'Image is too dark — text is not visible',tip:'Increase room brightness or use flashlight mode'},
+        {msg:'Document edges are cut off — full document must be visible',tip:'Move camera further back so the entire document is in frame'}
+      ]},
+    {name:'Contract_blurry.jpg', cat:'Other Application & Vehicle', score:31, status:'fail',
+      issues:[
+        {msg:'Image is blurry — text is not readable',tip:'Place document flat, hold camera still, tap to focus before shooting'},
+        {msg:'Image is heavily compressed — quality lost',tip:'Do not screenshot; send the original photo or scan directly'}
+      ]}
+  ]
+};
+// Quality override state: {filename: noteText}
+if(!S.qcOverrides)S.qcOverrides={};
+
+function qcCard(f){
+  var overridden=S.qcOverrides&&S.qcOverrides[f.name];
+  if(f.status==='pass'){
+    return '<div class="qc-card qc-pass">'
+      +'<div class="qc-row"><span class="qc-ic">&#10003;</span><div class="qc-body"><div class="qc-name">'+f.name+'</div><div class="qc-cat">'+f.cat+'</div></div><span class="qc-score-chip sc-green">Quality OK &mdash; score '+f.score+'/100</span></div>'
+    +'</div>';
+  }
+  if(f.status==='warn'){
+    return '<div class="qc-card qc-warn">'
+      +'<div class="qc-row"><span class="qc-ic">&#9888;</span><div class="qc-body"><div class="qc-name">'+f.name+'</div><div class="qc-cat">'+f.cat+'</div></div><span class="qc-score-chip sc-amber">Marginal &mdash; score '+f.score+'/100</span></div>'
+      +'<div class="qc-issues">'+f.issues.map(function(i){return '<div class="qc-issue"><span class="qc-issue-dot">&#9679;</span><span>'+i.msg+'</span></div>';}).join('')+'</div>'
+      +'<div class="qc-tips">'+f.issues.map(function(i){return '<div class="qc-tip">&#128161; '+i.tip+'</div>';}).join('')+'</div>'
+      +'<div class="qc-actions"><button class="fd-abtn" style="font-size:11.5px;padding:5px 12px;">'+IC.dl+' Replace with clearer file</button><button class="btn btn-sm" style="font-size:11.5px;background:#e8f0fe;color:#1d4ed8;border-color:#c5d3f6;">Continue &rarr;</button><span class="qc-note-hint">OCR will run but accuracy may be lower</span></div>'
+    +'</div>';
+  }
+  // fail
+  if(overridden){
+    return '<div class="qc-card qc-override">'
+      +'<div class="qc-row"><span class="qc-ic">&#9888;</span><div class="qc-body"><div class="qc-name">'+f.name+'</div><div class="qc-cat">'+f.cat+'</div></div><span class="qc-score-chip sc-amber">Overridden</span></div>'
+      +'<div class="qc-override-note">&#128221; '+overridden+'</div>'
+      +'<div class="qc-actions"><button class="btn btn-sm" style="font-size:11px;" onclick="undoQcOverride(\''+f.name+'\')">&#8635; Undo override</button></div>'
+    +'</div>';
+  }
+  return '<div class="qc-card qc-fail">'
+    +'<div class="qc-row"><span class="qc-ic">&#10007;</span><div class="qc-body"><div class="qc-name">'+f.name+'</div><div class="qc-cat">'+f.cat+'</div></div><span class="qc-score-chip sc-red">Cannot process &mdash; score '+f.score+'/100</span></div>'
+    +'<div class="qc-label">Issues detected:</div>'
+    +'<div class="qc-issues">'+f.issues.map(function(i){return '<div class="qc-issue"><span class="qc-issue-dot">&#10007;</span><span>'+i.msg+'</span></div>';}).join('')+'</div>'
+    +'<div class="qc-tips">'+f.issues.map(function(i){return '<div class="qc-tip">&#128161; '+i.tip+'</div>';}).join('')+'</div>'
+    +'<div class="qc-rule">AI recognition is blocked — results would be unreliable. Please replace with a clearer file.</div>'
+    +'<div class="qc-actions">'
+      +'<button class="fd-abtn-rec" style="font-size:11.5px;padding:5px 12px;border-radius:6px;">'+IC.dl+' Replace with clearer file</button>'
+      +'<button class="justify-btn" style="padding:5px 10px;" onclick="openQcOverride(\''+f.name+'\')">Proceed anyway &middot; Add note</button>'
+    +'</div>'
+  +'</div>';
+}
+function openQcOverride(fname){
+  S.qcOverrideTarget=fname;render();
+  setTimeout(function(){var i=document.getElementById('qc-note-inp');if(i)i.focus();},30);
+}
+function saveQcOverride(){
+  var inp=document.getElementById('qc-note-inp');
+  var note=inp&&inp.value.trim()?inp.value.trim():'No note provided';
+  if(!S.qcOverrides)S.qcOverrides={};
+  S.qcOverrides[S.qcOverrideTarget]=note;
+  S.qcOverrideTarget=null;render();
+}
+function undoQcOverride(fname){delete S.qcOverrides[fname];render();}
+function renderQcOverrideModal(){
+  return '<div class="ov" style="z-index:90;"><div class="add-rule-modal" style="width:440px;">'
+    +'<div class="arm-hdr"><h3>Proceed with low-quality image</h3><button class="docs-x" onclick="S.qcOverrideTarget=null;render()">&times;</button></div>'
+    +'<div class="arm-body">'
+      +'<div class="arm-note" style="border-color:#f3c969;background:#fffbf0;"><strong style="color:#b45309;">&#9888; You are overriding a quality block.</strong><br><br>The AI may produce inaccurate results or fabricate content from a blurry image. You take responsibility for manually verifying all extracted fields. This override is logged.</div>'
+      +'<div class="arm-row"><label class="arm-lbl">Reason for proceeding <span style="color:#dc2626;">*required</span></label>'
+        +'<textarea id="qc-note-inp" class="inp" style="width:100%;min-height:80px;resize:vertical;" placeholder="e.g. Original document not available — this is the only copy. Will verify all fields manually."></textarea>'
+      +'</div>'
+    +'</div>'
+    +'<div class="arm-foot"><button class="btn" onclick="S.qcOverrideTarget=null;render()">Cancel</button><button class="btn btn-pri" onclick="saveQcOverride()">Proceed anyway</button></div>'
+  +'</div></div>';
+}
 function renderUpload(){
   var boxes=UPCATS.map(function(c){
     return '<div class="up-box">'
@@ -696,6 +821,24 @@ function renderUpload(){
       +'<div class="up-hint">'+c.hint+'</div>'
     +'</div>';
   }).join('');
+  var staged=QC_STAGED[S.qcScene]||QC_STAGED['mixed'];
+  var failCount=staged.filter(function(f){return f.status==='fail'&&!((S.qcOverrides||{})[f.name]);}).length;
+  var warnCount=staged.filter(function(f){return f.status==='warn';}).length;
+  var sumBanner='';
+  if(failCount){
+    sumBanner='<div class="qc-sum qc-sum-fail">&#10007; '+failCount+' file'+(failCount>1?'s':'')+' blocked — image quality too low for AI processing. Replace before submitting.'
+      +(warnCount?' &nbsp;|&nbsp; &#9888; '+warnCount+' file'+(warnCount>1?'s':'')+' with marginal quality — may proceed but results may be inaccurate.':'')+'</div>';
+  } else if(warnCount){
+    sumBanner='<div class="qc-sum qc-sum-warn">&#9888; '+warnCount+' file'+(warnCount>1?'s':'')+' with marginal quality. OCR will run but accuracy may be reduced.</div>';
+  } else {
+    sumBanner='<div class="qc-sum qc-sum-pass">&#10003; All files passed quality check — ready for OCR processing.</div>';
+  }
+  var demoToggle='<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;padding:8px 10px;background:#f8f9fa;border-radius:6px;font-size:11px;color:#5b6470;">'
+    +'<strong>Demo:</strong> Quality check outcome &nbsp;'
+    +'<button class="btn btn-sm" style="font-size:10.5px;'+(S.qcScene==='all-pass'?'background:#e6f4ea;color:#1a7a43;':'')+';" onclick="S.qcScene=\'all-pass\';render()">All pass</button>'
+    +'<button class="btn btn-sm" style="font-size:10.5px;'+(S.qcScene==='mixed'?'background:#fef9ec;color:#b45309;':'')+';" onclick="S.qcScene=\'mixed\';render()">Mixed</button>'
+    +'<button class="btn btn-sm" style="font-size:10.5px;'+(S.qcScene==='all-fail'?'background:#fdeceb;color:#c0392b;':'')+';" onclick="S.qcScene=\'all-fail\';render()">All fail</button>'
+  +'</div>';
   return '<div class="up-wrap">'
     +'<div class="up-hd">Categorized Upload Area <span>OCR: PDF, JPG, JPEG, PNG only. Non-OCR: PDF, JPG, JPEG, PNG, DOCX, XLSX. 10KB&ndash;20MB per file.</span></div>'
     +'<div class="up-grid">'+boxes+'</div>'
@@ -703,6 +846,12 @@ function renderUpload(){
       +'<div class="up-other ttl" style="border:none;background:none;padding:0;margin-bottom:10px;font-weight:700;">Other Documents (Non AI Scanning_Requires manual check)</div>'
       +'<div class="warn" style="font-size:20px;">&#9888;</div>'
       +'<div class="up-act" style="margin-top:6px;">Drag &amp; drop, or <a>browse</a></div>'
+    +'</div>'
+    +'<div class="qc-section">'
+      +'<div class="qc-section-hdr">Image Quality Check <span class="qc-hdr-note">Runs automatically after upload &mdash; poor quality files are blocked before AI processing</span></div>'
+      +demoToggle
+      +sumBanner
+      +'<div class="qc-list">'+staged.map(qcCard).join('')+'</div>'
     +'</div>'
   +'</div>';
 }
@@ -1335,6 +1484,7 @@ function render(){
   if(S.syncOpen)html+=renderSync();
   if(S.addRuleOpen)html+=renderAddRule();
   if(S.justifyTarget)html+=renderJustifyModal();
+  if(S.qcOverrideTarget)html+=renderQcOverrideModal();
   document.getElementById('app').innerHTML=html;
 }
 function openDocs(){S.docsOpen=true;render();}
