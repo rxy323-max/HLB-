@@ -419,6 +419,41 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .cls-add-actions{display:flex;gap:8px;margin-top:14px;}
 .cls-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 18px;border-top:1px solid var(--bd);background:#fff;}
 
+/* ── 3-tier summary bar at top of classify modal ── */
+.cls-tier-bar{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--bd);background:#fbfcfd;flex-wrap:wrap;}
+.tier-chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;padding:4px 11px;border-radius:11px;font-weight:600;}
+.tier-pass{background:#e6f4ea;color:#1a7a43;}
+.tier-warn{background:#fef9ec;color:#b45309;}
+.tier-fail{background:#fdeceb;color:#c0392b;}
+.tier-skipped{background:#eef0f3;color:#5b6470;}
+.oc-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.oc-dot.pass{background:#1a7a43;} .oc-dot.warn{background:#e0a800;} .oc-dot.fail{background:#dc2626;} .oc-dot.neutral{background:#9aa1ab;}
+
+/* ── Per-segment OCR outcome line ── */
+.cls-outcome{font-size:11.5px;line-height:1.5;margin-top:8px;padding:6px 10px;border-radius:5px;display:flex;flex-direction:column;gap:3px;}
+.cls-outcome.pass{background:#f1faf3;color:#1a7a43;flex-direction:row;align-items:center;gap:6px;}
+.cls-outcome.warn{background:#fef9ec;color:#7a5c0a;}
+.cls-outcome.fail{background:#fdeceb;color:#8b3a3a;}
+.cls-outcome.neutral{background:#eef0f3;color:#5b6470;flex-direction:row;align-items:center;gap:6px;}
+.cls-outcome .oc-row{display:flex;align-items:center;gap:6px;}
+.cls-outcome .oc-help{font-size:10.5px;opacity:.85;padding-left:14px;}
+
+/* ── Thumb hover actions + tier visuals ── */
+.cls-thumb.tier-warn{box-shadow:0 0 0 1px #e0a800 inset;}
+.cls-thumb.is-skipped{opacity:.55;filter:grayscale(.4);}
+.thumb-blur-badge.skipped{background:#5b6470;color:#fff;}
+.thumb-actions{position:absolute;top:0;left:0;right:0;bottom:18px;background:rgba(15,23,42,.78);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;opacity:0;transition:opacity .12s;}
+.cls-thumb:hover .thumb-actions{opacity:1;}
+.thumb-act{background:#fff;color:#1d4ed8;border:none;border-radius:4px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.thumb-act:hover{background:#e8f0fe;}
+
+/* ── Replace-page mini panel ── */
+.rep-drop{margin-top:12px;border:1.5px dashed #c5d3f6;background:#f7fbff;border-radius:8px;padding:24px;text-align:center;}
+.rep-drop-icon{font-size:24px;color:#1d4ed8;margin-bottom:8px;}
+.rep-drop-msg{font-size:13px;color:#374151;margin-bottom:4px;}
+.rep-drop-hint{font-size:11px;color:#9aa1ab;line-height:1.5;}
+.rep-isolation{margin-top:14px;font-size:11.5px;color:#5b6470;background:#f8f9fa;border-radius:5px;padding:8px 11px;display:flex;align-items:flex-start;gap:7px;line-height:1.5;}
+
 /* ── Image Quality — modal detail (no standalone panel) ── */
 .ocr-banner-warn{background:#fffaf0;border-color:#f0d080;}
 .qcd-score-row{display:flex;align-items:center;gap:14px;padding:8px 12px;background:#f8f9fa;border-radius:7px;margin-bottom:12px;}
@@ -472,7 +507,9 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'filelist', fileOpen:false, file
         classifSelectedSeg:0,
         classifAddOpen:false,
         classifAddType:'',
-        classifAddRange:''
+        classifAddRange:'',
+        pageSkipped:{},       // {fileId: {pageNumber:true}} — skipped pages
+        replaceTarget:null    // {fileId,page} — replace-page mini panel
 };
 
 /* ════════════════ DATA ════════════════ */
@@ -773,9 +810,9 @@ var CLASSIFICATIONS={
     {type:'Driving License',range:'3',conf:99},
     {type:'Payslip',range:'4-6',conf:50},
     {type:'Individual Bank Statement',range:'7-19',conf:50}
-  ],pageBlur:{15:'fail'}},
+  ],pageBlur:{4:'warn',15:'fail'}}, // page 4 marginal, page 15 fail — shows all 3 tiers
   vso:{confirmed:false,totalPages:1,segments:[{type:'VSO',range:'1',conf:50}],pageBlur:{1:'fail'}},
-  mykad:{confirmed:true,totalPages:2,segments:[{type:'Mykad',range:'1-2',conf:99}],pageBlur:{}},
+  mykad:{confirmed:true,totalPages:2,segments:[{type:'Mykad',range:'1-2',conf:99}],pageBlur:{2:'warn'}}, // page 2 marginal
   epf:{confirmed:true,totalPages:1,segments:[{type:'EPF Statement',range:'1',conf:99}],pageBlur:{}},
   ec:{confirmed:true,totalPages:1,segments:[{type:'EC Form',range:'1',conf:99}],pageBlur:{}}
 };
@@ -787,20 +824,21 @@ function parseRange(r){
   var p=String(r).split('-');
   return [parseInt(p[0])||0, parseInt(p[1]||p[0])||0];
 }
-// Aggregate per-page blur to file-level summary
-// Note: returns blur even if classification not yet confirmed —
-// the AI runs both passes upfront so user can review both in the classify modal.
+// Aggregate per-page blur to file-level summary, accounting for user actions.
+// 'skipped' pages are subtracted from fail/warn (the user accepted the loss).
 function fileBlurSummary(fileId){
   var c=CLASSIFICATIONS[fileId];
-  if(!c)return {failPages:[],warnPages:[],overridden:false};
-  var pb=c.pageBlur||{};
-  var fail=[],warn=[];
+  if(!c)return {failPages:[],warnPages:[],skippedPages:[],overridden:false};
+  var pb=c.pageBlur||{},skips=(S.pageSkipped||{})[fileId]||{};
+  var fail=[],warn=[],skipped=[];
   Object.keys(pb).forEach(function(k){
-    if(pb[k]==='fail')fail.push(parseInt(k));
-    else if(pb[k]==='warn')warn.push(parseInt(k));
+    var p=parseInt(k);
+    if(skips[p]){skipped.push(p);return;}
+    if(pb[k]==='fail')fail.push(p);
+    else if(pb[k]==='warn')warn.push(p);
   });
-  fail.sort(function(a,b){return a-b;});warn.sort(function(a,b){return a-b;});
-  return {failPages:fail,warnPages:warn,overridden:!!(S.qcOverrides||{})[fileId]};
+  [fail,warn,skipped].forEach(function(a){a.sort(function(x,y){return x-y;});});
+  return {failPages:fail,warnPages:warn,skippedPages:skipped,overridden:!!(S.qcOverrides||{})[fileId]};
 }
 // Per-segment blur status (any blurry page in range → segment is flagged)
 function segmentBlur(fileId,range){
@@ -899,6 +937,46 @@ function overrideBlurFromClassify(){
   S.qcOverrideTarget=S.classifyFileId;render();
   setTimeout(function(){var i=document.getElementById('qc-note-inp');if(i)i.focus();},30);
 }
+// ── Page-level actions: Skip / Replace ──
+function skipPage(fileId,page){
+  if(!S.pageSkipped[fileId])S.pageSkipped[fileId]={};
+  S.pageSkipped[fileId][page]=true;render();
+}
+function unSkipPage(fileId,page){
+  if(S.pageSkipped[fileId])delete S.pageSkipped[fileId][page];render();
+}
+function openReplacePage(ev,fileId,page){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  S.replaceTarget={fileId:fileId,page:page};render();
+}
+function closeReplacePage(){S.replaceTarget=null;render();}
+function simulateReplaceUpload(){
+  var t=S.replaceTarget;if(!t)return;
+  // Demo: pretend the new page passes quality
+  if(CLASSIFICATIONS[t.fileId].pageBlur)delete CLASSIFICATIONS[t.fileId].pageBlur[t.page];
+  if(S.pageSkipped[t.fileId])delete S.pageSkipped[t.fileId][t.page];
+  S.replaceTarget=null;render();
+}
+function renderReplacePagePanel(){
+  var t=S.replaceTarget;if(!t)return '';
+  var file=FILES.find(function(f){return f.id===t.fileId;})||{name:t.fileId};
+  return '<div class="ov" style="z-index:95;"><div class="add-rule-modal" style="width:460px;">'
+    +'<div class="arm-hdr"><h3>Replace page '+t.page+'</h3><button class="docs-x" onclick="closeReplacePage()">&times;</button></div>'
+    +'<div class="arm-body">'
+      +'<div class="arm-note">Replacing <strong>page '+t.page+'</strong> of <em>'+file.name+'</em>. Other pages stay untouched; the file ID and total page count are preserved.</div>'
+      +'<div class="rep-drop">'
+        +'<div class="rep-drop-icon">&#8682;</div>'
+        +'<div class="rep-drop-msg">Drag &amp; drop replacement, or <a class="lnk">browse</a></div>'
+        +'<div class="rep-drop-hint">Single image / 1-page PDF. Multi-page upload will expand total page count after confirmation.</div>'
+      +'</div>'
+      +'<div class="rep-isolation">'+IC.info+' <span>Isolated update: this replacement is associated only with <strong>'+file.name+'</strong>. Other files in this case are unaffected.</span></div>'
+    +'</div>'
+    +'<div class="arm-foot">'
+      +'<button class="btn" onclick="closeReplacePage()">Cancel</button>'
+      +'<button class="btn btn-pri" onclick="simulateReplaceUpload()">Demo: Simulate successful upload</button>'
+    +'</div>'
+  +'</div></div>';
+}
 
 // Mini page thumbnail mock — colored block per type
 function pageThumbMock(type,page){
@@ -926,7 +1004,8 @@ function renderClassifyModal(){
     for(var p=r[0];p<=r[1];p++)pageSeg[p]=i;
   });
 
-  // Page thumbnails
+  // Page thumbnails — 3-tier visual + hover actions for blurry pages
+  var skips=(S.pageSkipped||{})[fileId]||{};
   var thumbs='';
   for(var p=1;p<=c.totalPages;p++){
     var segIdx=pageSeg[p];
@@ -934,26 +1013,63 @@ function renderClassifyModal(){
     var color=seg?classifColor(seg.type):'#cfd5dd';
     var isSel=segIdx===S.classifSelectedSeg;
     var blur=(c.pageBlur||{})[p];
-    var blurBadge=blur==='fail'?'<div class="thumb-blur-badge fail">&#9888; Blurry</div>'
+    var isSkipped=skips[p];
+    // Tier badge
+    var tierCls=isSkipped?'skipped':blur==='fail'?'fail':blur==='warn'?'warn':'';
+    var blurBadge=isSkipped?'<div class="thumb-blur-badge skipped">Skipped</div>'
+                  :blur==='fail'?'<div class="thumb-blur-badge fail">&#9888; Blurry</div>'
                   :blur==='warn'?'<div class="thumb-blur-badge warn">&#9888; Marginal</div>':'';
-    thumbs+='<div class="cls-thumb'+(isSel?' selected':'')+(blur==='fail'?' has-blur':'')+'" onclick="selectSegment('+(segIdx!=null?segIdx:0)+')" style="border-color:'+color+';">'
+    // Hover-revealed actions for blurry / marginal / skipped pages
+    var pageActions='';
+    if(blur||isSkipped){
+      pageActions='<div class="thumb-actions">'
+        +'<button class="thumb-act" title="Replace this page" onclick="openReplacePage(event,\''+fileId+'\','+p+')">&#8634; Replace</button>'
+        +(isSkipped
+          ?'<button class="thumb-act" title="Un-skip" onclick="event.stopPropagation();unSkipPage(\''+fileId+'\','+p+')">Un-skip</button>'
+          :'<button class="thumb-act" title="Skip this page" onclick="event.stopPropagation();skipPage(\''+fileId+'\','+p+')">Skip</button>')
+      +'</div>';
+    }
+    thumbs+='<div class="cls-thumb tier-'+tierCls+(isSel?' selected':'')+(blur==='fail'&&!isSkipped?' has-blur':'')+(isSkipped?' is-skipped':'')+'" onclick="selectSegment('+(segIdx!=null?segIdx:0)+')" style="border-color:'+color+';">'
       +pageThumbMock(seg?seg.type:'',p)
       +blurBadge
+      +pageActions
       +'<div class="cls-thumb-n'+(isSel?' active':'')+'">'+p+'</div>'
     +'</div>';
   }
 
-  // Classification cards
+  // Classification cards with 3-tier OCR outcome
   var cards=c.segments.map(function(s,i){
     var color=classifColor(s.type);
     var isSel=i===S.classifSelectedSeg;
     var conf=s.conf===null?'Manual':s.conf+'%';
     var confCol=s.conf===null?'#5b6470':s.conf>=90?'#1a7a43':'#e0a800';
-    var segB=segmentBlur(fileId,s.range);
-    var blurInfo=segB.status==='fail'
-      ?'<div class="cls-card-blur fail">&#9888; Page '+segB.pages.join(',')+' blurry &mdash; OCR will skip these page(s)</div>'
-      :segB.status==='warn'
-      ?'<div class="cls-card-blur warn">&#9888; Page '+segB.pages.join(',')+' marginal quality</div>':'';
+    // Build tier-aware OCR-outcome line per segment, accounting for skipped pages
+    var r=parseRange(s.range);
+    var fail=[],warn=[],skipped=[];
+    var segSkips=(S.pageSkipped||{})[fileId]||{};
+    for(var pg=r[0];pg<=r[1];pg++){
+      var b=(c.pageBlur||{})[pg];
+      if(segSkips[pg])skipped.push(pg);
+      else if(b==='fail')fail.push(pg);
+      else if(b==='warn')warn.push(pg);
+    }
+    var outcomeHtml='';
+    if(fail.length){
+      outcomeHtml='<div class="cls-outcome fail">'
+        +'<div class="oc-row"><span class="oc-dot fail"></span><b>'+fail.length+' page'+(fail.length>1?'s':'')+' blurry</b> (page '+fail.join(', ')+') &mdash; OCR blocked on '+(fail.length>1?'these pages':'this page')+'</div>'
+        +'<div class="oc-help">Replace, skip, or override these pages on the left.</div>'
+      +'</div>';
+    } else if(warn.length){
+      outcomeHtml='<div class="cls-outcome warn">'
+        +'<div class="oc-row"><span class="oc-dot warn"></span><b>'+warn.length+' page'+(warn.length>1?'s':'')+' marginal</b> (page '+warn.join(', ')+') &mdash; OCR will run, but every field must be Verified</div>'
+        +'<div class="oc-help">AI is unsure here. Verify All available on the OCR detail page.</div>'
+      +'</div>';
+    } else {
+      outcomeHtml='<div class="cls-outcome pass"><span class="oc-dot pass"></span>All '+(r[1]-r[0]+1)+' page'+(r[1]>r[0]?'s':'')+' clear &mdash; OCR will run normally</div>';
+    }
+    if(skipped.length){
+      outcomeHtml+='<div class="cls-outcome neutral"><span class="oc-dot neutral"></span>'+skipped.length+' page'+(skipped.length>1?'s':'')+' skipped (page '+skipped.join(', ')+') &mdash; fields left blank, user may fill manually</div>';
+    }
     var rangeCell=(S.editSegIdx===i)
       ?'<input id="seg-range-inp" class="inp" style="padding:3px 7px;font-size:11.5px;width:80px;" value="'+s.range+'" onkeydown="if(event.key===\'Enter\')saveSegmentEdit();if(event.key===\'Escape\'){S.editSegIdx=null;render();}" onblur="saveSegmentEdit()">'
       :s.range;
@@ -966,7 +1082,7 @@ function renderClassifyModal(){
           +'<a class="lnk" onclick="event.stopPropagation();removeSegment('+i+')" style="margin-left:14px;color:#5b6470;">Remove</a>'
         +'</span>'
       +'</div>'
-      +blurInfo
+      +outcomeHtml
     +'</div>';
   }).join('');
 
@@ -986,17 +1102,16 @@ function renderClassifyModal(){
     +'</div>'
     :'<button class="cls-add-btn" onclick="openAddClassif()">&#43; Add Split Point / Classification</button>';
 
-  // Bottom blur warning bar — encourages action before confirm
+  // 3-tier summary bar — counts of Pass / Marginal / Fail (+ Skipped) at the top
   var blur=fileBlurSummary(fileId);
-  var blurBar='';
-  if(blur.failPages.length){
-    blurBar='<div class="cls-blur-bar fail">'
-      +'<span><b>&#9888; '+blur.failPages.length+' page'+(blur.failPages.length>1?'s':'')+' detected as blurry</b> &mdash; AI may fabricate content. Replace these pages or override with a justification before OCR runs.</span>'
-      +'<button class="justify-btn" style="padding:5px 10px;" onclick="overrideBlurFromClassify()">Proceed anyway &middot; Add note</button>'
-    +'</div>';
-  } else if(blur.warnPages.length){
-    blurBar='<div class="cls-blur-bar warn">&#9888; '+blur.warnPages.length+' page'+(blur.warnPages.length>1?'s':'')+' marginal quality &mdash; OCR will run but accuracy may be lower.</div>';
-  }
+  var passCount=c.totalPages-blur.failPages.length-blur.warnPages.length-blur.skippedPages.length;
+  var blurBar='<div class="cls-tier-bar">'
+    +'<span class="tier-chip tier-pass"><span class="oc-dot pass"></span>'+passCount+' clear</span>'
+    +(blur.warnPages.length?'<span class="tier-chip tier-warn"><span class="oc-dot warn"></span>'+blur.warnPages.length+' marginal &mdash; OCR + Verify required</span>':'')
+    +(blur.failPages.length?'<span class="tier-chip tier-fail"><span class="oc-dot fail"></span>'+blur.failPages.length+' blurry &mdash; OCR blocked, action needed</span>':'')
+    +(blur.skippedPages.length?'<span class="tier-chip tier-skipped">'+blur.skippedPages.length+' skipped</span>':'')
+    +(blur.failPages.length?'<button class="justify-btn" style="margin-left:auto;padding:5px 10px;" onclick="overrideBlurFromClassify()">Proceed anyway for all &middot; Add note</button>':'')
+  +'</div>';
 
   return '<div class="ov" style="z-index:85;"><div class="cls-modal">'
     +'<div class="cls-hdr">'
@@ -1661,7 +1776,16 @@ function renderFileDetail(){
   var resMap=S.alertResolved[S.fileId]||{};
   var sevRank={hard:0,warn:1,check:2};
   var custom=(S.customRules[S.fileId]||[]).map(function(r){return Object.assign({},r,{isCustom:true});});
-  var allAlerts=d.alerts.concat(custom);
+  // Auto-inject Marginal Page Quality alert when this file has warn pages
+  var blur=fileBlurSummary(S.fileId);
+  var marginalAlerts=[];
+  if(blur.warnPages.length){
+    marginalAlerts.push({id:'marginal-quality',title:'Marginal page quality &mdash; Verify required',
+      sev:'check',dim:'Image Quality',kind:'eyeball',
+      cmp:'Page '+blur.warnPages.join(', ')+' had marginal sharpness. AI extracted values but cannot guarantee accuracy &mdash; every field in this file must be human-verified before submission.',
+      acts:['verifyall'],rec:'verifyall'});
+  }
+  var allAlerts=marginalAlerts.concat(d.alerts).concat(custom);
   var sorted=allAlerts.slice().sort(function(x,y){
     return ((resMap[x.id]?10:0)+(sevRank[x.sev]==null?3:sevRank[x.sev])) - ((resMap[y.id]?10:0)+(sevRank[y.sev]==null?3:sevRank[y.sev]));
   });
@@ -1810,6 +1934,7 @@ function render(){
   if(S.qcOverrideTarget)html+=renderQcOverrideModal();
   if(S.qcDetailFor)html+=renderQcDetailModal();
   if(S.classifyOpen)html+=renderClassifyModal();
+  if(S.replaceTarget)html+=renderReplacePagePanel();
   document.getElementById('app').innerHTML=html;
 }
 function openDocs(){S.docsOpen=true;render();}
