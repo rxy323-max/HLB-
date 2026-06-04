@@ -184,8 +184,8 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .fd-title{font-size:14px;font-weight:700;}
 .fd-crumb{font-size:11.5px;color:var(--mut);margin-top:2px;}
 .fd-top .sp{margin-left:auto;}
-/* Left/right split: fixed 440px left panel, rest for preview */
-.fd-split{flex:1;display:grid;grid-template-columns:440px 1fr;overflow:hidden;}
+/* Left/right split: wider left panel to accommodate rule dropdown column */
+.fd-split{flex:1;display:grid;grid-template-columns:560px 1fr;overflow:hidden;}
 .fd-left{border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;}
 /* ── Left panel tab bar ── */
 .fd-left-tabs{display:flex;border-bottom:1px solid var(--bd);background:#fafbfc;flex-shrink:0;}
@@ -281,6 +281,25 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .xv-issues{font-size:12px;color:#5b6470;background:#eef1f4;border-radius:6px;padding:4px 12px;}
 .xv-issues.bad{color:#c0392b;background:#fdeceb;}
 
+/* ── CED rule-category column in field rows ── */
+.ced-rule-cell{min-width:200px;flex-shrink:0;padding-right:8px;}
+.ced-rule-sel{border:1px solid #d6dae0;border-radius:5px;padding:4px 7px;font-size:11.5px;background:#fff;color:#374151;cursor:pointer;width:100%;max-width:220px;}
+.ced-rule-sel:hover{border-color:var(--blue);}
+.ced-rule-sel:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px #c3d5fb;}
+.ced-rule-sel.modified{border-color:#d97706;background:#fffdf0;color:#7a5c00;font-weight:600;}
+.ced-rule-tag{font-size:11px;color:#9aa1ab;font-style:italic;} /* formula/auto fields */
+.ced-rule-modified-dot{width:6px;height:6px;border-radius:50%;background:#d97706;display:inline-block;margin-right:4px;vertical-align:2px;flex-shrink:0;}
+/* ── CED recalculated income banner (inside Fields tab) ── */
+.ced-income-bar{margin:10px 16px 0;border:1px solid #c3d5fb;border-radius:7px;overflow:hidden;}
+.ced-income-bar-hd{display:flex;align-items:center;padding:8px 14px;background:#e8f0fe;font-size:12.5px;font-weight:700;color:#1e3a8a;gap:8px;}
+.ced-income-bar-hd .pending{color:#b45309;background:#fff4e0;border:1px solid #f3d98f;border-radius:4px;font-size:10.5px;padding:1px 8px;font-weight:600;}
+.ced-income-items{padding:8px 14px 10px;display:flex;flex-direction:column;gap:4px;}
+.ced-income-row{display:flex;justify-content:space-between;font-size:12px;color:#374151;}
+.ced-income-row .lbl{color:#6b7280;}
+.ced-income-row .val{font-weight:600;}
+.ced-income-row.total{border-top:1px solid #c3d5fb;padding-top:5px;margin-top:3px;font-size:13px;color:#1e3a8a;}
+.ced-recalc-btn{border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:6px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;}
+.ced-recalc-btn:hover{background:var(--blue);color:#fff;}
 /* ── CED File List tab ── */
 .fl-foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:8px;border-top:1px solid var(--bd2);}
 .ced-up-zone{background:#fffdf0;border:1.5px dashed #f0c14b;border-radius:8px;padding:22px;text-align:center;margin-bottom:14px;}
@@ -596,7 +615,9 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'cedfiles', fileOpen:false, file
         pageSkipped:{},       // {fileId: {pageNumber:true}} — skipped pages
         replaceTarget:null,   // {fileId,page} — replace-page mini panel
         fdTab:'alerts',       // 'alerts'|'fields' — which left-panel tab is shown
-        incomeDecisions:{}    // {fileId:{itemLabel:'count'|'exclude'|'override', overrideVal?}}
+        incomeDecisions:{},   // {fileId:{itemLabel:'count'|'exclude'|'override', overrideVal?}}
+        cedRuleOverrides:{},  // {fileId:{fieldKey:ruleCat}} — CED's rule classification changes
+        cedRecalcDone:false   // whether CED has clicked Recalculate this session
 };
 
 /* ════════════════ DATA ════════════════ */
@@ -764,6 +785,62 @@ var INCOME_VERIFY_FILES=[
 var CED_FILES=[
   {name:'PAYSLIP.pdf',size:'2.45 MB',cat:'Credit Related',desc:'',time:'06/02/26 10:22:13',src:'v_kangyi'}
 ];
+/*
+  FIELD_RULE_OPTS — available rule categories per field key.
+  Drawn from the Payslip / EC Form field spec (Eyeball Check / Consistency / Formula columns).
+  CED can select from these to reclassify how a field is treated in income computation.
+  Fields not in this map are identity/admin fields and show no dropdown.
+*/
+var FIELD_RULE_OPTS={
+  // ── EC Form / Annual income ──
+  'earning_gross_salary':   ['Count as Annual Income (÷12/mo)','Reference Only','Exclude'],
+  'total_taxable_income':   ['Cross-check with Gross Salary','Count as Annual Income (÷12/mo)','Exclude'],
+  'deduction_pcb_tax':      ['Tax Deduction (PCB)','Exclude'],
+  'deduction_zakat':        ['Zakat Deduction','Exclude'],
+  'deduction_cp38':         ['CP38 Tax Deduction','Exclude'],
+  'deduction_epf':          ['EPF Deduction (EC)','Exclude (Foreign Worker)'],
+  'deduction_socso':        ['SOCSO Deduction','Exclude'],
+  // ── EPF Statement ──
+  'employee_contribution':  ['Employee EPF — verify vs Payslip','Reference Only','Exclude'],
+  'employer_contribution':  ['Employer EPF — reference only','Exclude'],
+  // ── Payslip monthly records ──
+  'earning_basic_salary':   ['Primary Income (Fixed)','Exclude'],
+  'earning_total_allowances':['Fixed Allowance (count in full)','Variable Allowance (÷12 avg)','Exclude'],
+  'earning_overtime_pay':   ['Variable OT — include (÷12 avg ≤12mo)','Exclude (insufficient history)'],
+  'earning_bonus':          ['Non-recurring Bonus (÷12)','Exclude'],
+  'earning_commission':     ['Commission Variable (÷12 avg)','Exclude'],
+  'earning_others':         ['Count as Income','Manual Review Required','Exclude'],
+  'gross_salary':           ['Formula (auto — Basic + Allowances + OT + Others)'],
+  'net_pay_amount':         ['Formula (auto — Gross − Total Deductions)'],
+  'deduction_epf_employee': ['EPF Deduction','Exclude (Ineligible Foreign Worker)'],
+  'deduction_angkasa_and_loan':['Angkasa / Cooperative Loan Deduction','Exclude'],
+  'deduction_socso_em':     ['SOCSO Deduction','Exclude']
+};
+// Default rule (AI's pre-classification before CED modifies)
+var FIELD_RULE_DEFAULTS={
+  'earning_gross_salary':'Count as Annual Income (÷12/mo)',
+  'total_taxable_income':'Cross-check with Gross Salary',
+  'deduction_pcb_tax':'Tax Deduction (PCB)',
+  'deduction_zakat':'Zakat Deduction',
+  'deduction_cp38':'CP38 Tax Deduction',
+  'deduction_epf':'EPF Deduction (EC)',
+  'deduction_socso':'SOCSO Deduction',
+  'employee_contribution':'Employee EPF — verify vs Payslip',
+  'employer_contribution':'Employer EPF — reference only',
+  'earning_basic_salary':'Primary Income (Fixed)',
+  'earning_total_allowances':'Fixed Allowance (count in full)',
+  'earning_overtime_pay':'Variable OT — include (÷12 avg ≤12mo)',
+  'earning_bonus':'Non-recurring Bonus (÷12)',
+  'earning_commission':'Commission Variable (÷12 avg)',
+  'gross_salary':'Formula (auto — Basic + Allowances + OT + Others)',
+  'net_pay_amount':'Formula (auto — Gross − Total Deductions)',
+  'deduction_epf_employee':'EPF Deduction',
+  'deduction_angkasa_and_loan':'Angkasa / Cooperative Loan Deduction',
+  'deduction_socso_em':'SOCSO Deduction'
+};
+// Which file types are income-type (show the rule column + recalc banner)
+var INCOME_FILE_IDS=['ec','epf','multidoc'];
+
 var SYNC_ROWS=[
   {f:'Conventional/Islamic',cur:'C',ocr:'C',st:'ok'},
   {f:'Product Group',cur:'HP',ocr:'HP',st:'ok'},
@@ -1964,13 +2041,65 @@ function fdRow(f,fileId){
     rightCtrl='<span class="verified-tag">&#10003; Verified</span>';
   }
 
+  // ── CED Rule Category dropdown (income/deduction fields only) ──
+  var ruleCell='';
+  var ruleOpts=FIELD_RULE_OPTS[f.k];
+  if(ruleOpts&&ruleOpts.length){
+    var isFormula=ruleOpts.length===1&&ruleOpts[0].indexOf('Formula')!==-1;
+    var currentRule=(S.cedRuleOverrides[fileId]||{})[f.k]||FIELD_RULE_DEFAULTS[f.k]||ruleOpts[0];
+    var isModified=!!(S.cedRuleOverrides[fileId]||{})[f.k];
+    if(isFormula){
+      ruleCell='<div class="ced-rule-cell"><span class="ced-rule-tag">'+ruleOpts[0]+'</span></div>';
+    } else {
+      var optHtml=ruleOpts.map(function(o){
+        return '<option value="'+o+'"'+(currentRule===o?' selected':'')+'>'+o+'</option>';
+      }).join('');
+      ruleCell='<div class="ced-rule-cell">'
+        +(isModified?'<span class="ced-rule-modified-dot"></span>':'')
+        +'<select class="ced-rule-sel'+(isModified?' modified':'')+'" onchange="setCedRule(\''+fileId+'\',\''+f.k+'\',this.value)">'
+          +optHtml
+        +'</select>'
+      +'</div>';
+    }
+  }
+
   return '<div class="fd-f'+(need?' need-row':'')+(hl?' hl':'')+(isEditing?' editing':'')+'">'
     +'<div class="lbl">'+f.k+'</div>'
     +'<div class="val-wrap">'+valCell+'</div>'
+    +ruleCell
     +'<div class="fd-right-ctrl">'+rightCtrl+confHtml+'</div>'
   +'</div>';
 }
 function switchFdTab(tab){S.fdTab=tab;render();}
+// CED rule override: set classification for a field
+function setCedRule(fileId,fieldKey,value){
+  if(!S.cedRuleOverrides[fileId])S.cedRuleOverrides[fileId]={};
+  S.cedRuleOverrides[fileId][fieldKey]=value;
+  S.cedRecalcDone=false; // mark recalc needed
+  render();
+}
+// CED recalculate: mark as done (in real system this would trigger backend recalc)
+function cedRecalculate(){S.cedRecalcDone=true;render();}
+// Mock income calculation from field values + CED rule overrides
+function cedCalcIncome(fileId){
+  var d=FILE_DETAIL[fileId];if(!d)return null;
+  var overrides=S.cedRuleOverrides[fileId]||{};
+  var lines=[];
+  d.groups.forEach(function(g){
+    g.fields.forEach(function(f){
+      var opts=FIELD_RULE_OPTS[f.k];
+      if(!opts||!opts.length)return; // no rule = not an income field
+      var rule=overrides[f.k]||FIELD_RULE_DEFAULTS[f.k]||opts[0];
+      if(rule.indexOf('Formula')!==-1||rule.indexOf('Reference')!==-1||rule.indexOf('Exclude')!==-1)return;
+      var raw=parseFloat((f.v||'').toString().replace(/[^0-9.]/g,''));
+      if(isNaN(raw)||raw===0)return;
+      var monthly=raw;
+      if(rule.indexOf('÷12')!==-1)monthly=raw/12;
+      lines.push({label:f.k,rule:rule,monthly:monthly,isOverride:!!(overrides[f.k])});
+    });
+  });
+  return lines;
+}
 function verifyAll(fileId,alertId){
   if(!S.alertResolved[fileId])S.alertResolved[fileId]={};
   S.alertResolved[fileId][alertId]=true;
@@ -2115,7 +2244,36 @@ function renderFileDetail(){
     var add=g.addNew?'<div class="add-item">+ Add New Item</div>':'';
     return hdr+rows+add;
   }).join('');
-  var fieldsTabBody=zeroBanner+groupsHtml;
+
+  // ── CED Income Rule Summary banner (income files only) ──
+  var incomeRuleBanner='';
+  var isIncomeFile=INCOME_FILE_IDS.indexOf(S.fileId)!==-1;
+  if(isIncomeFile){
+    var overrides=S.cedRuleOverrides[S.fileId]||{};
+    var overrideCount=Object.keys(overrides).length;
+    var needsRecalc=overrideCount>0&&!S.cedRecalcDone;
+    var calcLines=cedCalcIncome(S.fileId);
+    var totalMonthly=calcLines?calcLines.reduce(function(s,l){return s+l.monthly;},0):0;
+    var lineItems=calcLines&&calcLines.length
+      ? calcLines.map(function(l){
+          return '<div class="ced-income-row"><span class="lbl">'+l.label.replace(/_/g,' ')+(l.isOverride?' <span style="font-size:10px;color:#d97706;">[modified]</span>':'')+'</span><span class="val">RM '+(l.monthly.toFixed(2))+(l.rule.indexOf('÷12')!==-1?' <span class="muted" style="font-size:10.5px;">(annual÷12)</span>':'')+'</span></div>';
+        }).join('')
+        +'<div class="ced-income-row total"><span class="lbl">Verifiable Monthly Income</span><span class="val" style="color:#1e3a8a;">RM '+totalMonthly.toFixed(2)+'</span></div>'
+      : '<div style="font-size:11.5px;color:#9aa1ab;padding:4px 0;">No income items counted — adjust rule categories above.</div>';
+    incomeRuleBanner='<div class="ced-income-bar">'
+      +'<div class="ced-income-bar-hd">'
+        +'&#9656; Income Rule Summary'
+        +(overrideCount?' &nbsp;<span style="font-size:11px;color:#d97706;font-weight:400;">'+overrideCount+' rule(s) modified by CED</span>':'')
+        +(needsRecalc?'<span class="pending" style="margin-left:auto;">Recalculate needed</span>':'')
+        +'<button class="ced-recalc-btn" style="margin-left:auto;" onclick="cedRecalculate()">&#8635; Recalculate</button>'
+      +'</div>'
+      +(S.cedRecalcDone||!needsRecalc
+        ?'<div class="ced-income-items">'+lineItems+'</div>'
+        :'<div style="padding:8px 14px;font-size:11.5px;color:#9aa1ab;">Click Recalculate to update income totals after rule changes.</div>')
+    +'</div>';
+  }
+
+  var fieldsTabBody=zeroBanner+incomeRuleBanner+groupsHtml;
 
   // ── Active tab
   var activeBody=(S.fdTab==='fields')?fieldsTabBody:alertsTabBody;
@@ -2172,13 +2330,19 @@ function renderFileDetail(){
         +'<div class="fd-doc">'+docMock(d.doc)+'</div>'
       +'</div>'
     +'</div>'
-    // ── Footer: clear hierarchy — sync | draft | save | Submit
+    // ── Footer: sync | draft | Save | [Income: Confirm Classification] | Submit
     +'<div class="fd-bottom">'
       +'<button class="btn btn-sm" onclick="openSync()">&#8635; Sync from OCR</button>'
       +'<button class="btn btn-sm">Save Draft</button>'
-      +'<div style="margin-left:auto;display:flex;gap:8px;">'
-        +'<button class="btn btn-sm">Save</button>'
-        +'<button class="btn btn-pri btn-sm" '+(nh?'disabled title="Resolve all Hard Fails first"':'')+'>'+(nh?'&#9940; Submit':'Submit &#8594;')+'</button>'
+      +'<div style="margin-left:auto;display:flex;align-items:center;gap:8px;">'
+        +(isIncomeFile
+          ? '<span style="font-size:11.5px;color:var(--mut);">Income rules:</span>'
+            +'<button class="btn btn-sm" onclick="cedRecalculate()">&#8635; Recalculate</button>'
+            +'<button class="btn btn-pri btn-sm" onclick="switchFdTab(\'fields\')">'
+              +(S.cedRecalcDone?'&#10003; Classification Confirmed':'Confirm Income Classification')
+            +'</button>'
+          : '<button class="btn btn-sm">Save</button>'
+            +'<button class="btn btn-pri btn-sm" '+(nh?'disabled title="Resolve all Hard Fails first"':'')+'>'+(nh?'&#9940; Submit':'Submit &#8594;')+'</button>')
       +'</div>'
     +'</div>'
   +'</div></div>';
@@ -2267,7 +2431,7 @@ function openDocs(){S.docsOpen=true;render();}
 function closeDocs(){S.docsOpen=false;render();}
 function setDocsTab(t){S.docsTab=t;render();}
 function setInnerTab(t){S.innerTab=t;render();}
-function openFile(id){if(id){S.fileId=id;S.locate=null;S.fdTab='alerts';}S.fileOpen=true;render();}
+function openFile(id){if(id){S.fileId=id;S.locate=null;S.fdTab='alerts';S.cedRecalcDone=false;}S.fileOpen=true;render();}
 function closeFile(){S.fileOpen=false;render();}
 function openSync(){S.syncOpen=true;render();}
 function closeSync(){S.syncOpen=false;render();}
