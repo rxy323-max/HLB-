@@ -184,12 +184,32 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .fd-title{font-size:14px;font-weight:700;}
 .fd-crumb{font-size:11.5px;color:var(--mut);margin-top:2px;}
 .fd-top .sp{margin-left:auto;}
-/* Left/right split: left = fields/alerts, right = preview. Single col when preview hidden. */
-.fd-split{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(420px,640px);overflow:hidden;}
-.fd-split.no-preview{grid-template-columns:1fr 38px;}
-.fd-split.narrow-preview{grid-template-columns:minmax(0,1fr) minmax(300px,360px);}
-.fd-left{border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;}
-.fd-split.no-preview .fd-left{border-right:none;}
+/* ── 2×2 grid: alerts | rules / fields | preview ── */
+.fd-grid{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,440px);grid-template-rows:auto minmax(0,1fr);overflow:hidden;position:relative;}
+.fdq{min-width:0;min-height:0;}
+.fdq-alerts{grid-column:1;grid-row:1;border-bottom:1px solid var(--bd);}
+.fdq-rules{grid-column:2;grid-row:1;border-left:1px solid var(--bd);border-bottom:1px solid var(--bd);}
+.fd-grid.no-rules .fdq-alerts{grid-column:1 / 3;}
+.fdq-fields{grid-column:1;grid-row:2;overflow:auto;}
+.fdq-preview{grid-column:2;grid-row:2;border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;background:#fafbfc;}
+.fdq-lbl{font-size:10px;font-weight:800;letter-spacing:.5px;color:#1e3a8a;background:#eef3fb;padding:6px 18px;border-bottom:1px solid #dbe6fb;position:sticky;top:0;z-index:1;}
+.fdq-lbl span{font-weight:400;color:#5b6470;}
+.fdq-fields .fd-fields-head{position:sticky;top:0;z-index:1;}
+.fdq-fields .fdq-lbl+.fd-fields-head{top:27px;}
+/* ── Hover panels (top row) — collapsed bar, overlay drop ── */
+.hoverpanel{position:relative;background:#fff;}
+.hp-bar{display:flex;align-items:center;gap:8px;padding:11px 16px;cursor:pointer;user-select:none;}
+.hp-bar:hover{background:#fafbfc;}
+.fdq-rules .hp-bar{background:#fbfcfe;}
+.hp-bar .al-hd-ic{display:inline-flex;}.hp-bar .al-hd-ic svg{width:15px;height:15px;}
+.hp-hint{margin-left:auto;font-size:10px;color:#c3c9d2;font-style:italic;}
+.hp-bar .chev{color:#9aa1ab;font-size:11px;transition:transform .15s;}
+.hp-drop{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--bd);border-top:none;box-shadow:0 16px 34px rgba(30,40,80,.18);max-height:0;overflow:hidden;opacity:0;pointer-events:none;transition:opacity .12s;z-index:40;}
+.hp-inner{padding:8px 14px 12px;}
+.hoverpanel:hover .hp-drop,.hoverpanel.pinned .hp-drop{max-height:72vh;overflow:auto;opacity:1;pointer-events:auto;}
+.hoverpanel:hover .chev,.hoverpanel.pinned .chev{transform:rotate(180deg);}
+/* inside the drop, alert cards are fully expanded (no second-level hover needed) */
+.hp-drop .al-card .al-expand{max-height:340px;opacity:1;margin-top:9px;}
 /* ── Collapsible alerts header ── */
 .fd-alert-strip{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--bd);cursor:pointer;flex-shrink:0;}
 .fd-alert-strip:hover{background:#fafbfc;}
@@ -730,7 +750,8 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'cedfiles', fileOpen:false, file
         classifAddRange:'',
         pageSkipped:{},       // {fileId: {pageNumber:true}} — skipped pages
         replaceTarget:null,   // {fileId,page} — replace-page mini panel
-        fdAlertsOpen:true,    // field-detail: alerts strip expanded?
+        fdAlertsOpen:false,   // 2×2: alerts panel pinned open? (hover also opens)
+        fdRulesOpen:false,    // 2×2: rule-config panel pinned open?
         fdPreviewOpen:true,   // field-detail: PDF preview pane shown?
         incomeDecisions:{},   // {fileId:{itemLabel:'count'|'exclude'|'override', overrideVal?}}
         cedRuleOverrides:{},  // {fileId:{fieldKey:ruleCat}} — CED's rule classification changes
@@ -2115,17 +2136,24 @@ function locateField(fileId,key,page){
   var el=document.querySelector('.fd-f.hl');
   if(el&&el.scrollIntoView)el.scrollIntoView({block:'center'});
 }
-// Hover-highlight linked field rows from an alert chip (direct DOM, no re-render)
+// Hover-highlight linked field rows (all months) — direct DOM, no re-render
 function hlFields(keys){
   (keys||'').split(',').forEach(function(k){
-    var el=document.getElementById('fdf-'+k.trim());
-    if(el)el.classList.add('xhl');
+    var els=document.querySelectorAll('.fk-'+k.trim());
+    for(var i=0;i<els.length;i++)els[i].classList.add('xhl');
   });
 }
 function unhlFields(){
   var els=document.querySelectorAll('.fd-f.xhl');
   for(var i=0;i<els.length;i++)els[i].classList.remove('xhl');
 }
+// Rule-row hover: highlight its mapped field in the (uncovered) Fields quadrant + source doc line
+function ruleHover(fileId,id){
+  hlDoc(id);
+  var b=ruleDraft(fileId,id);
+  if(b&&b!=='exclude')hlFields(b);
+}
+function ruleUnhover(id){unhlDoc(id);unhlFields();}
 // Hover-highlight the source document line for a rule (direct DOM, no re-render)
 function hlDoc(id){
   var e=document.getElementById('psdoc-'+id);
@@ -2337,7 +2365,7 @@ function fdRow(f,fileId){
     }
   }
 
-  return '<div class="fd-f'+(need?' need-row':'')+(hl?' hl':'')+(isEditing?' editing':'')+'" id="fdf-'+f.k+'">'
+  return '<div class="fd-f fk-'+f.k+(need?' need-row':'')+(hl?' hl':'')+(isEditing?' editing':'')+'" id="fdf-'+f.k+'">'
     +'<div class="lbl">'+f.k+'</div>'
     +'<div class="val-wrap">'+valCell+'</div>'
     +ruleCell
@@ -2346,6 +2374,7 @@ function fdRow(f,fileId){
 }
 function switchFdTab(tab){S.fdAlertsOpen=(tab==='alerts');render();}
 function toggleFdAlerts(){S.fdAlertsOpen=!S.fdAlertsOpen;render();}
+function toggleFdRules(){S.fdRulesOpen=!S.fdRulesOpen;render();}
 function toggleFdPreview(){S.fdPreviewOpen=!S.fdPreviewOpen;render();}
 // CED rule override: set classification for a field
 function setCedRule(fileId,fieldKey,value){
@@ -2537,7 +2566,7 @@ function renderRuleConfig(fileId){
     var opts=buckets.map(function(b){return '<option value="'+b.key+'"'+(draft===b.key?' selected':'')+'>'+b.label+'</option>';}).join('');
     var aiHint=(applied!==it.ai)?'':'<span class="rc-ai">AI</span>';
     return '<div class="rc-row'+(hot?' hot':'')+(isPending?' pending':'')+'" id="rc-'+it.id+'"'
-        +' onmouseenter="hlDoc(\''+it.id+'\')" onmouseleave="unhlDoc(\''+it.id+'\')">'
+        +' onmouseenter="ruleHover(\''+fileId+'\',\''+it.id+'\')" onmouseleave="ruleUnhover(\''+it.id+'\')">'
       +'<div class="rc-name" onclick="locateLine(\''+it.id+'\')" title="Locate in document"><span class="li-loc">&#128205;</span>'+it.type+'</div>'
       +'<div class="rc-map">'
         +(isPending?'<span class="li-mod-dot" title="Pending"></span>':(isCommitted?'<span class="li-mod-dot" style="background:#1f9d57;"></span>':''))
@@ -2560,7 +2589,7 @@ function renderRuleConfig(fileId){
       +'</details>'
     : '';
   return '<div class="rc-panel">'
-    +'<div class="rc-hd"><span>&#9881; RULE CONFIGURATION</span><span class="rc-sub">map each payslip line to an income field &middot; hover to locate in document &middot; no amounts</span></div>'
+    +'<div class="rc-sub" style="padding:8px 18px 4px;">Map each payslip line to an income field &middot; hover a row to locate it in the document &middot; no amounts here</div>'
     +'<div class="rc-grp">EARNINGS</div>'+earnRows
     +'<div class="rc-grp">DEDUCTIONS</div>'+dedRows
     +applyBar+logSec
@@ -2622,76 +2651,76 @@ function renderFileDetail(){
     +'</div>';
   }
   var lineMode=!!d.lineItemMode;
-  // Rule-mode files: COMPLETE standard field display (generated) + a separate Rule Config panel on top
+  var isIncomeFile=INCOME_FILE_IDS.indexOf(S.fileId)!==-1;
+
+  // BL FIELDS = complete standard display only (rule config moved to TR quadrant)
   var renderGroups=lineMode?payslipGroups(S.fileId):d.groups;
-  var stdGroupsHtml=renderGroups.map(function(g){
+  var groupsHtml=renderGroups.map(function(g){
     var hdr=(g.name&&g.name.length)?'<div class="fd-grp">'+g.name+(g.del?'<span class="del">Delete</span>':'')+'</div>':'';
     var rows=g.fields.map(function(f){return fdRow(f,S.fileId);}).join('');
     var add=g.addNew?'<div class="add-item">+ Add New Item</div>':'';
     return hdr+rows+add;
   }).join('');
-  var groupsHtml=lineMode
-    ? renderRuleConfig(S.fileId)
-      +'<div class="fd-grp" style="color:#1e3a8a;background:#eef3fb;">FIELDS &nbsp;<span style="font-weight:400;color:#5b6470;">recomputed from rules above</span></div>'
-      +stdGroupsHtml
-    : stdGroupsHtml;
-
-  var isIncomeFile=INCOME_FILE_IDS.indexOf(S.fileId)!==-1;
-
-  // ── Alerts header (collapsible) + hover-expand cards ──
-  var alertStrip='<div class="fd-alert-strip'+(S.fdAlertsOpen?' open':'')+'" onclick="toggleFdAlerts()">'
-    +'<span class="al-hd-ic" style="color:'+(nh?'#c0392b':nw?'#d97706':'#9aa1ab')+';">'+IC.warn+'</span>'
-    +'<span class="al-hd-ttl">VALIDATION ALERTS</span>'
-    +'<span class="al-hd-cnt">'+(unresolvedCount?'('+unresolvedCount+' PENDING)':'(ALL CLEAR)')+'</span>'
-    +'<span class="add-rule-btn" style="margin-left:auto;font-size:10.5px;padding:2px 9px;" onclick="event.stopPropagation();openAddRule(\''+S.fileId+'\',null)">+ Rule</span>'
-    +'<span class="chev">&#9662;</span>'
-  +'</div>';
-  var alertBody=S.fdAlertsOpen?'<div class="fd-alert-body">'
-    +(sorted.length?sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join(''):'<div class="fd-noalert">No validation alerts on this document.</div>')
-  +'</div>':'';
-
-  // ── Fields column header (rule-mode hides it — rule config has its own) ──
-  var fieldsHead=lineMode?'':'<div class="fd-fields-head">'
-    +'<span class="h-lbl">Field</span>'
-    +'<span class="h-val">OCR Value</span>'
-    +(isIncomeFile?'<span class="h-rule">Rule Classification &#9656; editable</span>':'')
+  var fieldsHead='<div class="fd-fields-head">'
+    +'<span class="h-lbl">Field</span><span class="h-val">OCR Value</span>'
+    +((isIncomeFile&&!lineMode)?'<span class="h-rule">Rule Classification &#9656; editable</span>':'')
     +'<span class="h-conf">Conf.</span>'
   +'</div>';
 
-  // ── Income total for footer ──
-  var overrides=S.cedRuleOverrides[S.fileId]||{};
-  var overrideCount=lineMode?Object.keys(S.ruleMap[S.fileId]||{}).length:Object.keys(overrides).length;
-  var totalMonthly;
+  // ── TL quadrant: ALERTS (light bar, hover/click → overlay drop) ──
+  var alertsDrop=(sorted.length?sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join(''):'<div class="fd-noalert">No validation alerts on this document.</div>');
+  var qAlerts='<div class="fdq fdq-alerts hoverpanel'+(S.fdAlertsOpen?' pinned':'')+'">'
+    +'<div class="hp-bar" onclick="toggleFdAlerts()">'
+      +'<span class="al-hd-ic" style="color:'+(nh?'#c0392b':nw?'#d97706':'#1f9d57')+';">'+IC.warn+'</span>'
+      +'<span class="al-hd-ttl">VALIDATION ALERTS</span>'
+      +'<span class="al-hd-cnt">'+(unresolvedCount?'('+unresolvedCount+' PENDING)':'(ALL CLEAR)')+'</span>'
+      +'<span class="hp-hint">hover to review</span><span class="chev">&#9662;</span>'
+    +'</div>'
+    +'<div class="hp-drop"><div class="hp-inner">'+summary+alertsDrop+'</div></div>'
+  +'</div>';
+
+  // ── TR quadrant: RULE CONFIG (rule-mode files only) ──
+  var qRules='';
   if(lineMode){
-    totalMonthly=payslipAvgIncome(S.fileId);
-  } else {
-    var calcLines=isIncomeFile?cedCalcIncome(S.fileId):null;
-    totalMonthly=calcLines?calcLines.reduce(function(s,l){return s+l.monthly;},0):0;
+    var prc=pendingRules(S.fileId).length;
+    qRules='<div class="fdq fdq-rules hoverpanel'+(S.fdRulesOpen?' pinned':'')+'">'
+      +'<div class="hp-bar" onclick="toggleFdRules()">'
+        +'<span class="al-hd-ic" style="color:#1e3a8a;font-size:14px;">&#9881;</span>'
+        +'<span class="al-hd-ttl">RULE CONFIGURATION</span>'
+        +'<span class="al-hd-cnt">'+(prc?'('+prc+' PENDING)':'('+RULE_ITEMS.length+' rules)')+'</span>'
+        +'<span class="hp-hint">hover to configure</span><span class="chev">&#9662;</span>'
+      +'</div>'
+      +'<div class="hp-drop"><div class="hp-inner">'+renderRuleConfig(S.fileId)+'</div></div>'
+    +'</div>';
   }
 
-  // ── Preview page ──
-  var locPageDisplay=locPage;
-  var previewOpen=S.fdPreviewOpen;
+  // ── BL quadrant: FIELDS ──
+  var qFields='<div class="fdq fdq-fields">'
+    +(lineMode?'<div class="fdq-lbl">FIELDS <span>&middot; recomputed from rules</span></div>':'')
+    +zeroBanner+fieldsHead+groupsHtml
+  +'</div>';
 
-  // ── Right preview pane ──
-  var previewPane=previewOpen
-    ? '<div class="fd-right">'
-        +'<div class="fd-rtop">'
-          +'<select class="sel" style="flex:1;min-width:90px;"><option>category</option><option>Applicant Income</option></select>'
-          +'<select class="sel" style="flex:1;min-width:90px;"><option>File type</option><option>Payslip</option><option>EC Form</option></select>'
-          +'<button class="btn btn-pri btn-sm">Confirm</button>'
-          +'<button class="btn btn-sm" title="Hide preview" onclick="toggleFdPreview()">Hide &#8250;</button>'
-        +'</div>'
-        +'<div class="fd-pdftb">'
-          +'<input class="inp" style="width:40px;min-width:0;padding:3px 5px;text-align:center;" value="'+locPageDisplay+'"> <span class="muted" style="font-size:11.5px;">/ 6</span>'
-          +'<button class="mini">&minus;</button><button class="mini">+</button>'
-          +'<button class="mini" title="Rotate CW">&#8635;</button>'
-          +'<button class="mini" title="Fit page">&#8596;</button>'
-          +'<span style="margin-left:auto;font-size:11.5px;color:var(--mut);">Fit page</span>'
-        +'</div>'
-        +'<div class="fd-doc">'+docMock(d.doc)+'</div>'
-      +'</div>'
-    : '<div class="fd-preview-tab" onclick="toggleFdPreview()" title="Show document preview"><span>&#8249; Show document</span></div>';
+  // ── BR quadrant: DOCUMENT PREVIEW ──
+  var qPreview='<div class="fdq fdq-preview">'
+    +'<div class="fd-rtop">'
+      +'<select class="sel" style="flex:1;min-width:80px;"><option>category</option><option>Applicant Income</option></select>'
+      +'<select class="sel" style="flex:1;min-width:80px;"><option>File type</option><option>Payslip</option></select>'
+      +'<button class="btn btn-pri btn-sm">Confirm</button>'
+    +'</div>'
+    +'<div class="fd-pdftb">'
+      +'<input class="inp" style="width:38px;min-width:0;padding:3px 4px;text-align:center;" value="'+locPage+'"> <span class="muted" style="font-size:11.5px;">/ 3</span>'
+      +'<button class="mini">&minus;</button><button class="mini">+</button>'
+      +'<button class="mini" title="Rotate">&#8635;</button>'
+      +'<span style="margin-left:auto;font-size:11.5px;color:var(--mut);">Fit page</span>'
+    +'</div>'
+    +'<div class="fd-doc">'+docMock(d.doc)+'</div>'
+  +'</div>';
+
+  // ── Income total for footer ──
+  var overrideCount=lineMode?Object.keys(S.ruleMap[S.fileId]||{}).length:Object.keys(S.cedRuleOverrides[S.fileId]||{}).length;
+  var totalMonthly;
+  if(lineMode){totalMonthly=payslipAvgIncome(S.fileId);}
+  else{var calcLines=isIncomeFile?cedCalcIncome(S.fileId):null;totalMonthly=calcLines?calcLines.reduce(function(s,l){return s+l.monthly;},0):0;}
 
   return '<div class="ov ov-full"><div class="fd">'
     +'<div class="fd-top">'
@@ -2701,19 +2730,9 @@ function renderFileDetail(){
       +'<button class="btn btn-sm">&#8249; Prev</button>'
       +'<button class="btn btn-sm">Next &#8250;</button>'
     +'</div>'
-    // CED income files: narrower preview to give the rule panel more room
-    +'<div class="fd-split'+(previewOpen?(isIncomeFile?' narrow-preview':''):' no-preview')+'">'
-      // ── Left: alerts strip + fields table ──
-      +'<div class="fd-left">'
-        +alertStrip
-        +alertBody
-        +'<div class="fd-left-body">'
-          +zeroBanner
-          +fieldsHead
-          +groupsHtml
-        +'</div>'
-      +'</div>'
-      +previewPane
+    // ── 2×2 grid: alerts | rules / fields | preview ──
+    +'<div class="fd-grid'+(lineMode?'':' no-rules')+'">'
+      +qAlerts+qRules+qFields+qPreview
     +'</div>'
     // ── Footer ──
     +'<div class="fd-bottom">'
@@ -2817,7 +2836,7 @@ function openDocs(){S.docsOpen=true;render();}
 function closeDocs(){S.docsOpen=false;render();}
 function setDocsTab(t){S.docsTab=t;render();}
 function setInnerTab(t){S.innerTab=t;render();}
-function openFile(id){if(id){S.fileId=id;S.locate=null;S.locateLine=null;S.fdAlertsOpen=true;S.fdPreviewOpen=true;S.cedRecalcDone=false;if(S.ruleDraft)S.ruleDraft[id]={};}S.fileOpen=true;render();}
+function openFile(id){if(id){S.fileId=id;S.locate=null;S.locateLine=null;S.fdAlertsOpen=false;S.fdRulesOpen=false;S.fdPreviewOpen=true;S.cedRecalcDone=false;if(S.ruleDraft)S.ruleDraft[id]={};}S.fileOpen=true;render();}
 function closeFile(){S.fileOpen=false;render();}
 function openSync(){S.syncOpen=true;render();}
 function closeSync(){S.syncOpen=false;render();}
