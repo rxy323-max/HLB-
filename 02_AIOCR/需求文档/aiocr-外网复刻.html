@@ -187,15 +187,51 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 /* Left/right split: left = fields/alerts, right = preview. Single col when preview hidden. */
 .fd-split{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(420px,640px);overflow:hidden;}
 .fd-split.no-preview{grid-template-columns:1fr 38px;}
+.fd-split.narrow-preview{grid-template-columns:minmax(0,1fr) minmax(300px,360px);}
 .fd-left{border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;}
 .fd-split.no-preview .fd-left{border-right:none;}
-/* ── Collapsible alerts strip ── */
-.fd-alert-strip{display:flex;align-items:center;gap:9px;padding:10px 16px;background:#fffdf6;border-bottom:1px solid var(--bd);cursor:pointer;font-size:12.5px;flex-shrink:0;}
-.fd-alert-strip:hover{background:#fff9ec;}
-.fd-alert-strip .a-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+/* ── Collapsible alerts header ── */
+.fd-alert-strip{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--bd);cursor:pointer;flex-shrink:0;}
+.fd-alert-strip:hover{background:#fafbfc;}
+.fd-alert-strip .al-hd-ic{display:inline-flex;}.fd-alert-strip .al-hd-ic svg{width:15px;height:15px;}
+.al-hd-ttl{font-size:11.5px;font-weight:800;letter-spacing:.5px;color:#374151;}
+.al-hd-cnt{font-size:11px;color:#9aa1ab;font-weight:600;}
 .fd-alert-strip .chev{color:var(--mut);font-size:11px;transition:transform .15s;}
 .fd-alert-strip.open .chev{transform:rotate(180deg);}
-.fd-alert-body{flex-shrink:0;max-height:42%;overflow:auto;padding:10px 16px 4px;border-bottom:1px solid var(--bd);background:#fcfcfd;}
+.fd-alert-body{flex-shrink:0;max-height:48%;overflow:auto;padding:8px 14px;border-bottom:1px solid var(--bd);background:#fcfcfd;}
+/* ── Compact alert card (hover-expands) ── */
+.al-card{border:1px solid var(--bd);border-left-width:3px;border-radius:8px;padding:10px 12px;margin-bottom:7px;background:#fff;transition:box-shadow .12s;}
+.al-card.al-hard{border-left-color:#dc2626;}
+.al-card.al-warn{border-left-color:#e0a107;}
+.al-card.al-check{border-left-color:#9aa1ab;}
+.al-card:hover{box-shadow:0 3px 12px rgba(40,60,120,.10);border-color:#bcd0f5;}
+.al-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.al-ic{display:inline-flex;flex-shrink:0;}.al-ic svg{width:15px;height:15px;}
+.al-ttl{font-size:13px;font-weight:700;color:#2a2f37;}
+.al-chips{display:inline-flex;gap:5px;flex-wrap:wrap;}
+.al-fld{font-size:11px;color:#2563eb;background:#f0f6ff;border:1px solid #d3e2fb;border-radius:4px;padding:1px 7px;cursor:pointer;white-space:nowrap;}
+.al-fld:hover{background:#2563eb;color:#fff;border-color:#2563eb;}
+.al-desc{font-size:11.5px;color:#6b7280;margin-top:5px;line-height:1.5;}
+/* expand-on-hover region */
+.al-expand{max-height:0;overflow:hidden;opacity:0;transition:max-height .18s ease,opacity .18s ease;}
+.al-card:hover .al-expand{max-height:260px;opacity:1;margin-top:9px;}
+.al-cmp{margin-bottom:9px;}
+.cmp2{display:flex;align-items:stretch;gap:0;border:1px solid #e3e7ee;border-radius:7px;overflow:hidden;background:#f9fafc;}
+.cmp2-c{flex:1;display:flex;flex-direction:column;gap:3px;padding:8px 12px;}
+.cmp2-l{font-size:9.5px;font-weight:700;letter-spacing:.4px;color:#9aa1ab;}
+.cmp2-v{font-size:13px;font-weight:700;color:#374151;font-family:ui-monospace,Menlo,Consolas,monospace;}
+.cmp2-v.bad{color:#dc2626;}
+.cmp2-arr{display:flex;align-items:center;padding:0 6px;color:#9aa1ab;font-size:16px;background:#eef1f6;}
+.al-acts{display:flex;gap:7px;flex-wrap:wrap;}
+.al-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid #d6dae0;background:#fff;color:#374151;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;}
+.al-btn:hover{border-color:var(--blue);color:var(--blue);}
+.al-btn svg{width:13px;height:13px;}
+/* the primary action (fd-abtn-rec reused) shows blue */
+.al-acts .fd-abtn{display:inline-flex;align-items:center;gap:5px;border:1px solid #d6dae0;background:#fff;color:#374151;border-radius:6px;padding:6px 12px;font-size:12px;}
+.al-acts .fd-abtn-rec{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600;}
+.al-acts .fd-abtn-rec:hover{background:var(--blue-d);}
+/* ── Field row hover-highlight from alert chip ── */
+.fd-f.xhl{background:#eaf2ff;box-shadow:inset 3px 0 0 #2563eb;}
 /* badge kept for income-file cards reuse */
 .fd-ltab-badge{min-width:17px;height:17px;border-radius:9px;background:#dc2626;color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;}
 .fd-ltab-badge.ok{background:#1f9d57;}
@@ -328,6 +364,17 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .agg-total .agg-sum{color:#1e3a8a;font-size:13px;}
 .agg-total.final{background:#e8f0fe;border-top:2px solid #c3d5fb;}
 .agg-total.final .agg-lbl,.agg-total.final .agg-sum{font-weight:800;font-size:14px;}
+/* pending-changes apply bar */
+.li-row.pending{background:#fffaf0;}
+.li-apply{display:flex;align-items:center;gap:12px;margin:8px 18px;padding:9px 13px;background:#fff8e6;border:1px solid #f3d98f;border-radius:8px;}
+.li-apply-txt{font-size:12px;color:#7a5c00;flex:1;line-height:1.4;}
+.li-apply-txt b{color:#5a4300;}
+/* change log */
+.li-log{display:flex;align-items:center;gap:12px;padding:6px 18px;border-bottom:1px solid #f3f4f6;font-size:11.5px;}
+.li-log-t{color:#9aa1ab;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;flex-shrink:0;}
+.li-log-raw{font-weight:600;color:#374151;min-width:150px;}
+.li-log-chg{color:#6b7280;}
+.li-log-chg b{color:#1a7a43;}
 /* ── CED rule-category column in field rows ── */
 .ced-rule-cell{min-width:200px;flex-shrink:0;padding-right:8px;}
 .ced-rule-sel{border:1px solid #d6dae0;border-radius:5px;padding:4px 7px;font-size:11.5px;background:#fff;color:#374151;cursor:pointer;width:100%;max-width:220px;}
@@ -639,7 +686,9 @@ var IC={
   trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
   search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
   refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',
-  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  flag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>'
 };
 function railIcon(p){return '<div class="rail-ic">'+p+'</div>';}
 
@@ -666,7 +715,9 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'cedfiles', fileOpen:false, file
         incomeDecisions:{},   // {fileId:{itemLabel:'count'|'exclude'|'override', overrideVal?}}
         cedRuleOverrides:{},  // {fileId:{fieldKey:ruleCat}} — CED's rule classification changes
         cedRecalcDone:false,  // whether CED has clicked Recalculate this session
-        lineClass:{},         // {fileId:{lineId:classKey}} — CED line-item classification
+        lineClass:{},         // {fileId:{lineId:classKey}} — APPLIED (committed) line classification
+        lineDraft:{},         // {fileId:{lineId:classKey}} — staged, not yet applied
+        incomeLog:{},         // {fileId:[{t,raw,from,to}]} — CED change log
         locateLine:null       // lineId currently located/highlighted (field↔doc linkage)
 };
 
@@ -703,11 +754,12 @@ var FILE_DETAIL={
   mykad:{ name:'Mykad (11).pdf', crumb:'Personal Identity &rsaquo; Mykad', doc:'mykad',
     alerts:[
       {id:'idcons', title:'Mykad - id_no Consistency', sev:'hard', dim:'File Consistency', kind:'consistency',
-        cmp:'Page 1 <b>870420-49-5767</b> &nbsp;&ne;&nbsp; Page 2 <span class="bad">870420-49-5767-05</span>',
+        desc:'The ID number extracted by OCR does not match the value in CDM.', fields:['id_no'],
+        cmp:'<div class="cmp2"><div class="cmp2-c"><span class="cmp2-l">OCR EXTRACTED</span><span class="cmp2-v bad">870420-49-5767</span></div><span class="cmp2-arr">&rarr;</span><div class="cmp2-c"><span class="cmp2-l">CDM</span><span class="cmp2-v">870420-49-5767-05</span></div></div>',
         acts:['amend','replace'], rec:'amend', locate:'id_no', page:2},
       {id:'eyeball', title:'Eyeball Check', sev:'check', dim:'Eyeball / Existence', kind:'eyeball',
-        cmp:'4 fields flagged for manual confirm: address_line1, address_line2, id_no_alt, gender',
-        acts:['verifyall','replace'], rec:'verifyall', locate:'gender'}
+        desc:'The following fields require manual verification against the original document.', fields:['address_line1','address_line2','gender'],
+        cmp:'', acts:['verifyall','replace'], rec:'verifyall', locate:'gender'}
     ],
     groups:[
       {name:'customer_info', fields:[
@@ -950,28 +1002,59 @@ var PAYSLIP_LINES=[
   {id:'pl7', raw:'Bayaran Balik Tuntutan', en:'Claim Reimbursement',month:'Mar 2026', amt:330.00,  ai:'exclude',     page:1},
   {id:'pl8', raw:'Bonus Tahunan',       en:'Annual Bonus',          month:'Mar 2026', amt:1000.00, ai:'bonus',       page:1}
 ];
-// CED's per-line classification override; default = line.ai
-function lineClass(fileId,lineId){
+// APPLIED (committed) classification; default = AI recommendation
+function lineApplied(fileId,lineId){
   var ov=(S.lineClass[fileId]||{})[lineId];
   if(ov)return ov;
   var l=PAYSLIP_LINES.find(function(x){return x.id===lineId;});
   return l?l.ai:'other';
 }
+// DRAFT classification (what the dropdown shows); falls back to applied
+function lineDraftClass(fileId,lineId){
+  var d=(S.lineDraft[fileId]||{})[lineId];
+  return d?d:lineApplied(fileId,lineId);
+}
+// Staging a change: write to draft only (does not affect computed totals yet)
 function setLineClass(fileId,lineId,cls){
-  if(!S.lineClass[fileId])S.lineClass[fileId]={};
-  S.lineClass[fileId][lineId]=cls;
+  if(!S.lineDraft[fileId])S.lineDraft[fileId]={};
+  S.lineDraft[fileId][lineId]=cls;
   render();
 }
-// Aggregate line items by their current class → for computed summary
+// How many staged changes differ from the applied state
+function pendingLines(fileId){
+  var d=S.lineDraft[fileId]||{},out=[];
+  Object.keys(d).forEach(function(id){
+    if(d[id]!==lineApplied(fileId,id))out.push(id);
+  });
+  return out;
+}
+// Confirm & Refresh: apply drafts, recompute, write change log
+function confirmLineChanges(fileId){
+  var pend=pendingLines(fileId);
+  if(!pend.length)return;
+  if(!S.lineClass[fileId])S.lineClass[fileId]={};
+  if(!S.incomeLog[fileId])S.incomeLog[fileId]=[];
+  var now=new Date();
+  var ts=('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2);
+  pend.forEach(function(id){
+    var l=PAYSLIP_LINES.find(function(x){return x.id===id;});
+    var from=classMeta(lineApplied(fileId,id)).label;
+    var to=classMeta(S.lineDraft[fileId][id]).label;
+    S.incomeLog[fileId].unshift({t:ts,raw:l?l.raw:id,from:from,to:to});
+    S.lineClass[fileId][id]=S.lineDraft[fileId][id];
+  });
+  S.lineDraft[fileId]={};
+  render();
+}
+// Aggregate by APPLIED class → computed income (only updates after Confirm & Refresh)
 function payslipAgg(fileId){
   var groups={};
   PAYSLIP_LINES.forEach(function(l){
-    var c=lineClass(fileId,l.id);
+    var c=lineApplied(fileId,l.id);
     if(!groups[c])groups[c]={cls:c,lines:[],sum:0};
     groups[c].lines.push(l);
     groups[c].sum+=l.amt;
   });
-  // ordered by INCOME_CLASSES order
   var ordered=INCOME_CLASSES.map(function(c){return groups[c.key];}).filter(Boolean);
   var gross=0,verifiable=0;
   ordered.forEach(function(g){
@@ -1985,24 +2068,33 @@ function fdAlertCard(a,fileId){
       +'<div class="fd-alert-acts"><button class="fd-abtn" onclick="reopenAlert(\''+fileId+'\',\''+a.id+'\')">&#8635; Undo</button></div>'
     +'</div>';
   }
-  // "Jump to related field/line" link — locates the field or source line item
-  var jumpLink=a.locateLine
-    ? '<a class="lnk" style="font-size:11px;margin-left:auto;" onclick="locateLine(\''+a.locateLine+'\')">&#8595; Show in document</a>'
-    : a.locate
-    ? '<a class="lnk" style="font-size:11px;margin-left:auto;" onclick="locateField(\''+fileId+'\',\''+a.locate+'\','+(a.page||1)+')">&#8595; Go to field</a>'
-    : '';
-  var sourceTag=a.isCustom?'<span class="customtag">&#9998; Custom</span>':'<span class="systag">System</span>';
-  var customFoot=a.isCustom?'<div class="custom-rule-foot"><button class="cr-edit" onclick="openAddRule(\''+fileId+'\',\''+a.id+'\')">&#9998; Edit</button><button class="cr-del" onclick="deleteCustomRule(\''+fileId+'\',\''+a.id+'\')">&#215; Remove</button></div>':'';
-  return '<div class="fd-alert sevbox-'+a.sev+(a.isCustom?' custom-rule':'')+'">'
-    // Row 1: severity tag + dim tag + source + "↓ See fields" link
-    +'<div class="fd-alert-top"><span class="sevtag '+sm.c+'">'+sm.t+'</span><span class="dimtag">'+a.dim+'</span>'+sourceTag+jumpLink+'</div>'
-    +'<div class="fd-alert-ttl">'+a.title+'</div>'
-    +(a.cmp?'<div class="fd-cmp">'+a.cmp+'</div>':'')
-    // Guidance: short one-liner only, no separate "fd-guide" block
-    +'<div class="fd-guide">'+guidanceLine(a)+'</div>'
-    // Actions: primary action(s) | then justify as text link
-    +'<div class="fd-alert-acts">'+acts+justifyBtn+'</div>'
-    +customFoot
+  // ── Active state — compact card, expands on hover ──
+  // Linked fields: chips that highlight the field rows on hover + locate on click
+  var linkedFields=a.fields||(a.locate?[a.locate]:[]);
+  var chips=linkedFields.length
+    ? linkedFields.map(function(k){
+        return '<span class="al-fld" onmouseenter="hlFields(\''+k+'\')" onmouseleave="unhlFields()" onclick="locateField(\''+fileId+'\',\''+k+'\','+(a.page||1)+')">&rarr; '+k+'</span>';
+      }).join('')
+    : (a.locateLine?'<span class="al-fld" onclick="locateLine(\''+a.locateLine+'\')">&rarr; show in document</span>':'');
+  var alIcon=a.kind==='eyeball'?IC.eye:IC.warn;
+  var iconColor=a.sev==='hard'?'#c0392b':a.sev==='warn'?'#d97706':'#2563eb';
+  var desc=a.desc||(a.kind==='eyeball'?'The following fields require manual verification against the original document.'
+    :a.kind==='exist'?'OCR did not detect this field in the document.'
+    :'The value extracted by OCR does not match the reference.');
+  // Expanded actions: primary + Note + Flag Rule
+  var noteBtn='<button class="al-btn" onclick="openJustify(\''+fileId+'\',\''+a.id+'\')">'+IC.doc+' Note</button>';
+  var flagBtn='<button class="al-btn" onclick="openAddRule(\''+fileId+'\',null)">'+IC.warn+' Flag Rule</button>';
+  return '<div class="al-card al-'+a.sev+'">'
+    +'<div class="al-head">'
+      +'<span class="al-ic" style="color:'+iconColor+';">'+alIcon+'</span>'
+      +'<span class="al-ttl">'+a.title+'</span>'
+      +'<span class="al-chips">'+chips+'</span>'
+    +'</div>'
+    +'<div class="al-desc">'+desc+'</div>'
+    +'<div class="al-expand">'
+      +(a.cmp?'<div class="al-cmp">'+a.cmp+'</div>':'')
+      +'<div class="al-acts">'+acts+noteBtn+flagBtn+'</div>'
+    +'</div>'
   +'</div>';
 }
 function reopenAlert(fileId,alertId){
@@ -2013,6 +2105,17 @@ function locateField(fileId,key,page){
   S.locate={file:fileId,key:key,page:page||1};render();
   var el=document.querySelector('.fd-f.hl');
   if(el&&el.scrollIntoView)el.scrollIntoView({block:'center'});
+}
+// Hover-highlight linked field rows from an alert chip (direct DOM, no re-render)
+function hlFields(keys){
+  (keys||'').split(',').forEach(function(k){
+    var el=document.getElementById('fdf-'+k.trim());
+    if(el)el.classList.add('xhl');
+  });
+}
+function unhlFields(){
+  var els=document.querySelectorAll('.fd-f.xhl');
+  for(var i=0;i<els.length;i++)els[i].classList.remove('xhl');
 }
 // Field ↔ document linkage for payslip line items: highlight both sides + ensure preview open
 function locateLine(lineId){
@@ -2216,7 +2319,7 @@ function fdRow(f,fileId){
     }
   }
 
-  return '<div class="fd-f'+(need?' need-row':'')+(hl?' hl':'')+(isEditing?' editing':'')+'">'
+  return '<div class="fd-f'+(need?' need-row':'')+(hl?' hl':'')+(isEditing?' editing':'')+'" id="fdf-'+f.k+'">'
     +'<div class="lbl">'+f.k+'</div>'
     +'<div class="val-wrap">'+valCell+'</div>'
     +ruleCell
@@ -2330,7 +2433,7 @@ function vsoMock(){
 function payslipMock(fileId){
   var rows=PAYSLIP_LINES.map(function(l){
     var hot=S.locateLine===l.id;
-    var cls=lineClass(fileId,l.id);
+    var cls=lineApplied(fileId,l.id);
     var m=classMeta(cls);
     return '<tr id="psdoc-'+l.id+'" style="'+(hot?'background:#fff3c4;outline:2px solid #e0a107;':'')+'cursor:pointer;" onclick="locateLine(\''+l.id+'\')">'
       +'<td style="padding:5px 8px;border-bottom:1px solid #e3e3e3;">'+l.raw+'</td>'
@@ -2354,35 +2457,46 @@ function docMock(t){return t==='mykad'?mykadMock():t==='epf'?epfMock():t==='pays
 
 /* ── Line-item classification panel (payslip income files) ── */
 function renderLineItemPanel(fileId){
-  var changed=Object.keys(S.lineClass[fileId]||{}).length;
+  var pend=pendingLines(fileId);
+  var committed=Object.keys(S.lineClass[fileId]||{}).length;
   // Section A: source line items
   var itemRows=PAYSLIP_LINES.map(function(l){
-    var cls=lineClass(fileId,l.id);
-    var isOverride=!!(S.lineClass[fileId]||{})[l.id];
+    var draftCls=lineDraftClass(fileId,l.id);     // shown in dropdown
+    var appliedCls=lineApplied(fileId,l.id);
+    var isPending=pend.indexOf(l.id)!==-1;
+    var isCommitted=!!(S.lineClass[fileId]||{})[l.id];
     var hot=S.locateLine===l.id;
     var opts=INCOME_CLASSES.map(function(c){
-      return '<option value="'+c.key+'"'+(cls===c.key?' selected':'')+'>'+c.label+'</option>';
+      return '<option value="'+c.key+'"'+(draftCls===c.key?' selected':'')+'>'+c.label+'</option>';
     }).join('');
-    var m=classMeta(cls);
-    return '<div class="li-row'+(hot?' hot':'')+'" id="li-'+l.id+'">'
+    var m=classMeta(draftCls);
+    return '<div class="li-row'+(hot?' hot':'')+(isPending?' pending':'')+'" id="li-'+l.id+'">'
       +'<div class="li-name" onclick="locateLine(\''+l.id+'\')" title="Show in document">'
         +'<span class="li-loc">&#128205;</span>'
         +'<span class="li-raw">'+l.raw+'</span><span class="li-en">'+l.en+'</span>'
       +'</div>'
       +'<div class="li-amt">RM '+l.amt.toFixed(2)+'</div>'
       +'<div class="li-cls">'
-        +(isOverride?'<span class="li-mod-dot"></span>':'')
-        +'<select class="ced-rule-sel'+(isOverride?' modified':'')+(m.income?'':' li-excl')+'" onchange="setLineClass(\''+fileId+'\',\''+l.id+'\',this.value)">'+opts+'</select>'
+        +(isPending?'<span class="li-mod-dot" title="Pending — not yet applied"></span>':(isCommitted?'<span class="li-mod-dot" style="background:#1f9d57;" title="Changed by CED"></span>':''))
+        +'<select class="ced-rule-sel'+(isPending?' modified':'')+(m.income?'':' li-excl')+'" onchange="setLineClass(\''+fileId+'\',\''+l.id+'\',this.value)">'+opts+'</select>'
       +'</div>'
     +'</div>';
   }).join('');
   var sectionA='<div class="li-sec">'
-    +'<div class="li-sec-hd"><span>SOURCE LINE ITEMS</span><span class="li-sec-sub">'+PAYSLIP_LINES.length+' items extracted &middot; AI pre-classified &middot; '+(changed?changed+' changed by CED':'confirm or adjust')+'</span></div>'
+    +'<div class="li-sec-hd"><span>SOURCE LINE ITEMS</span><span class="li-sec-sub">'+PAYSLIP_LINES.length+' items extracted &middot; AI pre-classified &middot; adjust the classification dropdown</span></div>'
     +'<div class="li-head"><span class="lh-name">Description (as printed)</span><span class="lh-amt">Amount</span><span class="lh-cls">Income Classification &#9656;</span></div>'
     +itemRows
   +'</div>';
 
-  // Section B: computed aggregates
+  // Pending-changes apply bar
+  var applyBar=pend.length
+    ? '<div class="li-apply">'
+        +'<span class="li-apply-txt">&#9888; <b>'+pend.length+' change'+(pend.length>1?'s':'')+' pending</b> — computed income below is not updated until you apply.</span>'
+        +'<button class="btn btn-pri btn-sm" onclick="confirmLineChanges(\''+fileId+'\')">&#8635; Confirm &amp; Refresh</button>'
+      +'</div>'
+    : '';
+
+  // Section B: computed aggregates (reflect APPLIED state only)
   var agg=payslipAgg(fileId);
   var aggRows=agg.groups.map(function(g){
     var m=classMeta(g.cls);
@@ -2395,13 +2509,23 @@ function renderLineItemPanel(fileId){
     +'</div>';
   }).join('');
   var sectionB='<div class="li-sec">'
-    +'<div class="li-sec-hd"><span>COMPUTED INCOME</span><span class="li-sec-sub">auto-aggregated &middot; updates live as you reclassify</span></div>'
+    +'<div class="li-sec-hd"><span>COMPUTED INCOME</span><span class="li-sec-sub">'+(pend.length?'<span style="color:#b45309;">showing last-applied values</span>':'aggregated from confirmed classifications')+'</span></div>'
     +aggRows
     +'<div class="agg-total"><div class="agg-lbl">Gross Monthly Income</div><div class="agg-sum">RM '+agg.gross.toFixed(2)+'</div><div class="agg-note"></div></div>'
     +'<div class="agg-total final"><div class="agg-lbl">Verifiable Monthly Income <span class="agg-from">per CED policy (bonus averaged)</span></div><div class="agg-sum">RM '+agg.verifiable.toFixed(2)+'</div><div class="agg-note"></div></div>'
   +'</div>';
 
-  return sectionA+sectionB;
+  // Change log
+  var log=S.incomeLog[fileId]||[];
+  var logSec=log.length
+    ? '<div class="li-sec"><div class="li-sec-hd"><span>CHANGE LOG</span><span class="li-sec-sub">'+log.length+' classification change'+(log.length>1?'s':'')+' by CED (audit-recorded)</span></div>'
+        +log.map(function(e){
+          return '<div class="li-log"><span class="li-log-t">'+e.t+'</span><span class="li-log-raw">'+e.raw+'</span><span class="li-log-chg">'+e.from+' &rarr; <b>'+e.to+'</b></span></div>';
+        }).join('')
+      +'</div>'
+    : '';
+
+  return sectionA+applyBar+sectionB+logSec;
 }
 function renderFileDetail(){
   var d=FILE_DETAIL[S.fileId]||FILE_DETAIL.ec;
@@ -2468,19 +2592,15 @@ function renderFileDetail(){
 
   var isIncomeFile=INCOME_FILE_IDS.indexOf(S.fileId)!==-1;
 
-  // ── Collapsible alerts strip ──
-  var alertSummaryText=unresolvedCount
-    ? (nh?nh+' Hard Fail':'')+(nh&&(nw||nc)?', ':'')+(nw?nw+' Warning':'')+((nh||nw)&&nc?', ':'')+(nc?nc+' Needs Check':'')
-    : (allAlerts.length?'All alerts cleared':'No validation alerts');
-  var stripDot=unresolvedCount?(nh?'background:#dc2626;':'background:#d97706;'):'background:#1f9d57;';
+  // ── Alerts header (collapsible) + hover-expand cards ──
   var alertStrip='<div class="fd-alert-strip'+(S.fdAlertsOpen?' open':'')+'" onclick="toggleFdAlerts()">'
-    +'<span class="a-dot" style="'+stripDot+'"></span>'
-    +'<span style="font-weight:700;">'+(unresolvedCount?unresolvedCount+' Validation Alert'+(unresolvedCount>1?'s':''):'Validation Alerts')+'</span>'
-    +'<span class="muted" style="font-size:11.5px;">'+alertSummaryText+'</span>'
+    +'<span class="al-hd-ic" style="color:'+(nh?'#c0392b':nw?'#d97706':'#9aa1ab')+';">'+IC.warn+'</span>'
+    +'<span class="al-hd-ttl">VALIDATION ALERTS</span>'
+    +'<span class="al-hd-cnt">'+(unresolvedCount?'('+unresolvedCount+' PENDING)':'(ALL CLEAR)')+'</span>'
     +'<span class="add-rule-btn" style="margin-left:auto;font-size:10.5px;padding:2px 9px;" onclick="event.stopPropagation();openAddRule(\''+S.fileId+'\',null)">+ Rule</span>'
     +'<span class="chev">&#9662;</span>'
   +'</div>';
-  var alertBody=S.fdAlertsOpen?'<div class="fd-alert-body">'+summary
+  var alertBody=S.fdAlertsOpen?'<div class="fd-alert-body">'
     +(sorted.length?sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join(''):'<div class="fd-noalert">No validation alerts on this document.</div>')
   +'</div>':'';
 
@@ -2536,7 +2656,8 @@ function renderFileDetail(){
       +'<button class="btn btn-sm">&#8249; Prev</button>'
       +'<button class="btn btn-sm">Next &#8250;</button>'
     +'</div>'
-    +'<div class="fd-split'+(previewOpen?'':' no-preview')+'">'
+    // CED income files: narrower preview to give the rule panel more room
+    +'<div class="fd-split'+(previewOpen?(isIncomeFile?' narrow-preview':''):' no-preview')+'">'
       // ── Left: alerts strip + fields table ──
       +'<div class="fd-left">'
         +alertStrip
@@ -2556,9 +2677,11 @@ function renderFileDetail(){
       +'<div style="margin-left:auto;display:flex;align-items:center;gap:10px;">'
         +(isIncomeFile
           ? '<span style="font-size:12px;color:#374151;">Verifiable income: <b style="color:#1e3a8a;font-size:13px;">RM '+totalMonthly.toFixed(2)+'/mo</b>'
-              +(overrideCount?' <span style="color:#d97706;font-size:11px;">('+overrideCount+' change'+(overrideCount>1?'s':'')+' by CED)</span>':'')
+              +(overrideCount?' <span style="color:#1f9d57;font-size:11px;">('+overrideCount+' confirmed change'+(overrideCount>1?'s':'')+')</span>':'')
               +'</span>'
-            +'<button class="btn btn-pri btn-sm">&#10003; Confirm Classification</button>'
+            +(lineMode&&pendingLines(S.fileId).length
+              ? '<button class="btn btn-pri btn-sm" disabled title="Confirm & Refresh pending changes first">&#10003; Confirm Classification</button>'
+              : '<button class="btn btn-pri btn-sm">&#10003; Confirm Classification</button>')
           : '<button class="btn btn-sm">Save</button>'
             +'<button class="btn btn-pri btn-sm" '+(nh?'disabled title="Resolve all Hard Fails first"':'')+'>'+(nh?'&#9940; Submit':'Submit &#8594;')+'</button>')
       +'</div>'
@@ -2649,7 +2772,7 @@ function openDocs(){S.docsOpen=true;render();}
 function closeDocs(){S.docsOpen=false;render();}
 function setDocsTab(t){S.docsTab=t;render();}
 function setInnerTab(t){S.innerTab=t;render();}
-function openFile(id){if(id){S.fileId=id;S.locate=null;S.locateLine=null;S.fdAlertsOpen=true;S.fdPreviewOpen=true;S.cedRecalcDone=false;}S.fileOpen=true;render();}
+function openFile(id){if(id){S.fileId=id;S.locate=null;S.locateLine=null;S.fdAlertsOpen=true;S.fdPreviewOpen=true;S.cedRecalcDone=false;if(S.lineDraft)S.lineDraft[id]={};}S.fileOpen=true;render();}
 function closeFile(){S.fileOpen=false;render();}
 function openSync(){S.syncOpen=true;render();}
 function closeSync(){S.syncOpen=false;render();}
