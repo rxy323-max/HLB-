@@ -179,27 +179,52 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 
 /* ── File detail ── */
 .fd{background:#fff;border-radius:10px;flex:1;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);}
-.fd-top{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bd);}
+.fd-top{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--bd);}
 .fd-back{width:30px;height:30px;border:1px solid var(--bd);border-radius:6px;background:#fff;color:var(--mut);}
-.fd-title{font-size:15px;font-weight:700;}
+.fd-title{font-size:14px;font-weight:700;}
 .fd-crumb{font-size:11.5px;color:var(--mut);margin-top:2px;}
 .fd-top .sp{margin-left:auto;}
-.fd-split{flex:1;display:grid;grid-template-columns:minmax(0,500px) 1fr;overflow:hidden;}
-.fd-left{border-right:1px solid var(--bd);overflow:auto;padding:6px 0 14px;}
-.fd-sec{padding:13px 18px 9px;font-size:12px;font-weight:700;color:#b91c1c;display:flex;align-items:center;gap:7px;cursor:pointer;}
+/* Left/right split: fixed 440px left panel, rest for preview */
+.fd-split{flex:1;display:grid;grid-template-columns:440px 1fr;overflow:hidden;}
+.fd-left{border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;}
+/* ── Left panel tab bar ── */
+.fd-left-tabs{display:flex;border-bottom:1px solid var(--bd);background:#fafbfc;flex-shrink:0;}
+.fd-ltab{padding:10px 18px;font-size:12.5px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--mut);border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:6px;}
+.fd-ltab:hover{color:var(--tx);}
+.fd-ltab.active{color:var(--blue);border-bottom-color:var(--blue);}
+.fd-ltab-badge{min-width:17px;height:17px;border-radius:9px;background:#dc2626;color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;}
+.fd-ltab-badge.ok{background:#1f9d57;}
+.fd-ltab-badge.warn{background:#d97706;}
+/* ── Left panel content (one section at a time, scrolls internally) ── */
+.fd-left-body{flex:1;overflow:auto;padding:0 0 16px;}
+/* ── Old stack-style section headers (now unused, keeping for compat) ── */
+.fd-sec{padding:13px 18px 9px;font-size:12px;font-weight:700;color:#b91c1c;display:flex;align-items:center;gap:7px;}
 .fd-sec .rd{width:7px;height:7px;border-radius:50%;background:var(--red);}
-.fd-grp{font-size:12px;font-weight:700;color:#374151;background:#f6f7f9;padding:9px 18px;border-top:1px solid var(--bd2);border-bottom:1px solid var(--bd2);margin-top:2px;}
+.fd-grp{font-size:12px;font-weight:700;color:#374151;background:#f6f7f9;padding:8px 18px;border-top:1px solid var(--bd2);border-bottom:1px solid var(--bd2);margin-top:2px;}
 .fd-grp .del{float:right;color:var(--red);font-weight:500;cursor:pointer;font-size:11.5px;}
 .fd-f{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid #f3f4f6;}
 .fd-f .lbl{color:#6b7280;font-size:12px;min-width:165px;line-height:1.4;}
 .fd-f .val{flex:1;font-size:12.5px;color:#111827;font-weight:500;line-height:1.4;}
 .fd-f .conf{font-size:11px;color:#374151;display:flex;align-items:center;gap:5px;}
+/* ── 0% OCR failure banner (inside fields tab) ── */
+.fd-zero-banner{margin:12px 16px 6px;background:#fff4e0;border:1px solid #f3d98f;border-radius:7px;padding:10px 13px;font-size:12px;color:#7a5c00;line-height:1.6;}
+.fd-zero-banner strong{color:#5a4300;}
+.fd-zero-banner .fd-z-act{display:flex;gap:8px;margin-top:8px;}
+/* ── Reclassify warning in preview header ── */
+.fd-reclassify-warn{background:#fff4e0;border-bottom:1px solid #f3d98f;padding:7px 14px;font-size:11.5px;color:#7a5c00;display:flex;align-items:center;gap:6px;}
+.fd-reclassify-warn strong{color:#5a4300;}
+/* ── Right preview panel ── */
 .fd-right{display:flex;flex-direction:column;overflow:hidden;background:#fafbfc;}
-.fd-rtop{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--bd);}
-.fd-pdftb{display:flex;gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bd);font-size:12px;color:#374151;background:#fff;}
+.fd-rtop{display:flex;gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bd);flex-wrap:wrap;}
+.fd-pdftb{display:flex;gap:6px;align-items:center;padding:7px 14px;border-bottom:1px solid var(--bd);font-size:12px;color:#374151;background:#fff;}
 .fd-pdftb .mini{width:26px;height:26px;border:1px solid var(--bd);border-radius:5px;background:#fff;}
 .fd-doc{flex:1;overflow:auto;padding:18px;display:flex;justify-content:center;}
-.fd-bottom{display:flex;justify-content:flex-end;gap:10px;padding:12px 16px;border-top:1px solid var(--bd);background:#fff;}
+.fd-bottom{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:10px 16px;border-top:1px solid var(--bd);background:#fff;}
+/* ── Alert card: more compact + clearer hierarchy ── */
+.fd-alert{border:1px solid #e5e7eb;border-left-width:4px;border-radius:7px;padding:10px 13px;margin-bottom:8px;background:#fff;}
+/* ── Justify btn: tertiary text-link style ── */
+.justify-btn{border:none;background:none;color:#9aa1ab;font-size:11.5px;padding:5px 4px;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;font-family:inherit;}
+.justify-btn:hover{color:#374151;}
 
 /* ── VALIDATION ALERTS cards (B-2 optimized) ── */
 .fd-alerts{padding:8px 16px 6px;}
@@ -522,7 +547,8 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'filelist', fileOpen:false, file
         classifAddType:'',
         classifAddRange:'',
         pageSkipped:{},       // {fileId: {pageNumber:true}} — skipped pages
-        replaceTarget:null    // {fileId,page} — replace-page mini panel
+        replaceTarget:null,   // {fileId,page} — replace-page mini panel
+        fdTab:'alerts'        // 'alerts'|'fields' — which left-panel tab is shown
 };
 
 /* ════════════════ DATA ════════════════ */
@@ -1495,7 +1521,10 @@ function renderDocs(){
 /* ════════════════ FILE DETAIL ════════════════ */
 function actBtn(key,fileId,alertId,rec){
   var label=ACT_LABEL[key],isRec=key===rec;
-  var cls='fd-abtn'+(isRec?' fd-abtn-rec':'');
+  // Replace Document is always primary blue (destructive but intended action)
+  // Verify All is also always primary
+  var forceRec=(key==='replace'||key==='verifyall');
+  var cls='fd-abtn'+((isRec||forceRec)?' fd-abtn-rec':'');
   if(key==='verifyall')return '<button class="'+cls+'" onclick="verifyAll(\''+fileId+'\',\''+alertId+'\')">'+label+'</button>';
   return '<button class="'+cls+'">'+label+'</button>';
 }
@@ -1506,7 +1535,7 @@ function guidanceLine(a){
   return 'AI misread the value → <strong>Amend</strong> to correct. Document non-compliant → <strong>Replace Document</strong>. Issue acceptable with a reason → <strong>Justify &amp; proceed</strong>.';
 }
 function fdAlertCard(a,fileId){
-  // ── Justified state (merged: Justification + Skip → one concept) ──
+  // ── Justified state ──
   var justified=(S.justifiedAlerts[fileId]||{})[a.id];
   if(justified!==undefined){
     return '<div class="fd-alert justified">'
@@ -1516,12 +1545,12 @@ function fdAlertCard(a,fileId){
       +'<div class="fd-alert-acts"><button class="fd-abtn" onclick="undoJustify(\''+fileId+'\',\''+a.id+'\')">&#8635; Undo</button></div>'
     +'</div>';
   }
-  // ── Resolved state (actually fixed) ──
+  // ── Resolved state ──
   var resolved=(S.alertResolved[fileId]||{})[a.id];
   var sm=sevMeta(a.sev);
   var acts=a.acts.map(function(k){return actBtn(k,fileId,a.id,a.rec);}).join('');
-  // Justify & proceed — always last, tertiary
-  var justifyBtn='<button class="justify-btn" onclick="openJustify(\''+fileId+'\',\''+a.id+'\')">'+(a.sev==='hard'?'Justify &amp; proceed (mandatory note)':'Justify &amp; proceed')+'</button>';
+  // Justify — always tertiary (text-link style)
+  var justifyBtn='<button class="justify-btn" onclick="openJustify(\''+fileId+'\',\''+a.id+'\')">'+(a.sev==='hard'?'Justify (note required)':'Justify &amp; proceed')+'</button>';
   if(resolved){
     var how=resolved.how==='adopt'?('Adopted reference <b>'+resolved.note+'</b>'):
       resolved.how==='replace'?'Replacement requested':
@@ -1533,14 +1562,20 @@ function fdAlertCard(a,fileId){
       +'<div class="fd-alert-acts"><button class="fd-abtn" onclick="reopenAlert(\''+fileId+'\',\''+a.id+'\')">&#8635; Undo</button></div>'
     +'</div>';
   }
-  var locate=a.locate?'<span class="fd-locate" onclick="locateField(\''+fileId+'\',\''+a.locate+'\','+(a.page||1)+')">&#128205; Locate</span>':'';
+  // "Jump to related field" link — switches to Fields tab and locates the field
+  var jumpLink=a.locate
+    ? '<a class="lnk" style="font-size:11px;margin-left:auto;" onclick="locateField(\''+fileId+'\',\''+a.locate+'\','+(a.page||1)+');switchFdTab(\'fields\')">&#8595; Go to field</a>'
+    : '<a class="lnk" style="font-size:11px;margin-left:auto;" onclick="switchFdTab(\'fields\')">&#8595; See fields</a>';
   var sourceTag=a.isCustom?'<span class="customtag">&#9998; Custom</span>':'<span class="systag">System</span>';
   var customFoot=a.isCustom?'<div class="custom-rule-foot"><button class="cr-edit" onclick="openAddRule(\''+fileId+'\',\''+a.id+'\')">&#9998; Edit</button><button class="cr-del" onclick="deleteCustomRule(\''+fileId+'\',\''+a.id+'\')">&#215; Remove</button></div>':'';
   return '<div class="fd-alert sevbox-'+a.sev+(a.isCustom?' custom-rule':'')+'">'
-    +'<div class="fd-alert-top"><span class="sevtag '+sm.c+'">'+sm.t+'</span><span class="dimtag">'+a.dim+'</span>'+sourceTag+(locate?'<span style="margin-left:auto;">'+locate+'</span>':'')+'</div>'
+    // Row 1: severity tag + dim tag + source + "↓ See fields" link
+    +'<div class="fd-alert-top"><span class="sevtag '+sm.c+'">'+sm.t+'</span><span class="dimtag">'+a.dim+'</span>'+sourceTag+jumpLink+'</div>'
     +'<div class="fd-alert-ttl">'+a.title+'</div>'
     +(a.cmp?'<div class="fd-cmp">'+a.cmp+'</div>':'')
+    // Guidance: short one-liner only, no separate "fd-guide" block
     +'<div class="fd-guide">'+guidanceLine(a)+'</div>'
+    // Actions: primary action(s) | then justify as text link
     +'<div class="fd-alert-acts">'+acts+justifyBtn+'</div>'
     +customFoot
   +'</div>';
@@ -1728,6 +1763,7 @@ function fdRow(f,fileId){
     +'<div class="fd-right-ctrl">'+rightCtrl+confHtml+'</div>'
   +'</div>';
 }
+function switchFdTab(tab){S.fdTab=tab;render();}
 function verifyAll(fileId,alertId){
   if(!S.alertResolved[fileId])S.alertResolved[fileId]={};
   S.alertResolved[fileId][alertId]=true;
@@ -1806,13 +1842,14 @@ function renderFileDetail(){
   var resMap=S.alertResolved[S.fileId]||{};
   var sevRank={hard:0,warn:1,check:2};
   var custom=(S.customRules[S.fileId]||[]).map(function(r){return Object.assign({},r,{isCustom:true});});
+
   // Auto-inject Marginal Page Quality alert when this file has warn pages
   var blur=fileBlurSummary(S.fileId);
   var marginalAlerts=[];
   if(blur.warnPages.length){
-    marginalAlerts.push({id:'marginal-quality',title:'Marginal page quality &mdash; Verify required',
+    marginalAlerts.push({id:'marginal-quality',title:'Marginal page quality — Verify required',
       sev:'check',dim:'Image Quality',kind:'eyeball',
-      cmp:'Page '+blur.warnPages.join(', ')+' had marginal sharpness. AI extracted values but cannot guarantee accuracy &mdash; every field in this file must be human-verified before submission.',
+      cmp:'Page '+blur.warnPages.join(', ')+' had marginal sharpness. AI extracted values but accuracy is not guaranteed — every field must be human-verified before submission.',
       acts:['verifyall'],rec:'verifyall'});
   }
   var allAlerts=marginalAlerts.concat(d.alerts).concat(custom);
@@ -1822,68 +1859,120 @@ function renderFileDetail(){
   var justMap=S.justifiedAlerts[S.fileId]||{};
   var nh=0,nw=0,nc=0,nj=0;
   allAlerts.forEach(function(a){
-    if(resMap[a.id])return; // resolved
-    if(justMap[a.id]){nj++;return;} // justified
+    if(resMap[a.id])return;
+    if(justMap[a.id]){nj++;return;}
     if(a.sev==='hard')nh++;else if(a.sev==='warn')nw++;else nc++;
   });
-  var addRuleBtn='<button class="add-rule-btn" onclick="openAddRule(\''+S.fileId+'\',null)">+ Add Rule / Check</button>';
-  var statusMsg=nh?'<span class="fd-sum-block">&#9940; Cannot submit until Hard Fail resolved or justified</span>'
-    :(nh===0&&nw===0&&nc===0&&allAlerts.length?'<span class="fd-sum-ok">&#10003; All alerts cleared</span>':'<span class="fd-sum-soft">Remaining items need resolution or justification</span>');
+  var unresolvedCount=nh+nw+nc;
+
+  // ── Alert tab badge
+  var alertBadge=unresolvedCount
+    ? '<span class="fd-ltab-badge'+(nh?' ':'  ok')+'">'+(nh||nw||nc)+'</span>'
+    : (allAlerts.length?'<span class="fd-ltab-badge ok">&#10003;</span>':'');
+
+  // ── Alerts tab content
+  var addRuleBtn='<button class="add-rule-btn" onclick="openAddRule(\''+S.fileId+'\',null)">+ Add Rule</button>';
+  var statusMsg=nh?'<span class="fd-sum-block">&#9940; Cannot submit — resolve or justify Hard Fails first</span>'
+    :(nh===0&&nw===0&&nc===0&&allAlerts.length?'<span class="fd-sum-ok">&#10003; All alerts cleared</span>':'<span class="fd-sum-soft">Resolve or justify remaining items</span>');
   var summary='<div class="fd-sum">'
     +(nh?'<span class="fd-sum-chip red">'+nh+' Hard Fail</span>':'')
     +(nw?'<span class="fd-sum-chip org">'+nw+' Warning</span>':'')
     +(nc?'<span class="fd-sum-chip blue">'+nc+' Needs Check</span>':'')
     +(nj?'<span class="fd-sum-chip" style="background:#fff4e0;color:#b45309;">'+nj+' Justified</span>':'')
-    +statusMsg
-    +addRuleBtn
+    +statusMsg+addRuleBtn
   +'</div>';
-  var alertsHtml=summary+(sorted.length
+  var alertsTabBody='<div class="fd-alerts">'+summary+(sorted.length
     ? sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join('')
-    : '<div class="fd-noalert">No validation alerts on this document.</div>');
+    : '<div class="fd-noalert">No validation alerts on this document.</div>')
+  +'</div>';
+
+  // ── Fields tab content
   var locPage=(S.locate&&S.locate.file===S.fileId)?S.locate.page:1;
+  // Check if OCR extracted almost nothing (>70% of fields are 0% confidence)
+  var totalFields=0,zeroFields=0;
+  d.groups.forEach(function(g){g.fields.forEach(function(f){totalFields++;if((f.c==null?99:f.c)===0)zeroFields++;});});
+  var zeroBanner='';
+  if(totalFields>2&&zeroFields/totalFields>0.6){
+    zeroBanner='<div class="fd-zero-banner">'
+      +'<strong>⚠ OCR could not extract this document</strong> — '+(zeroFields)+' of '+totalFields+' fields returned no data. '
+      +'This may indicate the file is misclassified, the scan quality is too low, or the document type is unsupported.<br>'
+      +'<div class="fd-z-act">'
+        +'<button class="btn btn-sm" style="font-size:11.5px;">↺ Replace File</button>'
+        +'<button class="btn btn-sm" style="font-size:11.5px;" onclick="switchFdTab(\'alerts\')">&#8593; Review Alerts</button>'
+      +'</div>'
+    +'</div>';
+  }
   var groupsHtml=d.groups.map(function(g){
     var hdr=(g.name&&g.name.length)?'<div class="fd-grp">'+g.name+(g.del?'<span class="del">Delete</span>':'')+'</div>':'';
     var rows=g.fields.map(function(f){return fdRow(f,S.fileId);}).join('');
     var add=g.addNew?'<div class="add-item">+ Add New Item</div>':'';
     return hdr+rows+add;
   }).join('');
+  var fieldsTabBody=zeroBanner+groupsHtml;
+
+  // ── Active tab
+  var activeBody=(S.fdTab==='fields')?fieldsTabBody:alertsTabBody;
+
+  // ── Reclassify warning: show when fields are mostly 0%
+  var reclassifyWarn='';
+  if(totalFields>2&&zeroFields/totalFields>0.6){
+    reclassifyWarn='<div class="fd-reclassify-warn">⚠ <strong>Check classification</strong> — most fields extracted no data. Verify that the category and file type below are correct before reviewing.</div>';
+  }
+
+  // ── Preview: page number
+  var locPageDisplay=locPage;
+
   return '<div class="ov ov-full"><div class="fd">'
+    // ── Header: back | filename | nav buttons (no duplicate Save)
     +'<div class="fd-top">'
       +'<button class="fd-back" onclick="closeFile()">&#8249;</button>'
       +'<div><div class="fd-title">'+d.name+'</div><div class="fd-crumb">'+d.crumb+'</div></div>'
       +'<div class="sp"></div>'
-      +'<button class="btn btn-sm">&#8249; Previous</button>'
+      +'<button class="btn btn-sm">&#8249; Prev</button>'
       +'<button class="btn btn-sm">Next &#8250;</button>'
-      +'<button class="btn btn-pri btn-sm">Save</button>'
     +'</div>'
     +'<div class="fd-split">'
+      // ── Left panel: tabbed (Alerts | Fields)
       +'<div class="fd-left">'
-        +'<div class="fd-sec"><span class="rd"></span> VALIDATION ALERTS</div>'
-        +'<div class="fd-alerts">'+alertsHtml+'</div>'
-        +'<div class="fd-sec"><span class="rd"></span> FIELDS</div>'
-        +groupsHtml
+        +'<div class="fd-left-tabs">'
+          +'<button class="fd-ltab'+(S.fdTab!=='fields'?' active':'')+'" onclick="switchFdTab(\'alerts\')">'
+            +'Alerts '+alertBadge
+          +'</button>'
+          +'<button class="fd-ltab'+(S.fdTab==='fields'?' active':'')+'" onclick="switchFdTab(\'fields\')">'
+            +'Fields'
+          +'</button>'
+          +'<div style="margin-left:auto;padding:8px 12px;">'
+            +'<button class="add-rule-btn" style="font-size:11px;padding:3px 10px;" onclick="openAddRule(\''+S.fileId+'\',null)">+ Rule</button>'
+          +'</div>'
+        +'</div>'
+        +'<div class="fd-left-body">'+activeBody+'</div>'
       +'</div>'
+      // ── Right panel: reclassify dropdowns + PDF viewer
       +'<div class="fd-right">'
+        +reclassifyWarn
         +'<div class="fd-rtop">'
-          +'<select class="sel"><option>category</option></select>'
-          +'<select class="sel"><option>fileType</option></select>'
-          +'<select class="sel" style="min-width:220px;"><option></option></select>'
-          +'<button class="btn btn-sm" disabled>Confirm</button>'
+          +'<select class="sel" style="flex:1;min-width:100px;"><option>category</option><option>Collateral/Others</option><option>Applicant Income</option><option>Application Form</option></select>'
+          +'<select class="sel" style="flex:1;min-width:100px;"><option>File type</option><option>Bill of Lading</option><option>Bank Statement</option><option>Payslip</option></select>'
+          +'<button class="btn btn-pri btn-sm">Confirm</button>'
         +'</div>'
         +'<div class="fd-pdftb">'
-          +'<input class="inp" style="width:48px;min-width:0;padding:4px;" value="'+locPage+'"> <span class="muted">of 2</span>'
+          +'<input class="inp" style="width:40px;min-width:0;padding:3px 5px;text-align:center;" value="'+locPageDisplay+'"> <span class="muted" style="font-size:11.5px;">/ 6</span>'
           +'<button class="mini">&minus;</button><button class="mini">+</button>'
-          +'<button class="mini">&#8635;</button><button class="mini">&#8634;</button>'
-          +'<select class="sel" style="min-width:140px;"><option>Automatic Zoom</option></select>'
+          +'<button class="mini" title="Rotate CW">&#8635;</button>'
+          +'<button class="mini" title="Fit page">&#8596;</button>'
+          +'<span style="margin-left:auto;font-size:11.5px;color:var(--mut);">Fit page</span>'
         +'</div>'
         +'<div class="fd-doc">'+docMock(d.doc)+'</div>'
       +'</div>'
     +'</div>'
+    // ── Footer: clear hierarchy — sync | draft | save | Submit
     +'<div class="fd-bottom">'
-      +'<button class="btn" onclick="openSync()">Sync from OCR</button>'
-      +'<button class="btn">Save as Draft</button>'
-      +'<button class="btn btn-pri">Save</button>'
-      +'<button class="btn" disabled>Next Step</button>'
+      +'<button class="btn btn-sm" onclick="openSync()">&#8635; Sync from OCR</button>'
+      +'<button class="btn btn-sm">Save Draft</button>'
+      +'<div style="margin-left:auto;display:flex;gap:8px;">'
+        +'<button class="btn btn-sm">Save</button>'
+        +'<button class="btn btn-pri btn-sm" '+(nh?'disabled title="Resolve all Hard Fails first"':'')+'>'+(nh?'&#9940; Submit':'Submit &#8594;')+'</button>'
+      +'</div>'
     +'</div>'
   +'</div></div>';
 }
@@ -1971,7 +2060,7 @@ function openDocs(){S.docsOpen=true;render();}
 function closeDocs(){S.docsOpen=false;render();}
 function setDocsTab(t){S.docsTab=t;render();}
 function setInnerTab(t){S.innerTab=t;render();}
-function openFile(id){if(id){S.fileId=id;S.locate=null;}S.fileOpen=true;render();}
+function openFile(id){if(id){S.fileId=id;S.locate=null;S.fdTab='alerts';}S.fileOpen=true;render();}
 function closeFile(){S.fileOpen=false;render();}
 function openSync(){S.syncOpen=true;render();}
 function closeSync(){S.syncOpen=false;render();}
