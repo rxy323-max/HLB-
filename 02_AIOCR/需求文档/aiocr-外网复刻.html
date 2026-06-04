@@ -294,6 +294,40 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .xv-issues{font-size:12px;color:#5b6470;background:#eef1f4;border-radius:6px;padding:4px 12px;}
 .xv-issues.bad{color:#c0392b;background:#fdeceb;}
 
+/* ── Line-item classification panel (payslip) ── */
+.li-sec{margin:0 0 6px;}
+.li-sec-hd{display:flex;align-items:baseline;gap:10px;padding:10px 18px 6px;flex-wrap:wrap;}
+.li-sec-hd>span:first-child{font-size:11px;font-weight:800;letter-spacing:.5px;color:#374151;}
+.li-sec-sub{font-size:11px;color:#9aa1ab;}
+.li-head{display:flex;align-items:center;padding:5px 18px;background:#fafbfc;border-top:1px solid var(--bd2);border-bottom:1px solid var(--bd2);font-size:10px;font-weight:700;color:#9aa1ab;text-transform:uppercase;letter-spacing:.3px;}
+.li-head .lh-name{flex:1;}
+.li-head .lh-amt{width:96px;text-align:right;}
+.li-head .lh-cls{width:210px;padding-left:14px;color:#d97706;}
+.li-row{display:flex;align-items:center;padding:8px 18px;border-bottom:1px solid #f3f4f6;gap:0;}
+.li-row.hot{background:#fff8e1;box-shadow:inset 3px 0 0 #e0a107;}
+.li-name{flex:1;display:flex;align-items:center;gap:7px;cursor:pointer;min-width:0;}
+.li-name:hover .li-raw{text-decoration:underline;}
+.li-loc{color:#c5ccd6;font-size:12px;flex-shrink:0;}
+.li-row.hot .li-loc{color:#e0a107;}
+.li-raw{font-size:12.5px;color:#1f2937;font-weight:600;white-space:nowrap;}
+.li-en{font-size:10.5px;color:#9aa1ab;margin-left:7px;white-space:nowrap;}
+.li-amt{width:96px;text-align:right;font-size:12.5px;font-weight:600;color:#111827;flex-shrink:0;}
+.li-cls{width:210px;padding-left:14px;flex-shrink:0;display:flex;align-items:center;}
+.li-cls .ced-rule-sel{max-width:100%;}
+.li-cls .ced-rule-sel.li-excl{color:#9aa1ab;background:#f6f7f9;border-style:dashed;}
+.li-mod-dot{width:6px;height:6px;border-radius:50%;background:#d97706;display:inline-block;margin-right:5px;flex-shrink:0;}
+/* aggregate rows */
+.agg-row{display:flex;align-items:flex-start;padding:8px 18px;border-bottom:1px solid #f3f4f6;gap:10px;}
+.agg-row.excl{opacity:.6;}
+.agg-lbl{flex:1;font-size:12.5px;font-weight:600;color:#1f2937;display:flex;flex-direction:column;gap:2px;}
+.agg-from{font-size:10.5px;color:#9aa1ab;font-weight:400;line-height:1.4;}
+.agg-sum{width:110px;text-align:right;font-size:12.5px;font-weight:700;color:#111827;flex-shrink:0;}
+.agg-note{width:130px;font-size:10.5px;color:#1a7a43;flex-shrink:0;line-height:1.4;}
+.agg-total{display:flex;align-items:center;padding:9px 18px;gap:10px;background:#f7faff;border-top:1px solid #e3ebf9;}
+.agg-total .agg-lbl{font-size:13px;color:#1e3a8a;flex-direction:row;align-items:baseline;gap:8px;}
+.agg-total .agg-sum{color:#1e3a8a;font-size:13px;}
+.agg-total.final{background:#e8f0fe;border-top:2px solid #c3d5fb;}
+.agg-total.final .agg-lbl,.agg-total.final .agg-sum{font-weight:800;font-size:14px;}
 /* ── CED rule-category column in field rows ── */
 .ced-rule-cell{min-width:200px;flex-shrink:0;padding-right:8px;}
 .ced-rule-sel{border:1px solid #d6dae0;border-radius:5px;padding:4px 7px;font-size:11.5px;background:#fff;color:#374151;cursor:pointer;width:100%;max-width:220px;}
@@ -631,7 +665,9 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'cedfiles', fileOpen:false, file
         fdPreviewOpen:true,   // field-detail: PDF preview pane shown?
         incomeDecisions:{},   // {fileId:{itemLabel:'count'|'exclude'|'override', overrideVal?}}
         cedRuleOverrides:{},  // {fileId:{fieldKey:ruleCat}} — CED's rule classification changes
-        cedRecalcDone:false   // whether CED has clicked Recalculate this session
+        cedRecalcDone:false,  // whether CED has clicked Recalculate this session
+        lineClass:{},         // {fileId:{lineId:classKey}} — CED line-item classification
+        locateLine:null       // lineId currently located/highlighted (field↔doc linkage)
 };
 
 /* ════════════════ DATA ════════════════ */
@@ -731,14 +767,14 @@ var FILE_DETAIL={
         {k:'deduction_socso',v:'',c:100}
       ]}
     ]},
-  payslip:{ name:'Payslip (Mar 2026).pdf', crumb:'Applicant Income &rsaquo; Payslip', doc:'vso',
+  payslip:{ name:'Payslip (Mar 2026).pdf', crumb:'Applicant Income &rsaquo; Payslip', doc:'payslip', lineItemMode:true,
     alerts:[
-      {id:'psgross', title:'Payslip - gross_salary Formula', sev:'warn', dim:'Internal Logic', kind:'datefmt',
-        cmp:'gross_salary <b>8,200.00</b> &nbsp;vs&nbsp; basic + allowances + OT + others = <span class="bad">9,770.00</span> &middot; difference RM 1,570.00',
-        acts:['amend','replace'], rec:'amend', locate:'gross_salary'},
-      {id:'pseye', title:'Eyeball Check', sev:'check', dim:'Eyeball / Existence', kind:'eyeball',
-        cmp:'3 income items need CED rule classification: earning_total_allowances, earning_overtime_pay, earning_others',
-        acts:['verifyall'], rec:'verifyall', locate:'earning_total_allowances'}
+      {id:'pseye', title:'Income items need CED classification', sev:'check', dim:'Income Rule', kind:'eyeball',
+        cmp:'8 source line items were auto-classified by AI. Confirm or adjust each classification — the income totals update as you change them.',
+        acts:['verifyall'], rec:'verifyall', locateLine:'pl2'},
+      {id:'psbonus', title:'Non-recurring item detected — Annual Bonus', sev:'warn', dim:'Income Rule', kind:'datefmt',
+        cmp:'<b>Bonus Tahunan RM 1,000.00</b> appears once. Per policy, non-recurring income is averaged (÷12) or excluded. AI classed it as Bonus — review.',
+        acts:['verifyall'], rec:'verifyall', locateLine:'pl8'}
     ],
     groups:[
       {name:'customer_info', fields:[
@@ -888,6 +924,62 @@ var FIELD_RULE_DEFAULTS={
 };
 // Which file types are income-type (show the rule column + recalc banner)
 var INCOME_FILE_IDS=['ec','epf','multidoc','payslip'];
+
+/* ════════ PAYSLIP LINE-ITEM MODEL ════════
+   Raw line items extracted from the payslip document. Each can be classified
+   by CED into an income class. Computed fields (Basic, Allowances...) are
+   AGGREGATES — e.g. Total Allowances = sum of every line classed as allowance. */
+var INCOME_CLASSES=[
+  {key:'basic',      label:'Basic Salary',          income:true,  note:'Fixed primary salary'},
+  {key:'fixed_allow',label:'Fixed Allowance',       income:true,  note:'Same amount every month'},
+  {key:'var_allow',  label:'Variable Allowance',    income:true,  note:'Fluctuates month to month'},
+  {key:'overtime',   label:'Overtime',              income:true,  note:'OT / shift pay'},
+  {key:'bonus',      label:'Bonus / Commission',    income:true,  note:'Non-recurring → averaged'},
+  {key:'other',      label:'Other Income',          income:true,  note:'Misc countable income'},
+  {key:'exclude',    label:'Exclude (not income)',  income:false, note:'Reimbursement, claims, one-off'}
+];
+function classMeta(key){return INCOME_CLASSES.find(function(c){return c.key===key;})||INCOME_CLASSES[0];}
+// id, raw (Malay as printed), en (English), month, amt, ai (AI default class), page
+var PAYSLIP_LINES=[
+  {id:'pl1', raw:'Gaji Pokok',          en:'Basic Salary',          month:'Mar 2026', amt:8200.00, ai:'basic',       page:1},
+  {id:'pl2', raw:'Elaun Makan',         en:'Meal Allowance',        month:'Mar 2026', amt:200.00,  ai:'fixed_allow', page:1},
+  {id:'pl3', raw:'Elaun Pengangkutan',  en:'Transport Allowance',   month:'Mar 2026', amt:150.00,  ai:'fixed_allow', page:1},
+  {id:'pl4', raw:'Elaun Lebih Masa',    en:'Overtime Allowance',    month:'Mar 2026', amt:420.00,  ai:'overtime',    page:1},
+  {id:'pl5', raw:'Elaun Kehadiran',     en:'Attendance Allowance',  month:'Mar 2026', amt:100.00,  ai:'fixed_allow', page:1},
+  {id:'pl6', raw:'Elaun Perumahan',     en:'Housing Allowance',     month:'Mar 2026', amt:500.00,  ai:'fixed_allow', page:1},
+  {id:'pl7', raw:'Bayaran Balik Tuntutan', en:'Claim Reimbursement',month:'Mar 2026', amt:330.00,  ai:'exclude',     page:1},
+  {id:'pl8', raw:'Bonus Tahunan',       en:'Annual Bonus',          month:'Mar 2026', amt:1000.00, ai:'bonus',       page:1}
+];
+// CED's per-line classification override; default = line.ai
+function lineClass(fileId,lineId){
+  var ov=(S.lineClass[fileId]||{})[lineId];
+  if(ov)return ov;
+  var l=PAYSLIP_LINES.find(function(x){return x.id===lineId;});
+  return l?l.ai:'other';
+}
+function setLineClass(fileId,lineId,cls){
+  if(!S.lineClass[fileId])S.lineClass[fileId]={};
+  S.lineClass[fileId][lineId]=cls;
+  render();
+}
+// Aggregate line items by their current class → for computed summary
+function payslipAgg(fileId){
+  var groups={};
+  PAYSLIP_LINES.forEach(function(l){
+    var c=lineClass(fileId,l.id);
+    if(!groups[c])groups[c]={cls:c,lines:[],sum:0};
+    groups[c].lines.push(l);
+    groups[c].sum+=l.amt;
+  });
+  // ordered by INCOME_CLASSES order
+  var ordered=INCOME_CLASSES.map(function(c){return groups[c.key];}).filter(Boolean);
+  var gross=0,verifiable=0;
+  ordered.forEach(function(g){
+    var m=classMeta(g.cls);
+    if(m.income){gross+=g.sum; verifiable+=(g.cls==='bonus'?g.sum/12:g.sum);}
+  });
+  return {groups:ordered,gross:gross,verifiable:verifiable};
+}
 
 var SYNC_ROWS=[
   {f:'Conventional/Islamic',cur:'C',ocr:'C',st:'ok'},
@@ -1893,10 +1985,12 @@ function fdAlertCard(a,fileId){
       +'<div class="fd-alert-acts"><button class="fd-abtn" onclick="reopenAlert(\''+fileId+'\',\''+a.id+'\')">&#8635; Undo</button></div>'
     +'</div>';
   }
-  // "Jump to related field" link — switches to Fields tab and locates the field
-  var jumpLink=a.locate
-    ? '<a class="lnk" style="font-size:11px;margin-left:auto;" onclick="locateField(\''+fileId+'\',\''+a.locate+'\','+(a.page||1)+');switchFdTab(\'fields\')">&#8595; Go to field</a>'
-    : '<a class="lnk" style="font-size:11px;margin-left:auto;" onclick="switchFdTab(\'fields\')">&#8595; See fields</a>';
+  // "Jump to related field/line" link — locates the field or source line item
+  var jumpLink=a.locateLine
+    ? '<a class="lnk" style="font-size:11px;margin-left:auto;" onclick="locateLine(\''+a.locateLine+'\')">&#8595; Show in document</a>'
+    : a.locate
+    ? '<a class="lnk" style="font-size:11px;margin-left:auto;" onclick="locateField(\''+fileId+'\',\''+a.locate+'\','+(a.page||1)+')">&#8595; Go to field</a>'
+    : '';
   var sourceTag=a.isCustom?'<span class="customtag">&#9998; Custom</span>':'<span class="systag">System</span>';
   var customFoot=a.isCustom?'<div class="custom-rule-foot"><button class="cr-edit" onclick="openAddRule(\''+fileId+'\',\''+a.id+'\')">&#9998; Edit</button><button class="cr-del" onclick="deleteCustomRule(\''+fileId+'\',\''+a.id+'\')">&#215; Remove</button></div>':'';
   return '<div class="fd-alert sevbox-'+a.sev+(a.isCustom?' custom-rule':'')+'">'
@@ -1919,6 +2013,18 @@ function locateField(fileId,key,page){
   S.locate={file:fileId,key:key,page:page||1};render();
   var el=document.querySelector('.fd-f.hl');
   if(el&&el.scrollIntoView)el.scrollIntoView({block:'center'});
+}
+// Field ↔ document linkage for payslip line items: highlight both sides + ensure preview open
+function locateLine(lineId){
+  S.locateLine=(S.locateLine===lineId)?null:lineId;
+  if(S.locateLine)S.fdPreviewOpen=true;
+  render();
+  if(S.locateLine){
+    var a=document.getElementById('li-'+S.locateLine);
+    if(a&&a.scrollIntoView)a.scrollIntoView({block:'center'});
+    var b=document.getElementById('psdoc-'+S.locateLine);
+    if(b&&b.scrollIntoView)b.scrollIntoView({block:'center'});
+  }
 }
 
 // ── CUSTOM RULES (B-3) ──────────────────────────────────────
@@ -2221,7 +2327,82 @@ function vsoMock(){
     +'<div style="text-align:right;font-size:9px;color:#999;margin-top:30px;">Scanned with CamScanner</div>'
   +'</div>';
 }
-function docMock(t){return t==='mykad'?mykadMock():t==='epf'?epfMock():t==='vso'?vsoMock():ecMock();}
+function payslipMock(fileId){
+  var rows=PAYSLIP_LINES.map(function(l){
+    var hot=S.locateLine===l.id;
+    var cls=lineClass(fileId,l.id);
+    var m=classMeta(cls);
+    return '<tr id="psdoc-'+l.id+'" style="'+(hot?'background:#fff3c4;outline:2px solid #e0a107;':'')+'cursor:pointer;" onclick="locateLine(\''+l.id+'\')">'
+      +'<td style="padding:5px 8px;border-bottom:1px solid #e3e3e3;">'+l.raw+'</td>'
+      +'<td style="padding:5px 8px;border-bottom:1px solid #e3e3e3;text-align:right;">'+l.amt.toFixed(2)+'</td>'
+      +'<td style="padding:5px 8px;border-bottom:1px solid #e3e3e3;font-size:9.5px;color:'+(m.income?'#1a7a43':'#9aa1ab')+';">'+(hot?'&#9664; '+m.label:'')+'</td>'
+    +'</tr>';
+  }).join('');
+  return '<div class="ec" style="font-family:Arial,sans-serif;max-width:560px;">'
+    +'<div style="display:flex;justify-content:space-between;border-bottom:2px solid #1d4ed8;padding-bottom:6px;"><div style="font-weight:800;color:#1d4ed8;font-size:15px;">PETRONAS CARIGALI</div><div style="font-size:10px;text-align:right;">Penyata Gaji / Payslip<br>Mac / March 2026</div></div>'
+    +'<div style="margin-top:8px;font-size:11px;">Nama: <b>AINA WAHIDA BINTI ABDUL</b> &nbsp; No. K/P: <b>920311-10-5234</b></div>'
+    +'<div style="font-size:11px;margin-bottom:8px;">No. Pekerja: <b>PCSB-44821</b></div>'
+    +'<div style="font-size:10.5px;font-weight:700;color:#1d4ed8;border-bottom:1px solid #1d4ed8;margin-top:8px;">PENDAPATAN / EARNINGS</div>'
+    +'<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:4px;">'
+      +'<tr style="background:#eef3fb;"><td style="padding:4px 8px;font-weight:700;">Butiran / Description</td><td style="padding:4px 8px;text-align:right;font-weight:700;">RM</td><td></td></tr>'
+      +rows
+    +'</table>'
+    +'<div style="font-size:9px;color:#999;margin-top:14px;text-align:right;">Click any line to locate it in the classification panel &#8594;</div>'
+  +'</div>';
+}
+function docMock(t){return t==='mykad'?mykadMock():t==='epf'?epfMock():t==='payslip'?payslipMock(S.fileId):t==='vso'?vsoMock():ecMock();}
+
+/* ── Line-item classification panel (payslip income files) ── */
+function renderLineItemPanel(fileId){
+  var changed=Object.keys(S.lineClass[fileId]||{}).length;
+  // Section A: source line items
+  var itemRows=PAYSLIP_LINES.map(function(l){
+    var cls=lineClass(fileId,l.id);
+    var isOverride=!!(S.lineClass[fileId]||{})[l.id];
+    var hot=S.locateLine===l.id;
+    var opts=INCOME_CLASSES.map(function(c){
+      return '<option value="'+c.key+'"'+(cls===c.key?' selected':'')+'>'+c.label+'</option>';
+    }).join('');
+    var m=classMeta(cls);
+    return '<div class="li-row'+(hot?' hot':'')+'" id="li-'+l.id+'">'
+      +'<div class="li-name" onclick="locateLine(\''+l.id+'\')" title="Show in document">'
+        +'<span class="li-loc">&#128205;</span>'
+        +'<span class="li-raw">'+l.raw+'</span><span class="li-en">'+l.en+'</span>'
+      +'</div>'
+      +'<div class="li-amt">RM '+l.amt.toFixed(2)+'</div>'
+      +'<div class="li-cls">'
+        +(isOverride?'<span class="li-mod-dot"></span>':'')
+        +'<select class="ced-rule-sel'+(isOverride?' modified':'')+(m.income?'':' li-excl')+'" onchange="setLineClass(\''+fileId+'\',\''+l.id+'\',this.value)">'+opts+'</select>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+  var sectionA='<div class="li-sec">'
+    +'<div class="li-sec-hd"><span>SOURCE LINE ITEMS</span><span class="li-sec-sub">'+PAYSLIP_LINES.length+' items extracted &middot; AI pre-classified &middot; '+(changed?changed+' changed by CED':'confirm or adjust')+'</span></div>'
+    +'<div class="li-head"><span class="lh-name">Description (as printed)</span><span class="lh-amt">Amount</span><span class="lh-cls">Income Classification &#9656;</span></div>'
+    +itemRows
+  +'</div>';
+
+  // Section B: computed aggregates
+  var agg=payslipAgg(fileId);
+  var aggRows=agg.groups.map(function(g){
+    var m=classMeta(g.cls);
+    var names=g.lines.map(function(l){return l.raw+' '+l.amt.toFixed(0);}).join('  +  ');
+    var counted=m.income?(g.cls==='bonus'?'÷12 &rarr; RM '+(g.sum/12).toFixed(2)+' counted':'counted in full'):'<span style="color:#c0392b;">not counted</span>';
+    return '<div class="agg-row'+(m.income?'':' excl')+'">'
+      +'<div class="agg-lbl">'+m.label+'<span class="agg-from">'+(g.lines.length>1?'= '+names:names)+'</span></div>'
+      +'<div class="agg-sum">RM '+g.sum.toFixed(2)+'</div>'
+      +'<div class="agg-note">'+counted+'</div>'
+    +'</div>';
+  }).join('');
+  var sectionB='<div class="li-sec">'
+    +'<div class="li-sec-hd"><span>COMPUTED INCOME</span><span class="li-sec-sub">auto-aggregated &middot; updates live as you reclassify</span></div>'
+    +aggRows
+    +'<div class="agg-total"><div class="agg-lbl">Gross Monthly Income</div><div class="agg-sum">RM '+agg.gross.toFixed(2)+'</div><div class="agg-note"></div></div>'
+    +'<div class="agg-total final"><div class="agg-lbl">Verifiable Monthly Income <span class="agg-from">per CED policy (bonus averaged)</span></div><div class="agg-sum">RM '+agg.verifiable.toFixed(2)+'</div><div class="agg-note"></div></div>'
+  +'</div>';
+
+  return sectionA+sectionB;
+}
 function renderFileDetail(){
   var d=FILE_DETAIL[S.fileId]||FILE_DETAIL.ec;
   var resMap=S.alertResolved[S.fileId]||{};
@@ -2277,7 +2458,8 @@ function renderFileDetail(){
       +'</div>'
     +'</div>';
   }
-  var groupsHtml=d.groups.map(function(g){
+  var lineMode=!!d.lineItemMode;
+  var groupsHtml=lineMode?renderLineItemPanel(S.fileId):d.groups.map(function(g){
     var hdr=(g.name&&g.name.length)?'<div class="fd-grp">'+g.name+(g.del?'<span class="del">Delete</span>':'')+'</div>':'';
     var rows=g.fields.map(function(f){return fdRow(f,S.fileId);}).join('');
     var add=g.addNew?'<div class="add-item">+ Add New Item</div>':'';
@@ -2302,20 +2484,25 @@ function renderFileDetail(){
     +(sorted.length?sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join(''):'<div class="fd-noalert">No validation alerts on this document.</div>')
   +'</div>':'';
 
-  // ── Fields column header (shows Rule column for income files) ──
-  var fieldsHead='<div class="fd-fields-head">'
+  // ── Fields column header (hidden in line-item mode — it has its own header) ──
+  var fieldsHead=lineMode?'':'<div class="fd-fields-head">'
     +'<span class="h-lbl">Field</span>'
     +'<span class="h-val">OCR Value</span>'
     +(isIncomeFile?'<span class="h-rule">Rule Classification &#9656; editable</span>':'')
     +'<span class="h-conf">Conf.</span>'
   +'</div>';
 
-  // ── Income total strip (slim, only for income files) ──
+  // ── Income total for footer ──
   var overrides=S.cedRuleOverrides[S.fileId]||{};
-  var overrideCount=Object.keys(overrides).length;
-  var needsRecalc=overrideCount>0&&!S.cedRecalcDone;
-  var calcLines=isIncomeFile?cedCalcIncome(S.fileId):null;
-  var totalMonthly=calcLines?calcLines.reduce(function(s,l){return s+l.monthly;},0):0;
+  var overrideCount=lineMode?Object.keys(S.lineClass[S.fileId]||{}).length:Object.keys(overrides).length;
+  var totalMonthly;
+  if(lineMode){
+    totalMonthly=payslipAgg(S.fileId).verifiable;
+  } else {
+    var calcLines=isIncomeFile?cedCalcIncome(S.fileId):null;
+    totalMonthly=calcLines?calcLines.reduce(function(s,l){return s+l.monthly;},0):0;
+  }
+  var needsRecalc=false; // line-item & rule changes now update live — no manual recalc
 
   // ── Preview page ──
   var locPageDisplay=locPage;
@@ -2368,11 +2555,10 @@ function renderFileDetail(){
       +'<button class="btn btn-sm">Save Draft</button>'
       +'<div style="margin-left:auto;display:flex;align-items:center;gap:10px;">'
         +(isIncomeFile
-          ? '<span style="font-size:12px;color:#374151;">Verifiable income: <b style="color:#1e3a8a;">RM '+totalMonthly.toFixed(2)+'/mo</b>'
-              +(overrideCount?' <span style="color:#d97706;font-size:11px;">('+overrideCount+' rule'+(overrideCount>1?'s':'')+' changed)</span>':'')
+          ? '<span style="font-size:12px;color:#374151;">Verifiable income: <b style="color:#1e3a8a;font-size:13px;">RM '+totalMonthly.toFixed(2)+'/mo</b>'
+              +(overrideCount?' <span style="color:#d97706;font-size:11px;">('+overrideCount+' change'+(overrideCount>1?'s':'')+' by CED)</span>':'')
               +'</span>'
-            +'<button class="btn btn-sm'+(needsRecalc?' btn-pri':'')+'" onclick="cedRecalculate()">&#8635; Recalculate</button>'
-            +'<button class="btn btn-pri btn-sm" '+(needsRecalc?'disabled title="Recalculate first"':'')+'>'+(S.cedRecalcDone?'&#10003; Confirm Classification':'Confirm Classification')+'</button>'
+            +'<button class="btn btn-pri btn-sm">&#10003; Confirm Classification</button>'
           : '<button class="btn btn-sm">Save</button>'
             +'<button class="btn btn-pri btn-sm" '+(nh?'disabled title="Resolve all Hard Fails first"':'')+'>'+(nh?'&#9940; Submit':'Submit &#8594;')+'</button>')
       +'</div>'
@@ -2463,7 +2649,7 @@ function openDocs(){S.docsOpen=true;render();}
 function closeDocs(){S.docsOpen=false;render();}
 function setDocsTab(t){S.docsTab=t;render();}
 function setInnerTab(t){S.innerTab=t;render();}
-function openFile(id){if(id){S.fileId=id;S.locate=null;S.fdAlertsOpen=true;S.fdPreviewOpen=true;S.cedRecalcDone=false;}S.fileOpen=true;render();}
+function openFile(id){if(id){S.fileId=id;S.locate=null;S.locateLine=null;S.fdAlertsOpen=true;S.fdPreviewOpen=true;S.cedRecalcDone=false;}S.fileOpen=true;render();}
 function closeFile(){S.fileOpen=false;render();}
 function openSync(){S.syncOpen=true;render();}
 function closeSync(){S.syncOpen=false;render();}
