@@ -281,6 +281,53 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .xv-issues{font-size:12px;color:#5b6470;background:#eef1f4;border-radius:6px;padding:4px 12px;}
 .xv-issues.bad{color:#c0392b;background:#fdeceb;}
 
+/* ── CED File List tab ── */
+.fl-foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:8px;border-top:1px solid var(--bd2);}
+.ced-up-zone{background:#fffdf0;border:1.5px dashed #f0c14b;border-radius:8px;padding:22px;text-align:center;margin-bottom:14px;}
+.ced-up-zone .cu-title{font-size:13px;font-weight:600;color:#374151;margin-bottom:4px;}
+.ced-up-zone .cu-sub{font-size:11.5px;color:var(--mut);}
+.ced-up-zone .cu-sub a{color:var(--blue);}
+.ced-fl-tbl td{padding:10px 10px;border-bottom:1px solid var(--bd2);font-size:12.5px;vertical-align:middle;}
+.ced-fl-tbl th{padding:9px 10px;font-size:11.5px;color:#6b7280;font-weight:600;border-bottom:1px solid var(--bd);background:#fafbfc;text-align:left;}
+
+/* ── Income Verification tab ── */
+.iv-summary-bar{display:flex;align-items:stretch;gap:0;border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:16px;}
+.iv-sum-cell{flex:1;padding:12px 18px;border-right:1px solid var(--bd);display:flex;flex-direction:column;gap:3px;}
+.iv-sum-cell:last-child{border-right:none;}
+.iv-sum-label{font-size:11px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
+.iv-sum-val{font-size:17px;font-weight:700;color:#111827;}
+.iv-sum-sub{font-size:11px;color:var(--mut);}
+.iv-file-card{border:1px solid var(--bd);border-radius:8px;margin-bottom:12px;overflow:hidden;}
+.iv-file-hd{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#fafbfc;border-bottom:1px solid var(--bd);}
+.iv-file-badge{font-size:11px;font-weight:700;padding:2px 9px;border-radius:4px;background:#e8f0fe;color:#2563eb;}
+.iv-file-name{font-size:13px;font-weight:600;color:#1f2937;flex:1;}
+.iv-item{display:flex;align-items:center;gap:0;padding:10px 16px;border-bottom:1px solid #f3f4f6;font-size:12.5px;}
+.iv-item:last-child{border-bottom:none;}
+.iv-item-label{flex:2;color:#374151;font-weight:500;}
+.iv-item-cat{flex:1.2;font-size:11px;color:#6b7280;}
+.iv-item-val{flex:1.5;font-weight:600;color:#111827;}
+.iv-item-val.empty{color:#c0392b;font-weight:400;font-style:italic;}
+.iv-conf-wrap{flex:1;display:flex;align-items:center;gap:6px;}
+.iv-conf-bar{height:4px;border-radius:2px;background:#e5e7eb;flex:1;overflow:hidden;}
+.iv-conf-fill{height:100%;border-radius:2px;}
+.iv-conf-fill.hi{background:#16a34a;}
+.iv-conf-fill.mid{background:#d97706;}
+.iv-conf-fill.lo{background:#dc2626;}
+.iv-conf-pct{font-size:11px;color:#6b7280;width:28px;text-align:right;}
+.iv-status{flex:1;display:flex;align-items:center;justify-content:center;}
+.iv-badge-auto{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:#e6f4ea;color:#1a7a43;}
+.iv-badge-pending{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:#fef9ec;color:#b45309;}
+.iv-badge-counted{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:#e8f0fe;color:#2563eb;}
+.iv-badge-excluded{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:#f1f3f5;color:#6b7280;text-decoration:line-through;}
+.iv-acts{flex:1.5;display:flex;gap:4px;justify-content:flex-end;}
+.iv-btn{border:1px solid var(--bd);background:#fff;color:#374151;border-radius:5px;padding:3px 10px;font-size:11.5px;cursor:pointer;}
+.iv-btn:hover{border-color:var(--blue);color:var(--blue);}
+.iv-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+.iv-btn.excl{border-color:#f3bcb9;color:#c0392b;}
+.iv-btn.excl:hover{background:#fdeceb;}
+.iv-notice{font-size:11.5px;color:#7a5c00;background:#fff4e0;border:1px solid #f3d98f;border-radius:7px;padding:8px 13px;margin-bottom:12px;line-height:1.6;}
+.iv-footer{display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px solid var(--bd);}
+
 /* ── Add Rule button + custom rule card ── */
 .add-rule-btn{border:1px dashed #2563eb;background:#f0f6ff;color:#2563eb;border-radius:6px;padding:5px 13px;font-size:12px;font-weight:600;margin-left:auto;cursor:pointer;}
 .add-rule-btn:hover{background:#2563eb;color:#fff;}
@@ -531,7 +578,7 @@ var IC={
 function railIcon(p){return '<div class="rail-ic">'+p+'</div>';}
 
 /* ════════════════ STATE ════════════════ */
-var S={ docsOpen:false, docsTab:'app', innerTab:'filelist', fileOpen:false, fileId:'mykad', syncOpen:false,
+var S={ docsOpen:false, docsTab:'app', innerTab:'cedfiles', fileOpen:false, fileId:'mykad', syncOpen:false,
         fieldChecked:{}, alertResolved:{}, locate:null,
         customRules:{},
         addRuleOpen:false, addRuleFileId:'', addRuleEditId:null,
@@ -548,7 +595,8 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'filelist', fileOpen:false, file
         classifAddRange:'',
         pageSkipped:{},       // {fileId: {pageNumber:true}} — skipped pages
         replaceTarget:null,   // {fileId,page} — replace-page mini panel
-        fdTab:'alerts'        // 'alerts'|'fields' — which left-panel tab is shown
+        fdTab:'alerts',       // 'alerts'|'fields' — which left-panel tab is shown
+        incomeDecisions:{}    // {fileId:{itemLabel:'count'|'exclude'|'override', overrideVal?}}
 };
 
 /* ════════════════ DATA ════════════════ */
@@ -687,6 +735,35 @@ var CROSSVAL=[
   {orig:'VSO.pdf',name:'VSO.pdf',subject:'Applicant',cat:'Collateral/Others',type:'VSO',ocr:'Validation Failed',rules:['VSO - customer_name Consistency','VSO - id_no Consistency','VSO - chassis_no Exist','VSO - engine_no Exist','VSO - vehicle_model Exist','VSO - total_sales_price Exist','VSO - deposit_amount Exist','General Document Rules','Eyeball Check']}
 ];
 function xvalDetailId(type){return {'Mykad':'mykad','EPF Statement':'epf','EC Form':'ec','VSO':'vso'}[type]||'mykad';}
+
+/* Income Verification data — only Applicant Income files */
+var INCOME_VERIFY_FILES=[
+  {fileId:'ec',fileName:'EC 2024(1).jpg',fileType:'EC Form',subject:'Applicant',
+   items:[
+     {label:'Gross Salary (Annual)',      field:'earning_gross_salary',  aiVal:null,            aiConf:0,  cat:'Primary Income',  decision:null},
+     {label:'Annual Taxable Income',      field:'total_taxable_income',  aiVal:null,            aiConf:0,  cat:'Primary Income',  decision:null},
+     {label:'PCB Tax Deduction',          field:'deduction_pcb_tax',     aiVal:'RM 52.30/yr',   aiConf:99, cat:'Deduction',       decision:'auto'},
+     {label:'Zakat Deduction',            field:'deduction_zakat',       aiVal:'RM 780.00/yr',  aiConf:99, cat:'Deduction',       decision:'auto'},
+     {label:'EPF Deduction (EC)',         field:'deduction_epf',         aiVal:null,            aiConf:0,  cat:'Deduction',       decision:null}
+   ]},
+  {fileId:'epf',fileName:'1147 EPF Statement.pdf',fileType:'EPF Statement',subject:'Applicant',
+   items:[
+     {label:'Employee EPF Contribution',  field:'employee_contribution', aiVal:'RM 4,925.00/mo',aiConf:95, cat:'Contribution',    decision:'auto'},
+     {label:'Employer EPF Contribution',  field:'employer_contribution', aiVal:'RM 6,940.00/mo',aiConf:95, cat:'Contribution',    decision:'auto'}
+   ]},
+  {fileId:'multidoc',fileName:'AINA WAHIDA MYVI H.pdf (Payslip p.4-6)',fileType:'Payslip',subject:'Applicant',
+   items:[
+     {label:'Basic Salary',               field:'basic_salary',          aiVal:'RM 8,200.00/mo',aiConf:99, cat:'Primary Income',  decision:'auto'},
+     {label:'Housing Allowance',          field:'housing_allowance',     aiVal:'RM 850.00/mo',  aiConf:78, cat:'Allowance',       decision:null},
+     {label:'Transport Allowance',        field:'transport_allowance',   aiVal:'RM 300.00/mo',  aiConf:72, cat:'Allowance',       decision:null},
+     {label:'Overtime Pay',               field:'overtime',              aiVal:'RM 420.00/mo',  aiConf:61, cat:'Variable Income', decision:null}
+   ]}
+];
+
+/* CED's own supplementary uploaded files */
+var CED_FILES=[
+  {name:'PAYSLIP.pdf',size:'2.45 MB',cat:'Credit Related',desc:'',time:'06/02/26 10:22:13',src:'v_kangyi'}
+];
 var SYNC_ROWS=[
   {f:'Conventional/Islamic',cur:'C',ocr:'C',st:'ok'},
   {f:'Product Group',cur:'HP',ocr:'HP',st:'ok'},
@@ -1499,7 +1576,141 @@ function renderCrossVal(){
       +'<button class="btn btn-pri" style="margin-left:auto;">Revalidation &amp; Submit Results</button>'
     +'</div>';
 }
+/* ── CED File List: CED's own supplementary uploads ── */
+function renderCedFileList(){
+  var rows=CED_FILES.map(function(f){
+    return '<tr>'
+      +'<td><b>'+f.name+'</b><span class="muted" style="font-size:10.5px;"> ('+f.size+')</span></td>'
+      +'<td><a class="lnk">'+f.cat+'</a></td>'
+      +'<td><span class="aic" title="Edit description" style="cursor:pointer;">'+IC.edit+'</span></td>'
+      +'<td class="muted" style="font-size:11.5px;">'+f.time+'</td>'
+      +'<td class="muted" style="font-size:11.5px;">'+f.size+'</td>'
+      +'<td class="muted" style="font-size:11.5px;">'+f.src+'</td>'
+      +'<td><div class="acts">'
+        +'<span class="aic" title="Preview">'+IC.eye+'</span>'
+        +'<span class="aic" title="Download">'+IC.dl+'</span>'
+        +'<span class="aic" title="Delete" style="color:#c0392b;">&#215;</span>'
+      +'</div></td>'
+    +'</tr>';
+  }).join('');
+  return '<div class="ced-up-zone">'
+      +'<div class="cu-title">Credit Related Documents <span style="font-weight:400;color:var(--mut);font-size:11.5px;">(Non AI Scanning — Requires manual check)</span></div>'
+      +'<div class="cu-sub" style="margin-top:6px;">&#9888; <span style="color:var(--mut);">Drag &amp; drop, or</span> <a class="lnk">browse</a></div>'
+    +'</div>'
+    +'<table class="ced-fl-tbl" style="width:100%;">'
+      +'<thead><tr><th>File Name</th><th>Category</th><th>Description</th><th>Upload Time</th><th>File Size</th><th>Source</th><th>Action</th></tr></thead>'
+      +'<tbody>'+rows+'</tbody>'
+    +'</table>'
+    +'<div class="pager" style="margin-top:10px;"><span>&lsaquo;</span><span class="pg-num">1</span><span>&rsaquo;</span><span>10 / page &#9662;</span></div>';
+}
+
+/* ── Income Verification: CED's income classification workspace ── */
+function setIncomeDecision(fileId,label,decision){
+  if(!S.incomeDecisions[fileId])S.incomeDecisions[fileId]={};
+  if(S.incomeDecisions[fileId][label]===decision){
+    delete S.incomeDecisions[fileId][label]; // toggle off
+  } else {
+    S.incomeDecisions[fileId][label]=decision;
+  }
+  render();
+}
+function renderIncomeVerification(){
+  // Tally totals
+  var autoPassed=0, pending=0, counted=0, excluded=0;
+  INCOME_VERIFY_FILES.forEach(function(f){
+    f.items.forEach(function(it){
+      var dec=(S.incomeDecisions[f.fileId]||{})[it.label]||(it.decision);
+      if(dec==='auto')autoPassed++;
+      else if(dec==='count')counted++;
+      else if(dec==='exclude')excluded++;
+      else pending++;
+    });
+  });
+  var totalItems=autoPassed+pending+counted+excluded;
+  var verifiedItems=autoPassed+counted+excluded;
+  var summaryBar='<div class="iv-summary-bar">'
+    +'<div class="iv-sum-cell"><div class="iv-sum-label">Income Files</div><div class="iv-sum-val">'+INCOME_VERIFY_FILES.length+'</div><div class="iv-sum-sub">Applicant Income type</div></div>'
+    +'<div class="iv-sum-cell"><div class="iv-sum-label">Auto-Verified</div><div class="iv-sum-val" style="color:#1a7a43;">'+autoPassed+'</div><div class="iv-sum-sub">AI confidence ≥ 90%</div></div>'
+    +'<div class="iv-sum-cell"><div class="iv-sum-label">Pending Review</div><div class="iv-sum-val" style="color:'+(pending?'#b45309':'#1a7a43')+';">'+pending+'</div><div class="iv-sum-sub">'+(pending?'CED action required':'All reviewed')+'</div></div>'
+    +'<div class="iv-sum-cell"><div class="iv-sum-label">Verified by CED</div><div class="iv-sum-val">'+verifiedItems+' / '+totalItems+'</div><div class="iv-sum-sub">items reviewed</div></div>'
+  +'</div>';
+  var notice=pending
+    ? '<div class="iv-notice">&#9888; <strong>'+pending+' item(s) need CED review</strong> — these income fields had low AI confidence or no extracted value. Click <strong>Count</strong> to include in verifiable income, or <strong>Exclude</strong> if not applicable per CED policy. The Proceed button is locked until all items are reviewed.</div>'
+    : '<div class="iv-notice" style="background:#e6f4ea;border-color:#9bd5ab;color:#1a5c2e;">&#10003; <strong>All income items reviewed.</strong> Proceed to approve or request additional documents.</div>';
+
+  var fileCards=INCOME_VERIFY_FILES.map(function(f){
+    var pendingInFile=f.items.filter(function(it){
+      var dec=(S.incomeDecisions[f.fileId]||{})[it.label]||(it.decision);
+      return !dec||dec==='null'||dec===null;
+    }).length;
+    var hd='<div class="iv-file-hd">'
+      +'<span class="iv-file-badge">'+f.fileType+'</span>'
+      +'<span class="iv-file-name">'+f.fileName+'</span>'
+      +'<span style="font-size:11.5px;color:var(--mut);">'+f.subject+'</span>'
+      +(pendingInFile?'<span class="fd-ltab-badge" style="margin-left:8px;">'+pendingInFile+' pending</span>':'<span class="fd-ltab-badge ok" style="margin-left:8px;">&#10003;</span>')
+    +'</div>';
+    var headerRow='<div class="iv-item" style="background:#fafbfc;font-size:11px;font-weight:700;color:#6b7280;padding:6px 16px;">'
+      +'<div style="flex:2;">Field</div>'
+      +'<div style="flex:1.2;">Category</div>'
+      +'<div style="flex:1.5;">OCR Value</div>'
+      +'<div style="flex:1;">Confidence</div>'
+      +'<div style="flex:1;text-align:center;">Status</div>'
+      +'<div style="flex:1.5;text-align:right;">CED Decision</div>'
+    +'</div>';
+    var itemRows=f.items.map(function(it){
+      var dec=(S.incomeDecisions[f.fileId]||{})[it.label]||(it.decision);
+      var isPending=!dec||dec===null;
+      // Confidence bar
+      var pct=it.aiConf;
+      var fillCls=pct>=90?'hi':pct>=60?'mid':'lo';
+      var confHtml=pct>0
+        ?('<div class="iv-conf-wrap"><div class="iv-conf-bar"><div class="iv-conf-fill '+fillCls+'" style="width:'+pct+'%;"></div></div><span class="iv-conf-pct">'+pct+'%</span></div>')
+        :'<span class="muted" style="font-size:11px;">No data</span>';
+      // Status badge
+      var badge=dec==='auto'?'<span class="iv-badge-auto">Auto ✓</span>'
+        :dec==='count'?'<span class="iv-badge-counted">Counted</span>'
+        :dec==='exclude'?'<span class="iv-badge-excluded">Excluded</span>'
+        :'<span class="iv-badge-pending">Pending</span>';
+      // Action buttons
+      var btnCount='<button class="iv-btn'+(dec==='count'?' active':'')+'" onclick="setIncomeDecision(\''+f.fileId+'\',\''+it.label+'\',\'count\')">Count</button>';
+      var btnExcl='<button class="iv-btn excl'+(dec==='exclude'?' active':'')+'" onclick="setIncomeDecision(\''+f.fileId+'\',\''+it.label+'\',\'exclude\')">Exclude</button>';
+      var acts=dec==='auto'
+        ?('<button class="iv-btn" onclick="setIncomeDecision(\''+f.fileId+'\',\''+it.label+'\',\'exclude\')">Override</button>')
+        :btnCount+btnExcl;
+      return '<div class="iv-item'+(isPending?' need-row':'')+'">'
+        +'<div class="iv-item-label">'+it.label+'</div>'
+        +'<div class="iv-item-cat">'+it.cat+'</div>'
+        +'<div class="iv-item-val'+(it.aiVal?'':' empty')+'">'+(it.aiVal||'Not extracted')+'</div>'
+        +'<div class="iv-conf-wrap" style="flex:1;">'+confHtml+'</div>'
+        +'<div class="iv-status">'+badge+'</div>'
+        +'<div class="iv-acts">'+acts+'</div>'
+      +'</div>';
+    }).join('');
+    return '<div class="iv-file-card">'+hd+headerRow+itemRows+'</div>';
+  }).join('');
+
+  var footer='<div class="iv-footer">'
+    +'<span class="muted" style="font-size:12px;">Income Verification is recorded under your CED ID and audit-logged.</span>'
+    +'<div style="display:flex;gap:8px;">'
+      +'<button class="btn btn-sm">Request Additional Docs</button>'
+      +'<button class="btn btn-pri btn-sm" '+(pending?'disabled title="Review all pending items first"':'')+'>&#10003; Confirm Income &amp; Proceed</button>'
+    +'</div>'
+  +'</div>';
+  return summaryBar+notice+fileCards+footer;
+}
+
 function renderDocs(){
+  var t=S.innerTab;
+  var tabs='<div class="lt-tabs">'
+    +'<div class="lt-tab '+(t==='cedfiles'?'active':'')+'" onclick="setInnerTab(\'cedfiles\')">CED File List</div>'
+    +'<div class="lt-tab '+(t==='filelist'?'active':'')+'" onclick="setInnerTab(\'filelist\')">File List</div>'
+    +'<div class="lt-tab '+(t==='crossval'?'active':'')+'" onclick="setInnerTab(\'crossval\')">Cross-Validation Results</div>'
+    +'<div class="lt-tab '+(t==='incomeverif'?'active':'')+'" onclick="setInnerTab(\'incomeverif\')" style="color:'+(t==='incomeverif'?'var(--blue)':'#e0a107')+';font-weight:600;">&#9650; Income Verification</div>'
+  +'</div>';
+  var body=t==='cedfiles'?renderCedFileList()
+    :t==='filelist'?renderFileList()
+    :t==='crossval'?renderCrossVal()
+    :renderIncomeVerification();
   return '<div class="ov ov-full"><div class="docs">'
     +'<div class="docs-tabs">'
       +'<div class="docs-tab '+(S.docsTab==='app'?'active':'')+'" onclick="setDocsTab(\'app\')">Application Submission</div>'
@@ -1507,13 +1718,9 @@ function renderDocs(){
       +'<button class="docs-x" onclick="closeDocs()">&times;</button>'
     +'</div>'
     +'<div class="docs-bd">'
-      +(S.docsTab==='app'?renderUpload():'<div style="padding:40px;text-align:center;color:var(--mut);">Disbursement-stage upload &mdash; same categorized tool, disbursement document types.</div>')
-      +'<div class="lt-tabs">'
-        +'<div class="lt-tab '+(S.innerTab==='filelist'?'active':'')+'" onclick="setInnerTab(\'filelist\')">File List</div>'
-        +'<div class="lt-tab '+(S.innerTab==='crossval'?'active':'')+'" onclick="setInnerTab(\'crossval\')">Cross-Validation Results</div>'
-      +'</div>'
-      +(S.innerTab==='filelist'?renderFileList():renderCrossVal())
-      +(S.innerTab==='filelist'?'<div style="display:flex;justify-content:flex-end;margin-top:14px;"><button class="btn" onclick="closeDocs()" style="color:var(--blue);border-color:#bcd0f5;">Back To List</button></div>':'')
+      +(S.docsTab==='app'?renderUpload():'<div style="padding:30px;text-align:center;color:var(--mut);">Disbursement-stage upload — same categorized tool, disbursement document types.</div>')
+      +tabs
+      +body
     +'</div>'
   +'</div></div>';
 }
