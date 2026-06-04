@@ -184,19 +184,32 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .fd-title{font-size:14px;font-weight:700;}
 .fd-crumb{font-size:11.5px;color:var(--mut);margin-top:2px;}
 .fd-top .sp{margin-left:auto;}
-/* Left/right split: wider left panel to accommodate rule dropdown column */
-.fd-split{flex:1;display:grid;grid-template-columns:560px 1fr;overflow:hidden;}
+/* Left/right split: left = fields/alerts, right = preview. Single col when preview hidden. */
+.fd-split{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(420px,640px);overflow:hidden;}
+.fd-split.no-preview{grid-template-columns:1fr 38px;}
 .fd-left{border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;}
-/* ── Left panel tab bar ── */
-.fd-left-tabs{display:flex;border-bottom:1px solid var(--bd);background:#fafbfc;flex-shrink:0;}
-.fd-ltab{padding:10px 18px;font-size:12.5px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--mut);border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:6px;}
-.fd-ltab:hover{color:var(--tx);}
-.fd-ltab.active{color:var(--blue);border-bottom-color:var(--blue);}
+.fd-split.no-preview .fd-left{border-right:none;}
+/* ── Collapsible alerts strip ── */
+.fd-alert-strip{display:flex;align-items:center;gap:9px;padding:10px 16px;background:#fffdf6;border-bottom:1px solid var(--bd);cursor:pointer;font-size:12.5px;flex-shrink:0;}
+.fd-alert-strip:hover{background:#fff9ec;}
+.fd-alert-strip .a-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.fd-alert-strip .chev{color:var(--mut);font-size:11px;transition:transform .15s;}
+.fd-alert-strip.open .chev{transform:rotate(180deg);}
+.fd-alert-body{flex-shrink:0;max-height:42%;overflow:auto;padding:10px 16px 4px;border-bottom:1px solid var(--bd);background:#fcfcfd;}
+/* badge kept for income-file cards reuse */
 .fd-ltab-badge{min-width:17px;height:17px;border-radius:9px;background:#dc2626;color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;}
 .fd-ltab-badge.ok{background:#1f9d57;}
-.fd-ltab-badge.warn{background:#d97706;}
-/* ── Left panel content (one section at a time, scrolls internally) ── */
+/* ── Fields column header ── */
+.fd-fields-head{display:flex;align-items:center;gap:14px;padding:7px 18px;background:#fafbfc;border-bottom:1px solid var(--bd);font-size:10px;font-weight:700;color:#9aa1ab;text-transform:uppercase;letter-spacing:.4px;position:sticky;top:0;z-index:2;}
+.fd-fields-head .h-lbl{min-width:165px;flex-shrink:0;}
+.fd-fields-head .h-val{flex:1;}
+.fd-fields-head .h-rule{min-width:200px;flex-shrink:0;color:#d97706;}
+.fd-fields-head .h-conf{width:46px;text-align:right;flex-shrink:0;margin-left:auto;}
+/* ── Fields scroll area ── */
 .fd-left-body{flex:1;overflow:auto;padding:0 0 16px;}
+/* ── Preview hidden: thin vertical tab ── */
+.fd-preview-tab{display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;background:#fafbfc;border-left:1px solid var(--bd);cursor:pointer;color:var(--blue);font-size:12px;font-weight:600;width:38px;}
+.fd-preview-tab:hover{background:#eef4ff;}
 /* ── Old stack-style section headers (now unused, keeping for compat) ── */
 .fd-sec{padding:13px 18px 9px;font-size:12px;font-weight:700;color:#b91c1c;display:flex;align-items:center;gap:7px;}
 .fd-sec .rd{width:7px;height:7px;border-radius:50%;background:var(--red);}
@@ -614,7 +627,8 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'cedfiles', fileOpen:false, file
         classifAddRange:'',
         pageSkipped:{},       // {fileId: {pageNumber:true}} — skipped pages
         replaceTarget:null,   // {fileId,page} — replace-page mini panel
-        fdTab:'alerts',       // 'alerts'|'fields' — which left-panel tab is shown
+        fdAlertsOpen:true,    // field-detail: alerts strip expanded?
+        fdPreviewOpen:true,   // field-detail: PDF preview pane shown?
         incomeDecisions:{},   // {fileId:{itemLabel:'count'|'exclude'|'override', overrideVal?}}
         cedRuleOverrides:{},  // {fileId:{fieldKey:ruleCat}} — CED's rule classification changes
         cedRecalcDone:false   // whether CED has clicked Recalculate this session
@@ -717,6 +731,40 @@ var FILE_DETAIL={
         {k:'deduction_socso',v:'',c:100}
       ]}
     ]},
+  payslip:{ name:'Payslip (Mar 2026).pdf', crumb:'Applicant Income &rsaquo; Payslip', doc:'vso',
+    alerts:[
+      {id:'psgross', title:'Payslip - gross_salary Formula', sev:'warn', dim:'Internal Logic', kind:'datefmt',
+        cmp:'gross_salary <b>8,200.00</b> &nbsp;vs&nbsp; basic + allowances + OT + others = <span class="bad">9,770.00</span> &middot; difference RM 1,570.00',
+        acts:['amend','replace'], rec:'amend', locate:'gross_salary'},
+      {id:'pseye', title:'Eyeball Check', sev:'check', dim:'Eyeball / Existence', kind:'eyeball',
+        cmp:'3 income items need CED rule classification: earning_total_allowances, earning_overtime_pay, earning_others',
+        acts:['verifyall'], rec:'verifyall', locate:'earning_total_allowances'}
+    ],
+    groups:[
+      {name:'customer_info', fields:[
+        {k:'customer_name',v:'AINA WAHIDA BINTI ABDUL',c:99,dot:true},
+        {k:'id_no',v:'920311105234',c:99,dot:true},
+        {k:'employer_name',v:'PETRONAS CARIGALI SDN BHD',c:98,dot:true}
+      ]},
+      {name:'monthly_records (Mar 2026)', del:true, fields:[
+        {k:'earning_basic_salary',v:'8200.00',c:99},
+        {k:'earning_total_allowances',v:'850.00',c:88},
+        {k:'earning_overtime_pay',v:'420.00',c:72},
+        {k:'earning_bonus',v:'',c:0},
+        {k:'earning_commission',v:'',c:0},
+        {k:'earning_others',v:'300.00',c:65},
+        {k:'gross_salary',v:'8200.00',c:90},
+        {k:'deduction_epf_employee',v:'902.00',c:99},
+        {k:'deduction_angkasa_and_loan',v:'',c:0},
+        {k:'deduction_socso_em',v:'24.75',c:97},
+        {k:'deduction_pcb_tax',v:'415.00',c:98},
+        {k:'net_pay_amount',v:'6858.25',c:95}
+      ]},
+      {name:'bank_info', fields:[
+        {k:'bank_name',v:'Maybank',c:99,dot:true},
+        {k:'bank_account_no',v:'5141 2233 4455',c:99,dot:true}
+      ]}
+    ]},
   vso:{ name:'VSO.pdf', crumb:'Collateral/Others &rsaquo; VSO', doc:'vso',
     alerts:[
       {id:'vsoname', title:'VSO - customer_name Consistency', sev:'hard', dim:'File Consistency', kind:'consistency',
@@ -755,7 +803,7 @@ var CROSSVAL=[
   {orig:'VOC INCOME.pdf',name:'VOC.pdf',subject:'Applicant',cat:'Collateral/Others',type:'VOC',ocr:'Validation Failed',rules:['VOC - chassis_no Consistency','VOC - engine_no Consistency','VOC - vehicle_model Consistency','General Document Rules','Eyeball Check']},
   {orig:'VSO.pdf',name:'VSO.pdf',subject:'Applicant',cat:'Collateral/Others',type:'VSO',ocr:'Validation Failed',rules:['VSO - customer_name Consistency','VSO - id_no Consistency','VSO - chassis_no Exist','VSO - engine_no Exist','VSO - vehicle_model Exist','VSO - total_sales_price Exist','VSO - deposit_amount Exist','General Document Rules','Eyeball Check']}
 ];
-function xvalDetailId(type){return {'Mykad':'mykad','EPF Statement':'epf','EC Form':'ec','VSO':'vso'}[type]||'mykad';}
+function xvalDetailId(type){return {'Mykad':'mykad','EPF Statement':'epf','EC Form':'ec','VSO':'vso','Payslip':'payslip'}[type]||'mykad';}
 
 /* Income Verification data — only Applicant Income files */
 var INCOME_VERIFY_FILES=[
@@ -839,7 +887,7 @@ var FIELD_RULE_DEFAULTS={
   'deduction_socso_em':'SOCSO Deduction'
 };
 // Which file types are income-type (show the rule column + recalc banner)
-var INCOME_FILE_IDS=['ec','epf','multidoc'];
+var INCOME_FILE_IDS=['ec','epf','multidoc','payslip'];
 
 var SYNC_ROWS=[
   {f:'Conventional/Islamic',cur:'C',ocr:'C',st:'ok'},
@@ -1778,16 +1826,15 @@ function renderIncomeVerification(){
 
 function renderDocs(){
   var t=S.innerTab;
+  if(t==='incomeverif')t='crossval'; // legacy: 4th tab removed
   var tabs='<div class="lt-tabs">'
     +'<div class="lt-tab '+(t==='cedfiles'?'active':'')+'" onclick="setInnerTab(\'cedfiles\')">CED File List</div>'
     +'<div class="lt-tab '+(t==='filelist'?'active':'')+'" onclick="setInnerTab(\'filelist\')">File List</div>'
     +'<div class="lt-tab '+(t==='crossval'?'active':'')+'" onclick="setInnerTab(\'crossval\')">Cross-Validation Results</div>'
-    +'<div class="lt-tab '+(t==='incomeverif'?'active':'')+'" onclick="setInnerTab(\'incomeverif\')" style="color:'+(t==='incomeverif'?'var(--blue)':'#e0a107')+';font-weight:600;">&#9650; Income Verification</div>'
   +'</div>';
   var body=t==='cedfiles'?renderCedFileList()
     :t==='filelist'?renderFileList()
-    :t==='crossval'?renderCrossVal()
-    :renderIncomeVerification();
+    :renderCrossVal();
   return '<div class="ov ov-full"><div class="docs">'
     +'<div class="docs-tabs">'
       +'<div class="docs-tab '+(S.docsTab==='app'?'active':'')+'" onclick="setDocsTab(\'app\')">Application Submission</div>'
@@ -2070,7 +2117,9 @@ function fdRow(f,fileId){
     +'<div class="fd-right-ctrl">'+rightCtrl+confHtml+'</div>'
   +'</div>';
 }
-function switchFdTab(tab){S.fdTab=tab;render();}
+function switchFdTab(tab){S.fdAlertsOpen=(tab==='alerts');render();}
+function toggleFdAlerts(){S.fdAlertsOpen=!S.fdAlertsOpen;render();}
+function toggleFdPreview(){S.fdPreviewOpen=!S.fdPreviewOpen;render();}
 // CED rule override: set classification for a field
 function setCedRule(fileId,fieldKey,value){
   if(!S.cedRuleOverrides[fileId])S.cedRuleOverrides[fileId]={};
@@ -2201,13 +2250,7 @@ function renderFileDetail(){
   });
   var unresolvedCount=nh+nw+nc;
 
-  // ── Alert tab badge
-  var alertBadge=unresolvedCount
-    ? '<span class="fd-ltab-badge'+(nh?' ':'  ok')+'">'+(nh||nw||nc)+'</span>'
-    : (allAlerts.length?'<span class="fd-ltab-badge ok">&#10003;</span>':'');
-
-  // ── Alerts tab content
-  var addRuleBtn='<button class="add-rule-btn" onclick="openAddRule(\''+S.fileId+'\',null)">+ Add Rule</button>';
+  // ── Alerts summary chips (shown inside the collapsible alert body) ──
   var statusMsg=nh?'<span class="fd-sum-block">&#9940; Cannot submit — resolve or justify Hard Fails first</span>'
     :(nh===0&&nw===0&&nc===0&&allAlerts.length?'<span class="fd-sum-ok">&#10003; All alerts cleared</span>':'<span class="fd-sum-soft">Resolve or justify remaining items</span>');
   var summary='<div class="fd-sum">'
@@ -2215,14 +2258,10 @@ function renderFileDetail(){
     +(nw?'<span class="fd-sum-chip org">'+nw+' Warning</span>':'')
     +(nc?'<span class="fd-sum-chip blue">'+nc+' Needs Check</span>':'')
     +(nj?'<span class="fd-sum-chip" style="background:#fff4e0;color:#b45309;">'+nj+' Justified</span>':'')
-    +statusMsg+addRuleBtn
-  +'</div>';
-  var alertsTabBody='<div class="fd-alerts">'+summary+(sorted.length
-    ? sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join('')
-    : '<div class="fd-noalert">No validation alerts on this document.</div>')
+    +statusMsg
   +'</div>';
 
-  // ── Fields tab content
+  // ── Fields content
   var locPage=(S.locate&&S.locate.file===S.fileId)?S.locate.page:1;
   // Check if OCR extracted almost nothing (>70% of fields are 0% confidence)
   var totalFields=0,zeroFields=0;
@@ -2245,80 +2284,51 @@ function renderFileDetail(){
     return hdr+rows+add;
   }).join('');
 
-  // ── CED Income Rule Summary banner (income files only) ──
-  var incomeRuleBanner='';
   var isIncomeFile=INCOME_FILE_IDS.indexOf(S.fileId)!==-1;
-  if(isIncomeFile){
-    var overrides=S.cedRuleOverrides[S.fileId]||{};
-    var overrideCount=Object.keys(overrides).length;
-    var needsRecalc=overrideCount>0&&!S.cedRecalcDone;
-    var calcLines=cedCalcIncome(S.fileId);
-    var totalMonthly=calcLines?calcLines.reduce(function(s,l){return s+l.monthly;},0):0;
-    var lineItems=calcLines&&calcLines.length
-      ? calcLines.map(function(l){
-          return '<div class="ced-income-row"><span class="lbl">'+l.label.replace(/_/g,' ')+(l.isOverride?' <span style="font-size:10px;color:#d97706;">[modified]</span>':'')+'</span><span class="val">RM '+(l.monthly.toFixed(2))+(l.rule.indexOf('÷12')!==-1?' <span class="muted" style="font-size:10.5px;">(annual÷12)</span>':'')+'</span></div>';
-        }).join('')
-        +'<div class="ced-income-row total"><span class="lbl">Verifiable Monthly Income</span><span class="val" style="color:#1e3a8a;">RM '+totalMonthly.toFixed(2)+'</span></div>'
-      : '<div style="font-size:11.5px;color:#9aa1ab;padding:4px 0;">No income items counted — adjust rule categories above.</div>';
-    incomeRuleBanner='<div class="ced-income-bar">'
-      +'<div class="ced-income-bar-hd">'
-        +'&#9656; Income Rule Summary'
-        +(overrideCount?' &nbsp;<span style="font-size:11px;color:#d97706;font-weight:400;">'+overrideCount+' rule(s) modified by CED</span>':'')
-        +(needsRecalc?'<span class="pending" style="margin-left:auto;">Recalculate needed</span>':'')
-        +'<button class="ced-recalc-btn" style="margin-left:auto;" onclick="cedRecalculate()">&#8635; Recalculate</button>'
-      +'</div>'
-      +(S.cedRecalcDone||!needsRecalc
-        ?'<div class="ced-income-items">'+lineItems+'</div>'
-        :'<div style="padding:8px 14px;font-size:11.5px;color:#9aa1ab;">Click Recalculate to update income totals after rule changes.</div>')
-    +'</div>';
-  }
 
-  var fieldsTabBody=zeroBanner+incomeRuleBanner+groupsHtml;
+  // ── Collapsible alerts strip ──
+  var alertSummaryText=unresolvedCount
+    ? (nh?nh+' Hard Fail':'')+(nh&&(nw||nc)?', ':'')+(nw?nw+' Warning':'')+((nh||nw)&&nc?', ':'')+(nc?nc+' Needs Check':'')
+    : (allAlerts.length?'All alerts cleared':'No validation alerts');
+  var stripDot=unresolvedCount?(nh?'background:#dc2626;':'background:#d97706;'):'background:#1f9d57;';
+  var alertStrip='<div class="fd-alert-strip'+(S.fdAlertsOpen?' open':'')+'" onclick="toggleFdAlerts()">'
+    +'<span class="a-dot" style="'+stripDot+'"></span>'
+    +'<span style="font-weight:700;">'+(unresolvedCount?unresolvedCount+' Validation Alert'+(unresolvedCount>1?'s':''):'Validation Alerts')+'</span>'
+    +'<span class="muted" style="font-size:11.5px;">'+alertSummaryText+'</span>'
+    +'<span class="add-rule-btn" style="margin-left:auto;font-size:10.5px;padding:2px 9px;" onclick="event.stopPropagation();openAddRule(\''+S.fileId+'\',null)">+ Rule</span>'
+    +'<span class="chev">&#9662;</span>'
+  +'</div>';
+  var alertBody=S.fdAlertsOpen?'<div class="fd-alert-body">'+summary
+    +(sorted.length?sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join(''):'<div class="fd-noalert">No validation alerts on this document.</div>')
+  +'</div>':'';
 
-  // ── Active tab
-  var activeBody=(S.fdTab==='fields')?fieldsTabBody:alertsTabBody;
+  // ── Fields column header (shows Rule column for income files) ──
+  var fieldsHead='<div class="fd-fields-head">'
+    +'<span class="h-lbl">Field</span>'
+    +'<span class="h-val">OCR Value</span>'
+    +(isIncomeFile?'<span class="h-rule">Rule Classification &#9656; editable</span>':'')
+    +'<span class="h-conf">Conf.</span>'
+  +'</div>';
 
-  // ── Reclassify warning: show when fields are mostly 0%
-  var reclassifyWarn='';
-  if(totalFields>2&&zeroFields/totalFields>0.6){
-    reclassifyWarn='<div class="fd-reclassify-warn">⚠ <strong>Check classification</strong> — most fields extracted no data. Verify that the category and file type below are correct before reviewing.</div>';
-  }
+  // ── Income total strip (slim, only for income files) ──
+  var overrides=S.cedRuleOverrides[S.fileId]||{};
+  var overrideCount=Object.keys(overrides).length;
+  var needsRecalc=overrideCount>0&&!S.cedRecalcDone;
+  var calcLines=isIncomeFile?cedCalcIncome(S.fileId):null;
+  var totalMonthly=calcLines?calcLines.reduce(function(s,l){return s+l.monthly;},0):0;
 
-  // ── Preview: page number
+  // ── Preview page ──
   var locPageDisplay=locPage;
+  var previewOpen=S.fdPreviewOpen;
 
-  return '<div class="ov ov-full"><div class="fd">'
-    // ── Header: back | filename | nav buttons (no duplicate Save)
-    +'<div class="fd-top">'
-      +'<button class="fd-back" onclick="closeFile()">&#8249;</button>'
-      +'<div><div class="fd-title">'+d.name+'</div><div class="fd-crumb">'+d.crumb+'</div></div>'
-      +'<div class="sp"></div>'
-      +'<button class="btn btn-sm">&#8249; Prev</button>'
-      +'<button class="btn btn-sm">Next &#8250;</button>'
-    +'</div>'
-    +'<div class="fd-split">'
-      // ── Left panel: tabbed (Alerts | Fields)
-      +'<div class="fd-left">'
-        +'<div class="fd-left-tabs">'
-          +'<button class="fd-ltab'+(S.fdTab!=='fields'?' active':'')+'" onclick="switchFdTab(\'alerts\')">'
-            +'Alerts '+alertBadge
-          +'</button>'
-          +'<button class="fd-ltab'+(S.fdTab==='fields'?' active':'')+'" onclick="switchFdTab(\'fields\')">'
-            +'Fields'
-          +'</button>'
-          +'<div style="margin-left:auto;padding:8px 12px;">'
-            +'<button class="add-rule-btn" style="font-size:11px;padding:3px 10px;" onclick="openAddRule(\''+S.fileId+'\',null)">+ Rule</button>'
-          +'</div>'
-        +'</div>'
-        +'<div class="fd-left-body">'+activeBody+'</div>'
-      +'</div>'
-      // ── Right panel: reclassify dropdowns + PDF viewer
-      +'<div class="fd-right">'
-        +reclassifyWarn
+  // ── Right preview pane ──
+  var previewPane=previewOpen
+    ? '<div class="fd-right">'
         +'<div class="fd-rtop">'
-          +'<select class="sel" style="flex:1;min-width:100px;"><option>category</option><option>Collateral/Others</option><option>Applicant Income</option><option>Application Form</option></select>'
-          +'<select class="sel" style="flex:1;min-width:100px;"><option>File type</option><option>Bill of Lading</option><option>Bank Statement</option><option>Payslip</option></select>'
+          +'<select class="sel" style="flex:1;min-width:90px;"><option>category</option><option>Applicant Income</option></select>'
+          +'<select class="sel" style="flex:1;min-width:90px;"><option>File type</option><option>Payslip</option><option>EC Form</option></select>'
           +'<button class="btn btn-pri btn-sm">Confirm</button>'
+          +'<button class="btn btn-sm" title="Hide preview" onclick="toggleFdPreview()">Hide &#8250;</button>'
         +'</div>'
         +'<div class="fd-pdftb">'
           +'<input class="inp" style="width:40px;min-width:0;padding:3px 5px;text-align:center;" value="'+locPageDisplay+'"> <span class="muted" style="font-size:11.5px;">/ 6</span>'
@@ -2329,18 +2339,40 @@ function renderFileDetail(){
         +'</div>'
         +'<div class="fd-doc">'+docMock(d.doc)+'</div>'
       +'</div>'
+    : '<div class="fd-preview-tab" onclick="toggleFdPreview()" title="Show document preview"><span>&#8249; Show document</span></div>';
+
+  return '<div class="ov ov-full"><div class="fd">'
+    +'<div class="fd-top">'
+      +'<button class="fd-back" onclick="closeFile()">&#8249;</button>'
+      +'<div><div class="fd-title">'+d.name+'</div><div class="fd-crumb">'+d.crumb+'</div></div>'
+      +'<div class="sp"></div>'
+      +'<button class="btn btn-sm">&#8249; Prev</button>'
+      +'<button class="btn btn-sm">Next &#8250;</button>'
     +'</div>'
-    // ── Footer: sync | draft | Save | [Income: Confirm Classification] | Submit
+    +'<div class="fd-split'+(previewOpen?'':' no-preview')+'">'
+      // ── Left: alerts strip + fields table ──
+      +'<div class="fd-left">'
+        +alertStrip
+        +alertBody
+        +'<div class="fd-left-body">'
+          +zeroBanner
+          +fieldsHead
+          +groupsHtml
+        +'</div>'
+      +'</div>'
+      +previewPane
+    +'</div>'
+    // ── Footer ──
     +'<div class="fd-bottom">'
       +'<button class="btn btn-sm" onclick="openSync()">&#8635; Sync from OCR</button>'
       +'<button class="btn btn-sm">Save Draft</button>'
-      +'<div style="margin-left:auto;display:flex;align-items:center;gap:8px;">'
+      +'<div style="margin-left:auto;display:flex;align-items:center;gap:10px;">'
         +(isIncomeFile
-          ? '<span style="font-size:11.5px;color:var(--mut);">Income rules:</span>'
-            +'<button class="btn btn-sm" onclick="cedRecalculate()">&#8635; Recalculate</button>'
-            +'<button class="btn btn-pri btn-sm" onclick="switchFdTab(\'fields\')">'
-              +(S.cedRecalcDone?'&#10003; Classification Confirmed':'Confirm Income Classification')
-            +'</button>'
+          ? '<span style="font-size:12px;color:#374151;">Verifiable income: <b style="color:#1e3a8a;">RM '+totalMonthly.toFixed(2)+'/mo</b>'
+              +(overrideCount?' <span style="color:#d97706;font-size:11px;">('+overrideCount+' rule'+(overrideCount>1?'s':'')+' changed)</span>':'')
+              +'</span>'
+            +'<button class="btn btn-sm'+(needsRecalc?' btn-pri':'')+'" onclick="cedRecalculate()">&#8635; Recalculate</button>'
+            +'<button class="btn btn-pri btn-sm" '+(needsRecalc?'disabled title="Recalculate first"':'')+'>'+(S.cedRecalcDone?'&#10003; Confirm Classification':'Confirm Classification')+'</button>'
           : '<button class="btn btn-sm">Save</button>'
             +'<button class="btn btn-pri btn-sm" '+(nh?'disabled title="Resolve all Hard Fails first"':'')+'>'+(nh?'&#9940; Submit':'Submit &#8594;')+'</button>')
       +'</div>'
@@ -2431,7 +2463,7 @@ function openDocs(){S.docsOpen=true;render();}
 function closeDocs(){S.docsOpen=false;render();}
 function setDocsTab(t){S.docsTab=t;render();}
 function setInnerTab(t){S.innerTab=t;render();}
-function openFile(id){if(id){S.fileId=id;S.locate=null;S.fdTab='alerts';S.cedRecalcDone=false;}S.fileOpen=true;render();}
+function openFile(id){if(id){S.fileId=id;S.locate=null;S.fdAlertsOpen=true;S.fdPreviewOpen=true;S.cedRecalcDone=false;}S.fileOpen=true;render();}
 function closeFile(){S.fileOpen=false;render();}
 function openSync(){S.syncOpen=true;render();}
 function closeSync(){S.syncOpen=false;render();}
