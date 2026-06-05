@@ -196,19 +196,31 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .fdq-lbl span{font-weight:400;color:#5b6470;}
 .fdq-fields .fd-fields-head{position:sticky;top:0;z-index:1;}
 .fdq-fields .fdq-lbl+.fd-fields-head{top:27px;}
-/* ── Hover panels (top row) — collapsed bar, overlay drop ── */
+/* ── Expandable panels (top row) — click to pin open, explicit collapse ── */
 .hoverpanel{position:relative;background:#fff;}
-.hp-bar{display:flex;align-items:center;gap:8px;padding:11px 16px;cursor:pointer;user-select:none;}
-.hp-bar:hover{background:#fafbfc;}
-.fdq-rules .hp-bar{background:#fbfcfe;}
+.hp-bar{display:flex;align-items:center;gap:8px;padding:11px 16px;cursor:pointer;user-select:none;border-left:3px solid transparent;}
+.hp-bar:hover{background:#f3f7ff;border-left-color:var(--blue);}
+.hoverpanel.pinned .hp-bar{background:#eef4ff;border-left-color:var(--blue);}
+.fdq-rules .hp-bar:hover,.fdq-rules.pinned .hp-bar{background:#eef4ff;}
 .hp-bar .al-hd-ic{display:inline-flex;}.hp-bar .al-hd-ic svg{width:15px;height:15px;}
-.hp-hint{margin-left:auto;font-size:10px;color:#c3c9d2;font-style:italic;}
-.hp-bar .chev{color:#9aa1ab;font-size:11px;transition:transform .15s;}
-.hp-drop{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--bd);border-top:none;box-shadow:0 16px 34px rgba(30,40,80,.18);max-height:0;overflow:hidden;opacity:0;pointer-events:none;transition:opacity .12s;z-index:40;}
-.hp-inner{padding:8px 14px 12px;}
-.hoverpanel:hover .hp-drop,.hoverpanel.pinned .hp-drop{max-height:72vh;overflow:auto;opacity:1;pointer-events:auto;}
-.hoverpanel:hover .chev,.hoverpanel.pinned .chev{transform:rotate(180deg);}
-/* inside the drop, alert cards are fully expanded (no second-level hover needed) */
+/* clickable cue pill */
+.hp-cue{margin-left:auto;font-size:10.5px;font-weight:600;color:var(--blue);background:#e8f0fe;border:1px solid #cfe0fb;border-radius:11px;padding:1px 9px;display:inline-flex;align-items:center;gap:4px;}
+.hp-bar:hover .hp-cue{background:var(--blue);color:#fff;border-color:var(--blue);}
+.hp-bar .chev{color:var(--blue);font-size:11px;transition:transform .15s;}
+.hoverpanel.pinned .hp-bar .chev{transform:rotate(180deg);}
+/* empty / disabled bar — greyed, not clickable */
+.hp-bar.empty{cursor:default;border-left-color:transparent;opacity:.7;}
+.hp-bar.empty:hover{background:none;border-left-color:transparent;}
+.hp-bar.empty .al-hd-ttl,.hp-bar.empty .al-hd-cnt{color:#9aa1ab;}
+.hp-none{margin-left:auto;font-size:10.5px;color:#b6bcc6;font-style:italic;}
+/* overlay drop — opens only when pinned */
+.hp-drop{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--bd);border-top:none;box-shadow:0 16px 34px rgba(30,40,80,.18);max-height:0;overflow:hidden;opacity:0;pointer-events:none;z-index:40;}
+.hp-inner{padding:8px 14px 12px;position:relative;}
+.hoverpanel.pinned .hp-drop{max-height:74vh;overflow:auto;opacity:1;pointer-events:auto;}
+/* explicit collapse button inside the drop */
+.hp-close{position:sticky;top:0;float:right;margin:-2px -4px 4px 8px;border:1px solid var(--bd);background:#fff;color:#6b7280;border-radius:6px;padding:4px 11px;font-size:11.5px;font-weight:600;cursor:pointer;z-index:2;}
+.hp-close:hover{border-color:var(--blue);color:var(--blue);background:#f5f9ff;}
+/* inside the drop, alert cards are fully expanded */
 .hp-drop .al-card .al-expand{max-height:340px;opacity:1;margin-top:9px;}
 /* ── Collapsible alerts header ── */
 .fd-alert-strip{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--bd);cursor:pointer;flex-shrink:0;}
@@ -2667,30 +2679,34 @@ function renderFileDetail(){
     +'<span class="h-conf">Conf.</span>'
   +'</div>';
 
-  // ── TL quadrant: ALERTS (light bar, hover/click → overlay drop) ──
-  var alertsDrop=(sorted.length?sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join(''):'<div class="fd-noalert">No validation alerts on this document.</div>');
-  var qAlerts='<div class="fdq fdq-alerts hoverpanel'+(S.fdAlertsOpen?' pinned':'')+'">'
-    +'<div class="hp-bar" onclick="toggleFdAlerts()">'
-      +'<span class="al-hd-ic" style="color:'+(nh?'#c0392b':nw?'#d97706':'#1f9d57')+';">'+IC.warn+'</span>'
+  // ── TL quadrant: ALERTS — click to pin open; greyed when empty ──
+  var aEmpty=(allAlerts.length===0);
+  var alertsDrop=sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join('');
+  var aOpen=S.fdAlertsOpen&&!aEmpty;
+  var qAlerts='<div class="fdq fdq-alerts hoverpanel'+(aOpen?' pinned':'')+'">'
+    +'<div class="hp-bar'+(aEmpty?' empty':'')+'"'+(aEmpty?'':' onclick="toggleFdAlerts()"')+'>'
+      +'<span class="al-hd-ic" style="color:'+(aEmpty?'#b6bcc6':(nh?'#c0392b':nw?'#d97706':'#1f9d57'))+';">'+IC.warn+'</span>'
       +'<span class="al-hd-ttl">VALIDATION ALERTS</span>'
-      +'<span class="al-hd-cnt">'+(unresolvedCount?'('+unresolvedCount+' PENDING)':'(ALL CLEAR)')+'</span>'
-      +'<span class="hp-hint">hover to review</span><span class="chev">&#9662;</span>'
+      +'<span class="al-hd-cnt">'+(aEmpty?'(none)':(unresolvedCount?'('+unresolvedCount+' PENDING)':'(ALL CLEAR)'))+'</span>'
+      +(aEmpty?'<span class="hp-none">no alerts</span>'
+        :'<span class="hp-cue">'+(aOpen?'Collapse':'Click to expand')+'</span><span class="chev">&#9662;</span>')
     +'</div>'
-    +'<div class="hp-drop"><div class="hp-inner">'+summary+alertsDrop+'</div></div>'
+    +(aEmpty?'':'<div class="hp-drop"><div class="hp-inner"><button class="hp-close" onclick="toggleFdAlerts()">Collapse &#10005;</button>'+summary+alertsDrop+'</div></div>')
   +'</div>';
 
-  // ── TR quadrant: RULE CONFIG (rule-mode files only) ──
+  // ── TR quadrant: RULE CONFIG (rule-mode files only — always has rules) ──
   var qRules='';
   if(lineMode){
     var prc=pendingRules(S.fileId).length;
-    qRules='<div class="fdq fdq-rules hoverpanel'+(S.fdRulesOpen?' pinned':'')+'">'
+    var rOpen=S.fdRulesOpen;
+    qRules='<div class="fdq fdq-rules hoverpanel'+(rOpen?' pinned':'')+'">'
       +'<div class="hp-bar" onclick="toggleFdRules()">'
         +'<span class="al-hd-ic" style="color:#1e3a8a;font-size:14px;">&#9881;</span>'
         +'<span class="al-hd-ttl">RULE CONFIGURATION</span>'
         +'<span class="al-hd-cnt">'+(prc?'('+prc+' PENDING)':'('+RULE_ITEMS.length+' rules)')+'</span>'
-        +'<span class="hp-hint">hover to configure</span><span class="chev">&#9662;</span>'
+        +'<span class="hp-cue">'+(rOpen?'Collapse':'Click to configure')+'</span><span class="chev">&#9662;</span>'
       +'</div>'
-      +'<div class="hp-drop"><div class="hp-inner">'+renderRuleConfig(S.fileId)+'</div></div>'
+      +'<div class="hp-drop"><div class="hp-inner"><button class="hp-close" onclick="toggleFdRules()">Collapse &#10005;</button>'+renderRuleConfig(S.fileId)+'</div></div>'
     +'</div>';
   }
 
