@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Credios — AIOCR Documents (外网复刻)</title>
+<title>Credios — AIOCR Income Verification</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -321,7 +321,7 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .vf-ei-btn:hover{background:#bfdbfe;}
 .vf-ei-btn.done{background:#dcfce7;border-color:#86efac;color:#15803d;cursor:default;}
 /* ── Group-based line items (replaces month tabs) ── */
-.li2-tabs{display:none;}  /* hide old tabs */
+.li2-tabs{display:none;}
 .li2-group{border-bottom:1px solid var(--bd2);}
 .li2-group:last-child{border-bottom:none;}
 .li2-ghd{display:flex;align-items:center;justify-content:space-between;padding:6px 14px 4px;background:#f3f5f8;}
@@ -336,6 +336,17 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .li2-vbtn.done{border-color:#15803d;color:#15803d;background:#f0fdf4;cursor:default;}
 .li2-row.needs-check{background:#fffbeb;border-left:3px solid #f59e0b;padding-left:11px;}
 .li2-row.needs-check.row-verified{background:#f0fdf4;border-left-color:#15803d;}
+/* ── Missing field placeholder row ── */
+.li2-row.li2-missing{background:#fff9f0;border-left:3px solid #f59e0b;padding-left:11px;opacity:.9;}
+.li2-missing .li2-name{color:#9ca3af;font-style:italic;}
+.li2-missing .li2-en{color:#c4ac90;}
+/* ── Document info card (above line items) ── */
+.li2-docinfo{margin:10px 12px 0;border:1px solid var(--bd);border-radius:7px;overflow:hidden;}
+.li2-docinfo-hd{background:#f8f9fb;padding:7px 12px;font-size:11px;font-weight:700;color:#374151;border-bottom:1px solid var(--bd2);display:flex;align-items:center;justify-content:space-between;}
+.li2-docinfo-row{display:flex;align-items:center;gap:10px;padding:6px 12px;border-bottom:1px solid var(--bd2);font-size:12px;}
+.li2-docinfo-row:last-child{border-bottom:none;}
+.li2-docinfo-lbl{color:var(--mut);min-width:130px;flex-shrink:0;}
+.li2-docinfo-val{color:#1f2937;flex:1;}
 /* ── ③④ computed fields ── */
 .cp-month{border-bottom:1px solid var(--bd2);padding-bottom:6px;}
 .cp-month:last-child{border-bottom:none;}
@@ -847,7 +858,7 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 </head>
 <body>
 <div id="app"></div>
-<div class="replica-tag">外网复刻 v0 · Credios AIOCR</div>
+<div class="replica-tag">Prototype v0 · Credios AIOCR</div>
 
 <script>
 /* ════════════════ ICONS ════════════════ */
@@ -1187,10 +1198,10 @@ var RULE_ITEMS=[
 ];
 // Global eyeball-check items (non-line-item fields that Sales must manually verify)
 var EYEBALL_ITEMS=[
-  {id:'ei_employer', label:'雇主名称', en:'Employer Name',         val:'Malaysia Airlines Berhad (201401040794)'},
-  {id:'ei_name',     label:'员工姓名', en:'Employee Name',         val:'MOHD ZULKURNAIN, Staff No 8000633'},
-  {id:'ei_comm',     label:'纯佣金收入', en:'Pure Commission',     val:'否 (Non-commission)'},
-  {id:'ei_govt',     label:'政府雇员 / EPF 方案', en:'Govt EPF',  val:'否 (Private sector)'}
+  {id:'ei_employer', label:'Employer Name',   val:'Malaysia Airlines Berhad (201401040794)'},
+  {id:'ei_name',     label:'Employee IC / ID',val:'MOHD ZULKURNAIN · IC 800412-14-5371 · Staff No 8000633'},
+  {id:'ei_comm',     label:'Pure Commission', val:'No — salary-based employee'},
+  {id:'ei_govt',     label:'EPF Scheme',      val:'Private sector (standard EPF)'}
 ];
 function ruleItem(id){return RULE_ITEMS.find(function(x){return x.id===id;});}
 // Sales-补录 custom line items (Step-1 data gap fill) merge into the same pipeline as OCR line items
@@ -1232,7 +1243,7 @@ function confirmRuleChanges(fileId){
   pend.forEach(function(id){
     var it=ruleItemF(fileId,id);
     var to=bucketLabel(it.kind,ruleDraft(fileId,id));
-    var from=it.custom&&!(S.ruleMap[fileId]||{})[id]?'(新补录)':bucketLabel(it.kind,ruleApplied(fileId,id));
+    var from=it.custom&&!(S.ruleMap[fileId]||{})[id]?'(New item)':bucketLabel(it.kind,ruleApplied(fileId,id));
     S.incomeLog[fileId].unshift({t:ts,raw:it.type,from:from,to:to});
     S.ruleMap[fileId][id]=ruleDraft(fileId,id);
   });
@@ -1279,7 +1290,7 @@ function payslipAvgIncome(fileId){
 function payslipIssues(fileId){
   var missing=[],mismatch=[];
   // ② required income buckets that received no line item
-  var required=['earning_basic_salary'];
+  var required=['earning_basic_salary','earning_overtime_pay'];
   var c0=computeMonth(fileId,0);
   required.forEach(function(k){if(!c0[k])missing.push(k);});
   // ④ per-month reconciliation
@@ -2430,7 +2441,7 @@ function verifyLineRow(fileId,mIdx,type){
 // Add a new payslip month group (mock — adds a blank month entry)
 function addPayslipMonth(fileId){
   var n=PAYSLIP_MONTHS.length+1;
-  PAYSLIP_MONTHS.push({month:'第'+n+'组(新增)',earn:{},ded:{},ocrGross:0,ocrDed:0,ocrNet:0});
+  PAYSLIP_MONTHS.push({month:'Pay Period '+n+' (New)',earn:{},ded:{},ocrGross:0,ocrDed:0,ocrNet:0});
   render();
 }
 // Click a rule → open preview + lock highlight + scroll into view
@@ -2447,12 +2458,12 @@ function locateLine(id){
 // ── CUSTOM RULES (B-3) ──────────────────────────────────────
 // Rule type catalogue
 var RULE_TYPES=[
-  {key:'required', label:'Required (必填)', dim:'Existence', hint:'Field or document must be present', hasSev:true, fields:true},
-  {key:'manual',   label:'Manual Check (人工核验)', dim:'Eyeball / Existence', hint:'Flag field for human sign-off', hasSev:false, fields:true},
-  {key:'match',    label:'Match (字段比对)', dim:'File Consistency', hint:'Value must equal another field or application value', hasSev:true, fields:true},
-  {key:'threshold',label:'Threshold (阈值)', dim:'Internal Logic', hint:'Numeric ≥ / ≤ / = target', hasSev:true, fields:true},
-  {key:'recency',  label:'Recency (时效)', dim:'Business Validity', hint:'Date within N months of application_date', hasSev:true, fields:true},
-  {key:'note',     label:'Custom Note (自定义提醒)', dim:'Custom', hint:'Free-text reminder for reviewer', hasSev:false, fields:false}
+  {key:'required', label:'Required', dim:'Existence', hint:'Field or document must be present', hasSev:true, fields:true},
+  {key:'manual',   label:'Manual Check', dim:'Eyeball / Existence', hint:'Flag field for human sign-off', hasSev:false, fields:true},
+  {key:'match',    label:'Match', dim:'File Consistency', hint:'Value must equal another field or application value', hasSev:true, fields:true},
+  {key:'threshold',label:'Threshold', dim:'Internal Logic', hint:'Numeric ≥ / ≤ / = target', hasSev:true, fields:true},
+  {key:'recency',  label:'Recency', dim:'Business Validity', hint:'Date within N months of application_date', hasSev:true, fields:true},
+  {key:'note',     label:'Custom Note', dim:'Custom', hint:'Free-text reminder for reviewer', hasSev:false, fields:false}
 ];
 function openAddRule(fileId,editId){
   S.addRuleOpen=true; S.addRuleFileId=fileId; S.addRuleEditId=editId||null;
@@ -2727,17 +2738,17 @@ function removeCustomLine(fileId,id){
 function renderAddLineModal(){
   if(!S.addLineTarget)return '';
   return '<div class="ov" style="z-index:80;"><div class="add-rule-modal" style="width:460px;">'
-    +'<div class="arm-hdr"><h3>补录缺失细项</h3><button class="docs-x" onclick="closeAddLine()">&times;</button></div>'
+    +'<div class="arm-hdr"><h3>Add Missing Item</h3><button class="docs-x" onclick="closeAddLine()">&times;</button></div>'
     +'<div class="arm-body">'
-      +'<div class="arm-note">OCR 漏识别了原文中存在的某个细项时，在此补录其<strong>名称</strong>与<strong>类型</strong>；补录后请在 Step 1 各月份行内填写对应<strong>金额</strong>。该细项会进入 Step 2，等 CED 配置映射规则。</div>'
-      +'<div class="arm-row"><label class="arm-lbl">细项名称（马来/原文）<span style="color:#dc2626;">*</span></label>'
-        +'<input id="al-name" class="inp" style="width:100%;" placeholder="例：Elaun Pengangkutan"></div>'
-      +'<div class="arm-row"><label class="arm-lbl">英文备注（可选）</label>'
+      +'<div class="arm-note">Use this when OCR missed a line item that is visible in the source document. Add the item name and type here, then enter the amount for each pay period in Step 1. CED will map it to an income field in Step 2.</div>'
+      +'<div class="arm-row"><label class="arm-lbl">Item name (original text)<span style="color:#dc2626;">*</span></label>'
+        +'<input id="al-name" class="inp" style="width:100%;" placeholder="e.g. Elaun Pengangkutan"></div>'
+      +'<div class="arm-row"><label class="arm-lbl">English label (optional)</label>'
         +'<input id="al-en" class="inp" style="width:100%;" placeholder="e.g. Transport Allowance"></div>'
-      +'<div class="arm-row"><label class="arm-lbl">类型</label>'
-        +'<select id="al-kind" class="inp" style="width:100%;"><option value="earning">收入项 / Earning</option><option value="deduction">扣减项 / Deduction</option></select></div>'
+      +'<div class="arm-row"><label class="arm-lbl">Type</label>'
+        +'<select id="al-kind" class="inp" style="width:100%;"><option value="earning">Earning</option><option value="deduction">Deduction</option></select></div>'
     +'</div>'
-    +'<div class="arm-foot"><button class="btn" onclick="closeAddLine()">Cancel</button><button class="btn btn-pri" onclick="saveAddLine()">补录细项</button></div>'
+    +'<div class="arm-foot"><button class="btn" onclick="closeAddLine()">Cancel</button><button class="btn btn-pri" onclick="saveAddLine()">Add Item</button></div>'
   +'</div></div>';
 }
 function checkField(fileId,k){
@@ -2897,7 +2908,7 @@ function renderRuleConfig(fileId){
     return '<div class="rc-row'+(hot?' hot':'')+(isPending?' pending':'')+(isNew?' rc-new':'')+'" id="rc-'+it.id+'"'
         +' onmouseenter="ruleHover(\''+fileId+'\',\''+it.id+'\')" onmouseleave="ruleUnhover(\''+it.id+'\')">'
       +'<span class="rc-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'
-      +'<div class="rc-name">'+it.ms+'<span class="rc-en">'+it.en+'</span>'+(it.custom?'<span class="rc-newtag">新·Sales补录</span>':'')+'</div>'
+      +'<div class="rc-name">'+it.ms+'<span class="rc-en">'+it.en+'</span>'+(it.custom?'<span class="rc-newtag">Added by Sales</span>':'')+'</div>'
       +'<div class="rc-map">'
         +(isPending?'<span class="li-mod-dot" title="Pending"></span>':(isCommitted?'<span class="li-mod-dot" style="background:#1f9d57;"></span>':''))
         +'<span class="rc-arrow">&rarr;</span>'
@@ -2920,7 +2931,7 @@ function renderRuleConfig(fileId){
       +'</details>'
     : '';
   return '<div class="rc-panel">'
-    +'<div class="rc-sub" style="padding:8px 18px 4px;">规则与月份无关 &mdash; 每种细项类型仅配置一次，对全部月份统一生效 &middot; 悬停行可定位原文 &middot; 此处不涉及金额</div>'
+    +'<div class="rc-sub" style="padding:8px 18px 4px;">Rules are per item type, not per month &mdash; each type is configured once and applies to all pay periods. Hover a row to highlight it in the document.</div>'
     +'<div class="rc-grp">EARNINGS</div>'+earnRows
     +'<div class="rc-grp">DEDUCTIONS</div>'+dedRows
     +applyBar+logSec
@@ -2943,58 +2954,97 @@ function secCard(key,num,title,sub,badge,body){
 /* ── ① Source line items (raw OCR, bilingual, editable) — tabbed by month ── */
 function renderLineItems(fileId){
   var lv=S.lineVerified[fileId]||{};
+  var ev=S.eyeVerified[fileId]||{};
+  var issues=payslipIssues(fileId);
+  var justMap=S.justifiedAlerts[fileId]||{};
+  // Missing required fields (not yet justified/skipped)
+  var missingKeys=issues.missing.filter(function(k){return !justMap['miss:'+k];});
+  // Label map for missing field keys
+  var missingLabels={'earning_basic_salary':'Basic Salary','earning_overtime_pay':'Overtime Pay','earning_total_allowances':'Total Allowances','earning_bonus_commission':'Bonus / Commission','deduction_epf_employee':'EPF (Employee)','deduction_pcb_tax':'Tax (PCB)'};
+
   function row(it,mIdx){
     var amt=lineAmtVal(fileId,mIdx,it);
     var edited=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type]!=null;
-    var tag=it.custom?'<span class="li2-new">补录</span>':'';
-    var rm=it.custom?'<span class="li2-rm" onclick="removeCustomLine(\''+fileId+'\',\''+it.id+'\')" title="删除">&times;</span>':'';
-    // Per-row verify button for eyeCheck items
+    var tag=it.custom?'<span class="li2-new">Added</span>':'';
+    var rm=it.custom?'<span class="li2-rm" onclick="removeCustomLine(\''+fileId+'\',\''+it.id+'\')" title="Remove">&times;</span>':'';
     var needsCheck=it.eyeCheck&&!it.custom;
     var rowVerified=needsCheck&&lv[mIdx+'|'+it.type];
     var vbtn=needsCheck
       ?'<button class="li2-vbtn'+(rowVerified?' done':'')+'"'
-        +(rowVerified?' disabled':''+' onclick="verifyLineRow(\''+fileId+'\','+mIdx+',\''+it.type+'\')"')
-      +'>'+(rowVerified?'&#10003; 已核实':'核实')+'</button>'
+        +(rowVerified?' disabled':' onclick="verifyLineRow(\''+fileId+'\','+mIdx+',\''+it.type+'\')"')
+      +'>'+(rowVerified?'&#10003; Verified':'Verify')+'</button>'
       :'';
     var rowCls='li2-row'+(it.custom?' li2-cust':'')+(needsCheck?' needs-check':'')+(rowVerified?' row-verified':'');
     return '<div class="'+rowCls+'" id="li-'+it.id+'-'+mIdx+'"'
         +' onmouseenter="hlDoc(\''+it.id+'\')" onmouseleave="unhlDoc(\''+it.id+'\')">'
-      +'<span class="li2-loc" onclick="locateLine(\''+it.id+'\')" title="定位原文">'+IC.locate+'</span>'
+      +'<span class="li2-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'
       +'<span class="li2-name">'+it.ms+'<span class="li2-en">'+it.en+'</span>'+tag+'</span>'
       +'<span class="li2-amt">'
         +vbtn
         +'<span class="li2-cur">RM</span>'
-        +'<input value="'+(it.custom&&!edited?'':money(amt))+'"'+(it.custom?' placeholder="录入金额"':'')+' onchange="setLineAmt(\''+fileId+'\','+mIdx+',\''+it.type+'\',this.value)" class="'+(edited?'edited':'')+'">'
+        +'<input value="'+(it.custom&&!edited?'':money(amt))+'"'+(it.custom?' placeholder="Enter amount"':'')+' onchange="setLineAmt(\''+fileId+'\','+mIdx+',\''+it.type+'\',this.value)" class="'+(edited?'edited':'')+'">'
         +rm
       +'</span>'
     +'</div>';
   }
+
+  // Missing field placeholder row (shown once, in group 1 only)
+  function missingRow(k){
+    var label=missingLabels[k]||k.replace(/earning_|deduction_/g,'').replace(/_/g,' ');
+    return '<div class="li2-row li2-missing">'
+      +'<span class="li2-loc" style="opacity:.3;">'+IC.locate+'</span>'
+      +'<span class="li2-name"><span class="li2-en">'+label+'</span></span>'
+      +'<span class="li2-amt" style="gap:6px;">'
+        +'<span style="font-size:10px;color:#9ca3af;margin-right:4px;">Not detected</span>'
+        +'<button class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="openAddLine(\''+fileId+'\')">Add Item</button>'
+        +'<button class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="openJustify(\''+fileId+'\',\'miss:'+k+'\')">Skip</button>'
+      +'</span>'
+    +'</div>';
+  }
+
   var all=lineItemsAll(fileId);
-  // Group-based view: one section per payslip month, flat stacked, no tab UI
-  var periodLabels=['最近一份工资单','上一份工资单','更早一份工资单'];
+  var periodLabels=['Most recent payslip','Previous month','Earlier payslip'];
+
+  // Document information card — shown above group 1
+  var docInfoRows=EYEBALL_ITEMS.map(function(ei){
+    var done=!!ev[ei.id];
+    return '<div class="li2-docinfo-row">'
+      +'<span class="li2-docinfo-lbl">'+ei.label+'</span>'
+      +'<span class="li2-docinfo-val">'+ei.val+'</span>'
+      +'<button class="li2-vbtn'+(done?' done':'')+'"'+(done?' disabled':' onclick="verifyEyeItem(\''+fileId+'\',\''+ei.id+'\')"')+'>'+(done?'&#10003; Confirmed':'Confirm')+'</button>'
+    +'</div>';
+  }).join('');
+  var docInfoCard='<div class="li2-docinfo">'
+    +'<div class="li2-docinfo-hd"><span>Document Information</span><span style="font-size:10px;font-weight:400;color:var(--mut);">Compare each field against the source document</span></div>'
+    +docInfoRows
+  +'</div>';
+
   var groupsHtml=PAYSLIP_MONTHS.map(function(m,mIdx){
     var hasEdit=all.some(function(it){return (S.lineAmt[fileId]||{})[mIdx+'|'+it.type]!=null;});
     var earn=all.filter(function(x){return x.kind==='earning';}).map(function(it){return row(it,mIdx);}).join('');
     var ded=all.filter(function(x){return x.kind==='deduction';}).map(function(it){return row(it,mIdx);}).join('');
-    var period=periodLabels[mIdx]||('第'+(mIdx+1)+'份');
+    var period=periodLabels[mIdx]||('Pay Period '+(mIdx+1));
+    // Append missing-field placeholder rows to earnings section of group 1 only
+    var missingRowsHtml=(mIdx===0)?missingKeys.map(missingRow).join(''):'';
     return '<div class="li2-group">'
       +'<div class="li2-ghd">'
-        +'<span class="li2-gnum">第 '+(mIdx+1)+' 组'+(hasEdit?' <span style="color:#d97706;font-size:9px;">●</span>':'')+'</span>'
-        +'<span class="li2-gperiod">'+period+'</span>'
+        +'<span class="li2-gnum">Pay Period '+(mIdx+1)+(hasEdit?' <span style="color:#d97706;font-size:9px;">●</span>':'')+'</span>'
+        +'<span class="li2-gperiod">'+m.month+' &middot; '+period+'</span>'
       +'</div>'
-      +'<div class="li2-cap">EARNINGS / 收入细项</div>'+earn
-      +'<div class="li2-cap">DEDUCTIONS / 扣减细项</div>'+ded
+      +'<div class="li2-cap">EARNINGS</div>'+earn+missingRowsHtml
+      +'<div class="li2-cap">DEDUCTIONS</div>'+ded
       +'<div class="li2-gadd">'
-        +'<button class="li2-gadd-btn" onclick="openAddLine(\''+fileId+'\')">+ 补录此组遗漏细项</button>'
+        +'<button class="li2-gadd-btn" onclick="openAddLine(\''+fileId+'\')">+ Add item to this period</button>'
       +'</div>'
     +'</div>';
   }).join('');
+
   var addGroupBtn='<div class="li2-add">'
-    +'<button class="btn btn-sm" onclick="addPayslipMonth(\''+fileId+'\')">+ 添加一组工资单</button>'
-    +'<span class="li2-add-hint">如还有其他月份工资单需要录入，可在此添加新的一组。</span>'
+    +'<button class="btn btn-sm" onclick="addPayslipMonth(\''+fileId+'\')">+ Add Pay Period</button>'
   +'</div>';
-  return '<div class="li2-hint">原文马来语 / <span class="li2-en-key">灰色 = 英译</span>；读错金额可直接修改；<span style="color:#f59e0b;">●</span> = 已编辑；黄色行 = 需逐项核实。</div>'
-    +groupsHtml+addGroupBtn;
+
+  return '<div class="li2-hint">Malay / <span class="li2-en-key">grey = English translation</span> &nbsp;·&nbsp; Edit any amount directly &nbsp;·&nbsp; <span style="color:#f59e0b;">●</span> = edited &nbsp;·&nbsp; Yellow row = requires manual verify.</div>'
+    +docInfoCard+groupsHtml+addGroupBtn;
 }
 /* ── ③④ Computed fields with aggregation process + OCR reconciliation ── */
 function renderComputed(fileId){
@@ -3162,104 +3212,64 @@ function renderFileDetail(){
     var bounced=!!(S.salesBounce&&S.salesBounce[S.fileId]);
     // ── §1 Step-1 (Sales): show COMPLETE line items + one verify action. No disconnected alert cards. ──
     var salesItems=sorted.filter(function(a){return !resMap[a.id]&&!justMap[a.id];});
-    var s1Badge=bounced?'<span class="sec-badge red">退回核实</span>'
-      :(salesItems.length?'<span class="sec-badge org">待核 '+salesItems.length+'</span>':'<span class="sec-badge green">已核实</span>');
-    // completeness: required field with no source line → Sales 补录 or 忽略(reason). System already knows this at Step 1.
+    var s1Badge='';  // will be set below once missLeft is computed
+    // completeness: required field with no source line → Sales to add or skip with note. System already knows this at Step 1.
     var missLeft=issues.missing.filter(function(k){return !justMap['miss:'+k];});
     var s1Done=!bounced&&!salesItems.length&&!missLeft.length;
-    var s1Badge=bounced?'<span class="sec-badge red">退回核实</span>'
-      :((salesItems.length||missLeft.length)?'<span class="sec-badge org">待核 '+(salesItems.length+missLeft.length)+'</span>':'<span class="sec-badge green">已核实</span>');
+    var s1Badge=bounced?'<span class="sec-badge red">Returned</span>'
+      :((salesItems.length||missLeft.length)?'<span class="sec-badge org">'+(salesItems.length+missLeft.length)+' Pending</span>':'<span class="sec-badge green">Verified</span>');
     var verifyBar='';
     if(bounced){
-      verifyBar='<div class="vf-bar vf-bounce">&#8617; <b>CED 已退回</b> — 加总值与工资单印刷值不符。请对照右侧原文核实下列金额，确认或修正后标记完成。'
-        +'<div class="vf-acts"><button class="btn btn-pri btn-sm" onclick="clearBounce(\''+S.fileId+'\')">&#10003; 已核实金额，标记完成</button></div></div>';
+      verifyBar='<div class="vf-bar vf-bounce">&#8617; <b>Returned by CED</b> — computed totals do not match the printed payslip values. Review the amounts below against the source document, correct any errors, and mark as done.'
+        +'<div class="vf-acts"><button class="btn btn-pri btn-sm" onclick="clearBounce(\''+S.fileId+'\')">&#10003; Amounts confirmed — mark complete</button></div></div>';
     } else if(S.role==='ced'){
-      // CED 视图：Sales 路由过来时应已清零所有 Step-1 告警，直接显示已确认状态
-      verifyBar='<div class="vf-bar vf-done">&#10003; Sales 已完成核实 — 细项数据已确认，CED 无需重复核对金额</div>';
+      verifyBar='<div class="vf-bar vf-done">&#10003; Sales verified — line item data confirmed. No further review needed here.</div>';
     } else {
-      // ── Sales 视图：两类告警分开展示，顺序：先完整性缺失（橙）再人工核对（蓝）──
-      // ── ① 完整性缺失 (橙)：OCR 完全没有识别到某必要细项，需 Sales 补录或忽略 ──
+      // Missing required fields (orange bar)
       if(missLeft.length){
-        var missItems=missLeft.map(function(k){
-          var label=k.replace(/earning_|deduction_/g,'').replace(/_/g,' ');
-          return '<div class="vf-ei-row">'
-            +'<span class="vf-ei-label">'+label+'</span>'
-            +'<span class="vf-ei-val">OCR 未识别到，原文中可能存在</span>'
-            +'<button class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="openAddLine(\''+S.fileId+'\')">去补录</button>'
-            +'<button class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="openJustify(\''+S.fileId+'\',\'miss:'+k+'\')">跳过</button>'
-          +'</div>';
-        }).join('');
         verifyBar+='<div class="vf-bar vf-todo">'
-          +'<div class="vf-hd">&#9888; 必要字段缺失 — 以下字段未在 OCR 结果中识别到来源细项</div>'
-          +'<div style="margin:6px 0;">'+missItems+'</div>'
-          +'<div class="vf-acts" style="border-top:1px solid #f0dcc0;padding-top:7px;margin-top:4px;">'
-            +'<button class="btn btn-pri btn-sm" onclick="openAddLine(\''+S.fileId+'\')">+ 补录缺失细项</button>'
-            +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\'miss:'+missLeft[0]+'\')">跳过全部并说明原因</button>'
+          +'<div class="vf-hd">&#9888; '+missLeft.length+' required field'+(missLeft.length>1?'s':'')+' not detected by OCR — see highlighted rows below.</div>'
+          +'<div class="vf-acts">'
+            +'<button class="btn btn-pri btn-sm" onclick="openAddLine(\''+S.fileId+'\')">+ Add Missing Item</button>'
+            +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\'miss:'+missLeft[0]+'\')">Skip with Note</button>'
           +'</div>'
         +'</div>';
       }
-      // ── ② 人工核对 Eyeball Check (蓝)：AI 提取了值但无法自证准确，Sales 需对照原件逐项确认 ──
+      // Eyeball check (blue bar)
       if(salesItems.length){
-        var ev=S.eyeVerified[S.fileId]||{};
-        var lv2=S.lineVerified[S.fileId]||{};
-        // Global eyeball items with individual verify buttons
-        var globalRows=EYEBALL_ITEMS.map(function(ei){
-          var done=!!ev[ei.id];
-          return '<div class="vf-ei-row">'
-            +'<span class="vf-ei-label">'+ei.label+'</span>'
-            +'<span class="vf-ei-val">'+ei.val+'</span>'
-            +'<button class="vf-ei-btn'+(done?' done':'')+'"'+(done?' disabled':' onclick="verifyEyeItem(\''+S.fileId+'\',\''+ei.id+'\')"')+'>'+(done?'&#10003; 已核实':'核实')+'</button>'
-          +'</div>';
-        }).join('');
-        // Summary of eyeCheck line items
-        var eyeLineItems=RULE_ITEMS.filter(function(it){return it.eyeCheck;});
-        var lineCheckNote=eyeLineItems.length
-          ?'<div class="vf-ei-sec" style="margin-top:10px;">关键收入细项 — 对照下方各组金额逐行核实</div>'
-            +eyeLineItems.map(function(it){
-              var allMonthsDone=PAYSLIP_MONTHS.every(function(m,mi){return lv2[mi+'|'+it.type];});
-              return '<div class="vf-ei-row">'
-                +'<span class="vf-ei-label">'+it.ms+'</span>'
-                +'<span class="vf-ei-val">'+it.en+' — 在下方细项行点击"核实"逐月确认</span>'
-                +'<span class="vf-ei-btn'+(allMonthsDone?' done':'')+'" style="cursor:default;">'+(allMonthsDone?'&#10003; 已核实':'待核实')+'</span>'
-              +'</div>';
-            }).join('')
-          :'';
         verifyBar+='<div class="vf-bar vf-eye" onmouseenter="hlAllLines()" onmouseleave="unhlAllLines()">'
-          +'<div class="vf-hd">&#128065; 人工核对 — 以下字段 AI 已提取但无法自证准确，请对照右侧原件逐项确认（悬停此区域时下方细项高亮）</div>'
-          +'<div class="vf-ei-sec">全局信息</div>'
-          +globalRows
-          +lineCheckNote
-          +'<div class="vf-acts" style="border-top:1px solid #bfdbfe;padding-top:7px;margin-top:8px;">'
-            +'<button class="btn btn-pri btn-sm" onclick="verifyAllSales(\''+S.fileId+'\')">&#10003; 全部已核实</button>'
-            +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\''+salesItems[0].id+'\')">跳过并备注</button>'
+          +'<div class="vf-hd">&#128065; Eyeball check required — compare highlighted fields and amounts against the source document. Confirm each item in the Document Information card and yellow rows below.</div>'
+          +'<div class="vf-acts">'
+            +'<button class="btn btn-pri btn-sm" onclick="verifyAllSales(\''+S.fileId+'\')">&#10003; Mark All Verified</button>'
+            +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\''+salesItems[0].id+'\')">Skip with Note</button>'
           +'</div>'
         +'</div>';
       }
-      if(s1Done)verifyBar='<div class="vf-bar vf-done">&#10003; 细项已核实、字段完整 — Sales 已确认数据准确</div>';
+      if(s1Done)verifyBar='<div class="vf-bar vf-done">&#10003; All items verified — line items confirmed and fields complete.</div>';
     }
     var s1Body=verifyBar+renderLineItems(S.fileId);
     // ── §2 Step-2 (CED): PURE type→field mapping. Default rules pre-exist; only NEW Sales补录 types need a rule. Amounts never matter here. ──
     var nNew=newTypeGaps(S.fileId).length;
-    var mapBadge=prc?'<span class="sec-badge org">'+prc+' 待应用</span>':'<span class="sec-badge green">规则完整</span>';
-    var missBanner=(nNew?'<div class="sec-banner org">&#9888; <b>'+nNew+' 项 Sales 补录的新细项</b>待映射 — Sales 已补数据，请为其指派收入/扣减字段并「确认更新」。</div>':'');
+    var mapBadge=prc?'<span class="sec-badge org">'+prc+' Pending</span>':'<span class="sec-badge green">Rules OK</span>';
+    var missBanner=(nNew?'<div class="sec-banner org">&#9888; <b>'+nNew+' new item'+(nNew>1?'s':'')+' added by Sales</b> need field mapping — assign an income or deduction field for each, then click Confirm Update.</div>':'');
     // ── §3 Step-3: GATED result. Mismatch triage (Sales-first, then CED): ①识别错(Sales) ②归类(CED) ③规则如此(CED跳过). ──
-    var mmBadge=bounced?'<span class="sec-badge red">已退回</span>'
-      :(s3==='error'?'<span class="sec-badge red">'+nMismatch+' 不符</span>'
-      :(s3==='done'?'<span class="sec-badge green">已校验</span>'
-      :'<span class="sec-badge grey">待定</span>'));
+    var mmBadge=bounced?'<span class="sec-badge red">Returned</span>'
+      :(s3==='error'?'<span class="sec-badge red">'+nMismatch+' Mismatch</span>'
+      :(s3==='done'?'<span class="sec-badge green">Reconciled</span>'
+      :'<span class="sec-badge grey">Pending</span>'));
     var mmBanner;
-    if(s3==='wait')mmBanner='<div class="sec-banner grey">&#9203; 校验待定 — '+(s1Open?'等 Sales 完成 Step 1 细项核实/补全':'等 CED 应用 Step 2 规则')+'后，加总结果才可信，暂不告警。</div>';
+    if(s3==='wait')mmBanner='<div class="sec-banner grey">&#9203; Reconciliation pending — '+(s1Open?'waiting for Sales to complete Step 1 verification':'waiting for CED to apply Step 2 rules')+'. Totals will be validated once prior steps are complete.</div>';
     else if(s3==='error'){
-      mmBanner='<div class="sec-banner red">&#9888; '+nMismatch+' 项加总与工资单印刷值不符。可能原因：<b>①金额识别错</b>（Sales 改）· <b>②归类规则</b>（CED 改）· <b>③规则本就如此</b>（CED 跳过）。'
-        +(bounced?'<br><b>已退回 Sales 核实金额，待其确认。</b>'
-          :'<div class="vf-acts" style="margin-top:6px;"><button class="btn btn-sm" onclick="bounceToSales(\''+S.fileId+'\')">&#8617; 先退回 Sales 核实金额</button>'
-            +'<button class="btn btn-sm" onclick="scrollToSec(\'map\')">CED：调整 / 跳过规则 &#8594;</button></div>')
+      mmBanner='<div class="sec-banner red">&#9888; '+nMismatch+' total'+(nMismatch>1?'s':'')+' do not match the printed payslip values. Possible causes: <b>① OCR read the wrong amount</b> (Sales to correct) · <b>② wrong field classification</b> (CED to adjust) · <b>③ rule is intentional</b> (CED to skip).'
+        +(bounced?'<br><b>File returned to Sales for amount verification.</b>'
+          :'<div class="vf-acts" style="margin-top:6px;"><button class="btn btn-sm" onclick="bounceToSales(\''+S.fileId+'\')">&#8617; Return to Sales to verify amounts</button>'
+            +'<button class="btn btn-sm" onclick="scrollToSec(\'map\')">Adjust / skip rule in Step 2 &#8594;</button></div>')
       +'</div>';
     }
-    else mmBanner='<div class="sec-banner green">&#10003; 加总与工资单印刷值一致，校验通过。</div>';
-    var cItems=secCard('items','1','Step 1 · 细项核实','Source Line Items · Sales 负责',s1Badge, s1Body);
-    var cMap=secCard('map','2','Step 2 · 字段映射','Line-item → Field · CED 负责',mapBadge, missBanner+renderRuleConfig(S.fileId));
-    var cComp=secCard('comp','3','Step 3 · 加总校验','Computed &amp; Validation · vs 印刷值',mmBadge, mmBanner+renderComputed(S.fileId));
+    else mmBanner='<div class="sec-banner green">&#10003; All computed totals match printed values — reconciliation passed.</div>';
+    var cItems=secCard('items','1','Step 1 · Line Items','Source line items — Sales review',s1Badge, s1Body);
+    var cMap=secCard('map','2','Step 2 · Field Mapping','Line-item type &rarr; income field — CED',mapBadge, missBanner+renderRuleConfig(S.fileId));
+    var cComp=secCard('comp','3','Step 3 · Reconciliation','Computed totals vs printed values',mmBadge, mmBanner+renderComputed(S.fileId));
     // role view: Sales reads 1→2→3 (data-first); CED reads 3→2→1 (result-first, drills into rules)
     workspace=(S.role==='sales')?(cItems+cMap+cComp):(cComp+cMap+cItems);
   } else {
@@ -3286,9 +3296,9 @@ function renderFileDetail(){
       +'<button class="fd-back" onclick="closeFile()">&#8249;</button>'
       +'<div><div class="fd-title">'+d.name+'</div><div class="fd-crumb">'+d.crumb+'</div></div>'
       +'<div class="sp"></div>'
-      +(lineMode?'<div class="role-tog" title="不同角色看到的步骤顺序与重点不同">'
-        +'<button class="role-btn'+(S.role==='sales'?' on':'')+'" onclick="setRole(\'sales\')">Sales 视图</button>'
-        +'<button class="role-btn'+(S.role==='ced'?' on':'')+'" onclick="setRole(\'ced\')">CED 视图</button>'
+      +(lineMode?'<div class="role-tog" title="Switch between role views — each role sees a different step order and focus">'
+        +'<button class="role-btn'+(S.role==='sales'?' on':'')+'" onclick="setRole(\'sales\')">Sales View</button>'
+        +'<button class="role-btn'+(S.role==='ced'?' on':'')+'" onclick="setRole(\'ced\')">CED View</button>'
       +'</div>':'')
       +'<button class="btn btn-sm">&#8249; Prev</button>'
       +'<button class="btn btn-sm">Next &#8250;</button>'
