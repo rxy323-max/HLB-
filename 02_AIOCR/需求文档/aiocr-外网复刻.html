@@ -256,6 +256,7 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .sec-banner.red{background:#fdeceb;color:#9c2c20;}
 .sec-banner.grey{background:#f4f6f9;color:#6b7280;}
 .sec-banner.green{background:#eef8f1;color:#1a6b3c;}
+.sec-banner.info{background:#eef3fb;color:#3a5a8c;}
 .sec-badge.blue{background:#e8f0fe;color:#2563eb;}
 .sec-badge.grey{background:#eef1f5;color:#7a828e;}
 .sec-alerts-wrap{padding:10px 12px 2px;background:#fffaf3;border-bottom:1px solid var(--bd2);}
@@ -270,6 +271,8 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .vf-list li{margin:2px 0;}
 .vf-desc{color:#8a7a5a;font-weight:400;}
 .vf-acts{display:flex;gap:8px;margin-top:7px;}
+/* neutral, non-alert confirmation note (e.g. CED clean view) */
+.vf-note{margin:10px 12px 2px;font-size:11.5px;color:#8a92a0;padding:2px 2px;}
 /* 补录 custom line (Step 1 data gap fill) */
 .li2-new{display:inline-block;margin-left:7px;font-size:9.5px;font-weight:700;color:#7c3aed;background:#f3edff;border:1px solid #e0d3fb;border-radius:8px;padding:1px 6px;vertical-align:middle;}
 .li2-cust{background:#fbf9ff;}
@@ -323,10 +326,10 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 /* ── Group-based line items (replaces month tabs) ── */
 .li2-tabs{display:none;}
 /* thick neutral band separates one region (Document Info / each Pay Period) from the next */
-.li2-group{border-bottom:7px solid #eef1f5;}
+.li2-group{border-bottom:9px solid #e8edf4;}
 .li2-group:last-child{border-bottom:none;}
-.li2-ghd{display:flex;align-items:center;justify-content:space-between;padding:9px 14px 8px;background:#eef2f7;border-bottom:1px solid var(--bd2);}
-.li2-gnum{font-size:12px;font-weight:700;color:#1f2937;letter-spacing:.2px;}
+.li2-ghd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 9px;background:#e9eef6;border-bottom:1px solid #d8dfea;box-shadow:inset 4px 0 0 #aebbd2;}
+.li2-gnum{font-size:12.5px;font-weight:700;color:#1f2937;letter-spacing:.2px;}
 .li2-gperiod{font-size:10.5px;color:#8a92a0;margin-left:8px;font-weight:400;}
 .li2-gtag{font-size:10.5px;color:#8a92a0;}
 .li2-gtag.done{color:#1a8a4e;}
@@ -1318,7 +1321,7 @@ function payslipIssues(fileId){
 }
 function isRuleModeFile(fileId){var d=FILE_DETAIL[fileId];return !!(d&&d.lineItemMode);}
 function lineAmtVal(fileId,mIdx,it){var base=it.custom?null:(it.kind==='earning'?PAYSLIP_MONTHS[mIdx].earn:PAYSLIP_MONTHS[mIdx].ded)[it.type];var ov=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type];return ov!=null?ov:(base||0);}
-function setLineAmt(fileId,mIdx,type,val){var n=parseFloat((''+val).replace(/[^0-9.]/g,''));if(isNaN(n))return;if(!S.lineAmt[fileId])S.lineAmt[fileId]={};S.lineAmt[fileId][mIdx+'|'+type]=n;render();}
+function setLineAmt(fileId,mIdx,type,val){var n=parseFloat((''+val).replace(/[^0-9.]/g,''));if(isNaN(n))return;if(!S.lineAmt[fileId])S.lineAmt[fileId]={};S.lineAmt[fileId][mIdx+'|'+type]=n;pulse(mIdx+'|'+type);}
 // line items mapped into a given bucket for a month (for the aggregation "process")
 function bucketItems(fileId,mIdx,bucketKey){
   return RULE_ITEMS.filter(function(it){
@@ -2444,9 +2447,7 @@ function checkSalesComplete(fileId){
   var allLines=true;
   RULE_ITEMS.forEach(function(it){
     if(!it.eyeCheck)return;
-    for(var mi=0;mi<PAYSLIP_MONTHS.length;mi++){
-      if(!(S.lineVerified[fileId]||{})[mi+'|'+it.type])allLines=false;
-    }
+    if(!(S.lineVerified[fileId]||{})['0|'+it.type])allLines=false;   // most recent period only
   });
   if(allGlobal&&allLines){
     if(!S.alertResolved[fileId])S.alertResolved[fileId]={};
@@ -2734,12 +2735,12 @@ function verifyAllSales(fileId){
   if(!S.lineVerified[fileId])S.lineVerified[fileId]={};
   RULE_ITEMS.forEach(function(it){
     if(!it.eyeCheck)return;
-    for(var mi=0;mi<PAYSLIP_MONTHS.length;mi++)S.lineVerified[fileId][mi+'|'+it.type]=true;
+    S.lineVerified[fileId]['0|'+it.type]=true;   // most recent period only
   });
   // pulse all the rows that were just confirmed
   S.flash=S.flash||{};
   EYEBALL_ITEMS.forEach(function(ei){S.flash['doc|'+ei.id]=true;});
-  RULE_ITEMS.forEach(function(it){if(it.eyeCheck)for(var mi=0;mi<PAYSLIP_MONTHS.length;mi++)S.flash[mi+'|'+it.type]=true;});
+  RULE_ITEMS.forEach(function(it){if(it.eyeCheck)S.flash['0|'+it.type]=true;});
   render();
   setTimeout(function(){S.flash={};render();},760);
   showToast('All items verified — file is ready to route to CED.','ok');
@@ -3033,7 +3034,7 @@ function renderLineItems(fileId){
     var tag=it.custom?'<span class="li2-new">Added</span>':'';
     var rm=it.custom?'<span class="li2-rm" onclick="removeCustomLine(\''+fileId+'\',\''+it.id+'\')" title="Remove">&times;</span>':'';
     var rowKey=mIdx+'|'+it.type;
-    var flagged=it.eyeCheck&&!it.custom;          // line item that requires an eyeball check
+    var flagged=it.eyeCheck&&!it.custom&&mIdx===0;   // eyeball-check the most recent period only; older months are reference
     var verified=clean||(flagged&&lv[rowKey]);
     var vcol=flagged?vcell(verified,'verifyLineRow(\''+fileId+'\','+mIdx+',\''+it.type+'\')'):'<span class="li2-vcol"></span>';
     var rowCls='li2-row'+(it.custom?' li2-cust':'')+((flagged&&!verified)?' needs-check':'')+(flash[rowKey]?' li2-flash':'');
@@ -3296,13 +3297,13 @@ function renderFileDetail(){
       verifyBar='<div class="vf-bar vf-bounce">&#8617; <b>Returned by CED</b> — computed totals do not match the printed payslip values. Review the amounts against the source document, correct any errors, then mark complete.'
         +'<div class="vf-acts"><button class="btn btn-pri btn-sm" onclick="clearBounce(\''+S.fileId+'\')">&#10003; Amounts confirmed — mark complete</button></div></div>';
     } else if(roleClean){
-      verifyBar='<div class="vf-bar vf-done">&#10003; Verified by Sales — line items confirmed. You can still adjust any value before approving.</div>';
+      verifyBar='<div class="vf-note">Verified by Sales. You can adjust any value before approving.</div>';
     } else {
       // One combined orange alert bar — action prompt + buttons only, no detail rows.
       // Count the real pending rows so the wording matches what's highlighted below.
       var evNow=S.eyeVerified[S.fileId]||{},lvNow=S.lineVerified[S.fileId]||{};
       var pendDoc=EYEBALL_ITEMS.filter(function(ei){return !evNow[ei.id];}).length;
-      var pendLine=0;RULE_ITEMS.forEach(function(it){if(it.eyeCheck)for(var mi=0;mi<PAYSLIP_MONTHS.length;mi++){if(!lvNow[mi+'|'+it.type])pendLine++;}});
+      var pendLine=0;RULE_ITEMS.forEach(function(it){if(it.eyeCheck&&!lvNow['0|'+it.type])pendLine++;});
       var pendCheck=pendDoc+pendLine;
       var nPend=salesItems.length+missLeft.length;
       if(nPend){
@@ -3320,13 +3321,17 @@ function renderFileDetail(){
           +'</div>'
         +'</div>';
       }
-      if(s1Done)verifyBar='<div class="vf-bar vf-done">&#10003; All items verified — line items confirmed and fields complete.</div>';
+      // When everything is done the bar disappears entirely — the section badge + per-row marks carry the state.
+      if(s1Done)verifyBar='';
     }
     var s1Body=verifyBar+renderLineItems(S.fileId);
     // ── §2 Step-2 (CED): PURE type→field mapping. Default rules pre-exist; only NEW Sales补录 types need a rule. Amounts never matter here. ──
     var nNew=newTypeGaps(S.fileId).length;
     var mapBadge=prc?'<span class="sec-badge org">'+prc+' Pending</span>':'<span class="sec-badge green">Rules OK</span>';
     var missBanner=(nNew?'<div class="sec-banner org">&#9888; <b>'+nNew+' new item'+(nNew>1?'s':'')+' added by Sales</b> need field mapping — assign an income or deduction field for each, then click Confirm Update.</div>':'');
+    // Items Sales added were auto-mapped — surface a quiet "what changed" note rather than an action alert
+    var autoMapped=customLines(S.fileId).filter(function(c){return (S.ruleMap[S.fileId]||{})[c.id];});
+    var autoBanner=autoMapped.length?'<div class="sec-banner info">&#8505; '+autoMapped.length+' item'+(autoMapped.length>1?'s':'')+' added by Sales '+(autoMapped.length>1?'were':'was')+' auto-mapped to the income rules below — review and adjust only if needed.</div>':'';
     // ── §3 Step-3: GATED result. Mismatch triage (Sales-first, then CED): ①识别错(Sales) ②归类(CED) ③规则如此(CED跳过). ──
     var mmBadge=bounced?'<span class="sec-badge red">Returned</span>'
       :(s3==='error'?'<span class="sec-badge red">'+nMismatch+' Mismatch</span>'
@@ -3343,7 +3348,7 @@ function renderFileDetail(){
     }
     else mmBanner='<div class="sec-banner green">&#10003; All computed totals match printed values — reconciliation passed.</div>';
     var cItems=secCard('items','1','Step 1 · Line Items','Source line items — Sales review',s1Badge, s1Body);
-    var cMap=secCard('map','2','Step 2 · Field Mapping','Line-item type &rarr; income field — CED',mapBadge, missBanner+renderRuleConfig(S.fileId));
+    var cMap=secCard('map','2','Step 2 · Field Mapping','Line-item type &rarr; income field — CED',mapBadge, missBanner+autoBanner+renderRuleConfig(S.fileId));
     var cComp=secCard('comp','3','Step 3 · Reconciliation','Computed totals vs printed values',mmBadge, mmBanner+renderComputed(S.fileId));
     // role view: Sales reads 1→2→3 (data-first); CED reads 3→2→1 (result-first, drills into rules)
     workspace=(S.role==='sales')?(cItems+cMap+cComp):(cComp+cMap+cItems);
