@@ -259,6 +259,25 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .sec-badge.grey{background:#eef1f5;color:#7a828e;}
 .sec-alerts-wrap{padding:10px 12px 2px;background:#fffaf3;border-bottom:1px solid var(--bd2);}
 .sec-alerts-wrap .ac-cards{padding:0;}
+/* Step-1 Sales verify bar (replaces disconnected alert cards) */
+.vf-bar{margin:10px 12px;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;}
+.vf-todo{background:#fff8ec;border:1px solid #f0dcc0;}
+.vf-bounce{background:#fdeceb;border:1px solid #f3c4be;color:#9c2c20;}
+.vf-done{background:#eef8f1;border:1px solid #cfe8d6;color:#1a6b3c;font-weight:600;}
+.vf-hd{font-weight:700;color:#7a5c00;margin-bottom:5px;}
+.vf-list{margin:0 0 4px;padding-left:18px;color:#5a4a2a;}
+.vf-list li{margin:2px 0;}
+.vf-desc{color:#8a7a5a;font-weight:400;}
+.vf-acts{display:flex;gap:8px;margin-top:7px;}
+/* 补录 custom line (Step 1 data gap fill) */
+.li2-new{display:inline-block;margin-left:7px;font-size:9.5px;font-weight:700;color:#7c3aed;background:#f3edff;border:1px solid #e0d3fb;border-radius:8px;padding:1px 6px;vertical-align:middle;}
+.li2-cust{background:#fbf9ff;}
+.li2-rm{margin-left:6px;color:#c2c8d2;cursor:pointer;font-size:14px;font-weight:700;}
+.li2-rm:hover{color:#dc2626;}
+.li2-add{padding:10px 14px;border-top:1px dashed var(--bd2);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.li2-add-hint{font-size:11px;color:#9aa1ab;}
+.rc-new{background:#fbf9ff;}
+.rc-newtag{display:inline-block;margin-left:7px;font-size:9.5px;font-weight:700;color:#7c3aed;background:#f3edff;border:1px solid #e0d3fb;border-radius:8px;padding:1px 6px;}
 /* ── ① line items — single vertical bilingual list ── */
 .li2-hint{font-size:11px;color:#6b7280;background:#fafbfc;border-bottom:1px solid var(--bd2);padding:7px 14px;line-height:1.5;}
 .li2-en-key{color:#9aa1ab;}
@@ -843,6 +862,9 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'cedfiles', fileOpen:false, file
         incomeLog:{},         // {fileId:[{t,raw,from,to}]} — CED change log
         lineAmt:{},           // {fileId:{'mIdx|type':amount}} — edited line-item amounts
         secOpen:{},           // {sectionKey:false} — collapsed sections (default open)
+        salesBounce:{},       // {fileId:true} — §3 mismatch bounced back to Sales to re-verify amount
+        customLines:{},       // {fileId:[{id,ms,en,kind,ai,custom:true,type}]} — Sales-entered missing line items (Step 1 补录)
+        addLineTarget:null,   // fileId while the 补录 modal is open
         locateLine:null       // rule item id currently located/highlighted (rule↔doc linkage)
 };
 
@@ -1119,6 +1141,12 @@ var RULE_ITEMS=[
   {id:'r9', type:'MAPA Fee',                 ms:'Yuran MAPA',            en:'MAPA Fee',               kind:'deduction', ai:'deduction_other_deductions'}
 ];
 function ruleItem(id){return RULE_ITEMS.find(function(x){return x.id===id;});}
+// Sales-补录 custom line items (Step-1 data gap fill) merge into the same pipeline as OCR line items
+function customLines(fileId){return S.customLines[fileId]||[];}
+function lineItemsAll(fileId){return RULE_ITEMS.concat(customLines(fileId));}
+function ruleItemF(fileId,id){return RULE_ITEMS.find(function(x){return x.id===id;})||customLines(fileId).find(function(x){return x.id===id;});}
+// custom lines not yet rule-confirmed by CED → §2 gap (cross-layer: Sales added data, CED must map type)
+function newTypeGaps(fileId){return customLines(fileId).filter(function(c){return !(S.ruleMap[fileId]||{})[c.id];});}
 // Per-month amounts keyed by rule type (drives recompute + doc preview).
 // ocr* = totals printed on the payslip, used for step-④ reconciliation.
 var PAYSLIP_MONTHS=[
@@ -1133,12 +1161,14 @@ var PAYSLIP_MONTHS=[
                     ocrGross:20473.00, ocrDed:3384.10, ocrNet:17088.90}
 ];
 // APPLIED / DRAFT bucket for a rule type
-function ruleApplied(fileId,id){var ov=(S.ruleMap[fileId]||{})[id];return ov||ruleItem(id).ai;}
+function ruleApplied(fileId,id){var ov=(S.ruleMap[fileId]||{})[id];var it=ruleItemF(fileId,id);return ov||(it?it.ai:'exclude');}
 function ruleDraft(fileId,id){var d=(S.ruleDraft[fileId]||{})[id];return d||ruleApplied(fileId,id);}
 function setRule(fileId,id,bucket){if(!S.ruleDraft[fileId])S.ruleDraft[fileId]={};S.ruleDraft[fileId][id]=bucket;render();}
 function pendingRules(fileId){
   var d=S.ruleDraft[fileId]||{},out=[];
   Object.keys(d).forEach(function(id){if(d[id]!==ruleApplied(fileId,id))out.push(id);});
+  // Sales-补录 new types not yet committed to a rule are pending CED confirmation (even at AI default)
+  newTypeGaps(fileId).forEach(function(c){if(out.indexOf(c.id)===-1)out.push(c.id);});
   return out;
 }
 function confirmRuleChanges(fileId){
@@ -1148,11 +1178,11 @@ function confirmRuleChanges(fileId){
   if(!S.incomeLog[fileId])S.incomeLog[fileId]=[];
   var now=new Date();var ts=('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2);
   pend.forEach(function(id){
-    var it=ruleItem(id);
-    var from=bucketLabel(it.kind,ruleApplied(fileId,id));
-    var to=bucketLabel(it.kind,S.ruleDraft[fileId][id]);
+    var it=ruleItemF(fileId,id);
+    var to=bucketLabel(it.kind,ruleDraft(fileId,id));
+    var from=it.custom&&!(S.ruleMap[fileId]||{})[id]?'(新补录)':bucketLabel(it.kind,ruleApplied(fileId,id));
     S.incomeLog[fileId].unshift({t:ts,raw:it.type,from:from,to:to});
-    S.ruleMap[fileId][id]=S.ruleDraft[fileId][id];
+    S.ruleMap[fileId][id]=ruleDraft(fileId,id);
   });
   S.ruleDraft[fileId]={};
   render();
@@ -1166,11 +1196,11 @@ function computeMonth(fileId,mIdx){
   EARNING_BUCKETS.forEach(function(b){out[b.key]=0;});
   DEDUCTION_BUCKETS.forEach(function(b){out[b.key]=0;});
   var grossAll=0,dedAll=0;
-  RULE_ITEMS.forEach(function(it){
-    var base=(it.kind==='earning'?m.earn:m.ded)[it.type];
-    if(base==null)return;
+  lineItemsAll(fileId).forEach(function(it){
     var ov=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type];
-    var amt=(ov!=null?ov:base);
+    var amt;
+    if(it.custom){ if(ov==null)return; amt=ov; }        // 补录 line: amount comes ONLY from Sales entry, per month
+    else { var base=(it.kind==='earning'?m.earn:m.ded)[it.type]; if(base==null)return; amt=(ov!=null?ov:base); }
     if(it.kind==='earning')grossAll+=amt;else dedAll+=amt;
     var bucket=ruleApplied(fileId,it.id);
     if(bucket==='exclude')return;
@@ -1210,7 +1240,7 @@ function payslipIssues(fileId){
   return {missing:missing,mismatch:mismatch};
 }
 function isRuleModeFile(fileId){var d=FILE_DETAIL[fileId];return !!(d&&d.lineItemMode);}
-function lineAmtVal(fileId,mIdx,it){var base=(it.kind==='earning'?PAYSLIP_MONTHS[mIdx].earn:PAYSLIP_MONTHS[mIdx].ded)[it.type];var ov=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type];return ov!=null?ov:base;}
+function lineAmtVal(fileId,mIdx,it){var base=it.custom?null:(it.kind==='earning'?PAYSLIP_MONTHS[mIdx].earn:PAYSLIP_MONTHS[mIdx].ded)[it.type];var ov=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type];return ov!=null?ov:(base||0);}
 function setLineAmt(fileId,mIdx,type,val){var n=parseFloat((''+val).replace(/[^0-9.]/g,''));if(isNaN(n))return;if(!S.lineAmt[fileId])S.lineAmt[fileId]={};S.lineAmt[fileId][mIdx+'|'+type]=n;render();}
 // line items mapped into a given bucket for a month (for the aggregation "process")
 function bucketItems(fileId,mIdx,bucketKey){
@@ -2543,6 +2573,55 @@ function verifyAll(fileId,alertId){
   (FILE_DETAIL[fileId].groups||[]).forEach(function(g){g.fields.forEach(function(f){if(f.need)S.fieldChecked[fileId][f.k]=true;});});
   render();
 }
+// Step-1 Sales: one action resolves every Sales-side recognition/eyeball alert (line items verified vs document)
+function verifyAllSales(fileId){
+  if(!S.alertResolved[fileId])S.alertResolved[fileId]={};
+  (FILE_DETAIL[fileId].alerts||[]).forEach(function(a){S.alertResolved[fileId][a.id]=true;});
+  S.alertResolved[fileId]['marginal-quality']=true;
+  render();
+}
+// Step-3 CED → Sales: bounce a true total mismatch back for amount re-verification (CED trusts data, won't edit it)
+function bounceToSales(fileId){ if(!S.salesBounce)S.salesBounce={}; S.salesBounce[fileId]=true; S.secOpen.items=true; render(); }
+function clearBounce(fileId){ if(S.salesBounce)delete S.salesBounce[fileId]; render(); }
+// Step-1 Sales: 补录 a line item OCR missed entirely (data gap). Name + kind here; amounts entered per-month inline.
+function openAddLine(fileId){ S.addLineTarget=fileId; render(); setTimeout(function(){var i=document.getElementById('al-name');if(i)i.focus();},30); }
+function closeAddLine(){ S.addLineTarget=null; render(); }
+function saveAddLine(){
+  var f=S.addLineTarget; if(!f)return;
+  var ms=(document.getElementById('al-name').value||'').trim();
+  var en=(document.getElementById('al-en').value||'').trim();
+  var kind=document.getElementById('al-kind').value;
+  if(!ms){document.getElementById('al-name').style.borderColor='#dc2626';return;}
+  if(!S.customLines[f])S.customLines[f]=[];
+  var id='c'+(Date.now().toString().slice(-6));
+  S.customLines[f].push({id:id,type:id,ms:ms,en:en||ms,kind:kind,custom:true,
+    ai:kind==='earning'?'earning_others':'deduction_other_deductions'});
+  S.addLineTarget=null; S.secOpen.items=true; render();
+}
+function removeCustomLine(fileId,id){
+  S.customLines[fileId]=(S.customLines[fileId]||[]).filter(function(c){return c.id!==id;});
+  // clear its per-month amounts + any rule mapping
+  if(S.lineAmt[fileId])Object.keys(S.lineAmt[fileId]).forEach(function(k){if(k.split('|')[1]===id)delete S.lineAmt[fileId][k];});
+  if(S.ruleMap[fileId])delete S.ruleMap[fileId][id];
+  if(S.ruleDraft[fileId])delete S.ruleDraft[fileId][id];
+  render();
+}
+function renderAddLineModal(){
+  if(!S.addLineTarget)return '';
+  return '<div class="ov" style="z-index:80;"><div class="add-rule-modal" style="width:460px;">'
+    +'<div class="arm-hdr"><h3>补录缺失细项</h3><button class="docs-x" onclick="closeAddLine()">&times;</button></div>'
+    +'<div class="arm-body">'
+      +'<div class="arm-note">OCR 漏识别了原文中存在的某个细项时，在此补录其<strong>名称</strong>与<strong>类型</strong>；补录后请在 Step 1 各月份行内填写对应<strong>金额</strong>。该细项会进入 Step 2，等 CED 配置映射规则。</div>'
+      +'<div class="arm-row"><label class="arm-lbl">细项名称（马来/原文）<span style="color:#dc2626;">*</span></label>'
+        +'<input id="al-name" class="inp" style="width:100%;" placeholder="例：Elaun Pengangkutan"></div>'
+      +'<div class="arm-row"><label class="arm-lbl">英文备注（可选）</label>'
+        +'<input id="al-en" class="inp" style="width:100%;" placeholder="e.g. Transport Allowance"></div>'
+      +'<div class="arm-row"><label class="arm-lbl">类型</label>'
+        +'<select id="al-kind" class="inp" style="width:100%;"><option value="earning">收入项 / Earning</option><option value="deduction">扣减项 / Deduction</option></select></div>'
+    +'</div>'
+    +'<div class="arm-foot"><button class="btn" onclick="closeAddLine()">Cancel</button><button class="btn btn-pri" onclick="saveAddLine()">补录细项</button></div>'
+  +'</div></div>';
+}
 function checkField(fileId,k){
   if(!S.fieldChecked[fileId])S.fieldChecked[fileId]={};
   S.fieldChecked[fileId][k]=true;
@@ -2693,13 +2772,14 @@ function renderRuleConfig(fileId){
     var isPending=pend.indexOf(it.id)!==-1;
     var isCommitted=!!(S.ruleMap[fileId]||{})[it.id];
     var hot=S.locateLine===it.id;
+    var isNew=it.custom&&!(S.ruleMap[fileId]||{})[it.id];
     var buckets=it.kind==='earning'?EARNING_BUCKETS:DEDUCTION_BUCKETS;
     var opts=buckets.map(function(b){return '<option value="'+b.key+'"'+(draft===b.key?' selected':'')+'>'+b.label+'</option>';}).join('');
     var aiHint=(applied!==it.ai)?'':'<span class="rc-ai">AI</span>';
-    return '<div class="rc-row'+(hot?' hot':'')+(isPending?' pending':'')+'" id="rc-'+it.id+'"'
+    return '<div class="rc-row'+(hot?' hot':'')+(isPending?' pending':'')+(isNew?' rc-new':'')+'" id="rc-'+it.id+'"'
         +' onmouseenter="ruleHover(\''+fileId+'\',\''+it.id+'\')" onmouseleave="ruleUnhover(\''+it.id+'\')">'
       +'<span class="rc-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'
-      +'<div class="rc-name">'+it.ms+'<span class="rc-en">'+it.en+'</span></div>'
+      +'<div class="rc-name">'+it.ms+'<span class="rc-en">'+it.en+'</span>'+(it.custom?'<span class="rc-newtag">新·Sales补录</span>':'')+'</div>'
       +'<div class="rc-map">'
         +(isPending?'<span class="li-mod-dot" title="Pending"></span>':(isCommitted?'<span class="li-mod-dot" style="background:#1f9d57;"></span>':''))
         +'<span class="rc-arrow">&rarr;</span>'
@@ -2708,8 +2788,9 @@ function renderRuleConfig(fileId){
       +'</div>'
     +'</div>';
   }
-  var earnRows=RULE_ITEMS.filter(function(x){return x.kind==='earning';}).map(ruleRow).join('');
-  var dedRows=RULE_ITEMS.filter(function(x){return x.kind==='deduction';}).map(ruleRow).join('');
+  var allLI=lineItemsAll(fileId);
+  var earnRows=allLI.filter(function(x){return x.kind==='earning';}).map(ruleRow).join('');
+  var dedRows=allLI.filter(function(x){return x.kind==='deduction';}).map(ruleRow).join('');
   var applyBar=pend.length
     ? '<div class="li-apply"><span class="li-apply-txt">&#9888; <b>'+pend.length+' rule change'+(pend.length>1?'s':'')+' pending</b> — the field values below update only after you apply.</span>'
         +'<button class="btn btn-pri btn-sm" onclick="confirmRuleChanges(\''+fileId+'\')">&#8635; Confirm &amp; Refresh</button></div>'
@@ -2746,23 +2827,28 @@ function renderLineItems(fileId){
   function row(it,mIdx){
     var amt=lineAmtVal(fileId,mIdx,it);
     var edited=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type]!=null;
-    return '<div class="li2-row" id="li-'+it.id+'-'+mIdx+'"'
+    var tag=it.custom?'<span class="li2-new">补录</span>':'';
+    var rm=it.custom?'<span class="li2-rm" onclick="removeCustomLine(\''+fileId+'\',\''+it.id+'\')" title="删除补录细项">&times;</span>':'';
+    return '<div class="li2-row'+(it.custom?' li2-cust':'')+'" id="li-'+it.id+'-'+mIdx+'"'
         +' onmouseenter="hlDoc(\''+it.id+'\')" onmouseleave="unhlDoc(\''+it.id+'\')">'
       +'<span class="li2-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'
-      +'<span class="li2-name">'+it.ms+'<span class="li2-en">'+it.en+'</span></span>'
-      +'<span class="li2-amt"><span class="li2-cur">RM</span><input value="'+money(amt)+'" onchange="setLineAmt(\''+fileId+'\','+mIdx+',\''+it.type+'\',this.value)" class="'+(edited?'edited':'')+'"></span>'
+      +'<span class="li2-name">'+it.ms+'<span class="li2-en">'+it.en+'</span>'+tag+'</span>'
+      +'<span class="li2-amt"><span class="li2-cur">RM</span><input value="'+(it.custom&&!edited?'':money(amt))+'"'+(it.custom?' placeholder="录入金额"':'')+' onchange="setLineAmt(\''+fileId+'\','+mIdx+',\''+it.type+'\',this.value)" class="'+(edited?'edited':'')+'">'+rm+'</span>'
     +'</div>';
   }
+  var all=lineItemsAll(fileId);
   var months=PAYSLIP_MONTHS.map(function(m,mIdx){
-    var earn=RULE_ITEMS.filter(function(x){return x.kind==='earning';}).map(function(it){return row(it,mIdx);}).join('');
-    var ded=RULE_ITEMS.filter(function(x){return x.kind==='deduction';}).map(function(it){return row(it,mIdx);}).join('');
+    var earn=all.filter(function(x){return x.kind==='earning';}).map(function(it){return row(it,mIdx);}).join('');
+    var ded=all.filter(function(x){return x.kind==='deduction';}).map(function(it){return row(it,mIdx);}).join('');
     return '<div class="li2-month">'
       +'<div class="li2-mhd">'+m.month+'</div>'
       +'<div class="li2-cap">EARNINGS / PENDAPATAN</div>'+earn
       +'<div class="li2-cap">DEDUCTIONS / POTONGAN</div>'+ded
     +'</div>';
   }).join('');
-  return '<div class="li2-hint">Showing the document’s original Malay text; <span class="li2-en-key">grey = English</span>. Edit an amount if OCR misread it.</div>'+months;
+  var addBtn='<div class="li2-add"><button class="btn btn-sm" onclick="openAddLine(\''+fileId+'\')">+ 补录 OCR 漏识别的细项（名称 + 金额）</button>'
+    +'<span class="li2-add-hint">某个必要细项原文有、但 OCR 没识别到时，在此补录；补录后会进入 Step 2 等 CED 配规则。</span></div>';
+  return '<div class="li2-hint">Showing the document’s original Malay text; <span class="li2-en-key">grey = English</span>. Edit an amount if OCR misread it.</div>'+months+addBtn;
 }
 /* ── ③④ Computed fields with aggregation process + OCR reconciliation ── */
 function renderComputed(fileId){
@@ -2883,50 +2969,16 @@ function renderFileDetail(){
     : null;
   var alertCards=sorted.length?'<div class="ac-cards">'+sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join('')+'</div>':'';
 
-  // ── PIPELINE STEP BAR (lineMode): 3 horizontal steps, role-tagged, cascade-gated ──
-  // ① Sales 细项核对 (recognition/eyeball) → ② CED 规则映射 (rule gap) → ③ 加总校验 (gated result light)
+  // ── Step state machine (drives §3 cascade gating). lineMode has NO top nav —
+  //    the 3 vertical "Step N" cards + their header badges carry progress & alert entry. ──
   var prc=lineMode?pendingRules(S.fileId).length:0;
-  var s1Open=nh+nVerify+nCheck;            // ① open recognition items (Sales-owned)
-  var s2Open=nMissing+prc;                 // ② open rule items (CED-owned)
-  // ③ is a RESULT light, GATED by upstream: stays grey "待定" until ①② clear, then green/red.
-  // This kills the noise of reporting a mismatch that is merely a symptom of an unfinished ① or ②.
-  var s1=nh?'error':(s1Open?'todo':(allAlerts.length?'done':'none'));
-  var s2=s2Open?'todo':'done';
+  var s1Open=nh+nVerify+nCheck;            // ① Sales recognition/eyeball open items
+  var s2Open=nMissing+prc;                 // ② CED rule-mapping open items
+  // ③ is a GATED result light: grey 待定 until ①② clear, then green/red.
+  // Suppresses mismatch noise that is merely a symptom of an unfinished ① or ②.
   var s3=(s1Open||s2Open)?'wait':(nMismatch?'error':'done');
-  function psMeta(role,txt){return '<span class="ps-meta">'+(role?role+' · ':'')+txt+'</span>';}
-  var s1meta=nh?psMeta('Sales',nh+' 硬失败')
-    :(s1Open?psMeta('Sales','待核 '+s1Open):(allAlerts.length?psMeta('Sales','已核对'):psMeta('Sales','无告警')));
-  var s2meta=nMissing?psMeta('CED','缺口 '+nMissing)
-    :(prc?psMeta('CED',prc+' 待应用'):psMeta('CED','规则完整'));
-  var s3meta=psMeta('', s3==='done'?'✓ 校验通过':(s3==='error'?'加总不符':'待定 · '+(s1Open?'等细项':'等规则')));
-  function psStep(state,sec,name,meta){
-    return '<div class="ps-step ps-'+state+'" onclick="scrollToSec(\''+sec+'\')">'
-      +'<span class="ps-dot"></span><div class="ps-txt"><span class="ps-name">'+name+'</span>'+meta+'</div></div>';
-  }
-  // next-step CTA follows the cascade — whoever must act NOW
-  var nextRole='',nextSec='',nextTxt='';
-  if(nh){nextRole='sales';nextSec=itemsSec;nextTxt='Sales：解决 '+nh+' 项硬失败';}
-  else if(nVerify){nextRole='sales';nextSec=itemsSec;nextTxt='Sales：完成 '+nVerify+' 项人工核对';}
-  else if(nCheck){nextRole='sales';nextSec=itemsSec;nextTxt='Sales：核查 '+nCheck+' 项识别存疑';}
-  else if(nMissing){nextRole='ced';nextSec='map';nextTxt='CED：补全 '+nMissing+' 项规则缺口';}
-  else if(prc){nextRole='ced';nextSec='map';nextTxt='CED：应用 '+prc+' 项待生效规则';}
-  else if(nMismatch){nextRole='esc';nextSec='comp';nextTxt='CED：'+nMismatch+' 项加总不符 → 规则无误则升级';}
-  var allClear=!nextTxt;
-  var nextHtml=allClear
-    ? '<div class="ps-next"><span class="ps-next-done">&#10003; 全部就绪 · 该笔收入已可信</span></div>'
-    : '<div class="ps-next"><span class="ps-next-lbl">下一步</span><span class="ps-next-cta role-'+nextRole+'" onclick="scrollToSec(\''+nextSec+'\')">&#9654; '+nextTxt+'</span></div>';
-  var pipelineBar='<div class="psbar'+(allClear?' ps-clear':'')+'">'
-    +'<div class="ps-steps">'
-      +psStep(s1,itemsSec,'① 细项核对',s1meta)
-      +'<span class="ps-arrow">&#9656;</span>'
-      +psStep(s2,'map','② 规则映射',s2meta)
-      +'<span class="ps-arrow">&#9656;</span>'
-      +psStep(s3,'comp','③ 加总校验',s3meta)
-    +'</div>'
-    +nextHtml
-  +'</div>';
 
-  // non-lineMode files keep the compact action center (no 3-step pipeline)
+  // non-lineMode files keep the compact action center (no 3-step model)
   var actionCenter='<div class="ac'+(totalIssues?'':' ac-clear')+'">'
     +'<div class="ac-bar">'
       +'<span class="ac-ic" style="color:'+(totalIssues?(nh?'#c0392b':'#d97706'):'#1f9d57')+';">'+IC.warn+'</span>'
@@ -2938,7 +2990,7 @@ function renderFileDetail(){
     +'</div>'
     +alertCards
   +'</div>';
-  var topBar=lineMode?pipelineBar:actionCenter;
+  var topBar=lineMode?'':actionCenter;   // lineMode: no top nav, step cards carry everything
 
   // ── Preview (right column) ──
   var qPreview='<div class="fdq-preview">'
@@ -2959,28 +3011,48 @@ function renderFileDetail(){
   // ── Left workspace ──
   var workspace;
   if(lineMode){
-    // §1 (Sales): recognition/eyeball alert cards live HERE — surfaced by the step bar, opened on demand
-    var s1Badge=nh?'<span class="sec-badge red">'+nh+' hard</span>'
-      :(nVerify?'<span class="sec-badge blue">'+nVerify+' verify</span>'
-      :(nCheck?'<span class="sec-badge org">'+nCheck+' check</span>'
-      :(allAlerts.length?'<span class="sec-badge green">verified</span>':'')));
-    var mapBadge=prc?'<span class="sec-badge org">'+prc+' pending</span>':(nMissing?'<span class="sec-badge org">'+nMissing+' gap</span>':'<span class="sec-badge green">complete</span>');
-    // §3 badge mirrors the GATED ③ state: grey 待定 while upstream open, then red/green
-    var mmBadge=s3==='error'?'<span class="sec-badge red">'+nMismatch+' mismatch</span>'
-      :(s3==='done'?'<span class="sec-badge green">reconciled</span>'
-      :'<span class="sec-badge grey">待定</span>');
-    var s1Body=(sorted.length?'<div class="sec-alerts-wrap">'+alertCards+'</div>':'')+renderLineItems(S.fileId);
-    // §2 banner: CED rule gap (a new line-item type with no rule → routed from ① to CED here)
-    var missBanner=nMissing?'<div class="sec-banner org">&#9888; 规则缺口：<b>'+issues.missing.map(function(k){return k.replace(/_/g,' ');}).join(', ')+'</b> 尚无映射规则 — 在下方为对应细项指派字段（含 OCR 新识别的细项类型）。</div>':'';
-    // §3 banner: cascade-gated. Grey 待定 while ①/② open; red only when both upstream are clear (true anomaly)
+    var bounced=!!(S.salesBounce&&S.salesBounce[S.fileId]);
+    // ── §1 Step-1 (Sales): show COMPLETE line items + one verify action. No disconnected alert cards. ──
+    var salesItems=sorted.filter(function(a){return !resMap[a.id]&&!justMap[a.id];});
+    var s1Badge=bounced?'<span class="sec-badge red">退回核实</span>'
+      :(salesItems.length?'<span class="sec-badge org">待核 '+salesItems.length+'</span>':'<span class="sec-badge green">已核实</span>');
+    var verifyBar;
+    if(bounced){
+      verifyBar='<div class="vf-bar vf-bounce">&#8617; <b>CED 已退回</b> — 加总值与工资单印刷值不符。请对照右侧原文核实下列金额，确认或修正后标记完成。'
+        +'<div class="vf-acts"><button class="btn btn-pri btn-sm" onclick="clearBounce(\''+S.fileId+'\')">&#10003; 已核实金额，标记完成</button></div></div>';
+    } else if(salesItems.length){
+      var vlist=salesItems.map(function(a){return '<li>'+(a.title||a.dim||'Check')+(a.desc?' — <span class="vf-desc">'+a.desc+'</span>':'')+'</li>';}).join('');
+      verifyBar='<div class="vf-bar vf-todo"><div class="vf-hd">&#128065; 待人工核实 '+salesItems.length+' 项 — 对照右侧原文逐行核对金额无误：</div>'
+        +'<ul class="vf-list">'+vlist+'</ul>'
+        +'<div class="vf-acts"><button class="btn btn-pri btn-sm" onclick="verifyAllSales(\''+S.fileId+'\')">&#10003; 全部已核实</button>'
+        +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\''+salesItems[0].id+'\')">忽略并备注</button></div></div>';
+    } else {
+      verifyBar='<div class="vf-bar vf-done">&#10003; 细项已人工核实 — Sales 已确认金额准确</div>';
+    }
+    var s1Body=verifyBar+renderLineItems(S.fileId);
+    // ── §2 Step-2 (CED): rule gap — incl. NEW line-item types Sales补录 (cross-layer routed from ①). Amount edits never affect this. ──
+    var nNew=newTypeGaps(S.fileId).length;
+    var mapBadge=prc?'<span class="sec-badge org">'+prc+' 待应用</span>':(nMissing?'<span class="sec-badge org">缺口 '+nMissing+'</span>':'<span class="sec-badge green">规则完整</span>');
+    var missBanner=(nMissing?'<div class="sec-banner org">&#9888; 规则缺口：<b>'+issues.missing.map(function(k){return k.replace(/_/g,' ');}).join(', ')+'</b> 尚无映射规则 — 在下方为对应细项指派字段。</div>':'')
+      +(nNew?'<div class="sec-banner org">&#9888; <b>'+nNew+' 项 Sales 补录的新细项</b>待映射 — Sales 已补数据，请为其指派收入/扣减字段并「确认更新」。</div>':'');
+    // ── §3 Step-3: GATED result. Grey 待定 while ①/② open; only a TRUE anomaly when both upstream clear → bounce to Sales. ──
+    var mmBadge=bounced?'<span class="sec-badge red">已退回</span>'
+      :(s3==='error'?'<span class="sec-badge red">'+nMismatch+' 不符</span>'
+      :(s3==='done'?'<span class="sec-badge green">已校验</span>'
+      :'<span class="sec-badge grey">待定</span>'));
     var mmBanner;
-    if(s3==='wait')mmBanner='<div class="sec-banner grey">&#9203; 校验待定 — '+(s1Open?'等 Sales 完成 ① 细项核对':'等 CED 补全 ② 规则缺口')+'后，加总结果才可信，暂不告警。</div>';
-    else if(s3==='error')mmBanner='<div class="sec-banner red">&#9888; '+nMismatch+' 项加总与工资单印刷值不符。①②均已就绪 → 排除规则原因后疑为数据异常，需升级核查。</div>';
+    if(s3==='wait')mmBanner='<div class="sec-banner grey">&#9203; 校验待定 — '+(s1Open?'等 Sales 完成 ① 细项核实':'等 CED 补全 ② 规则缺口')+'后，加总结果才可信，暂不告警。</div>';
+    else if(s3==='error'){
+      mmBanner='<div class="sec-banner red">&#9888; '+nMismatch+' 项加总与工资单印刷值不符。①②均已就绪 → 排除规则原因后，疑为 Sales 录入的某个金额有误。'
+        +(bounced?'<br><b>已退回 Sales 核实，待其确认金额。</b>'
+          :'<div class="vf-acts" style="margin-top:6px;"><button class="btn btn-sm" onclick="bounceToSales(\''+S.fileId+'\')">&#8617; 退回 Sales 核实金额</button></div>')
+      +'</div>';
+    }
     else mmBanner='<div class="sec-banner green">&#10003; 加总与工资单印刷值一致，校验通过。</div>';
     workspace=
-      secCard('items','1','① 原始细项核对','Source Line Items · Sales 负责',s1Badge, s1Body)
-      +secCard('map','2','② 细项 → 字段映射','Line-item → Field · CED 负责',mapBadge, missBanner+renderRuleConfig(S.fileId))
-      +secCard('comp','3','③ 加总与校验','Computed &amp; Validation · vs 印刷值',mmBadge, mmBanner+renderComputed(S.fileId));
+      secCard('items','1','Step 1 · 细项核实','Source Line Items · Sales 负责',s1Badge, s1Body)
+      +secCard('map','2','Step 2 · 字段映射','Line-item → Field · CED 负责',mapBadge, missBanner+renderRuleConfig(S.fileId))
+      +secCard('comp','3','Step 3 · 加总校验','Computed &amp; Validation · vs 印刷值',mmBadge, mmBanner+renderComputed(S.fileId));
   } else {
     var renderGroups=d.groups;
     var groupsHtml=renderGroups.map(function(g){
@@ -3105,6 +3177,7 @@ function render(){
   if(S.syncOpen)html+=renderSync();
   if(S.addRuleOpen)html+=renderAddRule();
   if(S.justifyTarget)html+=renderJustifyModal();
+  if(S.addLineTarget)html+=renderAddLineModal();
   if(S.qcOverrideTarget)html+=renderQcOverrideModal();
   if(S.qcDetailFor)html+=renderQcDetailModal();
   if(S.classifyOpen)html+=renderClassifyModal();
