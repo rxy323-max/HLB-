@@ -350,9 +350,9 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .li2-row.needs-check:hover{background:#fff0e0;}
 /* hover from the verify bar cross-highlights the pending rows a touch stronger */
 .li2-row.li2-hl{background:#ffe9cf!important;}
-/* brief green pulse on confirm, then settle back to the normal row style */
-.li2-row.li2-flash{animation:li2flash .75s ease-out;}
-@keyframes li2flash{0%{background:#d4f4e0;}55%{background:#e9faf0;}100%{background:transparent;}}
+/* brief green pulse on confirm/save, then settle back to the normal row style */
+.li2-row.li2-flash{animation:li2flash .85s ease-out;}
+@keyframes li2flash{0%{background:#a7ecc1;}25%{background:#a7ecc1;}100%{background:transparent;}}
 /* ── Missing field placeholder row ── */
 .li2-row.li2-missing{background:#fff6ec;box-shadow:inset 3px 0 0 #f0a23c;}
 .li2-missing .li2-name{color:#9ca3af;}
@@ -1321,7 +1321,7 @@ function payslipIssues(fileId){
 }
 function isRuleModeFile(fileId){var d=FILE_DETAIL[fileId];return !!(d&&d.lineItemMode);}
 function lineAmtVal(fileId,mIdx,it){var base=it.custom?null:(it.kind==='earning'?PAYSLIP_MONTHS[mIdx].earn:PAYSLIP_MONTHS[mIdx].ded)[it.type];var ov=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type];return ov!=null?ov:(base||0);}
-function setLineAmt(fileId,mIdx,type,val){var n=parseFloat((''+val).replace(/[^0-9.]/g,''));if(isNaN(n))return;if(!S.lineAmt[fileId])S.lineAmt[fileId]={};S.lineAmt[fileId][mIdx+'|'+type]=n;pulse(mIdx+'|'+type);}
+function setLineAmt(fileId,mIdx,type,val){var n=parseFloat((''+val).replace(/[^0-9.]/g,''));if(isNaN(n))return;if(!S.lineAmt[fileId])S.lineAmt[fileId]={};S.lineAmt[fileId][mIdx+'|'+type]=n;pulse(mIdx+'|'+type);showToast('Amount saved','ok');}
 // line items mapped into a given bucket for a month (for the aggregation "process")
 function bucketItems(fileId,mIdx,bucketKey){
   return RULE_ITEMS.filter(function(it){
@@ -2424,6 +2424,7 @@ function unhlDoc(id){
 function setLineMonth(idx){S.lineMonthIdx=idx;render();}
 // Highlight/unhighlight all line-item rows — triggered by hovering the eyeball alert bar
 function hlAllLines(){var r=document.querySelectorAll('.li2-row.needs-check');for(var i=0;i<r.length;i++)r[i].classList.add('li2-hl');}
+function hlMissing(){var r=document.querySelectorAll('.li2-row.li2-missing');for(var i=0;i<r.length;i++)r[i].classList.add('li2-hl');}
 function unhlAllLines(){var r=document.querySelectorAll('.li2-row');for(var i=0;i<r.length;i++)r[i].classList.remove('li2-hl');}
 // Verify a single global eyeball item (employer name, IC, etc.)
 // Render-independent micro-feedback toast (lives outside #app so render() won't wipe it)
@@ -2439,7 +2440,7 @@ function showToast(msg,kind){
 // Brief green pulse on a row, then settle back to normal style
 function pulse(key){
   S.flash=S.flash||{};S.flash[key]=true;render();
-  setTimeout(function(){if(S.flash)delete S.flash[key];render();},760);
+  setTimeout(function(){if(S.flash)delete S.flash[key];render();},850);
 }
 // When every global field + every flagged line item is verified, clear the Step-1 eyeball alert
 function checkSalesComplete(fileId){
@@ -3299,30 +3300,32 @@ function renderFileDetail(){
     } else if(roleClean){
       verifyBar='<div class="vf-note">Verified by Sales. You can adjust any value before approving.</div>';
     } else {
-      // One combined orange alert bar — action prompt + buttons only, no detail rows.
-      // Count the real pending rows so the wording matches what's highlighted below.
+      // TWO separate orange alerts — they are two different operations, kept distinct.
       var evNow=S.eyeVerified[S.fileId]||{},lvNow=S.lineVerified[S.fileId]||{};
       var pendDoc=EYEBALL_ITEMS.filter(function(ei){return !evNow[ei.id];}).length;
       var pendLine=0;RULE_ITEMS.forEach(function(it){if(it.eyeCheck&&!lvNow['0|'+it.type])pendLine++;});
       var pendCheck=pendDoc+pendLine;
-      var nPend=salesItems.length+missLeft.length;
-      if(nPend){
-        var verifyBtn=salesItems.length?'<button class="btn btn-pri btn-sm" onclick="verifyAllSales(\''+S.fileId+'\')">&#10003; Mark All Verified</button>':'';
-        var addBtn=missLeft.length?'<button class="btn'+(salesItems.length?' btn-sm':' btn-pri btn-sm')+'" onclick="openAddLine(\''+S.fileId+'\',\''+missLeft[0]+'\')">+ Add Missing Item</button>':'';
-        var parts=[];
-        if(pendCheck)parts.push(pendCheck+' field'+(pendCheck>1?'s':'')+' to verify against the document');
-        if(missLeft.length)parts.push(missLeft.length+' required field'+(missLeft.length>1?'s':'')+' not detected');
-        var msg=parts.join(' · ')||'Compare the highlighted fields and amounts against the source document, then confirm';
+      // Alert A — Eyeball check (verify AI-extracted fields against the document)
+      if(pendCheck){
         verifyBar+='<div class="vf-bar vf-todo" onmouseenter="hlAllLines()" onmouseleave="unhlAllLines()">'
-          +'<div class="vf-hd">&#9888; Eyeball check — '+msg+'.</div>'
+          +'<div class="vf-hd">&#128065; Eyeball check &mdash; '+pendCheck+' field'+(pendCheck>1?'s':'')+' need a manual check against the source document.</div>'
           +'<div class="vf-acts">'
-            +verifyBtn+addBtn
-            +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\''+(salesItems.length?salesItems[0].id:'miss:'+missLeft[0])+'\')">Skip with Note</button>'
+            +'<button class="btn btn-pri btn-sm" onclick="verifyAllSales(\''+S.fileId+'\')">&#10003; Mark All Verified</button>'
+            +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\''+(salesItems.length?salesItems[0].id:'pseye')+'\')">Skip with Note</button>'
           +'</div>'
         +'</div>';
       }
-      // When everything is done the bar disappears entirely — the section badge + per-row marks carry the state.
-      if(s1Done)verifyBar='';
+      // Alert B — Missing required field (OCR did not detect it) — a distinct task
+      if(missLeft.length){
+        verifyBar+='<div class="vf-bar vf-todo" onmouseenter="hlMissing()" onmouseleave="unhlAllLines()">'
+          +'<div class="vf-hd">&#9888; Missing field &mdash; '+missLeft.length+' required field'+(missLeft.length>1?'s':'')+' not detected by OCR. Add the line item or skip with a note.</div>'
+          +'<div class="vf-acts">'
+            +'<button class="btn btn-pri btn-sm" onclick="openAddLine(\''+S.fileId+'\',\''+missLeft[0]+'\')">+ Add Missing Item</button>'
+            +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\'miss:'+missLeft[0]+'\')">Skip with Note</button>'
+          +'</div>'
+        +'</div>';
+      }
+      // When everything is done both bars disappear — the section badge + per-row marks carry the state.
     }
     var s1Body=verifyBar+renderLineItems(S.fileId);
     // ── §2 Step-2 (CED): PURE type→field mapping. Default rules pre-exist; only NEW Sales补录 types need a rule. Amounts never matter here. ──
@@ -3485,7 +3488,14 @@ function render(){
   if(S.qcDetailFor)html+=renderQcDetailModal();
   if(S.classifyOpen)html+=renderClassifyModal();
   if(S.replaceTarget)html+=renderReplacePagePanel();
+  // Preserve scroll position across the full re-render so verifying a row, editing an
+  // amount, or expanding a step doesn't snap the view back to the top.
+  var keepSel=['.fd-wleft','.fdq-preview','.fd-doc','.docs-bd'];
+  var snap={};keepSel.forEach(function(sel){var el=document.querySelector(sel);if(el)snap[sel]=el.scrollTop;});
+  var winY=window.scrollY;
   document.getElementById('app').innerHTML=html;
+  keepSel.forEach(function(sel){var el=document.querySelector(sel);if(el&&snap[sel]!=null)el.scrollTop=snap[sel];});
+  if(winY)window.scrollTo(0,winY);
 }
 function openDocs(){S.docsOpen=true;render();}
 function closeDocs(){S.docsOpen=false;render();}
