@@ -197,7 +197,8 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .ac-next{margin-left:auto;font-size:12px;font-weight:700;color:#fff;background:var(--blue);border-radius:7px;padding:5px 13px;cursor:pointer;}
 .ac-next:hover{background:var(--blue-d);}
 .ac-cards{padding:0 14px 12px;}
-.ac-cards .al-card .al-expand{max-height:340px;opacity:1;margin-top:9px;}
+/* compact by default; the detail comparison reveals on hover so the card stays clean */
+.ac-cards .al-card:hover .al-expand{max-height:240px;opacity:1;margin-top:8px;}
 /* ── Pipeline step bar (top, compact, state-machine driven) ── */
 .psbar{background:#fff;border-bottom:1px solid var(--bd);padding:9px 14px;flex-shrink:0;}
 .psbar.ps-clear{background:#f4fbf6;border-bottom-color:#cfe8d6;}
@@ -291,7 +292,7 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .li2-month:last-child{border-bottom:none;}
 .li2-mhd{font-size:11px;font-weight:700;color:#374151;background:#f3f5f8;padding:6px 14px;}
 .li2-cap{font-size:9.5px;font-weight:700;color:#9aa1ab;letter-spacing:.4px;padding:5px 14px 2px;}
-.li2-row{display:flex;align-items:center;gap:9px;padding:5px 14px;}
+.li2-row{display:flex;align-items:center;gap:9px;padding:6px 14px;}
 .li2-row:hover{background:#fafbfc;}
 .li2-name{flex:1;font-size:12.5px;color:#1f2937;min-width:0;display:flex;align-items:baseline;gap:8px;}
 .li2-en{font-size:10.5px;color:#9aa1ab;}
@@ -306,8 +307,7 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .li2-tab{padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;color:var(--mut);border:none;border-bottom:2px solid transparent;background:none;font-family:inherit;transition:color .12s,border-color .12s;}
 .li2-tab:hover{color:var(--tx);}
 .li2-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
-/* Row highlight on eyeball-alert hover */
-.li2-row.li2-hl{background:#fffbe8!important;outline:1px solid #f59e0b;border-radius:3px;}
+/* Row highlight on eyeball-alert hover (orange theme defined below) */
 /* vf-bar type variants: eyeball-check = blue; completeness-miss = orange (reuses existing vf-todo) */
 .vf-eye{background:#eff6ff;border:1px solid #bfdbfe;}
 .vf-eye .vf-hd{color:#1e40af;}
@@ -322,31 +322,45 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .vf-ei-btn.done{background:#dcfce7;border-color:#86efac;color:#15803d;cursor:default;}
 /* ── Group-based line items (replaces month tabs) ── */
 .li2-tabs{display:none;}
-.li2-group{border-bottom:1px solid var(--bd2);}
+/* thick neutral band separates one region (Document Info / each Pay Period) from the next */
+.li2-group{border-bottom:7px solid #eef1f5;}
 .li2-group:last-child{border-bottom:none;}
-.li2-ghd{display:flex;align-items:center;justify-content:space-between;padding:6px 14px 4px;background:#f3f5f8;}
-.li2-gnum{font-size:11px;font-weight:700;color:#374151;}
-.li2-gperiod{font-size:10.5px;color:#9aa1ab;margin-left:8px;}
-.li2-gadd{padding:5px 14px 8px;}
+.li2-ghd{display:flex;align-items:center;justify-content:space-between;padding:9px 14px 8px;background:#eef2f7;border-bottom:1px solid var(--bd2);}
+.li2-gnum{font-size:12px;font-weight:700;color:#1f2937;letter-spacing:.2px;}
+.li2-gperiod{font-size:10.5px;color:#8a92a0;margin-left:8px;font-weight:400;}
+.li2-gtag{font-size:10.5px;color:#8a92a0;}
+.li2-gtag.done{color:#1a8a4e;}
+.li2-gadd{padding:7px 14px 11px;}
 .li2-gadd-btn{font-size:11px;padding:3px 10px;border:1px dashed #c3cfe0;border-radius:5px;background:none;color:#6b7280;cursor:pointer;}
 .li2-gadd-btn:hover{background:#f0f4fb;color:var(--blue);border-color:var(--blue);}
-/* ── Per-row verify button ── */
-.li2-vbtn{font-size:10px;padding:2px 8px;border:1px solid #d1d5db;border-radius:4px;background:#fff;color:#6b7280;cursor:pointer;flex-shrink:0;}
-.li2-vbtn:hover{border-color:var(--blue);color:var(--blue);background:#eff6ff;}
-.li2-vbtn.done{border-color:#15803d;color:#15803d;background:#f0fdf4;cursor:default;}
-.li2-row.needs-check{background:#fffbeb;border-left:3px solid #f59e0b;padding-left:11px;}
-.li2-row.needs-check.row-verified{background:#f0fdf4;border-left-color:#15803d;}
+/* ── unified per-row verify column (always last column, after the amount) ── */
+.li2-vcol{flex-shrink:0;width:96px;display:flex;justify-content:flex-end;}
+.li2-docval{flex-shrink:0;font-size:12px;color:#374151;text-align:right;max-width:330px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.li2-vbtn{font-size:10px;padding:3px 11px;border:1px solid #e3a857;border-radius:5px;background:#fff;color:#b9701b;cursor:pointer;font-weight:600;white-space:nowrap;}
+.li2-vbtn:hover{background:#fff1df;border-color:#d98a2b;}
+.li2-vbtn.skip{border-color:#d1d5db;color:#6b7280;}
+.li2-vbtn.skip:hover{background:#f3f4f6;border-color:#9aa1ab;}
+.li2-vmark{font-size:10.5px;color:#9aa1ab;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;}
+.li2-vmark .ck{color:#1f9d57;font-weight:700;}
+/* needs-check = pending manual verify → soft orange, only while unverified */
+.li2-row.needs-check{background:#fff6ec;box-shadow:inset 3px 0 0 #f0a23c;}
+.li2-row.needs-check:hover{background:#fff0e0;}
+/* hover from the verify bar cross-highlights the pending rows a touch stronger */
+.li2-row.li2-hl{background:#ffe9cf!important;}
+/* brief green pulse on confirm, then settle back to the normal row style */
+.li2-row.li2-flash{animation:li2flash .75s ease-out;}
+@keyframes li2flash{0%{background:#d4f4e0;}55%{background:#e9faf0;}100%{background:transparent;}}
 /* ── Missing field placeholder row ── */
-.li2-row.li2-missing{background:#fff9f0;border-left:3px solid #f59e0b;padding-left:11px;opacity:.9;}
-.li2-missing .li2-name{color:#9ca3af;font-style:italic;}
-.li2-missing .li2-en{color:#c4ac90;}
-/* ── Document info card (above line items) ── */
-.li2-docinfo{margin:10px 12px 0;border:1px solid var(--bd);border-radius:7px;overflow:hidden;}
-.li2-docinfo-hd{background:#f8f9fb;padding:7px 12px;font-size:11px;font-weight:700;color:#374151;border-bottom:1px solid var(--bd2);display:flex;align-items:center;justify-content:space-between;}
-.li2-docinfo-row{display:flex;align-items:center;gap:10px;padding:6px 12px;border-bottom:1px solid var(--bd2);font-size:12px;}
-.li2-docinfo-row:last-child{border-bottom:none;}
-.li2-docinfo-lbl{color:var(--mut);min-width:130px;flex-shrink:0;}
-.li2-docinfo-val{color:#1f2937;flex:1;}
+.li2-row.li2-missing{background:#fff6ec;box-shadow:inset 3px 0 0 #f0a23c;}
+.li2-missing .li2-name{color:#9ca3af;}
+.li2-misstag{font-size:9.5px;font-weight:700;color:#b9701b;background:#fdebd3;border-radius:4px;padding:1px 6px;margin-left:7px;vertical-align:middle;}
+/* ── toast (render-independent micro feedback) ── */
+#toast-host{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;}
+.toast{background:#222b39;color:#fff;font-size:12.5px;line-height:1.45;padding:9px 16px;border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.22);opacity:0;transform:translateY(10px);transition:opacity .22s,transform .22s;max-width:440px;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.hide{opacity:0;transform:translateY(10px);}
+.toast-ok{background:#15663b;}
+.toast .tk{margin-right:7px;color:#7ee2a8;font-weight:700;}
 /* ── ③④ computed fields ── */
 .cp-month{border-bottom:1px solid var(--bd2);padding-bottom:6px;}
 .cp-month:last-child{border-bottom:none;}
@@ -374,17 +388,17 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .fd-alert-strip.open .chev{transform:rotate(180deg);}
 .fd-alert-body{flex-shrink:0;max-height:48%;overflow:auto;padding:8px 14px;border-bottom:1px solid var(--bd);background:#fcfcfd;}
 /* ── Compact alert card (hover-expands) ── */
-.al-card{border:1px solid var(--bd);border-left-width:3px;border-radius:8px;padding:10px 12px;margin-bottom:7px;background:#fff;transition:box-shadow .12s;}
-.al-card.al-hard{border-left-color:#dc2626;}
+.al-card{border:1px solid #f0d9b8;border-left:3px solid #e3a857;border-radius:8px;padding:10px 12px;margin-bottom:7px;background:#fff8ee;transition:box-shadow .12s;}
+.al-card.al-hard{border-left-color:#dc2626;background:#fdf2f0;border-color:#f3c9c2;}
 .al-card.al-warn{border-left-color:#e0a107;}
-.al-card.al-check{border-left-color:#9aa1ab;}
-.al-card:hover{box-shadow:0 3px 12px rgba(40,60,120,.10);border-color:#bcd0f5;}
+.al-card.al-check{border-left-color:#e3a857;}
+.al-card:hover{box-shadow:0 3px 12px rgba(120,90,40,.12);}
 .al-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .al-ic{display:inline-flex;flex-shrink:0;}.al-ic svg{width:15px;height:15px;}
 .al-ttl{font-size:13px;font-weight:700;color:#2a2f37;}
 .al-chips{display:inline-flex;gap:5px;flex-wrap:wrap;}
-.al-fld{font-size:11px;color:#2563eb;background:#f0f6ff;border:1px solid #d3e2fb;border-radius:4px;padding:1px 7px;cursor:pointer;white-space:nowrap;}
-.al-fld:hover{background:#2563eb;color:#fff;border-color:#2563eb;}
+.al-fld{font-size:11px;color:#b9701b;background:#fdebd3;border:1px solid #f0d3a8;border-radius:4px;padding:1px 7px;cursor:pointer;white-space:nowrap;}
+.al-fld:hover{background:#e3920f;color:#fff;border-color:#e3920f;}
 .al-desc{font-size:11.5px;color:#6b7280;margin-top:5px;line-height:1.5;}
 /* expand-on-hover region */
 .al-expand{max-height:0;overflow:hidden;opacity:0;transition:max-height .18s ease,opacity .18s ease;}
@@ -396,7 +410,7 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .cmp2-v{font-size:13px;font-weight:700;color:#374151;font-family:ui-monospace,Menlo,Consolas,monospace;}
 .cmp2-v.bad{color:#dc2626;}
 .cmp2-arr{display:flex;align-items:center;padding:0 6px;color:#9aa1ab;font-size:16px;background:#eef1f6;}
-.al-acts{display:flex;gap:7px;flex-wrap:wrap;}
+.al-acts{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;}
 .al-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid #d6dae0;background:#fff;color:#374151;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;}
 .al-btn:hover{border-color:var(--blue);color:var(--blue);}
 .al-btn svg{width:13px;height:13px;}
@@ -405,7 +419,7 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .al-acts .fd-abtn-rec{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600;}
 .al-acts .fd-abtn-rec:hover{background:var(--blue-d);}
 /* ── Field row hover-highlight from alert chip ── */
-.fd-f.xhl{background:#eaf2ff;box-shadow:inset 3px 0 0 #2563eb;}
+.fd-f.xhl{background:#fff2e0;box-shadow:inset 3px 0 0 #e3920f;}
 /* badge kept for income-file cards reuse */
 .fd-ltab-badge{min-width:17px;height:17px;border-radius:9px;background:#dc2626;color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;}
 .fd-ltab-badge.ok{background:#1f9d57;}
@@ -859,6 +873,7 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 <body>
 <div id="app"></div>
 <div class="replica-tag">Prototype v0 · Credios AIOCR</div>
+<div id="toast-host"></div>
 
 <script>
 /* ════════════════ ICONS ════════════════ */
@@ -915,9 +930,11 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'cedfiles', fileOpen:false, file
         lineAmt:{},           // {fileId:{'mIdx|type':amount}} — edited line-item amounts
         secOpen:{},           // {sectionKey:false} — collapsed sections (default open)
         salesBounce:{},       // {fileId:true} — §3 mismatch bounced back to Sales to re-verify amount
-        customLines:{},       // {fileId:[{id,ms,en,kind,ai,custom:true,type}]} — Sales-entered missing line items (Step 1 补录)
-        addLineTarget:null,   // fileId while the 补录 modal is open
-        role:'ced',           // 'sales' | 'ced' — drives card order + default-open (Sales 1→2→3, CED 3→2→1)
+        customLines:{},       // {fileId:[{id,ms,en,kind,ai,custom:true,type}]} — Sales-entered missing line items (Step 1)
+        addLineTarget:null,   // fileId while the add-missing-item modal is open
+        addLinePreset:null,   // required field key being filled from a missing-row prompt
+        flash:{},             // {rowKey:true} — transient green pulse after a confirm
+        role:'sales',         // 'sales' | 'ced' — drives card order + default-open (Sales 1→2→3, CED 3→2→1)
         lineMonthIdx:0,       // active month tab in Step-1 line items panel (0 = most recent month)
         locateLine:null,      // rule item id currently located/highlighted (rule↔doc linkage)
         eyeVerified:{},       // {fileId:{itemId:true}} — per-item global eyeball check confirmation
@@ -1025,12 +1042,9 @@ var FILE_DETAIL={
   payslip:{ name:'KJGHP2025L0012984.pdf', crumb:'Applicant Income &rsaquo; Payslip', doc:'payslip', lineItemMode:true,
     alerts:[
       {id:'pseye', title:'Eyeball Check', sev:'check', dim:'Eyeball / Existence', kind:'eyeball',
-        desc:'Confirm the rule configuration above maps each payslip line to the correct income field, then Verify the recomputed values.',
+        desc:'Some fields were extracted by AI but cannot be auto-verified. Confirm each flagged field against the source document.',
         fields:['earning_total_allowances','earning_others'],
-        cmp:'', acts:['verifyall'], rec:'verifyall'},
-      {id:'psid', title:'Payslip - id_no Exist', sev:'warn', dim:'Existence', kind:'exist',
-        desc:'OCR did not detect the ID number on this payslip.', fields:['id_no'],
-        cmp:'', acts:['amend','replace'], rec:'amend'}
+        cmp:'', acts:['verifyall'], rec:'verifyall'}
     ],
     groups:[]},  // groups generated dynamically by payslipGroups() — see render
   vso:{ name:'VSO.pdf', crumb:'Collateral/Others &rsaquo; VSO', doc:'vso',
@@ -1188,7 +1202,7 @@ function bucketLabel(kind,key){
 var RULE_ITEMS=[
   {id:'r1', type:'Basic Salary',             ms:'Gaji Pokok',            en:'Basic Salary',           kind:'earning',   ai:'earning_basic_salary',  eyeCheck:true},
   {id:'r2', type:'TC Meal Allowance',        ms:'Elaun Makan',           en:'Meal Allowance',         kind:'earning',   ai:'earning_others'},
-  {id:'r3', type:'TC Productivity Allowance',ms:'Elaun Produktiviti',    en:'Productivity Allowance', kind:'earning',   ai:'earning_others',         eyeCheck:true},
+  {id:'r3', type:'TC Productivity Allowance',ms:'Elaun Produktiviti',    en:'Productivity Allowance', kind:'earning',   ai:'earning_others'},
   {id:'r4', type:'Performance Bonus',        ms:'Bonus Prestasi',        en:'Performance Bonus',      kind:'earning',   ai:'earning_others',         eyeCheck:true},
   {id:'r5', type:'EPF Employee Contr.',      ms:'Caruman KWSP Pekerja',  en:'EPF (Employee)',         kind:'deduction', ai:'deduction_epf_employee'},
   {id:'r6', type:'SOCSO Employee Contr.',    ms:'Caruman PERKESO',       en:'SOCSO (Employee)',       kind:'deduction', ai:'deduction_socso_eis'},
@@ -2291,7 +2305,18 @@ function actBtn(key,fileId,alertId,rec){
   var forceRec=(key==='replace'||key==='verifyall');
   var cls='fd-abtn'+((isRec||forceRec)?' fd-abtn-rec':'');
   if(key==='verifyall')return '<button class="'+cls+'" onclick="verifyAll(\''+fileId+'\',\''+alertId+'\')">'+label+'</button>';
-  return '<button class="'+cls+'">'+label+'</button>';
+  return '<button class="'+cls+'" onclick="resolveAlertAct(\''+fileId+'\',\''+alertId+'\',\''+key+'\')">'+label+'</button>';
+}
+// Resolve a consistency / existence alert via one of its action buttons (Amend, Replace, Adopt…)
+function resolveAlertAct(fileId,alertId,how){
+  if(!S.alertResolved[fileId])S.alertResolved[fileId]={};
+  S.alertResolved[fileId][alertId]={how:how};
+  var msg=how==='replace'?'Replacement document requested.'
+    :how==='amend'?'Scanned value amended and saved.'
+    :how==='adopt'?'Reference value adopted.'
+    :'Resolved.';
+  showToast(msg,'ok');
+  render();
 }
 function sevMeta(s){return s==='hard'?{t:'Hard Fail',c:'sev-hard'}:s==='warn'?{t:'Warning',c:'sev-warn'}:{t:'Needs Check',c:'sev-check'};}
 function guidanceLine(a){
@@ -2350,10 +2375,8 @@ function fdAlertCard(a,fileId){
       +'<span class="al-chips">'+chips+'</span>'
     +'</div>'
     +'<div class="al-desc">'+desc+'</div>'
-    +'<div class="al-expand">'
-      +(a.cmp?'<div class="al-cmp">'+a.cmp+'</div>':'')
-      +'<div class="al-acts">'+acts+noteBtn+flagBtn+'</div>'
-    +'</div>'
+    +(a.cmp?'<div class="al-expand"><div class="al-cmp">'+a.cmp+'</div></div>':'')
+    +'<div class="al-acts">'+acts+noteBtn+flagBtn+'</div>'
   +'</div>';
 }
 function reopenAlert(fileId,alertId){
@@ -2397,32 +2420,26 @@ function unhlDoc(id){
 // Step-1 month-tab switch (named for CSP-safe onclick)
 function setLineMonth(idx){S.lineMonthIdx=idx;render();}
 // Highlight/unhighlight all line-item rows — triggered by hovering the eyeball alert bar
-function hlAllLines(){var r=document.querySelectorAll('.li2-row');for(var i=0;i<r.length;i++)r[i].classList.add('li2-hl');}
+function hlAllLines(){var r=document.querySelectorAll('.li2-row.needs-check');for(var i=0;i<r.length;i++)r[i].classList.add('li2-hl');}
 function unhlAllLines(){var r=document.querySelectorAll('.li2-row');for(var i=0;i<r.length;i++)r[i].classList.remove('li2-hl');}
 // Verify a single global eyeball item (employer name, IC, etc.)
-function verifyEyeItem(fileId,itemId){
-  if(!S.eyeVerified[fileId])S.eyeVerified[fileId]={};
-  S.eyeVerified[fileId][itemId]=true;
-  // Check if ALL global items AND all eyeCheck line-items are now verified → resolve alert
-  var allGlobal=EYEBALL_ITEMS.every(function(ei){return (S.eyeVerified[fileId]||{})[ei.id];});
-  var allLines=true;
-  RULE_ITEMS.forEach(function(it){
-    if(!it.eyeCheck)return;
-    for(var mi=0;mi<PAYSLIP_MONTHS.length;mi++){
-      if(!(S.lineVerified[fileId]||{})[mi+'|'+it.type])allLines=false;
-    }
-  });
-  if(allGlobal&&allLines){
-    if(!S.alertResolved[fileId])S.alertResolved[fileId]={};
-    S.alertResolved[fileId]['pseye']=true;
-  }
-  render();
+// Render-independent micro-feedback toast (lives outside #app so render() won't wipe it)
+function showToast(msg,kind){
+  var host=document.getElementById('toast-host');if(!host)return;
+  var t=document.createElement('div');t.className='toast'+(kind?' toast-'+kind:'');
+  t.innerHTML=(kind==='ok'?'<span class="tk">&#10003;</span>':'')+msg;
+  host.appendChild(t);
+  setTimeout(function(){t.classList.add('show');},10);
+  setTimeout(function(){t.classList.add('hide');},2600);
+  setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},2950);
 }
-// Verify a single line-item row
-function verifyLineRow(fileId,mIdx,type){
-  if(!S.lineVerified[fileId])S.lineVerified[fileId]={};
-  S.lineVerified[fileId][mIdx+'|'+type]=true;
-  // Same completion check as above
+// Brief green pulse on a row, then settle back to normal style
+function pulse(key){
+  S.flash=S.flash||{};S.flash[key]=true;render();
+  setTimeout(function(){if(S.flash)delete S.flash[key];render();},760);
+}
+// When every global field + every flagged line item is verified, clear the Step-1 eyeball alert
+function checkSalesComplete(fileId){
   var allGlobal=EYEBALL_ITEMS.every(function(ei){return (S.eyeVerified[fileId]||{})[ei.id];});
   var allLines=true;
   RULE_ITEMS.forEach(function(it){
@@ -2435,8 +2452,20 @@ function verifyLineRow(fileId,mIdx,type){
     if(!S.alertResolved[fileId])S.alertResolved[fileId]={};
     S.alertResolved[fileId]['pseye']=true;
     S.alertResolved[fileId]['marginal-quality']=true;
+    showToast('All items verified — file is ready to route to CED.','ok');
   }
-  render();
+}
+function verifyEyeItem(fileId,itemId){
+  if(!S.eyeVerified[fileId])S.eyeVerified[fileId]={};
+  S.eyeVerified[fileId][itemId]=true;
+  checkSalesComplete(fileId);
+  pulse('doc|'+itemId);
+}
+function verifyLineRow(fileId,mIdx,type){
+  if(!S.lineVerified[fileId])S.lineVerified[fileId]={};
+  S.lineVerified[fileId][mIdx+'|'+type]=true;
+  checkSalesComplete(fileId);
+  pulse(mIdx+'|'+type);
 }
 // Add a new payslip month group (mock — adds a blank month entry)
 function addPayslipMonth(fileId){
@@ -2699,7 +2728,7 @@ function verifyAllSales(fileId){
     if(a.kind==='eyeball')S.alertResolved[fileId][a.id]=true;
   });
   S.alertResolved[fileId]['marginal-quality']=true;
-  // Also mark all individual eyeball items as verified for UI consistency
+  // Mark every global field + every flagged line item as verified in one action
   if(!S.eyeVerified[fileId])S.eyeVerified[fileId]={};
   EYEBALL_ITEMS.forEach(function(ei){S.eyeVerified[fileId][ei.id]=true;});
   if(!S.lineVerified[fileId])S.lineVerified[fileId]={};
@@ -2707,25 +2736,44 @@ function verifyAllSales(fileId){
     if(!it.eyeCheck)return;
     for(var mi=0;mi<PAYSLIP_MONTHS.length;mi++)S.lineVerified[fileId][mi+'|'+it.type]=true;
   });
+  // pulse all the rows that were just confirmed
+  S.flash=S.flash||{};
+  EYEBALL_ITEMS.forEach(function(ei){S.flash['doc|'+ei.id]=true;});
+  RULE_ITEMS.forEach(function(it){if(it.eyeCheck)for(var mi=0;mi<PAYSLIP_MONTHS.length;mi++)S.flash[mi+'|'+it.type]=true;});
   render();
+  setTimeout(function(){S.flash={};render();},760);
+  showToast('All items verified — file is ready to route to CED.','ok');
 }
 // Step-3 CED → Sales: bounce a true total mismatch back for amount re-verification (CED trusts data, won't edit it)
 function bounceToSales(fileId){ if(!S.salesBounce)S.salesBounce={}; S.salesBounce[fileId]=true; S.secOpen.items=true; render(); }
 function clearBounce(fileId){ if(S.salesBounce)delete S.salesBounce[fileId]; render(); }
 // Step-1 Sales: 补录 a line item OCR missed entirely (data gap). Name + kind here; amounts entered per-month inline.
-function openAddLine(fileId){ S.addLineTarget=fileId; render(); setTimeout(function(){var i=document.getElementById('al-name');if(i)i.focus();},30); }
-function closeAddLine(){ S.addLineTarget=null; render(); }
+// presetKey (optional): a required income field the user is filling in (e.g. 'earning_overtime_pay')
+function openAddLine(fileId,presetKey){ S.addLineTarget=fileId; S.addLinePreset=presetKey||null; render(); setTimeout(function(){var i=document.getElementById('al-name');if(i)i.focus();},30); }
+function closeAddLine(){ S.addLineTarget=null; S.addLinePreset=null; render(); }
 function saveAddLine(){
   var f=S.addLineTarget; if(!f)return;
+  var preset=S.addLinePreset;
   var ms=(document.getElementById('al-name').value||'').trim();
   var en=(document.getElementById('al-en').value||'').trim();
   var kind=document.getElementById('al-kind').value;
   if(!ms){document.getElementById('al-name').style.borderColor='#dc2626';return;}
   if(!S.customLines[f])S.customLines[f]=[];
   var id='c'+(Date.now().toString().slice(-6));
-  S.customLines[f].push({id:id,type:id,ms:ms,en:en||ms,kind:kind,custom:true,
-    ai:kind==='earning'?'earning_others':'deduction_other_deductions'});
-  S.addLineTarget=null; S.secOpen.items=true; render();
+  // If filling a specific required field, map straight to it; otherwise a sensible default bucket
+  var ai=preset?preset:(kind==='earning'?'earning_others':'deduction_other_deductions');
+  S.customLines[f].push({id:id,type:id,ms:ms,en:en||ms,kind:kind,custom:true,ai:ai});
+  // Auto-insert the mapping rule so Sales never has to touch the rules panel — CED can still adjust it later
+  if(!S.ruleMap[f])S.ruleMap[f]={}; S.ruleMap[f][id]=ai;
+  // Filling a required field closes its "missing" prompt immediately
+  if(preset){ if(!S.justifiedAlerts[f])S.justifiedAlerts[f]={}; S.justifiedAlerts[f]['miss:'+preset]='Added as line item'; }
+  S.addLineTarget=null; S.addLinePreset=null; S.secOpen.items=true;
+  // flash the new row across every pay period so the user sees it landed
+  S.flash=S.flash||{};
+  for(var mi=0;mi<PAYSLIP_MONTHS.length;mi++)S.flash[mi+'|'+id]=true;
+  render();
+  setTimeout(function(){S.flash={};render();},900);
+  showToast(ms+' added &amp; auto-mapped to income rules. Enter its amount for each pay period.','ok');
 }
 function removeCustomLine(fileId,id){
   S.customLines[fileId]=(S.customLines[fileId]||[]).filter(function(c){return c.id!==id;});
@@ -2735,18 +2783,28 @@ function removeCustomLine(fileId,id){
   if(S.ruleDraft[fileId])delete S.ruleDraft[fileId][id];
   render();
 }
+// English labels for required fields that can be filled from the missing-row prompt
+var FIELD_LABELS={'earning_basic_salary':'Basic Salary','earning_overtime_pay':'Overtime Pay','earning_total_allowances':'Total Allowances','earning_bonus_commission':'Bonus / Commission','deduction_epf_employee':'EPF (Employee)','deduction_pcb_tax':'Tax (PCB)'};
 function renderAddLineModal(){
   if(!S.addLineTarget)return '';
+  var preset=S.addLinePreset;
+  var pLabel=preset?(FIELD_LABELS[preset]||preset):'';
+  var pKind=preset?(preset.indexOf('earning')===0?'earning':'deduction'):'';
+  var noteHtml=preset
+    ?'<div class="arm-note">Filling in <b>'+pLabel+'</b>, which OCR did not detect. Confirm the name as printed on the document, then enter the amount per pay period. It is mapped to the income rules automatically.</div>'
+    :'<div class="arm-note">Use this when OCR missed a line item that is visible in the source document. Enter its name and type — it is added to the income rules automatically, and you fill the amount per pay period afterwards.</div>';
+  var kindSel=preset
+    ?'<select id="al-kind" class="inp" style="width:100%;" disabled><option value="'+pKind+'" selected>'+(pKind==='earning'?'Earning':'Deduction')+'</option></select>'
+    :'<select id="al-kind" class="inp" style="width:100%;"><option value="earning">Earning</option><option value="deduction">Deduction</option></select>';
   return '<div class="ov" style="z-index:80;"><div class="add-rule-modal" style="width:460px;">'
-    +'<div class="arm-hdr"><h3>Add Missing Item</h3><button class="docs-x" onclick="closeAddLine()">&times;</button></div>'
+    +'<div class="arm-hdr"><h3>'+(preset?'Add '+pLabel:'Add Missing Item')+'</h3><button class="docs-x" onclick="closeAddLine()">&times;</button></div>'
     +'<div class="arm-body">'
-      +'<div class="arm-note">Use this when OCR missed a line item that is visible in the source document. Add the item name and type here, then enter the amount for each pay period in Step 1. CED will map it to an income field in Step 2.</div>'
+      +noteHtml
       +'<div class="arm-row"><label class="arm-lbl">Item name (original text)<span style="color:#dc2626;">*</span></label>'
-        +'<input id="al-name" class="inp" style="width:100%;" placeholder="e.g. Elaun Pengangkutan"></div>'
+        +'<input id="al-name" class="inp" style="width:100%;" value="'+(preset?pLabel:'')+'" placeholder="e.g. Elaun Pengangkutan"></div>'
       +'<div class="arm-row"><label class="arm-lbl">English label (optional)</label>'
-        +'<input id="al-en" class="inp" style="width:100%;" placeholder="e.g. Transport Allowance"></div>'
-      +'<div class="arm-row"><label class="arm-lbl">Type</label>'
-        +'<select id="al-kind" class="inp" style="width:100%;"><option value="earning">Earning</option><option value="deduction">Deduction</option></select></div>'
+        +'<input id="al-en" class="inp" style="width:100%;" value="'+(preset?pLabel:'')+'" placeholder="e.g. Transport Allowance"></div>'
+      +'<div class="arm-row"><label class="arm-lbl">Type</label>'+kindSel+'</div>'
     +'</div>'
     +'<div class="arm-foot"><button class="btn" onclick="closeAddLine()">Cancel</button><button class="btn btn-pri" onclick="saveAddLine()">Add Item</button></div>'
   +'</div></div>';
@@ -2951,84 +3009,94 @@ function secCard(key,num,title,sub,badge,body){
     +(open?'<div class="sec-bd">'+body+'</div>':'')
   +'</div>';
 }
-/* ── ① Source line items (raw OCR, bilingual, editable) — tabbed by month ── */
+/* ── ① Source line items (raw OCR, bilingual, editable) — flat groups by pay period ── */
 function renderLineItems(fileId){
   var lv=S.lineVerified[fileId]||{};
   var ev=S.eyeVerified[fileId]||{};
+  var flash=S.flash||{};
+  var clean=(S.role==='ced');   // CED receives a file Sales has already verified — present it clean
   var issues=payslipIssues(fileId);
   var justMap=S.justifiedAlerts[fileId]||{};
-  // Missing required fields (not yet justified/skipped)
-  var missingKeys=issues.missing.filter(function(k){return !justMap['miss:'+k];});
-  // Label map for missing field keys
+  var missingKeys=clean?[]:issues.missing.filter(function(k){return !justMap['miss:'+k];});
   var missingLabels={'earning_basic_salary':'Basic Salary','earning_overtime_pay':'Overtime Pay','earning_total_allowances':'Total Allowances','earning_bonus_commission':'Bonus / Commission','deduction_epf_employee':'EPF (Employee)','deduction_pcb_tax':'Tax (PCB)'};
 
+  // Unified verify cell: a button while pending, a quiet "✓ Verified" mark once done.
+  function vcell(verified,onclick){
+    if(verified)return '<span class="li2-vcol"><span class="li2-vmark"><span class="ck">&#10003;</span> Verified</span></span>';
+    return '<span class="li2-vcol"><button class="li2-vbtn" onclick="'+onclick+'">Verify</button></span>';
+  }
+
+  // A standard line-item row: [locate] [name] [amount] [verify]
   function row(it,mIdx){
     var amt=lineAmtVal(fileId,mIdx,it);
     var edited=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type]!=null;
     var tag=it.custom?'<span class="li2-new">Added</span>':'';
     var rm=it.custom?'<span class="li2-rm" onclick="removeCustomLine(\''+fileId+'\',\''+it.id+'\')" title="Remove">&times;</span>':'';
-    var needsCheck=it.eyeCheck&&!it.custom;
-    var rowVerified=needsCheck&&lv[mIdx+'|'+it.type];
-    var vbtn=needsCheck
-      ?'<button class="li2-vbtn'+(rowVerified?' done':'')+'"'
-        +(rowVerified?' disabled':' onclick="verifyLineRow(\''+fileId+'\','+mIdx+',\''+it.type+'\')"')
-      +'>'+(rowVerified?'&#10003; Verified':'Verify')+'</button>'
-      :'';
-    var rowCls='li2-row'+(it.custom?' li2-cust':'')+(needsCheck?' needs-check':'')+(rowVerified?' row-verified':'');
+    var rowKey=mIdx+'|'+it.type;
+    var flagged=it.eyeCheck&&!it.custom;          // line item that requires an eyeball check
+    var verified=clean||(flagged&&lv[rowKey]);
+    var vcol=flagged?vcell(verified,'verifyLineRow(\''+fileId+'\','+mIdx+',\''+it.type+'\')'):'<span class="li2-vcol"></span>';
+    var rowCls='li2-row'+(it.custom?' li2-cust':'')+((flagged&&!verified)?' needs-check':'')+(flash[rowKey]?' li2-flash':'');
     return '<div class="'+rowCls+'" id="li-'+it.id+'-'+mIdx+'"'
         +' onmouseenter="hlDoc(\''+it.id+'\')" onmouseleave="unhlDoc(\''+it.id+'\')">'
       +'<span class="li2-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'
       +'<span class="li2-name">'+it.ms+'<span class="li2-en">'+it.en+'</span>'+tag+'</span>'
       +'<span class="li2-amt">'
-        +vbtn
         +'<span class="li2-cur">RM</span>'
         +'<input value="'+(it.custom&&!edited?'':money(amt))+'"'+(it.custom?' placeholder="Enter amount"':'')+' onchange="setLineAmt(\''+fileId+'\','+mIdx+',\''+it.type+'\',this.value)" class="'+(edited?'edited':'')+'">'
         +rm
       +'</span>'
+      +vcol
     +'</div>';
   }
 
-  // Missing field placeholder row (shown once, in group 1 only)
+  // A document-information row (employer, IC, commission, EPF): [name] [value] [verify]
+  function docRow(ei){
+    var verified=clean||!!ev[ei.id];
+    var key='doc|'+ei.id;
+    var vcol=vcell(verified,'verifyEyeItem(\''+fileId+'\',\''+ei.id+'\')');
+    return '<div class="li2-row'+((!verified)?' needs-check':'')+(flash[key]?' li2-flash':'')+'" id="doc-'+ei.id+'">'
+      +'<span class="li2-loc" style="opacity:.35;">'+IC.locate+'</span>'
+      +'<span class="li2-name">'+ei.label+'</span>'
+      +'<span class="li2-docval">'+ei.val+'</span>'
+      +vcol
+    +'</div>';
+  }
+
+  // Missing field placeholder row (group 1 only): prompts Add or Skip inline
   function missingRow(k){
     var label=missingLabels[k]||k.replace(/earning_|deduction_/g,'').replace(/_/g,' ');
     return '<div class="li2-row li2-missing">'
       +'<span class="li2-loc" style="opacity:.3;">'+IC.locate+'</span>'
-      +'<span class="li2-name"><span class="li2-en">'+label+'</span></span>'
-      +'<span class="li2-amt" style="gap:6px;">'
-        +'<span style="font-size:10px;color:#9ca3af;margin-right:4px;">Not detected</span>'
-        +'<button class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="openAddLine(\''+fileId+'\')">Add Item</button>'
-        +'<button class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="openJustify(\''+fileId+'\',\'miss:'+k+'\')">Skip</button>'
-      +'</span>'
+      +'<span class="li2-name">'+label+'<span class="li2-misstag">NOT DETECTED</span></span>'
+      +'<span class="li2-amt"><button class="li2-vbtn" onclick="openAddLine(\''+fileId+'\',\''+k+'\')">Add Item</button></span>'
+      +'<span class="li2-vcol"><button class="li2-vbtn skip" onclick="openJustify(\''+fileId+'\',\'miss:'+k+'\')">Skip</button></span>'
     +'</div>';
   }
 
   var all=lineItemsAll(fileId);
   var periodLabels=['Most recent payslip','Previous month','Earlier payslip'];
 
-  // Document information card — shown above group 1
-  var docInfoRows=EYEBALL_ITEMS.map(function(ei){
-    var done=!!ev[ei.id];
-    return '<div class="li2-docinfo-row">'
-      +'<span class="li2-docinfo-lbl">'+ei.label+'</span>'
-      +'<span class="li2-docinfo-val">'+ei.val+'</span>'
-      +'<button class="li2-vbtn'+(done?' done':'')+'"'+(done?' disabled':' onclick="verifyEyeItem(\''+fileId+'\',\''+ei.id+'\')"')+'>'+(done?'&#10003; Confirmed':'Confirm')+'</button>'
-    +'</div>';
-  }).join('');
-  var docInfoCard='<div class="li2-docinfo">'
-    +'<div class="li2-docinfo-hd"><span>Document Information</span><span style="font-size:10px;font-weight:400;color:var(--mut);">Compare each field against the source document</span></div>'
-    +docInfoRows
+  // Region 1 — Document Information (same heading level as each Pay Period, not a separate card)
+  var docPending=EYEBALL_ITEMS.filter(function(ei){return !(clean||ev[ei.id]);}).length;
+  var docGroup='<div class="li2-group">'
+    +'<div class="li2-ghd">'
+      +'<span class="li2-gnum">Document Information</span>'
+      +'<span class="li2-gtag'+(docPending?'':' done')+'">'+(docPending?docPending+' to verify':'&#10003; All verified')+'</span>'
+    +'</div>'
+    +EYEBALL_ITEMS.map(docRow).join('')
   +'</div>';
 
+  // Regions 2..n — one per pay period
   var groupsHtml=PAYSLIP_MONTHS.map(function(m,mIdx){
     var hasEdit=all.some(function(it){return (S.lineAmt[fileId]||{})[mIdx+'|'+it.type]!=null;});
     var earn=all.filter(function(x){return x.kind==='earning';}).map(function(it){return row(it,mIdx);}).join('');
     var ded=all.filter(function(x){return x.kind==='deduction';}).map(function(it){return row(it,mIdx);}).join('');
     var period=periodLabels[mIdx]||('Pay Period '+(mIdx+1));
-    // Append missing-field placeholder rows to earnings section of group 1 only
     var missingRowsHtml=(mIdx===0)?missingKeys.map(missingRow).join(''):'';
     return '<div class="li2-group">'
       +'<div class="li2-ghd">'
-        +'<span class="li2-gnum">Pay Period '+(mIdx+1)+(hasEdit?' <span style="color:#d97706;font-size:9px;">●</span>':'')+'</span>'
+        +'<span class="li2-gnum">Pay Period '+(mIdx+1)+(hasEdit?' <span style="color:#d97706;font-size:9px;">&#9679;</span>':'')+'</span>'
         +'<span class="li2-gperiod">'+m.month+' &middot; '+period+'</span>'
       +'</div>'
       +'<div class="li2-cap">EARNINGS</div>'+earn+missingRowsHtml
@@ -3043,8 +3111,10 @@ function renderLineItems(fileId){
     +'<button class="btn btn-sm" onclick="addPayslipMonth(\''+fileId+'\')">+ Add Pay Period</button>'
   +'</div>';
 
-  return '<div class="li2-hint">Malay / <span class="li2-en-key">grey = English translation</span> &nbsp;·&nbsp; Edit any amount directly &nbsp;·&nbsp; <span style="color:#f59e0b;">●</span> = edited &nbsp;·&nbsp; Yellow row = requires manual verify.</div>'
-    +docInfoCard+groupsHtml+addGroupBtn;
+  var hint='<div class="li2-hint">Malay text with <span class="li2-en-key">grey English translation</span>. Edit any amount directly. '
+    +(clean?'This file was verified by Sales before routing — you can still adjust any value.':'Orange rows need a manual check against the source document — click <b>Verify</b> on each, or use <b>Mark All Verified</b> above.')
+    +'</div>';
+  return hint+docGroup+groupsHtml+addGroupBtn;
 }
 /* ── ③④ Computed fields with aggregation process + OCR reconciliation ── */
 function renderComputed(fileId){
@@ -3163,14 +3233,18 @@ function renderFileDetail(){
     : nVerify?{t:'Verify '+nVerify+' flagged field'+(nVerify>1?'s':''),s:itemsSec}
     : nCheck?{t:'Check '+nCheck+' field'+(nCheck>1?'s':''),s:itemsSec}
     : null;
-  var alertCards=sorted.length?'<div class="ac-cards">'+sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join('')+'</div>':'';
+  // Only show alerts that still need action — resolved/justified ones disappear from the page
+  var activeAlerts=sorted.filter(function(a){return !resMap[a.id]&&!justMap[a.id];});
+  var alertCards=activeAlerts.length?'<div class="ac-cards">'+activeAlerts.map(function(a){return fdAlertCard(a,S.fileId);}).join('')+'</div>':'';
 
   // ── Step state machine (drives §3 cascade gating). lineMode has NO top nav —
   //    the 3 vertical "Step N" cards + their header badges carry progress & alert entry. ──
   var prc=lineMode?pendingRules(S.fileId).length:0;
-  // completeness (required field with no source line) is a Step-1 SALES task — 补录 or 忽略(reason)
-  var nMissEff=lineMode?issues.missing.filter(function(k){return !justMap['miss:'+k];}).length:0;
-  var s1Open=nh+nVerify+nCheck+nMissEff;   // ① Sales: recognition/eyeball + completeness
+  // CED always receives a clean, Sales-verified file → no Step-1 alerts for the CED view
+  var roleClean=(lineMode&&S.role==='ced');
+  // completeness (required field with no source line) is a Step-1 SALES task — add item or skip with reason
+  var nMissEff=(lineMode&&!roleClean)?issues.missing.filter(function(k){return !justMap['miss:'+k];}).length:0;
+  var s1Open=roleClean?0:(nh+nVerify+nCheck+nMissEff);   // ① Sales: recognition/eyeball + completeness
   var s2Open=prc;                          // ② CED: rule mapping (prc already includes new补录-type gaps)
   // ③ is a GATED result light: grey 待定 until ①② clear, then green/red.
   // Suppresses mismatch noise that is merely a symptom of an unfinished ① or ②.
@@ -3210,38 +3284,39 @@ function renderFileDetail(){
   var workspace;
   if(lineMode){
     var bounced=!!(S.salesBounce&&S.salesBounce[S.fileId]);
-    // ── §1 Step-1 (Sales): show COMPLETE line items + one verify action. No disconnected alert cards. ──
-    var salesItems=sorted.filter(function(a){return !resMap[a.id]&&!justMap[a.id];});
-    var s1Badge='';  // will be set below once missLeft is computed
-    // completeness: required field with no source line → Sales to add or skip with note. System already knows this at Step 1.
-    var missLeft=issues.missing.filter(function(k){return !justMap['miss:'+k];});
+    // ── §1 Step-1 (Sales): full line items + one verify action. CED receives this already clean. ──
+    var salesItems=roleClean?[]:sorted.filter(function(a){return a.kind==='eyeball'&&!resMap[a.id]&&!justMap[a.id];});
+    // completeness: required field with no source line → Sales to add or skip with note
+    var missLeft=roleClean?[]:issues.missing.filter(function(k){return !justMap['miss:'+k];});
     var s1Done=!bounced&&!salesItems.length&&!missLeft.length;
     var s1Badge=bounced?'<span class="sec-badge red">Returned</span>'
       :((salesItems.length||missLeft.length)?'<span class="sec-badge org">'+(salesItems.length+missLeft.length)+' Pending</span>':'<span class="sec-badge green">Verified</span>');
     var verifyBar='';
     if(bounced){
-      verifyBar='<div class="vf-bar vf-bounce">&#8617; <b>Returned by CED</b> — computed totals do not match the printed payslip values. Review the amounts below against the source document, correct any errors, and mark as done.'
+      verifyBar='<div class="vf-bar vf-bounce">&#8617; <b>Returned by CED</b> — computed totals do not match the printed payslip values. Review the amounts against the source document, correct any errors, then mark complete.'
         +'<div class="vf-acts"><button class="btn btn-pri btn-sm" onclick="clearBounce(\''+S.fileId+'\')">&#10003; Amounts confirmed — mark complete</button></div></div>';
-    } else if(S.role==='ced'){
-      verifyBar='<div class="vf-bar vf-done">&#10003; Sales verified — line item data confirmed. No further review needed here.</div>';
+    } else if(roleClean){
+      verifyBar='<div class="vf-bar vf-done">&#10003; Verified by Sales — line items confirmed. You can still adjust any value before approving.</div>';
     } else {
-      // Missing required fields (orange bar)
-      if(missLeft.length){
-        verifyBar+='<div class="vf-bar vf-todo">'
-          +'<div class="vf-hd">&#9888; '+missLeft.length+' required field'+(missLeft.length>1?'s':'')+' not detected by OCR — see highlighted rows below.</div>'
+      // One combined orange alert bar — action prompt + buttons only, no detail rows.
+      // Count the real pending rows so the wording matches what's highlighted below.
+      var evNow=S.eyeVerified[S.fileId]||{},lvNow=S.lineVerified[S.fileId]||{};
+      var pendDoc=EYEBALL_ITEMS.filter(function(ei){return !evNow[ei.id];}).length;
+      var pendLine=0;RULE_ITEMS.forEach(function(it){if(it.eyeCheck)for(var mi=0;mi<PAYSLIP_MONTHS.length;mi++){if(!lvNow[mi+'|'+it.type])pendLine++;}});
+      var pendCheck=pendDoc+pendLine;
+      var nPend=salesItems.length+missLeft.length;
+      if(nPend){
+        var verifyBtn=salesItems.length?'<button class="btn btn-pri btn-sm" onclick="verifyAllSales(\''+S.fileId+'\')">&#10003; Mark All Verified</button>':'';
+        var addBtn=missLeft.length?'<button class="btn'+(salesItems.length?' btn-sm':' btn-pri btn-sm')+'" onclick="openAddLine(\''+S.fileId+'\',\''+missLeft[0]+'\')">+ Add Missing Item</button>':'';
+        var parts=[];
+        if(pendCheck)parts.push(pendCheck+' field'+(pendCheck>1?'s':'')+' to verify against the document');
+        if(missLeft.length)parts.push(missLeft.length+' required field'+(missLeft.length>1?'s':'')+' not detected');
+        var msg=parts.join(' · ')||'Compare the highlighted fields and amounts against the source document, then confirm';
+        verifyBar+='<div class="vf-bar vf-todo" onmouseenter="hlAllLines()" onmouseleave="unhlAllLines()">'
+          +'<div class="vf-hd">&#9888; Eyeball check — '+msg+'.</div>'
           +'<div class="vf-acts">'
-            +'<button class="btn btn-pri btn-sm" onclick="openAddLine(\''+S.fileId+'\')">+ Add Missing Item</button>'
-            +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\'miss:'+missLeft[0]+'\')">Skip with Note</button>'
-          +'</div>'
-        +'</div>';
-      }
-      // Eyeball check (blue bar)
-      if(salesItems.length){
-        verifyBar+='<div class="vf-bar vf-eye" onmouseenter="hlAllLines()" onmouseleave="unhlAllLines()">'
-          +'<div class="vf-hd">&#128065; Eyeball check required — compare highlighted fields and amounts against the source document. Confirm each item in the Document Information card and yellow rows below.</div>'
-          +'<div class="vf-acts">'
-            +'<button class="btn btn-pri btn-sm" onclick="verifyAllSales(\''+S.fileId+'\')">&#10003; Mark All Verified</button>'
-            +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\''+salesItems[0].id+'\')">Skip with Note</button>'
+            +verifyBtn+addBtn
+            +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\''+(salesItems.length?salesItems[0].id:'miss:'+missLeft[0])+'\')">Skip with Note</button>'
           +'</div>'
         +'</div>';
       }
