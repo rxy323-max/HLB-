@@ -184,14 +184,20 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .fd-title{font-size:14px;font-weight:700;}
 .fd-crumb{font-size:11.5px;color:var(--mut);margin-top:2px;}
 .fd-top .sp{margin-left:auto;}
-/* ── Alert summary strip (top) — routes to sections ── */
-.as-strip{display:flex;align-items:center;gap:8px;padding:8px 16px;background:#fff;border-bottom:1px solid var(--bd);flex-wrap:wrap;flex-shrink:0;}
-.as-ic{display:inline-flex;}.as-ic svg{width:15px;height:15px;}
-.as-ttl{font-size:11px;font-weight:800;letter-spacing:.5px;color:#374151;}
-.as-chip{font-size:11.5px;font-weight:600;padding:2px 10px;border-radius:11px;cursor:pointer;border:1px solid transparent;}
-.as-chip:hover{filter:brightness(.96);text-decoration:underline;}
-.as-chip.red{background:#fdeceb;color:#c0392b;} .as-chip.org{background:#fff4e0;color:#b8860b;} .as-chip.blue{background:#e8f0fe;color:#2563eb;}
-.as-ok{font-size:11.5px;font-weight:600;color:#1f9d57;}
+/* ── Alert action center (top, prominent) ── */
+.ac{background:#fffaf3;border-bottom:1px solid #f0dcc0;flex-shrink:0;}
+.ac.ac-clear{background:#f1faf3;border-bottom-color:#cfe8d6;}
+.ac-bar{display:flex;align-items:center;gap:9px;padding:10px 16px;flex-wrap:wrap;}
+.ac-ic{display:inline-flex;}.ac-ic svg{width:17px;height:17px;}
+.ac-ttl{font-size:13px;font-weight:700;color:#5a4300;}
+.ac.ac-clear .ac-ttl{color:#1a5c2e;}
+.ac-chip{font-size:11.5px;font-weight:700;padding:2px 10px;border-radius:11px;cursor:pointer;border:1px solid transparent;}
+.ac-chip:hover{filter:brightness(.95);}
+.ac-chip.red{background:#fdeceb;color:#c0392b;border-color:#f3c4be;} .ac-chip.org{background:#fff4e0;color:#b8860b;border-color:#f3d98f;} .ac-chip.blue{background:#e8f0fe;color:#2563eb;border-color:#cfe0fb;}
+.ac-next{margin-left:auto;font-size:12px;font-weight:700;color:#fff;background:var(--blue);border-radius:7px;padding:5px 13px;cursor:pointer;}
+.ac-next:hover{background:var(--blue-d);}
+.ac-cards{padding:0 14px 12px;}
+.ac-cards .al-card .al-expand{max-height:340px;opacity:1;margin-top:9px;}
 /* ── Work area: left workspace + right preview ── */
 .fd-work{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,420px);overflow:hidden;}
 .fd-wleft{overflow:auto;padding:12px 14px;background:#f6f7f9;}
@@ -213,23 +219,31 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .sec.open .sec-chev{transform:rotate(180deg);}
 .sec-bd{}
 .sec-hl{box-shadow:0 0 0 2px #2563eb;}
-/* ── ① line items ── */
-.li2-note{font-size:11.5px;color:#2563eb;background:#f0f6ff;border-bottom:1px solid #dbe9fc;padding:8px 14px;}
+/* ── locate icon (subtle, replaces red pin) ── */
+.li2-loc,.rc-loc{display:inline-flex;color:#c2c8d2;cursor:pointer;flex-shrink:0;}
+.li2-loc svg,.rc-loc svg{width:14px;height:14px;}
+.li2-loc:hover,.rc-loc:hover{color:var(--blue);}
+.li2-row.lit .li2-loc,.rc-row.hot .rc-loc{color:#e0a107;}
+/* ── inline section alerts / banners ── */
+.sec-alerts{padding:10px 12px 4px;border-bottom:1px solid var(--bd2);background:#fcfcfd;}
+.sec-banner{font-size:11.5px;line-height:1.5;padding:8px 14px;border-bottom:1px solid var(--bd2);}
+.sec-banner.org{background:#fff4e0;color:#7a5c00;}
+.sec-banner.red{background:#fdeceb;color:#9c2c20;}
+.sec-badge.blue{background:#e8f0fe;color:#2563eb;}
+/* ── ① line items — single vertical bilingual list ── */
+.li2-hint{font-size:11px;color:#6b7280;background:#fafbfc;border-bottom:1px solid var(--bd2);padding:7px 14px;line-height:1.5;}
+.li2-en-key{color:#9aa1ab;}
 .li2-month{border-bottom:1px solid var(--bd2);}
 .li2-month:last-child{border-bottom:none;}
 .li2-mhd{font-size:11px;font-weight:700;color:#374151;background:#f3f5f8;padding:6px 14px;}
-.li2-cols{display:grid;grid-template-columns:1fr 1fr;}
-.li2-col{border-right:1px solid var(--bd2);padding:4px 0;}
-.li2-col:last-child{border-right:none;}
-.li2-cap{font-size:9.5px;font-weight:700;color:#9aa1ab;letter-spacing:.4px;padding:2px 14px;}
-.li2-row{display:flex;align-items:center;gap:8px;padding:5px 14px;}
+.li2-cap{font-size:9.5px;font-weight:700;color:#9aa1ab;letter-spacing:.4px;padding:5px 14px 2px;}
+.li2-row{display:flex;align-items:center;gap:9px;padding:5px 14px;}
 .li2-row:hover{background:#fafbfc;}
-.li2-name{flex:1;font-size:12px;color:#374151;cursor:pointer;display:flex;align-items:center;gap:5px;min-width:0;}
-.li2-name:hover{text-decoration:underline;}
-.li2-name .li-loc{color:#c5ccd6;font-size:11px;}
+.li2-name{flex:1;font-size:12.5px;color:#1f2937;min-width:0;display:flex;align-items:baseline;gap:8px;}
+.li2-en{font-size:10.5px;color:#9aa1ab;}
 .li2-amt{display:flex;align-items:center;gap:4px;flex-shrink:0;}
 .li2-cur{font-size:10px;color:#9aa1ab;}
-.li2-amt input{width:84px;text-align:right;border:1px solid transparent;border-radius:5px;padding:3px 6px;font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace;background:#fff;}
+.li2-amt input{width:92px;text-align:right;border:1px solid transparent;border-radius:5px;padding:3px 7px;font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace;background:#fff;}
 .li2-amt input:hover{border-color:var(--bd);}
 .li2-amt input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px #c3d5fb;}
 .li2-amt input.edited{border-color:#d97706;background:#fffdf0;color:#7a5c00;font-weight:600;}
@@ -430,13 +444,11 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .rc-hd>span:first-child{font-size:11.5px;font-weight:800;letter-spacing:.5px;color:#1e3a8a;}
 .rc-sub{font-size:11px;color:#9aa1ab;}
 .rc-grp{font-size:10px;font-weight:800;letter-spacing:.5px;color:#9aa1ab;background:#fafbfc;padding:5px 18px;border-top:1px solid var(--bd2);border-bottom:1px solid var(--bd2);}
-.rc-row{display:flex;align-items:center;padding:7px 18px;border-bottom:1px solid #f3f4f6;gap:10px;}
+.rc-row{display:flex;align-items:center;padding:7px 16px;border-bottom:1px solid #f3f4f6;gap:9px;}
 .rc-row.hot{background:#fff8e1;box-shadow:inset 3px 0 0 #e0a107;}
 .rc-row.pending{background:#fffaf0;}
-.rc-name{flex:1;display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#1f2937;cursor:pointer;min-width:0;}
-.rc-name:hover{text-decoration:underline;}
-.rc-name .li-loc{color:#c5ccd6;font-size:12px;}
-.rc-row.hot .li-loc{color:#e0a107;}
+.rc-name{flex:1;display:flex;align-items:baseline;gap:8px;font-size:12.5px;font-weight:600;color:#1f2937;min-width:0;}
+.rc-en{font-size:10.5px;color:#9aa1ab;font-weight:400;}
 .rc-map{display:flex;align-items:center;gap:6px;flex-shrink:0;}
 .rc-arrow{color:#9aa1ab;font-size:13px;}
 .rc-map .ced-rule-sel{min-width:190px;}
@@ -768,7 +780,8 @@ var IC={
   refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',
   info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
   warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-  flag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>'
+  flag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',
+  locate:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="12" y1="1.5" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22.5" y2="12"/></svg>'
 };
 function railIcon(p){return '<div class="rail-ic">'+p+'</div>';}
 
@@ -1063,17 +1076,18 @@ function bucketLabel(kind,key){
   var b=list.find(function(x){return x.key===key;});
   return b?b.label:key;
 }
-// Rule items = distinct payslip line types (no amounts here). ai = AI default bucket.
+// Rule items = distinct payslip line types. ms = Malay (as printed in the file),
+// en = English annotation. type stays the internal key. ai = AI default bucket.
 var RULE_ITEMS=[
-  {id:'r1', type:'Basic Salary',            kind:'earning',   ai:'earning_basic_salary'},
-  {id:'r2', type:'TC Meal Allowance',       kind:'earning',   ai:'earning_others'},
-  {id:'r3', type:'TC Productivity Allowance',kind:'earning',  ai:'earning_others'},
-  {id:'r4', type:'Performance Bonus',       kind:'earning',   ai:'earning_others'},
-  {id:'r5', type:'EPF Employee Contr.',     kind:'deduction', ai:'deduction_epf_employee'},
-  {id:'r6', type:'SOCSO Employee Contr.',   kind:'deduction', ai:'deduction_socso_eis'},
-  {id:'r7', type:'PCB/Tax',                 kind:'deduction', ai:'deduction_pcb_tax'},
-  {id:'r8', type:'EIS EE Contr.',           kind:'deduction', ai:'deduction_socso_eis'},
-  {id:'r9', type:'MAPA Fee',                kind:'deduction', ai:'deduction_other_deductions'}
+  {id:'r1', type:'Basic Salary',             ms:'Gaji Pokok',            en:'Basic Salary',           kind:'earning',   ai:'earning_basic_salary'},
+  {id:'r2', type:'TC Meal Allowance',        ms:'Elaun Makan',           en:'Meal Allowance',         kind:'earning',   ai:'earning_others'},
+  {id:'r3', type:'TC Productivity Allowance',ms:'Elaun Produktiviti',    en:'Productivity Allowance', kind:'earning',   ai:'earning_others'},
+  {id:'r4', type:'Performance Bonus',        ms:'Bonus Prestasi',        en:'Performance Bonus',      kind:'earning',   ai:'earning_others'},
+  {id:'r5', type:'EPF Employee Contr.',      ms:'Caruman KWSP Pekerja',  en:'EPF (Employee)',         kind:'deduction', ai:'deduction_epf_employee'},
+  {id:'r6', type:'SOCSO Employee Contr.',    ms:'Caruman PERKESO',       en:'SOCSO (Employee)',       kind:'deduction', ai:'deduction_socso_eis'},
+  {id:'r7', type:'PCB/Tax',                  ms:'Potongan Cukai (PCB)',  en:'Tax (PCB)',              kind:'deduction', ai:'deduction_pcb_tax'},
+  {id:'r8', type:'EIS EE Contr.',            ms:'Caruman SIP Pekerja',   en:'EIS (Employee)',         kind:'deduction', ai:'deduction_socso_eis'},
+  {id:'r9', type:'MAPA Fee',                 ms:'Yuran MAPA',            en:'MAPA Fee',               kind:'deduction', ai:'deduction_other_deductions'}
 ];
 function ruleItem(id){return RULE_ITEMS.find(function(x){return x.id===id;});}
 // Per-month amounts keyed by rule type (drives recompute + doc preview).
@@ -1177,8 +1191,10 @@ function bucketItems(fileId,mIdx,bucketKey){
   }).map(function(it){return {type:it.type,amt:lineAmtVal(fileId,mIdx,it)};});
 }
 function money(n){return (n==null?'':Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));}
-function toggleSec(k){S.secOpen[k]=(S.secOpen[k]===false?true:false);render();}
-function secOpen(k){return S.secOpen[k]!==false;}
+// default-collapsed sections (reference material); others default open
+function secDefaultOpen(k){return k!=='items';}
+function secOpen(k){return (S.secOpen[k]===undefined)?secDefaultOpen(k):S.secOpen[k];}
+function toggleSec(k){S.secOpen[k]=!secOpen(k);render();}
 
 var SYNC_ROWS=[
   {f:'Conventional/Islamic',cur:'C',ocr:'C',st:'ok'},
@@ -2569,7 +2585,7 @@ function payslipMock(fileId){
     var amt=PAYSLIP_MONTHS[0][it.kind==='earning'?'earn':'ded'][it.type];
     var hot=S.locateLine===it.id;
     return '<tr id="psdoc-'+it.id+'" style="'+(hot?'background:#fff3c4;outline:2px solid #e0a107;':'')+'cursor:pointer;" onclick="locateLine(\''+it.id+'\')">'
-      +'<td style="padding:3px 8px;">'+it.type+'</td>'
+      +'<td style="padding:3px 8px;">'+it.ms+'</td>'
       +'<td style="padding:3px 8px;text-align:right;">'+(amt!=null?amt.toFixed(2):'')+'</td>'
     +'</tr>';
   }
@@ -2653,7 +2669,8 @@ function renderRuleConfig(fileId){
     var aiHint=(applied!==it.ai)?'':'<span class="rc-ai">AI</span>';
     return '<div class="rc-row'+(hot?' hot':'')+(isPending?' pending':'')+'" id="rc-'+it.id+'"'
         +' onmouseenter="ruleHover(\''+fileId+'\',\''+it.id+'\')" onmouseleave="ruleUnhover(\''+it.id+'\')">'
-      +'<div class="rc-name" onclick="locateLine(\''+it.id+'\')" title="Locate in document"><span class="li-loc">&#128205;</span>'+it.type+'</div>'
+      +'<span class="rc-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'
+      +'<div class="rc-name">'+it.ms+'<span class="rc-en">'+it.en+'</span></div>'
       +'<div class="rc-map">'
         +(isPending?'<span class="li-mod-dot" title="Pending"></span>':(isCommitted?'<span class="li-mod-dot" style="background:#1f9d57;"></span>':''))
         +'<span class="rc-arrow">&rarr;</span>'
@@ -2695,31 +2712,28 @@ function secCard(key,num,title,sub,badge,body){
     +(open?'<div class="sec-bd">'+body+'</div>':'')
   +'</div>';
 }
-/* ── ① Source line items (raw OCR, editable) ── */
+/* ── ① Source line items (raw OCR, bilingual, editable) ── */
 function renderLineItems(fileId){
-  var eye=(FILE_DETAIL[fileId].alerts||[]).some(function(a){return a.kind==='eyeball'&&!(S.alertResolved[fileId]||{})[a.id];});
-  var note=eye?'<div class="li2-note">&#128065; Some fields are flagged for manual verification — confirm them against the document.</div>':'';
+  function row(it,mIdx){
+    var amt=lineAmtVal(fileId,mIdx,it);
+    var edited=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type]!=null;
+    return '<div class="li2-row" id="li-'+it.id+'-'+mIdx+'"'
+        +' onmouseenter="hlDoc(\''+it.id+'\')" onmouseleave="unhlDoc(\''+it.id+'\')">'
+      +'<span class="li2-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'
+      +'<span class="li2-name">'+it.ms+'<span class="li2-en">'+it.en+'</span></span>'
+      +'<span class="li2-amt"><span class="li2-cur">RM</span><input value="'+money(amt)+'" onchange="setLineAmt(\''+fileId+'\','+mIdx+',\''+it.type+'\',this.value)" class="'+(edited?'edited':'')+'"></span>'
+    +'</div>';
+  }
   var months=PAYSLIP_MONTHS.map(function(m,mIdx){
-    function row(it){
-      var amt=lineAmtVal(fileId,mIdx,it);
-      var edited=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type]!=null;
-      return '<div class="li2-row" id="li-'+it.id+'-'+mIdx+'"'
-          +' onmouseenter="hlDoc(\''+it.id+'\')" onmouseleave="unhlDoc(\''+it.id+'\')">'
-        +'<span class="li2-name" onclick="locateLine(\''+it.id+'\')" title="Locate in document"><span class="li-loc">&#128205;</span>'+it.type+'</span>'
-        +'<span class="li2-amt"><span class="li2-cur">RM</span><input value="'+money(amt)+'" onchange="setLineAmt(\''+fileId+'\','+mIdx+',\''+it.type+'\',this.value)" class="'+(edited?'edited':'')+'"></span>'
-      +'</div>';
-    }
-    var earn=RULE_ITEMS.filter(function(x){return x.kind==='earning';}).map(row).join('');
-    var ded=RULE_ITEMS.filter(function(x){return x.kind==='deduction';}).map(row).join('');
+    var earn=RULE_ITEMS.filter(function(x){return x.kind==='earning';}).map(function(it){return row(it,mIdx);}).join('');
+    var ded=RULE_ITEMS.filter(function(x){return x.kind==='deduction';}).map(function(it){return row(it,mIdx);}).join('');
     return '<div class="li2-month">'
       +'<div class="li2-mhd">'+m.month+'</div>'
-      +'<div class="li2-cols">'
-        +'<div class="li2-col"><div class="li2-cap">EARNINGS</div>'+earn+'</div>'
-        +'<div class="li2-col"><div class="li2-cap">DEDUCTIONS</div>'+ded+'</div>'
-      +'</div>'
+      +'<div class="li2-cap">EARNINGS / PENDAPATAN</div>'+earn
+      +'<div class="li2-cap">DEDUCTIONS / POTONGAN</div>'+ded
     +'</div>';
   }).join('');
-  return note+months;
+  return '<div class="li2-hint">Showing the document’s original Malay text; <span class="li2-en-key">grey = English</span>. Edit an amount if OCR misread it.</div>'+months;
 }
 /* ── ③④ Computed fields with aggregation process + OCR reconciliation ── */
 function renderComputed(fileId){
@@ -2819,25 +2833,40 @@ function renderFileDetail(){
   var isIncomeFile=INCOME_FILE_IDS.indexOf(S.fileId)!==-1;
   var aEmpty=(allAlerts.length===0);
 
-  // ── Alert summary strip (top): type chips that route to the relevant section ──
+  // ── Alert ACTION CENTER (top, prominent): counts → routing + next-step + cards ──
   var issues=lineMode?payslipIssues(S.fileId):{missing:[],mismatch:[]};
   var nVerify=allAlerts.filter(function(a){return a.kind==='eyeball'&&!resMap[a.id]&&!justMap[a.id];}).length;
+  var nCheck=nw+nc-nVerify;            // remaining warnings / checks (non-eyeball)
   var nMissing=issues.missing.length;
   var nMismatch=issues.mismatch.length;
-  var nOther=nh+nw; // hard/warn non-eyeball
+  var totalIssues=nh+nVerify+nCheck+nMissing+nMismatch;
   function aChip(n,label,cls,target){
     if(!n)return '';
-    return '<span class="as-chip '+cls+'" onclick="scrollToSec(\''+target+'\')">'+n+' '+label+'</span>';
+    return '<span class="ac-chip '+cls+'" onclick="scrollToSec(\''+target+'\')">'+n+' '+label+'</span>';
   }
-  var alertStrip='<div class="as-strip">'
-    +'<span class="as-ic" style="color:'+(aEmpty&&!nMissing&&!nMismatch?'#1f9d57':'#c0392b')+';">'+IC.warn+'</span>'
-    +'<span class="as-ttl">VALIDATION</span>'
-    +(nh?'<span class="as-chip red" onclick="scrollToSec(\'alerts\')">'+nh+' Hard Fail</span>':'')
-    +aChip(nVerify,'Verify','blue',lineMode?'items':'alerts')
-    +aChip(nMissing,'Missing field','org','map')
-    +aChip(nMismatch,'Mismatch','red','comp')
-    +((nVerify+nMissing+nMismatch+nh+nw)===0?'<span class="as-ok">&#10003; All checks passed</span>':'')
-    +'<a class="lnk" style="margin-left:auto;font-size:11px;" onclick="scrollToSec(\'alerts\')">View all alerts &#8595;</a>'
+  var itemsSec=lineMode?'items':'fields';
+  // next-step priority: Hard → Missing → Mismatch → Verify → Check
+  var next= nh?{t:'Resolve '+nh+' hard fail'+(nh>1?'s':''),s:itemsSec}
+    : nMissing?{t:'Map '+nMissing+' missing required field'+(nMissing>1?'s':''),s:'map'}
+    : nMismatch?{t:'Review '+nMismatch+' total that doesn’t reconcile',s:'comp'}
+    : nVerify?{t:'Verify '+nVerify+' flagged field'+(nVerify>1?'s':''),s:itemsSec}
+    : nCheck?{t:'Check '+nCheck+' field'+(nCheck>1?'s':''),s:itemsSec}
+    : null;
+  // Recognition/rule alert cards always live in the top action center (never hidden in a collapsed section).
+  // Section-specific COMPUTED issues (missing field / mismatch) appear as inline banners in §2/§3.
+  var alertCards=sorted.length?'<div class="ac-cards">'+sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join('')+'</div>':'';
+  var actionCenter='<div class="ac'+(totalIssues?'':' ac-clear')+'">'
+    +'<div class="ac-bar">'
+      +'<span class="ac-ic" style="color:'+(totalIssues?(nh?'#c0392b':'#d97706'):'#1f9d57')+';">'+IC.warn+'</span>'
+      +'<span class="ac-ttl">'+(totalIssues?totalIssues+' item'+(totalIssues>1?'s':'')+' need attention':'All validation checks passed')+'</span>'
+      +(nh?'<span class="ac-chip red" onclick="scrollToSec(\''+itemsSec+'\')">'+nh+' Hard Fail</span>':'')
+      +aChip(nVerify,'Verify','blue',itemsSec)
+      +aChip(nCheck,'Check','org',itemsSec)
+      +aChip(nMissing,'Missing field','org','map')
+      +aChip(nMismatch,'Mismatch','red','comp')
+      +(next?'<span class="ac-next" onclick="scrollToSec(\''+next.s+'\')">&#9654; Next: '+next.t+'</span>':'')
+    +'</div>'
+    +alertCards
   +'</div>';
 
   // ── Preview (right column) ──
@@ -2860,15 +2889,16 @@ function renderFileDetail(){
   var workspace;
   if(lineMode){
     var prc=pendingRules(S.fileId).length;
-    var mapBadge=prc?'<span class="sec-badge org">'+prc+' pending</span>':'';
-    var missBadge=nMissing?'<span class="sec-badge org">'+nMissing+' missing</span>':'';
+    var verifyBadge=nVerify?'<span class="sec-badge blue">'+nVerify+' verify</span>':'';
+    var mapBadge=prc?'<span class="sec-badge org">'+prc+' pending</span>':(nMissing?'<span class="sec-badge org">'+nMissing+' missing</span>':'');
     var mmBadge=nMismatch?'<span class="sec-badge red">'+nMismatch+' mismatch</span>':'<span class="sec-badge green">reconciled</span>';
+    // §2/§3 carry their own COMPUTED issue banners; recognition alerts live in the top action center
+    var missBanner=nMissing?'<div class="sec-banner org">&#9888; Required field not mapped: <b>'+issues.missing.map(function(k){return k.replace(/_/g,' ');}).join(', ')+'</b> — assign a line item below.</div>':'';
+    var mmBanner=nMismatch?'<div class="sec-banner red">&#9888; '+nMismatch+' computed total does not match the payslip’s printed total — check the highlighted row(s).</div>':'';
     workspace=
-      secCard('items','1','Source Line Items','raw OCR — editable amounts','', renderLineItems(S.fileId))
-      +secCard('map','2','Line-item → Field Mapping','assign each line to an income field',mapBadge, renderRuleConfig(S.fileId))
-      +secCard('comp','3','Computed Fields &amp; Validation','aggregation process + reconcile vs payslip totals',mmBadge||missBadge, renderComputed(S.fileId))
-      +secCard('alerts','&#9888;','All Alerts','',aEmpty?'<span class="sec-badge green">none</span>':'<span class="sec-badge red">'+unresolvedCount+'</span>',
-        (sorted.length?summary+sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join(''):'<div class="fd-noalert">No validation alerts.</div>'));
+      secCard('items','1','Source Line Items','原始细项 · editable amounts',verifyBadge, renderLineItems(S.fileId))
+      +secCard('map','2','Line-item → Field Mapping','细项映射字段 · Malay → English',mapBadge, missBanner+renderRuleConfig(S.fileId))
+      +secCard('comp','3','Computed Fields &amp; Validation','加总与校验 · vs payslip totals',mmBadge, mmBanner+renderComputed(S.fileId));
   } else {
     var renderGroups=d.groups;
     var groupsHtml=renderGroups.map(function(g){
@@ -2879,10 +2909,7 @@ function renderFileDetail(){
     }).join('');
     var fieldsHead='<div class="fd-fields-head"><span class="h-lbl">Field</span><span class="h-val">OCR Value</span>'
       +(isIncomeFile?'<span class="h-rule">Rule Classification &#9656;</span>':'')+'<span class="h-conf">Conf.</span></div>';
-    workspace=
-      secCard('alerts','&#9888;','Validation Alerts','',aEmpty?'<span class="sec-badge green">none</span>':'<span class="sec-badge red">'+unresolvedCount+'</span>',
-        (sorted.length?summary+sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join(''):'<div class="fd-noalert">No validation alerts on this document.</div>'))
-      +secCard('fields','&#9707;','Fields','OCR-extracted values','', zeroBanner+fieldsHead+groupsHtml);
+    workspace=secCard('fields','&#9707;','Fields','OCR-extracted values','', zeroBanner+fieldsHead+groupsHtml);
   }
 
   // ── Income total for footer ──
@@ -2899,7 +2926,7 @@ function renderFileDetail(){
       +'<button class="btn btn-sm">&#8249; Prev</button>'
       +'<button class="btn btn-sm">Next &#8250;</button>'
     +'</div>'
-    +alertStrip
+    +actionCenter
     +'<div class="fd-work">'
       +'<div class="fd-wleft">'+workspace+'</div>'
       +qPreview
