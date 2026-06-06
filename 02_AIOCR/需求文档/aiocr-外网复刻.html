@@ -184,41 +184,72 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .fd-title{font-size:14px;font-weight:700;}
 .fd-crumb{font-size:11.5px;color:var(--mut);margin-top:2px;}
 .fd-top .sp{margin-left:auto;}
-/* ── 2×2 grid: alerts | rules / fields | preview ── */
-.fd-grid{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,440px);grid-template-rows:auto minmax(0,1fr);overflow:hidden;position:relative;}
-.fdq{min-width:0;min-height:0;}
-.fdq-alerts{grid-column:1;grid-row:1;border-bottom:1px solid var(--bd);}
-.fdq-rules{grid-column:2;grid-row:1;border-left:1px solid var(--bd);border-bottom:1px solid var(--bd);}
-.fd-grid.no-rules .fdq-alerts{grid-column:1 / 3;}
-.fdq-fields{grid-column:1;grid-row:2;overflow:auto;}
-.fdq-preview{grid-column:2;grid-row:2;border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;background:#fafbfc;}
-.fdq-lbl{font-size:10px;font-weight:800;letter-spacing:.5px;color:#1e3a8a;background:#eef3fb;padding:6px 18px;border-bottom:1px solid #dbe6fb;position:sticky;top:0;z-index:1;}
-.fdq-lbl span{font-weight:400;color:#5b6470;}
-.fdq-fields .fd-fields-head{position:sticky;top:0;z-index:1;}
-.fdq-fields .fdq-lbl+.fd-fields-head{top:27px;}
-/* ── Expandable panels (top row) — click to pin open, explicit collapse ── */
-.hoverpanel{position:relative;background:#fff;}
-.hp-bar{display:flex;align-items:center;gap:8px;padding:11px 16px;cursor:pointer;user-select:none;border-left:3px solid transparent;}
-.hp-bar:hover{background:#f3f7ff;border-left-color:var(--blue);}
-.hoverpanel.pinned .hp-bar{background:#eef4ff;border-left-color:var(--blue);}
-.fdq-rules .hp-bar:hover,.fdq-rules.pinned .hp-bar{background:#eef4ff;}
-.hp-bar .al-hd-ic{display:inline-flex;}.hp-bar .al-hd-ic svg{width:15px;height:15px;}
-/* clickable cue pill */
-.hp-cue{margin-left:auto;font-size:10.5px;font-weight:600;color:var(--blue);background:#e8f0fe;border:1px solid #cfe0fb;border-radius:11px;padding:1px 9px;display:inline-flex;align-items:center;gap:4px;}
-.hp-bar:hover .hp-cue{background:var(--blue);color:#fff;border-color:var(--blue);}
-.hp-bar .chev{color:var(--blue);font-size:11px;transition:transform .15s;}
-.hoverpanel.pinned .hp-bar .chev{transform:rotate(180deg);}
-/* empty / disabled bar — greyed, not clickable */
-.hp-bar.empty{cursor:default;border-left-color:transparent;opacity:.7;}
-.hp-bar.empty:hover{background:none;border-left-color:transparent;}
-.hp-bar.empty .al-hd-ttl,.hp-bar.empty .al-hd-cnt{color:#9aa1ab;}
-.hp-none{margin-left:auto;font-size:10.5px;color:#b6bcc6;font-style:italic;}
-/* overlay drop — opens only when pinned */
-.hp-drop{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--bd);border-top:none;box-shadow:0 16px 34px rgba(30,40,80,.18);max-height:0;overflow:hidden;opacity:0;pointer-events:none;z-index:40;}
-.hp-inner{padding:8px 14px 12px;position:relative;}
-.hoverpanel.pinned .hp-drop{max-height:74vh;overflow:auto;opacity:1;pointer-events:auto;}
-/* inside the drop, alert cards are fully expanded */
-.hp-drop .al-card .al-expand{max-height:340px;opacity:1;margin-top:9px;}
+/* ── Alert summary strip (top) — routes to sections ── */
+.as-strip{display:flex;align-items:center;gap:8px;padding:8px 16px;background:#fff;border-bottom:1px solid var(--bd);flex-wrap:wrap;flex-shrink:0;}
+.as-ic{display:inline-flex;}.as-ic svg{width:15px;height:15px;}
+.as-ttl{font-size:11px;font-weight:800;letter-spacing:.5px;color:#374151;}
+.as-chip{font-size:11.5px;font-weight:600;padding:2px 10px;border-radius:11px;cursor:pointer;border:1px solid transparent;}
+.as-chip:hover{filter:brightness(.96);text-decoration:underline;}
+.as-chip.red{background:#fdeceb;color:#c0392b;} .as-chip.org{background:#fff4e0;color:#b8860b;} .as-chip.blue{background:#e8f0fe;color:#2563eb;}
+.as-ok{font-size:11.5px;font-weight:600;color:#1f9d57;}
+/* ── Work area: left workspace + right preview ── */
+.fd-work{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,420px);overflow:hidden;}
+.fd-wleft{overflow:auto;padding:12px 14px;background:#f6f7f9;}
+.fdq-preview{border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;background:#fafbfc;}
+.fd-fields-head{display:flex;align-items:center;gap:14px;padding:7px 14px;background:#fafbfc;border-bottom:1px solid var(--bd);font-size:10px;font-weight:700;color:#9aa1ab;text-transform:uppercase;letter-spacing:.4px;}
+.fd-fields-head .h-lbl{min-width:160px;}.fd-fields-head .h-val{flex:1;}
+.fd-fields-head .h-rule{min-width:200px;color:#d97706;}.fd-fields-head .h-conf{width:46px;text-align:right;margin-left:auto;}
+/* ── Collapsible section cards ── */
+.sec{background:#fff;border:1px solid var(--bd);border-radius:9px;margin-bottom:12px;overflow:hidden;}
+.sec-hd{display:flex;align-items:center;gap:9px;padding:11px 14px;cursor:pointer;user-select:none;}
+.sec-hd:hover{background:#fafbfc;}
+.sec.open>.sec-hd{border-bottom:1px solid var(--bd2);}
+.sec-num{width:20px;height:20px;border-radius:50%;background:#1e3a8a;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sec-ttl{font-size:13px;font-weight:700;color:#1f2937;}
+.sec-sub{font-size:11px;color:#9aa1ab;}
+.sec-badge{font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;}
+.sec-badge.org{background:#fff4e0;color:#b8860b;}.sec-badge.red{background:#fdeceb;color:#c0392b;}.sec-badge.green{background:#e6f4ea;color:#1a7a43;}
+.sec-chev{margin-left:auto;color:#9aa1ab;font-size:11px;transition:transform .15s;}
+.sec.open .sec-chev{transform:rotate(180deg);}
+.sec-bd{}
+.sec-hl{box-shadow:0 0 0 2px #2563eb;}
+/* ── ① line items ── */
+.li2-note{font-size:11.5px;color:#2563eb;background:#f0f6ff;border-bottom:1px solid #dbe9fc;padding:8px 14px;}
+.li2-month{border-bottom:1px solid var(--bd2);}
+.li2-month:last-child{border-bottom:none;}
+.li2-mhd{font-size:11px;font-weight:700;color:#374151;background:#f3f5f8;padding:6px 14px;}
+.li2-cols{display:grid;grid-template-columns:1fr 1fr;}
+.li2-col{border-right:1px solid var(--bd2);padding:4px 0;}
+.li2-col:last-child{border-right:none;}
+.li2-cap{font-size:9.5px;font-weight:700;color:#9aa1ab;letter-spacing:.4px;padding:2px 14px;}
+.li2-row{display:flex;align-items:center;gap:8px;padding:5px 14px;}
+.li2-row:hover{background:#fafbfc;}
+.li2-name{flex:1;font-size:12px;color:#374151;cursor:pointer;display:flex;align-items:center;gap:5px;min-width:0;}
+.li2-name:hover{text-decoration:underline;}
+.li2-name .li-loc{color:#c5ccd6;font-size:11px;}
+.li2-amt{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.li2-cur{font-size:10px;color:#9aa1ab;}
+.li2-amt input{width:84px;text-align:right;border:1px solid transparent;border-radius:5px;padding:3px 6px;font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace;background:#fff;}
+.li2-amt input:hover{border-color:var(--bd);}
+.li2-amt input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px #c3d5fb;}
+.li2-amt input.edited{border-color:#d97706;background:#fffdf0;color:#7a5c00;font-weight:600;}
+/* ── ③④ computed fields ── */
+.cp-month{border-bottom:1px solid var(--bd2);padding-bottom:6px;}
+.cp-month:last-child{border-bottom:none;}
+.cp-row{display:flex;align-items:baseline;gap:10px;padding:5px 14px;font-size:12.5px;}
+.cp-lbl{flex:1;color:#374151;display:flex;flex-direction:column;}
+.cp-proc{font-size:10.5px;color:#9aa1ab;font-family:ui-monospace,Menlo,Consolas,monospace;margin-top:1px;}
+.cp-val{font-weight:600;color:#111827;font-family:ui-monospace,Menlo,Consolas,monospace;}
+.cp-recon{margin:6px 14px 4px;background:#f8f9fb;border:1px solid #eef0f3;border-radius:7px;padding:4px 0;}
+.cp-val-row{padding:5px 12px;font-size:11.5px;}
+.cp-val-row .cp-lbl{flex:1;color:#5b6470;}
+.cp-calc{font-weight:700;color:#1e3a8a;font-family:ui-monospace,Menlo,Consolas,monospace;}
+.cp-vs{font-size:10px;color:#b6bcc6;}
+.cp-ocr{color:#374151;font-family:ui-monospace,Menlo,Consolas,monospace;}
+.cp-ok{color:#1f9d57;font-weight:700;}
+.cp-bad{color:#c0392b;font-weight:700;font-size:11px;}
+.cp-income{font-size:11.5px;color:#1a5c2e;background:#eef7f0;border-top:1px solid #d6ead9;padding:6px 14px;}
+.cp-income b{color:#14532d;}
 /* ── Collapsible alerts header ── */
 .fd-alert-strip{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--bd);cursor:pointer;flex-shrink:0;}
 .fd-alert-strip:hover{background:#fafbfc;}
@@ -768,6 +799,8 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'cedfiles', fileOpen:false, file
         ruleMap:{},           // {fileId:{ruleId:bucket}} — APPLIED rule definitions
         ruleDraft:{},         // {fileId:{ruleId:bucket}} — staged, not yet applied
         incomeLog:{},         // {fileId:[{t,raw,from,to}]} — CED change log
+        lineAmt:{},           // {fileId:{'mIdx|type':amount}} — edited line-item amounts
+        secOpen:{},           // {sectionKey:false} — collapsed sections (default open)
         locateLine:null       // rule item id currently located/highlighted (rule↔doc linkage)
 };
 
@@ -1043,14 +1076,18 @@ var RULE_ITEMS=[
   {id:'r9', type:'MAPA Fee',                kind:'deduction', ai:'deduction_other_deductions'}
 ];
 function ruleItem(id){return RULE_ITEMS.find(function(x){return x.id===id;});}
-// Per-month amounts keyed by rule type (drives recompute + doc preview)
+// Per-month amounts keyed by rule type (drives recompute + doc preview).
+// ocr* = totals printed on the payslip, used for step-④ reconciliation.
 var PAYSLIP_MONTHS=[
   {month:'03/2025', earn:{'Basic Salary':9673.00,'TC Meal Allowance':3185.00,'TC Productivity Allowance':9464.00,'Performance Bonus':500.00},
-                    ded:{'EPF Employee Contr.':2167.00,'SOCSO Employee Contr.':29.75,'PCB/Tax':972.45,'EIS EE Contr.':11.90,'MAPA Fee':70.00}},
+                    ded:{'EPF Employee Contr.':2167.00,'SOCSO Employee Contr.':29.75,'PCB/Tax':972.45,'EIS EE Contr.':11.90,'MAPA Fee':70.00},
+                    ocrGross:22822.00, ocrDed:3251.10, ocrNet:19570.90},
   {month:'02/2025', earn:{'Basic Salary':9673.00,'TC Meal Allowance':2800.00,'TC Productivity Allowance':8900.00,'Performance Bonus':0.00},
-                    ded:{'EPF Employee Contr.':2334.00,'SOCSO Employee Contr.':29.75,'PCB/Tax':847.45,'EIS EE Contr.':11.90,'MAPA Fee':70.00}},
+                    ded:{'EPF Employee Contr.':2334.00,'SOCSO Employee Contr.':29.75,'PCB/Tax':847.45,'EIS EE Contr.':11.90,'MAPA Fee':70.00},
+                    ocrGross:21373.00, ocrDed:3293.10, ocrNet:18079.90},
   {month:'01/2025', earn:{'Basic Salary':9673.00,'TC Meal Allowance':2600.00,'TC Productivity Allowance':8200.00,'Performance Bonus':0.00},
-                    ded:{'EPF Employee Contr.':2425.00,'SOCSO Employee Contr.':29.75,'PCB/Tax':847.45,'EIS EE Contr.':11.90,'MAPA Fee':70.00}}
+                    ded:{'EPF Employee Contr.':2425.00,'SOCSO Employee Contr.':29.75,'PCB/Tax':847.45,'EIS EE Contr.':11.90,'MAPA Fee':70.00},
+                    ocrGross:20473.00, ocrDed:3384.10, ocrNet:17088.90}
 ];
 // APPLIED / DRAFT bucket for a rule type
 function ruleApplied(fileId,id){var ov=(S.ruleMap[fileId]||{})[id];return ov||ruleItem(id).ai;}
@@ -1077,31 +1114,71 @@ function confirmRuleChanges(fileId){
   S.ruleDraft[fileId]={};
   render();
 }
-// Recompute one month's income fields from the APPLIED rule mapping
+// Recompute one month from the APPLIED rule mapping.
+//   buckets        = income-classified sums (exclude dropped)
+//   grossAll/dedAll= sum of ALL captured lines (for OCR reconciliation, step ④)
+//   incomeGross    = sum of income buckets (exclude dropped) → verifiable income
 function computeMonth(fileId,mIdx){
   var m=PAYSLIP_MONTHS[mIdx];var out={};
   EARNING_BUCKETS.forEach(function(b){out[b.key]=0;});
   DEDUCTION_BUCKETS.forEach(function(b){out[b.key]=0;});
+  var grossAll=0,dedAll=0;
   RULE_ITEMS.forEach(function(it){
-    var amt=(it.kind==='earning'?m.earn:m.ded)[it.type];
-    if(amt==null)return;
+    var base=(it.kind==='earning'?m.earn:m.ded)[it.type];
+    if(base==null)return;
+    var ov=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type];
+    var amt=(ov!=null?ov:base);
+    if(it.kind==='earning')grossAll+=amt;else dedAll+=amt;
     var bucket=ruleApplied(fileId,it.id);
     if(bucket==='exclude')return;
     out[bucket]=(out[bucket]||0)+amt;
   });
-  var gross=EARNING_BUCKETS.reduce(function(s,b){return b.key==='exclude'?s:s+(out[b.key]||0);},0);
-  var totalDed=DEDUCTION_BUCKETS.reduce(function(s,b){return b.key==='exclude'?s:s+(out[b.key]||0);},0);
-  out.gross_salary=gross;
-  out.deduction_total_deductions=totalDed;
-  out.net_pay_amount=gross-totalDed;
+  var incomeGross=EARNING_BUCKETS.reduce(function(s,b){return b.key==='exclude'?s:s+(out[b.key]||0);},0);
+  out.gross_salary=grossAll;                 // printed gross = all earnings
+  out.deduction_total_deductions=dedAll;     // printed total deductions = all deductions
+  out.net_pay_amount=grossAll-dedAll;        // printed net
+  out.grossAll=grossAll; out.dedAll=dedAll; out.incomeGross=incomeGross;
+  out.ocrGross=m.ocrGross; out.ocrDed=m.ocrDed; out.ocrNet=m.ocrNet;
+  // validation flags (computed vs OCR printed)
+  out.okGross=Math.abs(grossAll-m.ocrGross)<0.01;
+  out.okDed=Math.abs(dedAll-m.ocrDed)<0.01;
+  out.okNet=Math.abs((grossAll-dedAll)-m.ocrNet)<0.01;
   return out;
 }
-// Average verifiable monthly income across the 3 months (gross basis)
+// Average verifiable (income) monthly income across the 3 months
 function payslipAvgIncome(fileId){
-  var sum=0;for(var i=0;i<PAYSLIP_MONTHS.length;i++)sum+=computeMonth(fileId,i).gross_salary;
+  var sum=0;for(var i=0;i<PAYSLIP_MONTHS.length;i++)sum+=computeMonth(fileId,i).incomeGross;
   return sum/PAYSLIP_MONTHS.length;
 }
+// Collect step-② (missing required field) + step-④ (validation mismatch) issues
+function payslipIssues(fileId){
+  var missing=[],mismatch=[];
+  // ② required income buckets that received no line item
+  var required=['earning_basic_salary'];
+  var c0=computeMonth(fileId,0);
+  required.forEach(function(k){if(!c0[k])missing.push(k);});
+  // ④ per-month reconciliation
+  PAYSLIP_MONTHS.forEach(function(m,i){
+    var c=computeMonth(fileId,i);
+    if(!c.okGross)mismatch.push({month:m.month,what:'Gross',calc:c.grossAll,ocr:c.ocrGross});
+    if(!c.okDed)mismatch.push({month:m.month,what:'Total Deductions',calc:c.dedAll,ocr:c.ocrDed});
+    if(!c.okNet)mismatch.push({month:m.month,what:'Net Pay',calc:c.grossAll-c.dedAll,ocr:c.ocrNet});
+  });
+  return {missing:missing,mismatch:mismatch};
+}
 function isRuleModeFile(fileId){var d=FILE_DETAIL[fileId];return !!(d&&d.lineItemMode);}
+function lineAmtVal(fileId,mIdx,it){var base=(it.kind==='earning'?PAYSLIP_MONTHS[mIdx].earn:PAYSLIP_MONTHS[mIdx].ded)[it.type];var ov=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type];return ov!=null?ov:base;}
+function setLineAmt(fileId,mIdx,type,val){var n=parseFloat((''+val).replace(/[^0-9.]/g,''));if(isNaN(n))return;if(!S.lineAmt[fileId])S.lineAmt[fileId]={};S.lineAmt[fileId][mIdx+'|'+type]=n;render();}
+// line items mapped into a given bucket for a month (for the aggregation "process")
+function bucketItems(fileId,mIdx,bucketKey){
+  return RULE_ITEMS.filter(function(it){
+    var base=(it.kind==='earning'?PAYSLIP_MONTHS[mIdx].earn:PAYSLIP_MONTHS[mIdx].ded)[it.type];
+    return base!=null && ruleApplied(fileId,it.id)===bucketKey;
+  }).map(function(it){return {type:it.type,amt:lineAmtVal(fileId,mIdx,it)};});
+}
+function money(n){return (n==null?'':Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));}
+function toggleSec(k){S.secOpen[k]=(S.secOpen[k]===false?true:false);render();}
+function secOpen(k){return S.secOpen[k]!==false;}
 
 var SYNC_ROWS=[
   {f:'Conventional/Islamic',cur:'C',ocr:'C',st:'ok'},
@@ -2604,6 +2681,85 @@ function renderRuleConfig(fileId){
     +applyBar+logSec
   +'</div>';
 }
+/* ── Collapsible section card ── */
+function secCard(key,num,title,sub,badge,body){
+  var open=secOpen(key);
+  return '<div class="sec'+(open?' open':'')+'" id="sec-'+key+'">'
+    +'<div class="sec-hd" onclick="toggleSec(\''+key+'\')">'
+      +'<span class="sec-num">'+num+'</span>'
+      +'<span class="sec-ttl">'+title+'</span>'
+      +(sub?'<span class="sec-sub">'+sub+'</span>':'')
+      +(badge||'')
+      +'<span class="sec-chev">&#9662;</span>'
+    +'</div>'
+    +(open?'<div class="sec-bd">'+body+'</div>':'')
+  +'</div>';
+}
+/* ── ① Source line items (raw OCR, editable) ── */
+function renderLineItems(fileId){
+  var eye=(FILE_DETAIL[fileId].alerts||[]).some(function(a){return a.kind==='eyeball'&&!(S.alertResolved[fileId]||{})[a.id];});
+  var note=eye?'<div class="li2-note">&#128065; Some fields are flagged for manual verification — confirm them against the document.</div>':'';
+  var months=PAYSLIP_MONTHS.map(function(m,mIdx){
+    function row(it){
+      var amt=lineAmtVal(fileId,mIdx,it);
+      var edited=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type]!=null;
+      return '<div class="li2-row" id="li-'+it.id+'-'+mIdx+'"'
+          +' onmouseenter="hlDoc(\''+it.id+'\')" onmouseleave="unhlDoc(\''+it.id+'\')">'
+        +'<span class="li2-name" onclick="locateLine(\''+it.id+'\')" title="Locate in document"><span class="li-loc">&#128205;</span>'+it.type+'</span>'
+        +'<span class="li2-amt"><span class="li2-cur">RM</span><input value="'+money(amt)+'" onchange="setLineAmt(\''+fileId+'\','+mIdx+',\''+it.type+'\',this.value)" class="'+(edited?'edited':'')+'"></span>'
+      +'</div>';
+    }
+    var earn=RULE_ITEMS.filter(function(x){return x.kind==='earning';}).map(row).join('');
+    var ded=RULE_ITEMS.filter(function(x){return x.kind==='deduction';}).map(row).join('');
+    return '<div class="li2-month">'
+      +'<div class="li2-mhd">'+m.month+'</div>'
+      +'<div class="li2-cols">'
+        +'<div class="li2-col"><div class="li2-cap">EARNINGS</div>'+earn+'</div>'
+        +'<div class="li2-col"><div class="li2-cap">DEDUCTIONS</div>'+ded+'</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+  return note+months;
+}
+/* ── ③④ Computed fields with aggregation process + OCR reconciliation ── */
+function renderComputed(fileId){
+  return PAYSLIP_MONTHS.map(function(m,mIdx){
+    var c=computeMonth(fileId,mIdx);
+    function fieldRow(key,label){
+      var items=bucketItems(fileId,mIdx,key);
+      if(!items.length)return '';
+      var process=items.length>1?'<span class="cp-proc">'+items.map(function(x){return x.type.replace(/ (Allowance|Contr\.|Employee).*/,'')+' '+money(x.amt);}).join(' + ')+'</span>':'';
+      return '<div class="cp-row"><span class="cp-lbl">'+label+process+'</span><span class="cp-val">RM '+money(c[key])+'</span></div>';
+    }
+    function valRow(label,calc,ocr,ok){
+      return '<div class="cp-row cp-val-row"><span class="cp-lbl">'+label+'</span>'
+        +'<span class="cp-calc">RM '+money(calc)+'</span>'
+        +'<span class="cp-vs">vs OCR</span><span class="cp-ocr">RM '+money(ocr)+'</span>'
+        +(ok?'<span class="cp-ok">&#10003;</span>':'<span class="cp-bad">&#9888; mismatch</span>')
+      +'</div>';
+    }
+    return '<div class="cp-month">'
+      +'<div class="li2-mhd">'+m.month+'</div>'
+      +fieldRow('earning_basic_salary','Basic Salary')
+      +fieldRow('earning_total_allowances','Total Allowances')
+      +fieldRow('earning_overtime_pay','Overtime')
+      +fieldRow('earning_bonus_commission','Bonus / Commission')
+      +fieldRow('earning_others','Other Income')
+      +fieldRow('deduction_epf_employee','EPF (Employee)')
+      +fieldRow('deduction_socso_eis','SOCSO / EIS')
+      +fieldRow('deduction_pcb_tax','PCB / Tax')
+      +fieldRow('deduction_other_deductions','Other Deduction')
+      +'<div class="cp-recon">'
+        +valRow('Gross (Σ all earnings)',c.grossAll,c.ocrGross,c.okGross)
+        +valRow('Total Deductions (Σ all)',c.dedAll,c.ocrDed,c.okDed)
+        +valRow('Net Pay',c.grossAll-c.dedAll,c.ocrNet,c.okNet)
+      +'</div>'
+      +'<div class="cp-income">Verifiable income (excl. policy items): <b>RM '+money(c.incomeGross)+'</b></div>'
+    +'</div>';
+  }).join('');
+}
+function scrollToSec(key){S.secOpen[key]=true;render();var el=document.getElementById('sec-'+key);if(el&&el.scrollIntoView)el.scrollIntoView({block:'start',behavior:'smooth'});}
+
 function renderFileDetail(){
   var d=FILE_DETAIL[S.fileId]||FILE_DETAIL.ec;
   var resMap=S.alertResolved[S.fileId]||{};
@@ -2661,60 +2817,31 @@ function renderFileDetail(){
   }
   var lineMode=!!d.lineItemMode;
   var isIncomeFile=INCOME_FILE_IDS.indexOf(S.fileId)!==-1;
-
-  // BL FIELDS = complete standard display only (rule config moved to TR quadrant)
-  var renderGroups=lineMode?payslipGroups(S.fileId):d.groups;
-  var groupsHtml=renderGroups.map(function(g){
-    var hdr=(g.name&&g.name.length)?'<div class="fd-grp">'+g.name+(g.del?'<span class="del">Delete</span>':'')+'</div>':'';
-    var rows=g.fields.map(function(f){return fdRow(f,S.fileId);}).join('');
-    var add=g.addNew?'<div class="add-item">+ Add New Item</div>':'';
-    return hdr+rows+add;
-  }).join('');
-  var fieldsHead='<div class="fd-fields-head">'
-    +'<span class="h-lbl">Field</span><span class="h-val">OCR Value</span>'
-    +((isIncomeFile&&!lineMode)?'<span class="h-rule">Rule Classification &#9656; editable</span>':'')
-    +'<span class="h-conf">Conf.</span>'
-  +'</div>';
-
-  // ── TL quadrant: ALERTS — click to pin open; greyed when empty ──
   var aEmpty=(allAlerts.length===0);
-  var alertsDrop=sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join('');
-  var aOpen=S.fdAlertsOpen&&!aEmpty;
-  var qAlerts='<div class="fdq fdq-alerts hoverpanel'+(aOpen?' pinned':'')+'">'
-    +'<div class="hp-bar'+(aEmpty?' empty':'')+'"'+(aEmpty?'':' onclick="toggleFdAlerts()"')+'>'
-      +'<span class="al-hd-ic" style="color:'+(aEmpty?'#b6bcc6':(nh?'#c0392b':nw?'#d97706':'#1f9d57'))+';">'+IC.warn+'</span>'
-      +'<span class="al-hd-ttl">VALIDATION ALERTS</span>'
-      +'<span class="al-hd-cnt">'+(aEmpty?'(none)':(unresolvedCount?'('+unresolvedCount+' PENDING)':'(ALL CLEAR)'))+'</span>'
-      +(aEmpty?'<span class="hp-none">no alerts</span>'
-        :'<span class="hp-cue">'+(aOpen?'Collapse':'Click to expand')+'</span><span class="chev">&#9662;</span>')
-    +'</div>'
-    +(aEmpty?'':'<div class="hp-drop"><div class="hp-inner">'+summary+alertsDrop+'</div></div>')
-  +'</div>';
 
-  // ── TR quadrant: RULE CONFIG (rule-mode files only — always has rules) ──
-  var qRules='';
-  if(lineMode){
-    var prc=pendingRules(S.fileId).length;
-    var rOpen=S.fdRulesOpen;
-    qRules='<div class="fdq fdq-rules hoverpanel'+(rOpen?' pinned':'')+'">'
-      +'<div class="hp-bar" onclick="toggleFdRules()">'
-        +'<span class="al-hd-ic" style="color:#1e3a8a;font-size:14px;">&#9881;</span>'
-        +'<span class="al-hd-ttl">RULE CONFIGURATION</span>'
-        +'<span class="al-hd-cnt">'+(prc?'('+prc+' PENDING)':'('+RULE_ITEMS.length+' rules)')+'</span>'
-        +'<span class="hp-cue">'+(rOpen?'Collapse':'Click to configure')+'</span><span class="chev">&#9662;</span>'
-      +'</div>'
-      +'<div class="hp-drop"><div class="hp-inner">'+renderRuleConfig(S.fileId)+'</div></div>'
-    +'</div>';
+  // ── Alert summary strip (top): type chips that route to the relevant section ──
+  var issues=lineMode?payslipIssues(S.fileId):{missing:[],mismatch:[]};
+  var nVerify=allAlerts.filter(function(a){return a.kind==='eyeball'&&!resMap[a.id]&&!justMap[a.id];}).length;
+  var nMissing=issues.missing.length;
+  var nMismatch=issues.mismatch.length;
+  var nOther=nh+nw; // hard/warn non-eyeball
+  function aChip(n,label,cls,target){
+    if(!n)return '';
+    return '<span class="as-chip '+cls+'" onclick="scrollToSec(\''+target+'\')">'+n+' '+label+'</span>';
   }
-
-  // ── BL quadrant: FIELDS ──
-  var qFields='<div class="fdq fdq-fields">'
-    +(lineMode?'<div class="fdq-lbl">FIELDS <span>&middot; recomputed from rules</span></div>':'')
-    +zeroBanner+fieldsHead+groupsHtml
+  var alertStrip='<div class="as-strip">'
+    +'<span class="as-ic" style="color:'+(aEmpty&&!nMissing&&!nMismatch?'#1f9d57':'#c0392b')+';">'+IC.warn+'</span>'
+    +'<span class="as-ttl">VALIDATION</span>'
+    +(nh?'<span class="as-chip red" onclick="scrollToSec(\'alerts\')">'+nh+' Hard Fail</span>':'')
+    +aChip(nVerify,'Verify','blue',lineMode?'items':'alerts')
+    +aChip(nMissing,'Missing field','org','map')
+    +aChip(nMismatch,'Mismatch','red','comp')
+    +((nVerify+nMissing+nMismatch+nh+nw)===0?'<span class="as-ok">&#10003; All checks passed</span>':'')
+    +'<a class="lnk" style="margin-left:auto;font-size:11px;" onclick="scrollToSec(\'alerts\')">View all alerts &#8595;</a>'
   +'</div>';
 
-  // ── BR quadrant: DOCUMENT PREVIEW ──
-  var qPreview='<div class="fdq fdq-preview">'
+  // ── Preview (right column) ──
+  var qPreview='<div class="fdq-preview">'
     +'<div class="fd-rtop">'
       +'<select class="sel" style="flex:1;min-width:80px;"><option>category</option><option>Applicant Income</option></select>'
       +'<select class="sel" style="flex:1;min-width:80px;"><option>File type</option><option>Payslip</option></select>'
@@ -2728,6 +2855,35 @@ function renderFileDetail(){
     +'</div>'
     +'<div class="fd-doc">'+docMock(d.doc)+'</div>'
   +'</div>';
+
+  // ── Left workspace ──
+  var workspace;
+  if(lineMode){
+    var prc=pendingRules(S.fileId).length;
+    var mapBadge=prc?'<span class="sec-badge org">'+prc+' pending</span>':'';
+    var missBadge=nMissing?'<span class="sec-badge org">'+nMissing+' missing</span>':'';
+    var mmBadge=nMismatch?'<span class="sec-badge red">'+nMismatch+' mismatch</span>':'<span class="sec-badge green">reconciled</span>';
+    workspace=
+      secCard('items','1','Source Line Items','raw OCR — editable amounts','', renderLineItems(S.fileId))
+      +secCard('map','2','Line-item → Field Mapping','assign each line to an income field',mapBadge, renderRuleConfig(S.fileId))
+      +secCard('comp','3','Computed Fields &amp; Validation','aggregation process + reconcile vs payslip totals',mmBadge||missBadge, renderComputed(S.fileId))
+      +secCard('alerts','&#9888;','All Alerts','',aEmpty?'<span class="sec-badge green">none</span>':'<span class="sec-badge red">'+unresolvedCount+'</span>',
+        (sorted.length?summary+sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join(''):'<div class="fd-noalert">No validation alerts.</div>'));
+  } else {
+    var renderGroups=d.groups;
+    var groupsHtml=renderGroups.map(function(g){
+      var hdr=(g.name&&g.name.length)?'<div class="fd-grp">'+g.name+(g.del?'<span class="del">Delete</span>':'')+'</div>':'';
+      var rows=g.fields.map(function(f){return fdRow(f,S.fileId);}).join('');
+      var add=g.addNew?'<div class="add-item">+ Add New Item</div>':'';
+      return hdr+rows+add;
+    }).join('');
+    var fieldsHead='<div class="fd-fields-head"><span class="h-lbl">Field</span><span class="h-val">OCR Value</span>'
+      +(isIncomeFile?'<span class="h-rule">Rule Classification &#9656;</span>':'')+'<span class="h-conf">Conf.</span></div>';
+    workspace=
+      secCard('alerts','&#9888;','Validation Alerts','',aEmpty?'<span class="sec-badge green">none</span>':'<span class="sec-badge red">'+unresolvedCount+'</span>',
+        (sorted.length?summary+sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join(''):'<div class="fd-noalert">No validation alerts on this document.</div>'))
+      +secCard('fields','&#9707;','Fields','OCR-extracted values','', zeroBanner+fieldsHead+groupsHtml);
+  }
 
   // ── Income total for footer ──
   var overrideCount=lineMode?Object.keys(S.ruleMap[S.fileId]||{}).length:Object.keys(S.cedRuleOverrides[S.fileId]||{}).length;
@@ -2743,9 +2899,10 @@ function renderFileDetail(){
       +'<button class="btn btn-sm">&#8249; Prev</button>'
       +'<button class="btn btn-sm">Next &#8250;</button>'
     +'</div>'
-    // ── 2×2 grid: alerts | rules / fields | preview ──
-    +'<div class="fd-grid'+(lineMode?'':' no-rules')+'">'
-      +qAlerts+qRules+qFields+qPreview
+    +alertStrip
+    +'<div class="fd-work">'
+      +'<div class="fd-wleft">'+workspace+'</div>'
+      +qPreview
     +'</div>'
     // ── Footer ──
     +'<div class="fd-bottom">'
@@ -2849,7 +3006,7 @@ function openDocs(){S.docsOpen=true;render();}
 function closeDocs(){S.docsOpen=false;render();}
 function setDocsTab(t){S.docsTab=t;render();}
 function setInnerTab(t){S.innerTab=t;render();}
-function openFile(id){if(id){S.fileId=id;S.locate=null;S.locateLine=null;S.fdAlertsOpen=false;S.fdRulesOpen=false;S.fdPreviewOpen=true;S.cedRecalcDone=false;if(S.ruleDraft)S.ruleDraft[id]={};}S.fileOpen=true;render();}
+function openFile(id){if(id){S.fileId=id;S.locate=null;S.locateLine=null;S.secOpen={};S.cedRecalcDone=false;if(S.ruleDraft)S.ruleDraft[id]={};}S.fileOpen=true;render();}
 function closeFile(){S.fileOpen=false;render();}
 function openSync(){S.syncOpen=true;render();}
 function closeSync(){S.syncOpen=false;render();}
