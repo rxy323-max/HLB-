@@ -223,7 +223,7 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .ps-next-cta.role-esc{background:#dc2626;}.ps-next-cta.role-esc:hover{background:#b91c1c;}
 .ps-next-done{font-weight:700;color:#1a7a43;}
 /* ── Work area: left workspace + right preview ── */
-.fd-work{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,420px);overflow:hidden;}
+.fd-work{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(440px,46%);overflow:hidden;}
 .fd-wleft{overflow:auto;padding:12px 14px;background:#f6f7f9;}
 .fdq-preview{border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;background:#fafbfc;}
 .fd-fields-head{display:flex;align-items:center;gap:14px;padding:7px 14px;background:#fafbfc;border-bottom:1px solid var(--bd);font-size:10px;font-weight:700;color:#9aa1ab;text-transform:uppercase;letter-spacing:.4px;}
@@ -278,6 +278,12 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .li2-add-hint{font-size:11px;color:#9aa1ab;}
 .rc-new{background:#fbf9ff;}
 .rc-newtag{display:inline-block;margin-left:7px;font-size:9.5px;font-weight:700;color:#7c3aed;background:#f3edff;border:1px solid #e0d3fb;border-radius:8px;padding:1px 6px;}
+/* role toggle */
+.role-tog{display:inline-flex;border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-right:6px;}
+.role-btn{font-size:11.5px;font-weight:700;padding:5px 12px;background:#fff;color:#6b7280;border:none;cursor:pointer;}
+.role-btn+.role-btn{border-left:1px solid var(--bd);}
+.role-btn.on{background:#1e3a8a;color:#fff;}
+.role-btn:not(.on):hover{background:#f1f4f9;}
 /* ── ① line items — single vertical bilingual list ── */
 .li2-hint{font-size:11px;color:#6b7280;background:#fafbfc;border-bottom:1px solid var(--bd2);padding:7px 14px;line-height:1.5;}
 .li2-en-key{color:#9aa1ab;}
@@ -865,6 +871,7 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'cedfiles', fileOpen:false, file
         salesBounce:{},       // {fileId:true} — §3 mismatch bounced back to Sales to re-verify amount
         customLines:{},       // {fileId:[{id,ms,en,kind,ai,custom:true,type}]} — Sales-entered missing line items (Step 1 补录)
         addLineTarget:null,   // fileId while the 补录 modal is open
+        role:'ced',           // 'sales' | 'ced' — drives card order + default-open (Sales 1→2→3, CED 3→2→1)
         locateLine:null       // rule item id currently located/highlighted (rule↔doc linkage)
 };
 
@@ -1250,10 +1257,15 @@ function bucketItems(fileId,mIdx,bucketKey){
   }).map(function(it){return {type:it.type,amt:lineAmtVal(fileId,mIdx,it)};});
 }
 function money(n){return (n==null?'':Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));}
-// default-collapsed sections (reference material); others default open
-function secDefaultOpen(k){return k!=='items';}
+// default-open sections depend on role: Sales works 1→2→3 (Step1 open); CED works 3→2→1 (Step3+2 open, Step1 reference)
+function secDefaultOpen(k){
+  if(k==='fields')return true;            // non-lineMode files: always open
+  if(S.role==='sales')return k==='items'; // Sales: Step1 open, rest collapsed
+  return k==='comp'||k==='map';           // CED: Step3 + Step2 open, Step1 collapsed
+}
 function secOpen(k){return (S.secOpen[k]===undefined)?secDefaultOpen(k):S.secOpen[k];}
 function toggleSec(k){S.secOpen[k]=!secOpen(k);render();}
+function setRole(r){S.role=r;S.secOpen={};render();}  // switching role resets section open-state to the role default
 
 var SYNC_ROWS=[
   {f:'Conventional/Islamic',cur:'C',ocr:'C',st:'ok'},
@@ -2972,8 +2984,10 @@ function renderFileDetail(){
   // ── Step state machine (drives §3 cascade gating). lineMode has NO top nav —
   //    the 3 vertical "Step N" cards + their header badges carry progress & alert entry. ──
   var prc=lineMode?pendingRules(S.fileId).length:0;
-  var s1Open=nh+nVerify+nCheck;            // ① Sales recognition/eyeball open items
-  var s2Open=nMissing+prc;                 // ② CED rule-mapping open items
+  // completeness (required field with no source line) is a Step-1 SALES task — 补录 or 忽略(reason)
+  var nMissEff=lineMode?issues.missing.filter(function(k){return !justMap['miss:'+k];}).length:0;
+  var s1Open=nh+nVerify+nCheck+nMissEff;   // ① Sales: recognition/eyeball + completeness
+  var s2Open=prc;                          // ② CED: rule mapping (prc already includes new补录-type gaps)
   // ③ is a GATED result light: grey 待定 until ①② clear, then green/red.
   // Suppresses mismatch noise that is merely a symptom of an unfinished ① or ②.
   var s3=(s1Open||s2Open)?'wait':(nMismatch?'error':'done');
@@ -3016,43 +3030,56 @@ function renderFileDetail(){
     var salesItems=sorted.filter(function(a){return !resMap[a.id]&&!justMap[a.id];});
     var s1Badge=bounced?'<span class="sec-badge red">退回核实</span>'
       :(salesItems.length?'<span class="sec-badge org">待核 '+salesItems.length+'</span>':'<span class="sec-badge green">已核实</span>');
-    var verifyBar;
+    // completeness: required field with no source line → Sales 补录 or 忽略(reason). System already knows this at Step 1.
+    var missLeft=issues.missing.filter(function(k){return !justMap['miss:'+k];});
+    var s1Done=!bounced&&!salesItems.length&&!missLeft.length;
+    var s1Badge=bounced?'<span class="sec-badge red">退回核实</span>'
+      :((salesItems.length||missLeft.length)?'<span class="sec-badge org">待核 '+(salesItems.length+missLeft.length)+'</span>':'<span class="sec-badge green">已核实</span>');
+    var verifyBar='';
     if(bounced){
       verifyBar='<div class="vf-bar vf-bounce">&#8617; <b>CED 已退回</b> — 加总值与工资单印刷值不符。请对照右侧原文核实下列金额，确认或修正后标记完成。'
         +'<div class="vf-acts"><button class="btn btn-pri btn-sm" onclick="clearBounce(\''+S.fileId+'\')">&#10003; 已核实金额，标记完成</button></div></div>';
-    } else if(salesItems.length){
-      var vlist=salesItems.map(function(a){return '<li>'+(a.title||a.dim||'Check')+(a.desc?' — <span class="vf-desc">'+a.desc+'</span>':'')+'</li>';}).join('');
-      verifyBar='<div class="vf-bar vf-todo"><div class="vf-hd">&#128065; 待人工核实 '+salesItems.length+' 项 — 对照右侧原文逐行核对金额无误：</div>'
-        +'<ul class="vf-list">'+vlist+'</ul>'
-        +'<div class="vf-acts"><button class="btn btn-pri btn-sm" onclick="verifyAllSales(\''+S.fileId+'\')">&#10003; 全部已核实</button>'
-        +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\''+salesItems[0].id+'\')">忽略并备注</button></div></div>';
     } else {
-      verifyBar='<div class="vf-bar vf-done">&#10003; 细项已人工核实 — Sales 已确认金额准确</div>';
+      if(missLeft.length){
+        verifyBar+='<div class="vf-bar vf-todo"><div class="vf-hd">&#9888; 完整性告警 — 必要字段缺少来源细项（OCR 未识别到）：</div>'
+          +'<ul class="vf-list">'+missLeft.map(function(k){return '<li>'+k.replace(/_/g,' ')+'</li>';}).join('')+'</ul>'
+          +'<div class="vf-acts"><button class="btn btn-pri btn-sm" onclick="openAddLine(\''+S.fileId+'\')">+ 补录缺失细项</button>'
+          +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\'miss:'+missLeft[0]+'\')">忽略并说明</button></div></div>';
+      }
+      if(salesItems.length){
+        var vlist=salesItems.map(function(a){return '<li>'+(a.title||a.dim||'Check')+(a.desc?' — <span class="vf-desc">'+a.desc+'</span>':'')+'</li>';}).join('');
+        verifyBar+='<div class="vf-bar vf-todo"><div class="vf-hd">&#128065; 待人工核实 '+salesItems.length+' 项 — 对照右侧原文逐行核对金额无误：</div>'
+          +'<ul class="vf-list">'+vlist+'</ul>'
+          +'<div class="vf-acts"><button class="btn btn-pri btn-sm" onclick="verifyAllSales(\''+S.fileId+'\')">&#10003; 全部已核实</button>'
+          +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\''+salesItems[0].id+'\')">忽略并备注</button></div></div>';
+      }
+      if(s1Done)verifyBar='<div class="vf-bar vf-done">&#10003; 细项已核实、字段完整 — Sales 已确认数据准确</div>';
     }
     var s1Body=verifyBar+renderLineItems(S.fileId);
-    // ── §2 Step-2 (CED): rule gap — incl. NEW line-item types Sales补录 (cross-layer routed from ①). Amount edits never affect this. ──
+    // ── §2 Step-2 (CED): PURE type→field mapping. Default rules pre-exist; only NEW Sales补录 types need a rule. Amounts never matter here. ──
     var nNew=newTypeGaps(S.fileId).length;
-    var mapBadge=prc?'<span class="sec-badge org">'+prc+' 待应用</span>':(nMissing?'<span class="sec-badge org">缺口 '+nMissing+'</span>':'<span class="sec-badge green">规则完整</span>');
-    var missBanner=(nMissing?'<div class="sec-banner org">&#9888; 规则缺口：<b>'+issues.missing.map(function(k){return k.replace(/_/g,' ');}).join(', ')+'</b> 尚无映射规则 — 在下方为对应细项指派字段。</div>':'')
-      +(nNew?'<div class="sec-banner org">&#9888; <b>'+nNew+' 项 Sales 补录的新细项</b>待映射 — Sales 已补数据，请为其指派收入/扣减字段并「确认更新」。</div>':'');
-    // ── §3 Step-3: GATED result. Grey 待定 while ①/② open; only a TRUE anomaly when both upstream clear → bounce to Sales. ──
+    var mapBadge=prc?'<span class="sec-badge org">'+prc+' 待应用</span>':'<span class="sec-badge green">规则完整</span>';
+    var missBanner=(nNew?'<div class="sec-banner org">&#9888; <b>'+nNew+' 项 Sales 补录的新细项</b>待映射 — Sales 已补数据，请为其指派收入/扣减字段并「确认更新」。</div>':'');
+    // ── §3 Step-3: GATED result. Mismatch triage (Sales-first, then CED): ①识别错(Sales) ②归类(CED) ③规则如此(CED跳过). ──
     var mmBadge=bounced?'<span class="sec-badge red">已退回</span>'
       :(s3==='error'?'<span class="sec-badge red">'+nMismatch+' 不符</span>'
       :(s3==='done'?'<span class="sec-badge green">已校验</span>'
       :'<span class="sec-badge grey">待定</span>'));
     var mmBanner;
-    if(s3==='wait')mmBanner='<div class="sec-banner grey">&#9203; 校验待定 — '+(s1Open?'等 Sales 完成 ① 细项核实':'等 CED 补全 ② 规则缺口')+'后，加总结果才可信，暂不告警。</div>';
+    if(s3==='wait')mmBanner='<div class="sec-banner grey">&#9203; 校验待定 — '+(s1Open?'等 Sales 完成 Step 1 细项核实/补全':'等 CED 应用 Step 2 规则')+'后，加总结果才可信，暂不告警。</div>';
     else if(s3==='error'){
-      mmBanner='<div class="sec-banner red">&#9888; '+nMismatch+' 项加总与工资单印刷值不符。①②均已就绪 → 排除规则原因后，疑为 Sales 录入的某个金额有误。'
-        +(bounced?'<br><b>已退回 Sales 核实，待其确认金额。</b>'
-          :'<div class="vf-acts" style="margin-top:6px;"><button class="btn btn-sm" onclick="bounceToSales(\''+S.fileId+'\')">&#8617; 退回 Sales 核实金额</button></div>')
+      mmBanner='<div class="sec-banner red">&#9888; '+nMismatch+' 项加总与工资单印刷值不符。可能原因：<b>①金额识别错</b>（Sales 改）· <b>②归类规则</b>（CED 改）· <b>③规则本就如此</b>（CED 跳过）。'
+        +(bounced?'<br><b>已退回 Sales 核实金额，待其确认。</b>'
+          :'<div class="vf-acts" style="margin-top:6px;"><button class="btn btn-sm" onclick="bounceToSales(\''+S.fileId+'\')">&#8617; 先退回 Sales 核实金额</button>'
+            +'<button class="btn btn-sm" onclick="scrollToSec(\'map\')">CED：调整 / 跳过规则 &#8594;</button></div>')
       +'</div>';
     }
     else mmBanner='<div class="sec-banner green">&#10003; 加总与工资单印刷值一致，校验通过。</div>';
-    workspace=
-      secCard('items','1','Step 1 · 细项核实','Source Line Items · Sales 负责',s1Badge, s1Body)
-      +secCard('map','2','Step 2 · 字段映射','Line-item → Field · CED 负责',mapBadge, missBanner+renderRuleConfig(S.fileId))
-      +secCard('comp','3','Step 3 · 加总校验','Computed &amp; Validation · vs 印刷值',mmBadge, mmBanner+renderComputed(S.fileId));
+    var cItems=secCard('items','1','Step 1 · 细项核实','Source Line Items · Sales 负责',s1Badge, s1Body);
+    var cMap=secCard('map','2','Step 2 · 字段映射','Line-item → Field · CED 负责',mapBadge, missBanner+renderRuleConfig(S.fileId));
+    var cComp=secCard('comp','3','Step 3 · 加总校验','Computed &amp; Validation · vs 印刷值',mmBadge, mmBanner+renderComputed(S.fileId));
+    // role view: Sales reads 1→2→3 (data-first); CED reads 3→2→1 (result-first, drills into rules)
+    workspace=(S.role==='sales')?(cItems+cMap+cComp):(cComp+cMap+cItems);
   } else {
     var renderGroups=d.groups;
     var groupsHtml=renderGroups.map(function(g){
@@ -3077,6 +3104,10 @@ function renderFileDetail(){
       +'<button class="fd-back" onclick="closeFile()">&#8249;</button>'
       +'<div><div class="fd-title">'+d.name+'</div><div class="fd-crumb">'+d.crumb+'</div></div>'
       +'<div class="sp"></div>'
+      +(lineMode?'<div class="role-tog" title="不同角色看到的步骤顺序与重点不同">'
+        +'<button class="role-btn'+(S.role==='sales'?' on':'')+'" onclick="setRole(\'sales\')">Sales 视图</button>'
+        +'<button class="role-btn'+(S.role==='ced'?' on':'')+'" onclick="setRole(\'ced\')">CED 视图</button>'
+      +'</div>':'')
       +'<button class="btn btn-sm">&#8249; Prev</button>'
       +'<button class="btn btn-sm">Next &#8250;</button>'
     +'</div>'
