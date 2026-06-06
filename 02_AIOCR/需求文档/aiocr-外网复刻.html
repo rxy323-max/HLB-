@@ -2859,34 +2859,34 @@ function renderLineItems(fileId){
   var activeIdx=S.lineMonthIdx||0;
   function row(it,mIdx){
     var amt=lineAmtVal(fileId,mIdx,it);
-    var edited=(S.lineAmt[fileId]||{})[mIdx+’|’+it.type]!=null;
-    var tag=it.custom?’<span class="li2-new">补录</span>’:’’;
-    var rm=it.custom?’<span class="li2-rm" onclick="removeCustomLine(\’’+fileId+’\’,\’’+it.id+’\’)" title="删除补录细项">&times;</span>’:’’;
-    return ‘<div class="li2-row’+(it.custom?’ li2-cust’:’’)+’" id="li-’+it.id+’-’+mIdx+’"’
-        +’ onmouseenter="hlDoc(\’’+it.id+’\’)" onmouseleave="unhlDoc(\’’+it.id+’\’)">’
-      +’<span class="li2-loc" onclick="locateLine(\’’+it.id+’\’)" title="Locate in document">’+IC.locate+’</span>’
-      +’<span class="li2-name">’+it.ms+’<span class="li2-en">’+it.en+’</span>’+tag+’</span>’
-      +’<span class="li2-amt"><span class="li2-cur">RM</span><input value="’+(it.custom&&!edited?’’:money(amt))+’"’+(it.custom?’ placeholder="录入金额"’:’’)+’ onchange="setLineAmt(\’’+fileId+’\’,’+mIdx+’,\’’+it.type+’\’,this.value)" class="’+(edited?’edited’:’’)+’">’+rm+’</span>’
-    +’</div>’;
+    var edited=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type]!=null;
+    var tag=it.custom?'<span class="li2-new">补录</span>':'';
+    var rm=it.custom?'<span class="li2-rm" onclick="removeCustomLine(\''+fileId+'\',\''+it.id+'\')" title="删除补录细项">&times;</span>':'';
+    return '<div class="li2-row'+(it.custom?' li2-cust':'')+'" id="li-'+it.id+'-'+mIdx+'"'
+        +' onmouseenter="hlDoc(\''+it.id+'\')" onmouseleave="unhlDoc(\''+it.id+'\')">'
+      +'<span class="li2-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'
+      +'<span class="li2-name">'+it.ms+'<span class="li2-en">'+it.en+'</span>'+tag+'</span>'
+      +'<span class="li2-amt"><span class="li2-cur">RM</span><input value="'+(it.custom&&!edited?'':money(amt))+'"'+(it.custom?' placeholder="录入金额"':'')+' onchange="setLineAmt(\''+fileId+'\','+mIdx+',\''+it.type+'\',this.value)" class="'+(edited?'edited':'')+'">'+rm+'</span>'
+    +'</div>';
   }
   var all=lineItemsAll(fileId);
   // Month tab bar — one tab per payslip month
-  var tabs=’<div class="li2-tabs">’+PAYSLIP_MONTHS.map(function(m,mIdx){
-    var hasEdit=all.some(function(it){return (S.lineAmt[fileId]||{})[mIdx+’|’+it.type]!=null;});
-    return ‘<button class="li2-tab’+(activeIdx===mIdx?’ active’:’’)+’" onclick="setLineMonth(‘+mIdx+’)">’
-      +m.month+(hasEdit?’ <span style="color:#d97706;font-size:9px;">●</span>’:’’)
-    +’</button>’;
-  }).join(‘’)+’</div>’;
-  // Only the active month’s rows
-  var earn=all.filter(function(x){return x.kind===’earning’;}).map(function(it){return row(it,activeIdx);}).join(‘’);
-  var ded=all.filter(function(x){return x.kind===’deduction’;}).map(function(it){return row(it,activeIdx);}).join(‘’);
-  var monthContent=’<div class="li2-month">’
-    +’<div class="li2-cap">EARNINGS / PENDAPATAN</div>’+earn
-    +’<div class="li2-cap">DEDUCTIONS / POTONGAN</div>’+ded
-  +’</div>’;
-  var addBtn=’<div class="li2-add"><button class="btn btn-sm" onclick="openAddLine(\’’+fileId+’\’)">+ 补录 OCR 漏识别的细项（名称 + 金额）</button>’
-    +’<span class="li2-add-hint">补录后在各月份 tab 内分别录入金额；该细项进入 Step 2 等 CED 配规则。</span></div>’;
-  return ‘<div class="li2-hint">原文马来语 / <span class="li2-en-key">灰色 = 英译</span>；OCR 读错金额可直接改；● = 已编辑。</div>’
+  var tabs='<div class="li2-tabs">'+PAYSLIP_MONTHS.map(function(m,mIdx){
+    var hasEdit=all.some(function(it){return (S.lineAmt[fileId]||{})[mIdx+'|'+it.type]!=null;});
+    return '<button class="li2-tab'+(activeIdx===mIdx?' active':'')+'" onclick="setLineMonth('+mIdx+')">'
+      +m.month+(hasEdit?' <span style="color:#d97706;font-size:9px;">●</span>':'')
+    +'</button>';
+  }).join('')+'</div>';
+  // Only the active month's rows
+  var earn=all.filter(function(x){return x.kind==='earning';}).map(function(it){return row(it,activeIdx);}).join('');
+  var ded=all.filter(function(x){return x.kind==='deduction';}).map(function(it){return row(it,activeIdx);}).join('');
+  var monthContent='<div class="li2-month">'
+    +'<div class="li2-cap">EARNINGS / PENDAPATAN</div>'+earn
+    +'<div class="li2-cap">DEDUCTIONS / POTONGAN</div>'+ded
+  +'</div>';
+  var addBtn='<div class="li2-add"><button class="btn btn-sm" onclick="openAddLine(\''+fileId+'\')">+ 补录 OCR 漏识别的细项（名称 + 金额）</button>'
+    +'<span class="li2-add-hint">补录后在各月份 tab 内分别录入金额；该细项进入 Step 2 等 CED 配规则。</span></div>';
+  return '<div class="li2-hint">原文马来语 / <span class="li2-en-key">灰色 = 英译</span>；OCR 读错金额可直接改；● = 已编辑。</div>'
     +tabs+monthContent+addBtn;
 }
 /* ── ③④ Computed fields with aggregation process + OCR reconciliation ── */
@@ -3002,7 +3002,7 @@ function renderFileDetail(){
   // next-step priority: Hard → Missing → Mismatch → Verify → Check
   var next= nh?{t:'Resolve '+nh+' hard fail'+(nh>1?'s':''),s:itemsSec}
     : nMissing?{t:'Map '+nMissing+' missing required field'+(nMissing>1?'s':''),s:'map'}
-    : nMismatch?{t:'Review '+nMismatch+' total that doesn’t reconcile',s:'comp'}
+    : nMismatch?{t:'Review '+nMismatch+' total that doesn\'t reconcile',s:'comp'}
     : nVerify?{t:'Verify '+nVerify+' flagged field'+(nVerify>1?'s':''),s:itemsSec}
     : nCheck?{t:'Check '+nCheck+' field'+(nCheck>1?'s':''),s:itemsSec}
     : null;
