@@ -198,6 +198,30 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .ac-next:hover{background:var(--blue-d);}
 .ac-cards{padding:0 14px 12px;}
 .ac-cards .al-card .al-expand{max-height:340px;opacity:1;margin-top:9px;}
+/* ── Pipeline step bar (top, compact, state-machine driven) ── */
+.psbar{background:#fff;border-bottom:1px solid var(--bd);padding:9px 14px;flex-shrink:0;}
+.psbar.ps-clear{background:#f4fbf6;border-bottom-color:#cfe8d6;}
+.ps-steps{display:flex;align-items:stretch;gap:2px;}
+.ps-step{display:flex;align-items:center;gap:9px;padding:6px 12px;border-radius:8px;cursor:pointer;flex:1;border:1px solid transparent;transition:background .12s;min-width:0;}
+.ps-step:hover{background:#f5f8fc;border-color:#e6ebf2;}
+.ps-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;background:#cbd2dc;box-shadow:0 0 0 3px #eef1f5;}
+.ps-txt{min-width:0;}
+.ps-name{font-size:12.5px;font-weight:700;color:#1f2937;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ps-meta{font-size:11px;font-weight:600;color:#9aa1ab;display:block;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ps-arrow{display:flex;align-items:center;color:#d2d8e0;font-size:14px;flex-shrink:0;}
+.ps-todo{background:#fffaf0;}.ps-todo .ps-dot{background:#e8a300;box-shadow:0 0 0 3px #fbedcf;}.ps-todo .ps-meta{color:#b07d09;}
+.ps-error{background:#fef5f4;}.ps-error .ps-dot{background:#dc2626;box-shadow:0 0 0 3px #f9dcd9;}.ps-error .ps-meta{color:#c0392b;}
+.ps-done .ps-dot{background:#1f9d57;box-shadow:0 0 0 3px #d4eddd;}.ps-done .ps-meta{color:#1a7a43;}
+.ps-wait .ps-dot{background:#c2c8d2;box-shadow:0 0 0 3px #eceff3;}.ps-wait .ps-meta{color:#9aa1ab;}
+.ps-none{opacity:.6;}
+.ps-next{display:flex;align-items:center;gap:9px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--bd2);font-size:12px;}
+.ps-next-lbl{font-weight:700;color:#6b7280;}
+.ps-next-cta{color:#fff;background:var(--blue);border-radius:7px;padding:4px 12px;cursor:pointer;font-weight:700;}
+.ps-next-cta:hover{background:var(--blue-d);}
+.ps-next-cta.role-sales{background:#7c3aed;}.ps-next-cta.role-sales:hover{background:#6d28d9;}
+.ps-next-cta.role-ced{background:var(--blue);}
+.ps-next-cta.role-esc{background:#dc2626;}.ps-next-cta.role-esc:hover{background:#b91c1c;}
+.ps-next-done{font-weight:700;color:#1a7a43;}
 /* ── Work area: left workspace + right preview ── */
 .fd-work{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,420px);overflow:hidden;}
 .fd-wleft{overflow:auto;padding:12px 14px;background:#f6f7f9;}
@@ -229,7 +253,12 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .sec-banner{font-size:11.5px;line-height:1.5;padding:8px 14px;border-bottom:1px solid var(--bd2);}
 .sec-banner.org{background:#fff4e0;color:#7a5c00;}
 .sec-banner.red{background:#fdeceb;color:#9c2c20;}
+.sec-banner.grey{background:#f4f6f9;color:#6b7280;}
+.sec-banner.green{background:#eef8f1;color:#1a6b3c;}
 .sec-badge.blue{background:#e8f0fe;color:#2563eb;}
+.sec-badge.grey{background:#eef1f5;color:#7a828e;}
+.sec-alerts-wrap{padding:10px 12px 2px;background:#fffaf3;border-bottom:1px solid var(--bd2);}
+.sec-alerts-wrap .ac-cards{padding:0;}
 /* ── ① line items — single vertical bilingual list ── */
 .li2-hint{font-size:11px;color:#6b7280;background:#fafbfc;border-bottom:1px solid var(--bd2);padding:7px 14px;line-height:1.5;}
 .li2-en-key{color:#9aa1ab;}
@@ -2852,9 +2881,52 @@ function renderFileDetail(){
     : nVerify?{t:'Verify '+nVerify+' flagged field'+(nVerify>1?'s':''),s:itemsSec}
     : nCheck?{t:'Check '+nCheck+' field'+(nCheck>1?'s':''),s:itemsSec}
     : null;
-  // Recognition/rule alert cards always live in the top action center (never hidden in a collapsed section).
-  // Section-specific COMPUTED issues (missing field / mismatch) appear as inline banners in §2/§3.
   var alertCards=sorted.length?'<div class="ac-cards">'+sorted.map(function(a){return fdAlertCard(a,S.fileId);}).join('')+'</div>':'';
+
+  // ── PIPELINE STEP BAR (lineMode): 3 horizontal steps, role-tagged, cascade-gated ──
+  // ① Sales 细项核对 (recognition/eyeball) → ② CED 规则映射 (rule gap) → ③ 加总校验 (gated result light)
+  var prc=lineMode?pendingRules(S.fileId).length:0;
+  var s1Open=nh+nVerify+nCheck;            // ① open recognition items (Sales-owned)
+  var s2Open=nMissing+prc;                 // ② open rule items (CED-owned)
+  // ③ is a RESULT light, GATED by upstream: stays grey "待定" until ①② clear, then green/red.
+  // This kills the noise of reporting a mismatch that is merely a symptom of an unfinished ① or ②.
+  var s1=nh?'error':(s1Open?'todo':(allAlerts.length?'done':'none'));
+  var s2=s2Open?'todo':'done';
+  var s3=(s1Open||s2Open)?'wait':(nMismatch?'error':'done');
+  function psMeta(role,txt){return '<span class="ps-meta">'+(role?role+' · ':'')+txt+'</span>';}
+  var s1meta=nh?psMeta('Sales',nh+' 硬失败')
+    :(s1Open?psMeta('Sales','待核 '+s1Open):(allAlerts.length?psMeta('Sales','已核对'):psMeta('Sales','无告警')));
+  var s2meta=nMissing?psMeta('CED','缺口 '+nMissing)
+    :(prc?psMeta('CED',prc+' 待应用'):psMeta('CED','规则完整'));
+  var s3meta=psMeta('', s3==='done'?'✓ 校验通过':(s3==='error'?'加总不符':'待定 · '+(s1Open?'等细项':'等规则')));
+  function psStep(state,sec,name,meta){
+    return '<div class="ps-step ps-'+state+'" onclick="scrollToSec(\''+sec+'\')">'
+      +'<span class="ps-dot"></span><div class="ps-txt"><span class="ps-name">'+name+'</span>'+meta+'</div></div>';
+  }
+  // next-step CTA follows the cascade — whoever must act NOW
+  var nextRole='',nextSec='',nextTxt='';
+  if(nh){nextRole='sales';nextSec=itemsSec;nextTxt='Sales：解决 '+nh+' 项硬失败';}
+  else if(nVerify){nextRole='sales';nextSec=itemsSec;nextTxt='Sales：完成 '+nVerify+' 项人工核对';}
+  else if(nCheck){nextRole='sales';nextSec=itemsSec;nextTxt='Sales：核查 '+nCheck+' 项识别存疑';}
+  else if(nMissing){nextRole='ced';nextSec='map';nextTxt='CED：补全 '+nMissing+' 项规则缺口';}
+  else if(prc){nextRole='ced';nextSec='map';nextTxt='CED：应用 '+prc+' 项待生效规则';}
+  else if(nMismatch){nextRole='esc';nextSec='comp';nextTxt='CED：'+nMismatch+' 项加总不符 → 规则无误则升级';}
+  var allClear=!nextTxt;
+  var nextHtml=allClear
+    ? '<div class="ps-next"><span class="ps-next-done">&#10003; 全部就绪 · 该笔收入已可信</span></div>'
+    : '<div class="ps-next"><span class="ps-next-lbl">下一步</span><span class="ps-next-cta role-'+nextRole+'" onclick="scrollToSec(\''+nextSec+'\')">&#9654; '+nextTxt+'</span></div>';
+  var pipelineBar='<div class="psbar'+(allClear?' ps-clear':'')+'">'
+    +'<div class="ps-steps">'
+      +psStep(s1,itemsSec,'① 细项核对',s1meta)
+      +'<span class="ps-arrow">&#9656;</span>'
+      +psStep(s2,'map','② 规则映射',s2meta)
+      +'<span class="ps-arrow">&#9656;</span>'
+      +psStep(s3,'comp','③ 加总校验',s3meta)
+    +'</div>'
+    +nextHtml
+  +'</div>';
+
+  // non-lineMode files keep the compact action center (no 3-step pipeline)
   var actionCenter='<div class="ac'+(totalIssues?'':' ac-clear')+'">'
     +'<div class="ac-bar">'
       +'<span class="ac-ic" style="color:'+(totalIssues?(nh?'#c0392b':'#d97706'):'#1f9d57')+';">'+IC.warn+'</span>'
@@ -2862,12 +2934,11 @@ function renderFileDetail(){
       +(nh?'<span class="ac-chip red" onclick="scrollToSec(\''+itemsSec+'\')">'+nh+' Hard Fail</span>':'')
       +aChip(nVerify,'Verify','blue',itemsSec)
       +aChip(nCheck,'Check','org',itemsSec)
-      +aChip(nMissing,'Missing field','org','map')
-      +aChip(nMismatch,'Mismatch','red','comp')
       +(next?'<span class="ac-next" onclick="scrollToSec(\''+next.s+'\')">&#9654; Next: '+next.t+'</span>':'')
     +'</div>'
     +alertCards
   +'</div>';
+  var topBar=lineMode?pipelineBar:actionCenter;
 
   // ── Preview (right column) ──
   var qPreview='<div class="fdq-preview">'
@@ -2888,17 +2959,28 @@ function renderFileDetail(){
   // ── Left workspace ──
   var workspace;
   if(lineMode){
-    var prc=pendingRules(S.fileId).length;
-    var verifyBadge=nVerify?'<span class="sec-badge blue">'+nVerify+' verify</span>':'';
-    var mapBadge=prc?'<span class="sec-badge org">'+prc+' pending</span>':(nMissing?'<span class="sec-badge org">'+nMissing+' missing</span>':'');
-    var mmBadge=nMismatch?'<span class="sec-badge red">'+nMismatch+' mismatch</span>':'<span class="sec-badge green">reconciled</span>';
-    // §2/§3 carry their own COMPUTED issue banners; recognition alerts live in the top action center
-    var missBanner=nMissing?'<div class="sec-banner org">&#9888; Required field not mapped: <b>'+issues.missing.map(function(k){return k.replace(/_/g,' ');}).join(', ')+'</b> — assign a line item below.</div>':'';
-    var mmBanner=nMismatch?'<div class="sec-banner red">&#9888; '+nMismatch+' computed total does not match the payslip’s printed total — check the highlighted row(s).</div>':'';
+    // §1 (Sales): recognition/eyeball alert cards live HERE — surfaced by the step bar, opened on demand
+    var s1Badge=nh?'<span class="sec-badge red">'+nh+' hard</span>'
+      :(nVerify?'<span class="sec-badge blue">'+nVerify+' verify</span>'
+      :(nCheck?'<span class="sec-badge org">'+nCheck+' check</span>'
+      :(allAlerts.length?'<span class="sec-badge green">verified</span>':'')));
+    var mapBadge=prc?'<span class="sec-badge org">'+prc+' pending</span>':(nMissing?'<span class="sec-badge org">'+nMissing+' gap</span>':'<span class="sec-badge green">complete</span>');
+    // §3 badge mirrors the GATED ③ state: grey 待定 while upstream open, then red/green
+    var mmBadge=s3==='error'?'<span class="sec-badge red">'+nMismatch+' mismatch</span>'
+      :(s3==='done'?'<span class="sec-badge green">reconciled</span>'
+      :'<span class="sec-badge grey">待定</span>');
+    var s1Body=(sorted.length?'<div class="sec-alerts-wrap">'+alertCards+'</div>':'')+renderLineItems(S.fileId);
+    // §2 banner: CED rule gap (a new line-item type with no rule → routed from ① to CED here)
+    var missBanner=nMissing?'<div class="sec-banner org">&#9888; 规则缺口：<b>'+issues.missing.map(function(k){return k.replace(/_/g,' ');}).join(', ')+'</b> 尚无映射规则 — 在下方为对应细项指派字段（含 OCR 新识别的细项类型）。</div>':'';
+    // §3 banner: cascade-gated. Grey 待定 while ①/② open; red only when both upstream are clear (true anomaly)
+    var mmBanner;
+    if(s3==='wait')mmBanner='<div class="sec-banner grey">&#9203; 校验待定 — '+(s1Open?'等 Sales 完成 ① 细项核对':'等 CED 补全 ② 规则缺口')+'后，加总结果才可信，暂不告警。</div>';
+    else if(s3==='error')mmBanner='<div class="sec-banner red">&#9888; '+nMismatch+' 项加总与工资单印刷值不符。①②均已就绪 → 排除规则原因后疑为数据异常，需升级核查。</div>';
+    else mmBanner='<div class="sec-banner green">&#10003; 加总与工资单印刷值一致，校验通过。</div>';
     workspace=
-      secCard('items','1','Source Line Items','原始细项 · editable amounts',verifyBadge, renderLineItems(S.fileId))
-      +secCard('map','2','Line-item → Field Mapping','细项映射字段 · Malay → English',mapBadge, missBanner+renderRuleConfig(S.fileId))
-      +secCard('comp','3','Computed Fields &amp; Validation','加总与校验 · vs payslip totals',mmBadge, mmBanner+renderComputed(S.fileId));
+      secCard('items','1','① 原始细项核对','Source Line Items · Sales 负责',s1Badge, s1Body)
+      +secCard('map','2','② 细项 → 字段映射','Line-item → Field · CED 负责',mapBadge, missBanner+renderRuleConfig(S.fileId))
+      +secCard('comp','3','③ 加总与校验','Computed &amp; Validation · vs 印刷值',mmBadge, mmBanner+renderComputed(S.fileId));
   } else {
     var renderGroups=d.groups;
     var groupsHtml=renderGroups.map(function(g){
@@ -2926,7 +3008,7 @@ function renderFileDetail(){
       +'<button class="btn btn-sm">&#8249; Prev</button>'
       +'<button class="btn btn-sm">Next &#8250;</button>'
     +'</div>'
-    +actionCenter
+    +topBar
     +'<div class="fd-work">'
       +'<div class="fd-wleft">'+workspace+'</div>'
       +qPreview
