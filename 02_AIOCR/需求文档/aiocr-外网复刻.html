@@ -882,6 +882,96 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .qcd-issue-tip{font-size:11.5px;color:#5b8a3c;line-height:1.5;margin-top:4px;}
 .qcd-rule{font-size:11.5px;color:#8b3a3a;background:#fef2f2;border:1px solid #fad4d4;border-radius:5px;padding:8px 11px;margin-top:10px;line-height:1.5;}
 .qcd-override-note{font-size:12px;color:#7a5c0a;margin:8px 0 12px;padding:8px 11px;background:#fef9ec;border-radius:5px;border-left:3px solid #e0b800;}
+
+/* ════════ ROLE-FLOW SCREENS (demo navigation chains) ════════ */
+.scr{flex:1;overflow:auto;padding:22px 26px 40px;background:#f5f6f7;}
+.scr-narrow{max-width:1180px;margin:0 auto;}
+/* role menu */
+.rm-hero{max-width:920px;margin:40px auto 0;}
+.rm-title{font-size:23px;font-weight:800;color:#1f2937;}
+.rm-sub{font-size:13.5px;color:#6b7280;margin:8px 0 28px;line-height:1.6;}
+.rm-cards{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.rm-card{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:24px 24px 20px;cursor:pointer;transition:box-shadow .14s,border-color .14s,transform .08s;}
+.rm-card:hover{box-shadow:0 8px 26px rgba(40,60,120,.12);border-color:#bcd0f5;transform:translateY(-2px);}
+.rm-card .rmc-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 10px;border-radius:5px;}
+.rm-card.ced .rmc-tag{background:#e6f0e6;color:#1a6b3c;}
+.rm-card.sales .rmc-tag{background:#e8f0fe;color:#2c4a8e;}
+.rmc-name{font-size:17px;font-weight:700;color:#1f2937;margin:12px 0 6px;}
+.rmc-desc{font-size:12.5px;color:#6b7280;line-height:1.6;min-height:54px;}
+.rmc-chain{font-size:11.5px;color:#8a92a0;margin:10px 0 14px;line-height:1.7;}
+.rmc-chain b{color:#4b5563;font-weight:600;}
+.rmc-go{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#fff;padding:9px 16px;border-radius:7px;border:none;cursor:pointer;}
+.rm-card.ced .rmc-go{background:#1a7a43;}
+.rm-card.sales .rmc-go{background:var(--blue);}
+.rm-step-note{font-size:11.5px;color:#9aa1ab;margin-top:22px;text-align:center;}
+/* generic screen header + search panel */
+.scr-h2{font-size:16px;font-weight:700;color:#1f2937;margin:2px 0 14px;}
+.srch{background:#fff;border:1px solid var(--bd);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
+.srch-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 22px;align-items:center;}
+.srch-f{display:flex;align-items:center;gap:10px;}
+.srch-f label{font-size:12.5px;color:#4b5563;white-space:nowrap;flex-shrink:0;min-width:96px;text-align:right;}
+.srch-f .inp,.srch-f .sel{flex:1;min-width:0;}
+.srch-acts{display:flex;justify-content:flex-end;gap:10px;margin-top:14px;}
+/* list table card */
+.lst{background:#fff;border:1px solid var(--bd);border-radius:10px;padding:16px 18px 10px;}
+.lst-sub{display:inline-block;font-size:12px;font-weight:700;color:#374151;background:#eef1f5;border-radius:6px;padding:4px 12px;margin:0 0 10px;}
+.lst-tabs{display:flex;gap:2px;border-bottom:1px solid var(--bd2);margin-bottom:6px;flex-wrap:wrap;}
+.lst-tab{padding:8px 14px;font-size:12.5px;color:var(--mut);cursor:pointer;border-bottom:2px solid transparent;}
+.lst-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;}
+.lst-tabs2{display:flex;gap:2px;margin:6px 0 10px;flex-wrap:wrap;}
+.lst-tab2{padding:5px 12px;font-size:12px;color:#4b5563;cursor:pointer;border-radius:6px;}
+.lst-tab2.active{background:var(--blue);color:#fff;font-weight:600;}
+table.ftbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.ftbl th{background:#f6f7f9;color:#4b5563;font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid var(--bd);white-space:nowrap;}
+table.ftbl td{padding:11px 12px;border-bottom:1px solid var(--bd2);color:#374151;vertical-align:middle;}
+table.ftbl tr:hover td{background:#fafbfc;}
+.ftbl .lnk{cursor:pointer;}
+.ftbl .red{color:#dc2626;font-weight:700;}
+.lst-foot{display:flex;align-items:center;justify-content:flex-end;gap:14px;padding:12px 4px 4px;font-size:12px;color:var(--mut);}
+.pill-sm{display:inline-block;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:4px;background:#eef1f5;color:#4b5563;}
+.pill-sm.appr{background:#e6f4ea;color:#1a7a43;}
+.pill-sm.rej{background:#fde8e8;color:#c0392b;}
+.pill-sm.pend{background:#fff3e0;color:#b45309;}
+/* CED detail screen */
+.cd-lock{background:#fdf6e3;border:1px solid #f0e0a8;color:#7a5c00;border-radius:8px;padding:11px 16px;font-size:13px;margin-bottom:14px;}
+.cd-grid{display:grid;grid-template-columns:218px 1fr;gap:16px;}
+.cd-side{align-self:start;}
+.cd-panel{background:#fff;border:1px solid var(--bd);border-radius:9px;margin-bottom:14px;overflow:hidden;}
+.cd-phd{font-size:13px;font-weight:700;color:#fff;padding:11px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.cd-phd.blue{background:#2f5fc4;}
+.cd-phd.navy{background:#27416e;}
+.cd-phd .chip{font-size:11px;font-weight:600;background:rgba(255,255,255,.18);border-radius:5px;padding:2px 9px;}
+.cd-phd .exp{margin-left:auto;font-size:11.5px;background:rgba(255,255,255,.16);border-radius:6px;padding:4px 12px;cursor:pointer;}
+.cd-kv{display:grid;grid-template-columns:auto 1fr auto 1fr auto 1fr;}
+.cd-kv .k{font-size:12px;color:#5b6470;padding:10px 14px;background:#fafbfc;border-bottom:1px solid var(--bd2);border-right:1px solid var(--bd2);white-space:nowrap;}
+.cd-kv .v{font-size:12.5px;color:#1f2937;font-weight:600;padding:10px 14px;border-bottom:1px solid var(--bd2);border-right:1px solid var(--bd2);}
+.cd-nav,.cd-tools{background:#fff;border:1px solid var(--bd);border-radius:9px;padding:8px;margin-bottom:14px;}
+.cd-nav-hd,.cd-tools-hd{font-size:12px;font-weight:700;color:#374151;padding:8px 8px 10px;}
+.cd-nav-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:6px;font-size:12.5px;color:#374151;cursor:pointer;}
+.cd-nav-item:hover{background:#f1f4f9;}
+.cd-nav-item.active{background:#eaf1fe;color:var(--blue);font-weight:600;}
+.cd-tools a{display:inline-block;font-size:12.5px;color:var(--blue);cursor:pointer;margin:3px 10px 3px 0;}
+.cd-tools a:hover{text-decoration:underline;}
+.cd-decision{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--bd);border-radius:9px;padding:12px 16px;margin-top:4px;}
+/* Sales detail screen */
+.sd-grid{display:grid;grid-template-columns:230px 1fr 300px;gap:14px;}
+.sd-card{background:#fff;border:1px solid var(--bd);border-radius:9px;padding:16px 18px;margin-bottom:14px;}
+.sd-formhd{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:#1f2937;margin-bottom:16px;}
+.sd-form{display:grid;grid-template-columns:1fr 1fr;gap:14px 22px;}
+.sd-f label{display:block;font-size:12px;color:#4b5563;margin-bottom:5px;}
+.sd-f label .req{color:#dc2626;}
+.sd-nav-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:6px;font-size:12.5px;color:#374151;cursor:pointer;}
+.sd-nav-item:hover{background:#f1f4f9;}
+.sd-nav-item.active{background:#eaf1fe;color:var(--blue);font-weight:600;}
+.sd-nav-sub{padding-left:22px;}
+.sd-stat-ok{color:#1a7a43;}
+.sd-stat-no{color:#dc2626;}
+.sd-sum label{font-size:11.5px;color:#6b7280;}
+.sd-sum-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--bd2);font-size:12.5px;}
+.sd-sum-row .v{font-weight:600;color:#1f2937;}
+.sd-footer{display:flex;align-items:center;gap:10px;justify-content:flex-end;background:#fff;border-top:1px solid var(--bd);padding:12px 18px;position:sticky;bottom:0;}
+.sd-bigbtn{width:100%;padding:13px;font-size:14px;font-weight:700;border-radius:9px;border:1.5px solid var(--blue);background:#fff;color:var(--blue);cursor:pointer;margin-top:12px;}
+.sd-bigbtn:hover{background:#eff4ff;}
 </style>
 </head>
 <body>
@@ -915,7 +1005,8 @@ var IC={
 function railIcon(p){return '<div class="rail-ic">'+p+'</div>';}
 
 /* ════════════════ STATE ════════════════ */
-var S={ docsOpen:false, docsTab:'app', innerTab:'cedfiles', fileOpen:false, fileId:'mykad', syncOpen:false,
+var S={ screen:'menu', activeRole:'ced',   // demo nav: 'menu'|'cedlist'|'ceddetail'|'saleslist'|'salesdetail'
+        docsOpen:false, docsTab:'app', innerTab:'cedfiles', fileOpen:false, fileId:'mykad', syncOpen:false,
         fieldChecked:{}, alertResolved:{}, locate:null,
         customRules:{},
         addRuleOpen:false, addRuleFileId:'', addRuleEditId:null,
@@ -1429,6 +1520,290 @@ function renderNav(){
 }
 function kvItem(l,v,big){return '<div class="kv-item"><label>'+l+'</label><div class="v'+(big?' big':'')+'">'+v+'</div></div>';}
 function reqItem(l,v){return '<div class="kv-item"><label>'+l+' <span class="req">*</span></label><div class="v big">'+v+'</div></div>';}
+
+/* ════════════════ ROLE-FLOW SCREENS (demo navigation chains) ════════════════ */
+// Shared app shell: left rail + top tabs + screen body
+function appShell(body){
+  return '<div class="shell">'
+    +'<div class="rail">'
+      +'<div class="rail-logo" style="cursor:pointer;" title="Back to role menu" onclick="goMenu()">H</div>'
+      +railIcon(IC.doc)+railIcon(IC.grid)+railIcon(IC.bank)+railIcon(IC.user)+railIcon(IC.file)
+      +railIcon(IC.dollar)+railIcon(IC.car)+railIcon(IC.info)
+      +'<div class="rail-foot">use</div>'
+    +'</div>'
+    +'<div class="main">'+renderTopTabs()+body+'</div>'
+  +'</div>';
+}
+function renderTopTabs(){
+  var sc=S.screen;
+  var poolA=(sc==='saleslist'||sc==='salesdetail');
+  var todoA=(sc==='cedlist'||sc==='ceddetail');
+  var h='<div class="topbar">'
+    +'<div class="toptab'+(poolA?' active':'')+'" onclick="enterSales()">Application Case Pool</div>'
+    +'<div class="toptab'+(todoA?' active':'')+'" onclick="enterCed()">To do list</div>';
+  if(sc==='ceddetail')h+='<div class="toptab active">PCJ/HP/2026/T0004190</div>';
+  if(sc==='salesdetail')h+='<div class="toptab active">TTI/HP/2026/Y0087010</div>';
+  h+='</div>';
+  return h;
+}
+function srchF(label,field){return '<div class="srch-f"><label>'+label+'</label>'+field+'</div>';}
+
+// ── Role menu (landing) ──
+function renderRoleMenu(){
+  var body='<div class="scr"><div class="rm-hero">'
+    +'<div class="rm-title">AIOCR Income Verification &middot; Role Walkthrough</div>'
+    +'<div class="rm-sub">Pick a role to walk its full path — from the work queue, through the case detail and the document centre, into the income-verification module. Both chains mirror the live system\'s navigation so you can demo each role end to end.</div>'
+    +'<div class="rm-cards">'
+      +'<div class="rm-card ced" onclick="enterCed()">'
+        +'<span class="rmc-tag">CED &middot; Credit Evaluation</span>'
+        +'<div class="rmc-name">CED journey</div>'
+        +'<div class="rmc-desc">A credit officer picks up a locked case from the To-do List, reviews the summary, then opens the document centre to check the OCR cross-validation results.</div>'
+        +'<div class="rmc-chain"><b>Path:</b> To-do List &rarr; Case detail (locked) &rarr; Attachment &rarr; Document centre (3 tabs) &rarr; Cross-Validation &rarr; Payslip (CED view)</div>'
+        +'<button class="rmc-go">Enter CED journey &rarr;</button>'
+      +'</div>'
+      +'<div class="rm-card sales" onclick="enterSales()">'
+        +'<span class="rmc-tag">Sales &middot; Application Input</span>'
+        +'<div class="rmc-name">Sales journey</div>'
+        +'<div class="rmc-desc">A sales officer opens an application from the Case Pool, fills in / checks the details, then opens the document centre to verify the extracted line-item data.</div>'
+        +'<div class="rmc-chain"><b>Path:</b> Case Pool &rarr; Application detail &rarr; Documents &rarr; Document centre (2 tabs) &rarr; Cross-Validation &rarr; Payslip (Sales view)</div>'
+        +'<button class="rmc-go">Enter Sales journey &rarr;</button>'
+      +'</div>'
+    +'</div>'
+    +'<div class="rm-step-note">Tip: the top "Application Case Pool / To do list" tabs switch between roles anytime; the red H icon (top-left) returns here.</div>'
+  +'</div></div>';
+  return appShell(body);
+}
+
+// ── CED: To-do list (Pending Credit Evaluation) ──
+var CED_TODO=[
+  {ref:'PCJ/HP/2026/T0004190',assigned:'15-04-2026 15:23:21',name:'AHMAD AZIZ',elapsed:'259'},
+  {ref:'PCJ/HP/2026/T0004191',assigned:'15-04-2026 15:29:12',name:'SITI SHAH',elapsed:'259'},
+  {ref:'PCJ/HP/2026/T0004194',assigned:'15-04-2026 15:37:02',name:'SARA AZIZ',elapsed:'259'},
+  {ref:'PCJ/HP/2026/T0004199',assigned:'15-04-2026 17:51:15',name:'SARA YUSOF',elapsed:'257'},
+  {ref:'PCJ/HP/2026/T0004200',assigned:'15-04-2026 17:54:20',name:'AHMAD SHAH',elapsed:'257'},
+  {ref:'PCJ/HP/2026/T0004201',assigned:'15-04-2026 18:00:31',name:'AHMAD SHAH',elapsed:'257'},
+  {ref:'PCJ/HP/2026/T0004202',assigned:'15-04-2026 18:01:01',name:'MAYA AZIZ',elapsed:'257'},
+  {ref:'PCJ/HP/2026/T0004205',assigned:'15-04-2026 19:47:50',name:'FAIZ YUSOF',elapsed:'257'}
+];
+function renderCedList(){
+  var rows=CED_TODO.map(function(r){
+    return '<tr>'
+      +'<td>No</td>'
+      +'<td>'+r.assigned+'</td>'
+      +'<td>15-04-2026</td>'
+      +'<td>'+r.ref+'</td>'
+      +'<td>'+r.name+'</td>'
+      +'<td>HP - RM 90,000</td>'
+      +'<td><span class="pill-sm appr">APPROVED</span></td>'
+      +'<td><span class="red">'+r.elapsed+'</span></td>'
+      +'<td><a class="lnk" onclick="openCedCase(\''+r.ref+'\')">Edit</a> &nbsp;&nbsp; <a class="lnk">Status Log</a></td>'
+    +'</tr>';
+  }).join('');
+  var search='<div class="srch"><div class="srch-row">'
+    +srchF('App. Ref. No. :','<input class="inp" placeholder="Enter App. Ref. No.">')
+    +srchF('Customer ID No :','<input class="inp" placeholder="Enter Customer ID No">')
+    +srchF('Customer Name :','<input class="inp" placeholder="Enter Customer Name">')
+    +'</div><div class="srch-acts"><button class="btn btn-pri btn-sm">'+IC.search+' Search</button><button class="btn btn-sm">'+IC.refresh+' Reset</button></div></div>';
+  var body='<div class="scr"><div class="scr-narrow">'
+    +search
+    +'<div class="lst">'
+      +'<div class="scr-h2">Pending Credit Evaluation</div>'
+      +'<div class="lst-sub">Xpress</div>'
+      +'<table class="ftbl"><thead><tr>'
+        +'<th>Greenlane</th><th>Date Assigned</th><th>App. Date</th><th>App. Ref. No.</th><th>Applicant Name</th><th>Product / Amount</th><th>e-Consent Status</th><th>Elapsed Time(Hour)</th><th>Action</th>'
+      +'</tr></thead><tbody>'+rows+'</tbody></table>'
+      +'<div class="lst-foot"><span>Total: 318</span></div>'
+      +'<div class="lst-sub" style="margin-top:6px;">Generic</div>'
+    +'</div>'
+  +'</div></div>';
+  return appShell(body);
+}
+
+// ── CED: case detail (locked) ──
+function cdKvRow(pairs){
+  var h='';
+  for(var i=0;i<3;i++){var p=pairs[i]||['',''];h+='<div class="k">'+p[0]+'</div><div class="v">'+p[1]+'</div>';}
+  return h;
+}
+function renderCedDetail(){
+  var nav=['Application Summary','Credit Summary','UW Result','Customer','Address Info','Driving License','Collateral Info','TV Check','Customer Rejected Reason','Income','Exposure Summary','External & Internal Exposure','Aggregate Networth','Manual Exception/Recovery','OCR Result','Rule-Based Alert','FMU','Financing Approval'];
+  var navHtml=nav.map(function(n,i){return '<div class="cd-nav-item'+(i===0?' active':'')+'">'+n+'</div>';}).join('');
+  var tools='<div class="cd-tools"><div class="cd-tools-hd">Action Tools</div>'
+    +'<a>Rules Summary</a><a>Reason Code</a><a>e-consent</a><a>Memo</a> '
+    +'<a onclick="openDocsRole(\'ced\')" style="font-weight:700;">Attachment &rarr;</a>'
+    +'<a>Credit Memorandum</a><a>Credit Memorandum History</a> '
+    +'<a style="color:#9aa1ab;cursor:default;">Audit log</a><a style="color:#9aa1ab;cursor:default;">Amendment Log</a>'
+  +'</div>';
+  var appSum='<div class="cd-panel">'
+    +'<div class="cd-phd blue">Application Summary <span class="chip">App. Ref. No. PCJ/HP/2026/T0004190</span> <span class="chip">Handling Officer crediosadmin - CrediOSAdmin</span><span class="exp">Expand</span></div>'
+    +'<div class="cd-kv">'
+      +cdKvRow([['App. Ref. No.','PCJ/HP/2026/T00041...'],['Status','PENDING_REVIEW'],['Lending Type','&mdash;']])
+      +cdKvRow([['CP No.','Bentong Branch/HP/...'],['Request Type','Review'],['Amendment','&mdash;']])
+      +cdKvRow([['App. Date','15-04-2026'],['Days from Approval','&mdash;'],['Facility Product Code','&mdash;']])
+      +cdKvRow([['Lending/Financing','C'],['No. of Guarantor','0'],['Application Type','PG1']])
+      +cdKvRow([['Primary Name','AHMAD AZIZ'],['',''],['','']])
+    +'</div>'
+  +'</div>';
+  var creditSum='<div class="cd-panel">'
+    +'<div class="cd-phd navy">Credit Summary</div>'
+    +'<div class="cd-kv">'
+      +cdKvRow([['AIP Result','<a class="lnk">Pass</a>'],['Current DSR %','0.00%'],['DSCR','0']])
+      +cdKvRow([['AIP Fail Count','0'],['Internal DSR %','0.00%'],['CDD','1 - Proceed to onboard']])
+      +cdKvRow([['Score Result','&mdash;'],['Global DSR %','0.00%'],['EDD','&mdash;']])
+      +cdKvRow([['Risk Band','&mdash;'],['MDI','&mdash;'],['AML Check Type','System']])
+      +cdKvRow([['Score Band','&mdash;'],['Vulnerable/Non-Vuln','N'],['AML Check Result','-']])
+      +cdKvRow([['Instinct','C'],['Anti-Fraud Result','C'],['','']])
+    +'</div>'
+  +'</div>';
+  var uwSum='<div class="cd-panel">'
+    +'<div class="cd-phd navy">UW Result</div>'
+    +'<div class="cd-kv">'
+      +cdKvRow([['UW Result','CED'],['ETB High DSR','&mdash;'],['Risk Car Type','8000.00']])
+    +'</div>'
+  +'</div>';
+  var decision='<div class="cd-decision"><b style="font-size:13px;">Make Decision:</b>'
+    +'<div class="sel" style="width:340px;display:flex;align-items:center;justify-content:space-between;color:#9aa1ab;">Select<span>&#9662;</span></div>'
+    +'<button class="btn btn-sm" disabled>Proceed</button></div>';
+  var body='<div class="scr"><div class="cd-lock">&#9888; This case is locked. You can view details, but changes are not allowed.</div>'
+    +'<div class="cd-grid">'
+      +'<div class="cd-side"><div class="cd-nav"><div class="cd-nav-hd">Navigation</div>'+navHtml+'</div>'+tools+'</div>'
+      +'<div>'+appSum+creditSum+uwSum+decision+'</div>'
+    +'</div>'
+  +'</div>';
+  return appShell(body);
+}
+
+// ── Sales: Application Case Pool ──
+var SALES_CASES=[
+  {ref:'TTI/HP/2026/Y0087010',date:'05-06-2026 19:01:51',status:'Pending Application',cls:'pend',consent:'APPROVED',app:'LIUYONG',appId:'981212-12-1212',veh:'-',vehSub:'[-] -',loan:'-',loanSub:'Pur. Price: -'},
+  {ref:'BTP/HP/2026/Y0082290',date:'04-06-2026 16:09:01',status:'Pending Application',cls:'pend',consent:'',app:'SDSD',appId:'981212-98-2372',veh:'-',vehSub:'[-] -',loan:'-',loanSub:'Pur. Price: -'},
+  {ref:'TTI/HP/2026/Y0028533',date:'11-05-2026 14:39:26',status:'Rejected',cls:'rej',consent:'',app:'SADA',appId:'880709-05-5251',veh:'MN OTOMART SDN BHD',vehSub:'[U] AD',loan:'RM 10,000',loanSub:'Pur. Price: RM 50,000'}
+];
+function renderSalesList(){
+  var rows=SALES_CASES.map(function(r){
+    var consentCell=r.consent?'Consent: <span class="pill-sm appr">'+r.consent+'</span>':'Consent:';
+    var statusCell='<span class="pill-sm '+r.cls+'">'+r.status+'</span>'+(r.cls==='rej'?'<div style="margin-top:4px;"><span class="pill-sm">From FMU</span></div>':'');
+    return '<tr>'
+      +'<td><input type="checkbox" class="cbx"></td>'
+      +'<td><b>'+r.ref+'</b></td>'
+      +'<td>'+r.date+'</td>'
+      +'<td>'+statusCell+'</td>'
+      +'<td style="font-size:11.5px;line-height:1.7;">'+consentCell+'<br>Acceptance:<br>E-hakmilik:</td>'
+      +'<td>'+r.app+'<div class="muted" style="font-size:11px;">'+r.appId+'</div></td>'
+      +'<td>'+r.veh+'<div class="muted" style="font-size:11px;">'+r.vehSub+'</div></td>'
+      +'<td>'+r.loan+'<div class="muted" style="font-size:11px;">'+r.loanSub+'</div></td>'
+      +'<td><a class="lnk" onclick="openSalesCase(\''+r.ref+'\')">Edit</a></td>'
+    +'</tr>';
+  }).join('');
+  var tabs=['New Cases','Rework Cases','All Valid Cases','Cancel/Reject','Funded','Pending Submission']
+    .map(function(t,i){return '<div class="lst-tab'+(i===0?' active':'')+'">'+t+'</div>';}).join('');
+  var tabs2=['All','Application Input','AIP Results','Pending Review','Credit Decision','Letter Printing','CILT & Appeal','Pending disbursement DOC','Pending Rectification','Siron TSQ List']
+    .map(function(t,i){return '<div class="lst-tab2'+(i===0?' active':'')+'">'+t+'</div>';}).join('');
+  var search='<div class="srch">'
+    +'<div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:14px;">&#9662; Search &amp; Filter</div>'
+    +'<div class="srch-row">'
+      +srchF('Search Field :','<div class="sel" style="display:flex;align-items:center;justify-content:space-between;">App Ref No<span>&#9662;</span></div>')
+      +srchF('Application status :','<div class="sel" style="color:#9aa1ab;display:flex;justify-content:space-between;">Select<span>&#9662;</span></div>')
+      +srchF('Application type :','<div class="sel" style="color:#9aa1ab;display:flex;justify-content:space-between;">Select<span>&#9662;</span></div>')
+      +srchF('Channel/Branch :','<div class="sel" style="color:#9aa1ab;display:flex;justify-content:space-between;">Select<span>&#9662;</span></div>')
+      +srchF('Loan Amount :','<div class="sel" style="color:#9aa1ab;display:flex;justify-content:space-between;">Select<span>&#9662;</span></div>')
+      +srchF('Officer ID/Name :','<input class="inp" placeholder="Enter Officer ID/Name">')
+      +srchF('Application Date :','<input class="inp" placeholder="start date &rarr; end date">')
+      +srchF('Vehicle Make :','<div class="sel" style="color:#9aa1ab;display:flex;justify-content:space-between;">Select<span>&#9662;</span></div>')
+      +srchF('E-Consent :','<div class="sel" style="color:#9aa1ab;display:flex;justify-content:space-between;">Select status<span>&#9662;</span></div>')
+    +'</div>'
+    +'<div class="srch-acts"><button class="btn btn-pri btn-sm">Search</button><button class="btn btn-sm">Reset</button><button class="btn btn-pri btn-sm">+ New Application</button></div>'
+  +'</div>';
+  var body='<div class="scr"><div class="scr-narrow">'
+    +search
+    +'<div class="lst">'
+      +'<div class="lst-tabs">'+tabs+'</div>'
+      +'<div class="lst-tabs2">'+tabs2+'</div>'
+      +'<table class="ftbl"><thead><tr>'
+        +'<th><input type="checkbox" class="cbx"></th><th>App Ref No</th><th>App. Date</th><th>Status</th><th>e-consent / e-acceptance / e-hakmilk</th><th>Applicant</th><th>Vehicle</th><th>Loan amount</th><th>Action</th>'
+      +'</tr></thead><tbody>'+rows+'</tbody></table>'
+      +'<div class="lst-foot"><span class="pill-sm">1</span><span>2</span><span>3</span><span>&hellip;</span><span>80</span><span>10 / page</span></div>'
+    +'</div>'
+  +'</div></div>';
+  return appShell(body);
+}
+
+// ── Sales: application detail ──
+var SALES_NAV=[
+  {n:'Identity Verification',st:'off'},
+  {n:'Application Details',st:'ok'},
+  {n:'Applicant Information',st:'no',active:true,sub:[
+    {n:'Customer Basic Information',st:'ok'},{n:'Personal Information',st:'no'},{n:'Customer Classification',st:'no'},
+    {n:'Home Address',st:'no'},{n:'Work Address',st:'no'},{n:'Email information',st:'no'},
+    {n:'Emergency Contact',st:'ok'},{n:'Confirmation',st:'no'},{n:'Employment Information',st:'no'},{n:'Applicant Income',st:'no'}
+  ]},
+  {n:'Guarantor Information',st:''},{n:'Income Summary',st:''},
+  {n:'Asset Information',st:'ok'},{n:'Collateral & Seller',st:'no'},{n:'Facility/Financing',st:'no'}
+];
+function sdStat(st){return st==='ok'?'<span class="sd-stat-ok">&#10003;</span>':st==='no'?'<span class="sd-stat-no">&#10007;</span>':'';}
+function sdField(label,val,req,isSel){
+  var f=isSel?'<div class="sel" style="display:flex;align-items:center;justify-content:space-between;">'+val+'<span style="color:#9aa1ab;">&#9662;</span></div>'
+    :'<input class="inp" style="width:100%;" value="'+val+'" readonly>';
+  return '<div class="sd-f"><label>'+label+(req?' <span class="req">*</span>':'')+'</label>'+f+'</div>';
+}
+function sdSumRow(l,v){return '<div class="sd-sum-row"><label>'+l+'</label><div class="v">'+(v||'&mdash;')+'</div></div>';}
+function renderSalesDetail(){
+  var navHtml=SALES_NAV.map(function(item){
+    var main='<div class="sd-nav-item'+(item.active?' active':'')+(item.st==='off'?'" style="color:#c2c8d2;':'')+'"><span>'+item.n+'</span>'+sdStat(item.st)+'</div>';
+    var subs=item.sub?item.sub.map(function(s){return '<div class="sd-nav-item sd-nav-sub"><span>'+s.n+'</span>'+sdStat(s.st)+'</div>';}).join(''):'';
+    return main+subs;
+  }).join('');
+  var form='<div class="sd-card"><div class="sd-formhd">&#9662; &#128203; Application Details</div>'
+    +'<div class="sd-form">'
+      +sdField('Product Group','HP',true)
+      +sdField('Lending/Financing Type','Conventional',true)
+      +sdField('Attending Officer','CrediOSAdmin (crediosadmin)',true,true)
+      +sdField('Source','099 - NIL',false,true)
+      +sdField('Sales Officer','CrediOSAdmin (crediosadmin)',true,true)
+      +sdField('Delivery Channel','H29 - ALC SEREMBAN',true,true)
+      +sdField('Loan Proposal','Kow Kok Hoong(1251396)',true,true)
+      +sdField('Closing Branch','Taman Tampoi Indah Branch',true,true)
+      +sdField('Sales Manager','CrediOSAdmin2 (crediosadmin2)',true,true)
+      +sdField('Line of Business','Retail',false)
+      +sdField('Referral Officer','',false,true)
+      +sdField('Prefer Language','English',true,true)
+      +sdField('Campaign Code','',false,true)
+      +sdField('Incentive Scope','100',false)
+    +'</div></div>';
+  var summary='<div class="sd-card"><div class="sd-formhd" style="font-size:14px;">&#128203; Application Summary</div>'
+    +sdSumRow('App ref No.','TTI/HP/2026/Y0087010')
+    +sdSumRow('CP No.','200/HP/2026/Y0087010')
+    +sdSumRow('Application Tags','')
+    +sdSumRow('Primary Applicant','LIUYONG')
+    +sdSumRow('Primary ID','')
+    +sdSumRow('No. of Guarantors','0')
+    +sdSumRow('Application Status','<span class="pill-sm pend">Pending Application</span>')
+    +sdSumRow('Loan Tenure','0')
+    +sdSumRow('Loan Amount','0')
+    +sdSumRow('Consent','<span class="pill-sm appr">APPROVED</span>')
+    +sdSumRow('Acceptance','')
+    +sdSumRow('E-hakmilik','')
+    +'<button class="sd-bigbtn" onclick="openDocsRole(\'sales\')">Documents</button>'
+    +'<button class="sd-bigbtn">Memo</button>'
+  +'</div>';
+  var body='<div class="scr" style="padding-bottom:0;"><div class="sd-grid">'
+    +'<div class="sd-card" style="padding:12px;"><div class="sd-formhd" style="font-size:14px;">&#9776; Navigation</div>'+navHtml+'</div>'
+    +'<div>'+form+'</div>'
+    +'<div>'+summary+'</div>'
+  +'</div></div>'
+  +'<div class="sd-footer"><span class="pill-sm pend" style="margin-right:auto;">PENDING APPLICATION</span>'
+    +'<button class="btn btn-sm" onclick="openDocsRole(\'sales\')">'+IC.refresh+' Sync from OCR</button>'
+    +'<button class="btn btn-sm">Save as Draft</button><button class="btn btn-sm">Save</button><button class="btn btn-pri btn-sm">Submit</button></div>';
+  return appShell(body);
+}
+
+// ── Navigation handlers ──
+function goMenu(){S.screen='menu';S.docsOpen=false;S.fileOpen=false;render();}
+function enterCed(){S.activeRole='ced';S.role='ced';S.screen='cedlist';S.docsOpen=false;S.fileOpen=false;render();}
+function enterSales(){S.activeRole='sales';S.role='sales';S.screen='saleslist';S.docsOpen=false;S.fileOpen=false;render();}
+function openCedCase(ref){S.screen='ceddetail';render();}
+function openSalesCase(ref){S.screen='salesdetail';render();}
+function openDocsRole(role){S.activeRole=role;S.role=role;S.innerTab=(role==='ced'?'cedfiles':'filelist');S.docsOpen=true;render();}
 
 function renderHost(){
   return '<div class="shell">'
@@ -2311,10 +2686,12 @@ function renderIncomeVerification(){
 }
 
 function renderDocs(){
+  var isSales=(S.activeRole==='sales');
   var t=S.innerTab;
   if(t==='incomeverif')t='crossval'; // legacy: 4th tab removed
+  if(isSales&&t==='cedfiles')t='filelist'; // Sales has no CED File List tab
   var tabs='<div class="lt-tabs">'
-    +'<div class="lt-tab '+(t==='cedfiles'?'active':'')+'" onclick="setInnerTab(\'cedfiles\')">CED File List</div>'
+    +(isSales?'':'<div class="lt-tab '+(t==='cedfiles'?'active':'')+'" onclick="setInnerTab(\'cedfiles\')">CED File List</div>')
     +'<div class="lt-tab '+(t==='filelist'?'active':'')+'" onclick="setInnerTab(\'filelist\')">File List</div>'
     +'<div class="lt-tab '+(t==='crossval'?'active':'')+'" onclick="setInnerTab(\'crossval\')">Cross-Validation Results</div>'
   +'</div>';
@@ -3543,7 +3920,12 @@ function renderAddRule(){
 
 /* ════════════════ RENDER + ACTIONS ════════════════ */
 function render(){
-  var html=renderHost();
+  var html;
+  if(S.screen==='cedlist')html=renderCedList();
+  else if(S.screen==='ceddetail')html=renderCedDetail();
+  else if(S.screen==='saleslist')html=renderSalesList();
+  else if(S.screen==='salesdetail')html=renderSalesDetail();
+  else html=renderRoleMenu();
   if(S.docsOpen&&!S.fileOpen)html+=renderDocs();
   if(S.fileOpen)html+=renderFileDetail();
   if(S.syncOpen)html+=renderSync();
