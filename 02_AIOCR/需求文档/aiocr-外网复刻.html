@@ -305,6 +305,10 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .li2-amt input:hover{border-color:var(--bd);}
 .li2-amt input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px #c3d5fb;}
 .li2-amt input.edited{border-color:#d97706;background:#fffdf0;color:#7a5c00;font-weight:600;}
+.li2-amt input.pending{border-color:#d97706;border-style:dashed;background:#fff7e9;color:#7a5c00;font-weight:600;}
+/* persistent change markers on a line item */
+.li2-edit-tag{display:inline-block;margin-left:7px;font-size:9px;font-weight:700;color:#9a6a12;background:#fdf0d8;border:1px solid #f0d9a8;border-radius:8px;padding:1px 6px;vertical-align:middle;}
+.li2-edit-tag.pend{color:#b45309;background:#fff4e0;border-color:#f3d08a;}
 /* ── Step-1 month tabs ── */
 .li2-tabs{display:flex;border-bottom:1px solid var(--bd2);background:#f8f9fb;}
 .li2-tab{padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;color:var(--mut);border:none;border-bottom:2px solid transparent;background:none;font-family:inherit;transition:color .12s,border-color .12s;}
@@ -372,6 +376,12 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .cp-proc{font-size:10.5px;color:#9aa1ab;font-family:ui-monospace,Menlo,Consolas,monospace;margin-top:1px;}
 .cp-val{font-weight:600;color:#111827;font-family:ui-monospace,Menlo,Consolas,monospace;}
 .cp-recon{margin:6px 14px 4px;background:#f8f9fb;border:1px solid #eef0f3;border-radius:7px;padding:4px 0;}
+/* downstream flash when amounts/rules are applied — makes the linkage visible */
+.cp-month.cp-flash{animation:cpflash 1s ease-out;}
+@keyframes cpflash{0%{background:#d4f4e0;}35%{background:#e2f8ea;}100%{background:transparent;}}
+/* brief highlight on the step a "go to Step N" button lands on */
+.sec.sec-land{animation:secland 1.1s ease-out;}
+@keyframes secland{0%,45%{box-shadow:0 0 0 2px #e3920f;}100%{box-shadow:0 0 0 0 rgba(227,146,15,0);}}
 .cp-val-row{padding:5px 12px;font-size:11.5px;}
 .cp-val-row .cp-lbl{flex:1;color:#5b6470;}
 .cp-calc{font-weight:700;color:#1e3a8a;font-family:ui-monospace,Menlo,Consolas,monospace;}
@@ -576,6 +586,7 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 /* pending-changes apply bar */
 .li-row.pending{background:#fffaf0;}
 .li-apply{display:flex;align-items:center;gap:12px;margin:8px 18px;padding:9px 13px;background:#fff8e6;border:1px solid #f3d98f;border-radius:8px;}
+.li-apply-sticky{position:sticky;top:6px;z-index:6;box-shadow:0 4px 14px rgba(120,90,20,.16);}
 .li-apply-txt{font-size:12px;color:#7a5c00;flex:1;line-height:1.4;}
 .li-apply-txt b{color:#5a4300;}
 /* change log */
@@ -930,7 +941,9 @@ var S={ docsOpen:false, docsTab:'app', innerTab:'cedfiles', fileOpen:false, file
         ruleMap:{},           // {fileId:{ruleId:bucket}} — APPLIED rule definitions
         ruleDraft:{},         // {fileId:{ruleId:bucket}} — staged, not yet applied
         incomeLog:{},         // {fileId:[{t,raw,from,to}]} — CED change log
-        lineAmt:{},           // {fileId:{'mIdx|type':amount}} — edited line-item amounts
+        lineAmt:{},           // {fileId:{'mIdx|type':amount}} — APPLIED line-item amounts (feed Step-3 compute)
+        lineAmtDraft:{},      // {fileId:{'mIdx|type':amount}} — pending edits, not yet applied to totals
+        compFlash:false,      // transient: flash Step-3 after amounts/rules are applied
         secOpen:{},           // {sectionKey:false} — collapsed sections (default open)
         salesBounce:{},       // {fileId:true} — §3 mismatch bounced back to Sales to re-verify amount
         customLines:{},       // {fileId:[{id,ms,en,kind,ai,custom:true,type}]} — Sales-entered missing line items (Step 1)
@@ -1265,7 +1278,9 @@ function confirmRuleChanges(fileId){
     S.ruleMap[fileId][id]=ruleDraft(fileId,id);
   });
   S.ruleDraft[fileId]={};
-  render();
+  S.compFlash=true;render();
+  setTimeout(function(){S.compFlash=false;render();},950);
+  showToast('Rules applied &mdash; Step 3 totals recalculated.','ok');
 }
 // Recompute one month from the APPLIED rule mapping.
 //   buckets        = income-classified sums (exclude dropped)
@@ -1321,7 +1336,27 @@ function payslipIssues(fileId){
 }
 function isRuleModeFile(fileId){var d=FILE_DETAIL[fileId];return !!(d&&d.lineItemMode);}
 function lineAmtVal(fileId,mIdx,it){var base=it.custom?null:(it.kind==='earning'?PAYSLIP_MONTHS[mIdx].earn:PAYSLIP_MONTHS[mIdx].ded)[it.type];var ov=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type];return ov!=null?ov:(base||0);}
-function setLineAmt(fileId,mIdx,type,val){var n=parseFloat((''+val).replace(/[^0-9.]/g,''));if(isNaN(n))return;if(!S.lineAmt[fileId])S.lineAmt[fileId]={};S.lineAmt[fileId][mIdx+'|'+type]=n;pulse(mIdx+'|'+type);showToast('Amount saved','ok');}
+// Base OCR amount for a type/month (null for custom Sales-added lines)
+function baseAmt(mIdx,type){var m=PAYSLIP_MONTHS[mIdx];var b=(m.earn[type]!=null?m.earn[type]:(m.ded[type]!=null?m.ded[type]:null));return b;}
+// Effective APPLIED value = applied override if set, else base OCR (drives Step-3 totals)
+function effectiveApplied(fileId,mIdx,type){var ov=(S.lineAmt[fileId]||{})[mIdx+'|'+type];return ov!=null?ov:baseAmt(mIdx,type);}
+// DISPLAY value for the Step-1 input = pending draft if any, else effective applied
+function lineDispAmt(fileId,mIdx,type){var d=(S.lineAmtDraft[fileId]||{})[mIdx+'|'+type];return d!=null?d:effectiveApplied(fileId,mIdx,type);}
+// Typing an amount stages a DRAFT — Step-3 totals don't move until the user clicks Save & refresh
+function setLineAmt(fileId,mIdx,type,val){var n=parseFloat((''+val).replace(/[^0-9.]/g,''));if(isNaN(n))return;if(!S.lineAmtDraft[fileId])S.lineAmtDraft[fileId]={};S.lineAmtDraft[fileId][mIdx+'|'+type]=n;render();}
+// Keys with a pending draft that differs from what's applied
+function pendingAmounts(fileId){var d=S.lineAmtDraft[fileId]||{},out=[];Object.keys(d).forEach(function(k){var p=k.split('|');var mIdx=+p[0];var type=p.slice(1).join('|');if(d[k]!==effectiveApplied(fileId,mIdx,type))out.push(k);});return out;}
+// Apply staged amounts → commit to S.lineAmt, recompute Step-3, flash the downstream change
+function applyAmountChanges(fileId){
+  var pend=pendingAmounts(fileId);if(!pend.length)return;
+  if(!S.lineAmt[fileId])S.lineAmt[fileId]={};
+  pend.forEach(function(k){S.lineAmt[fileId][k]=(S.lineAmtDraft[fileId]||{})[k];});
+  S.lineAmtDraft[fileId]={};
+  S.compFlash=true;S.flash=S.flash||{};pend.forEach(function(k){S.flash[k]=true;});
+  render();
+  setTimeout(function(){S.compFlash=false;S.flash={};render();},950);
+  showToast('Saved &mdash; Step 3 totals recalculated.','ok');
+}
 // line items mapped into a given bucket for a month (for the aggregation "process")
 function bucketItems(fileId,mIdx,bucketKey){
   return RULE_ITEMS.filter(function(it){
@@ -3028,13 +3063,21 @@ function renderLineItems(fileId){
     return '<span class="li2-vcol"><button class="li2-vbtn" onclick="'+onclick+'">Verify</button></span>';
   }
 
-  // A standard line-item row: [locate] [name] [amount] [verify]
+  // A standard line-item row: [locate] [name+marker] [amount] [verify]
   function row(it,mIdx){
-    var amt=lineAmtVal(fileId,mIdx,it);
-    var edited=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type]!=null;
+    var rowKey=mIdx+'|'+it.type;
+    var draft=(S.lineAmtDraft[fileId]||{})[rowKey];
+    var applied=(S.lineAmt[fileId]||{})[rowKey];
+    var base=it.custom?null:baseAmt(mIdx,it.type);
+    var effApplied=(applied!=null?applied:base);
+    var dispVal=(draft!=null?draft:effApplied);
+    var isPending=(draft!=null&&draft!==effApplied);                       // typed, not applied yet
+    var isEdited=(!isPending&&applied!=null&&base!=null&&applied!==base);  // committed change from OCR
+    var inpCls=isPending?'pending':(isEdited?'edited':'');
+    var marker=isPending?'<span class="li2-edit-tag pend">Pending</span>'
+      :(isEdited?'<span class="li2-edit-tag">Edited</span>':'');
     var tag=it.custom?'<span class="li2-new">Added</span>':'';
     var rm=it.custom?'<span class="li2-rm" onclick="removeCustomLine(\''+fileId+'\',\''+it.id+'\')" title="Remove">&times;</span>':'';
-    var rowKey=mIdx+'|'+it.type;
     var flagged=it.eyeCheck&&!it.custom&&mIdx===0;   // eyeball-check the most recent period only; older months are reference
     var verified=clean||(flagged&&lv[rowKey]);
     var vcol=flagged?vcell(verified,'verifyLineRow(\''+fileId+'\','+mIdx+',\''+it.type+'\')'):'<span class="li2-vcol"></span>';
@@ -3042,10 +3085,10 @@ function renderLineItems(fileId){
     return '<div class="'+rowCls+'" id="li-'+it.id+'-'+mIdx+'"'
         +' onmouseenter="hlDoc(\''+it.id+'\')" onmouseleave="unhlDoc(\''+it.id+'\')">'
       +'<span class="li2-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'
-      +'<span class="li2-name">'+it.ms+'<span class="li2-en">'+it.en+'</span>'+tag+'</span>'
+      +'<span class="li2-name">'+it.ms+'<span class="li2-en">'+it.en+'</span>'+tag+marker+'</span>'
       +'<span class="li2-amt">'
         +'<span class="li2-cur">RM</span>'
-        +'<input value="'+(it.custom&&!edited?'':money(amt))+'"'+(it.custom?' placeholder="Enter amount"':'')+' onchange="setLineAmt(\''+fileId+'\','+mIdx+',\''+it.type+'\',this.value)" class="'+(edited?'edited':'')+'">'
+        +'<input value="'+(dispVal!=null?money(dispVal):'')+'"'+(dispVal==null?' placeholder="Enter amount"':'')+' onchange="setLineAmt(\''+fileId+'\','+mIdx+',\''+it.type+'\',this.value)" class="'+inpCls+'">'
         +rm
       +'</span>'
       +vcol
@@ -3091,7 +3134,7 @@ function renderLineItems(fileId){
 
   // Regions 2..n — one per pay period
   var groupsHtml=PAYSLIP_MONTHS.map(function(m,mIdx){
-    var hasEdit=all.some(function(it){return (S.lineAmt[fileId]||{})[mIdx+'|'+it.type]!=null;});
+    var hasEdit=all.some(function(it){var k=mIdx+'|'+it.type;return (S.lineAmt[fileId]||{})[k]!=null||(S.lineAmtDraft[fileId]||{})[k]!=null;});
     var earn=all.filter(function(x){return x.kind==='earning';}).map(function(it){return row(it,mIdx);}).join('');
     var ded=all.filter(function(x){return x.kind==='deduction';}).map(function(it){return row(it,mIdx);}).join('');
     var period=periodLabels[mIdx]||('Pay Period '+(mIdx+1));
@@ -3116,7 +3159,13 @@ function renderLineItems(fileId){
   var hint='<div class="li2-hint">Malay text with <span class="li2-en-key">grey English translation</span>. Edit any amount directly. '
     +(clean?'This file was verified by Sales before routing — you can still adjust any value.':'Orange rows need a manual check against the source document — click <b>Verify</b> on each, or use <b>Mark All Verified</b> above.')
     +'</div>';
-  return hint+docGroup+groupsHtml+addGroupBtn;
+  // Sticky apply bar — staged amount edits don't reach Step-3 totals until saved
+  var pend=pendingAmounts(fileId);
+  var applyBar=pend.length
+    ?'<div class="li-apply li-apply-sticky"><span class="li-apply-txt">&#9998; <b>'+pend.length+' amount change'+(pend.length>1?'s':'')+' staged</b> — Step 3 totals refresh after you save.</span>'
+      +'<button class="btn btn-pri btn-sm" onclick="applyAmountChanges(\''+fileId+'\')">&#10003; Save &amp; refresh totals</button></div>'
+    :'';
+  return applyBar+hint+docGroup+groupsHtml+addGroupBtn;
 }
 /* ── ③④ Computed fields with aggregation process + OCR reconciliation ── */
 function renderComputed(fileId){
@@ -3135,7 +3184,7 @@ function renderComputed(fileId){
         +(ok?'<span class="cp-ok">&#10003;</span>':'<span class="cp-bad">&#9888; mismatch</span>')
       +'</div>';
     }
-    return '<div class="cp-month">'
+    return '<div class="cp-month'+(S.compFlash?' cp-flash':'')+'">'
       +'<div class="li2-mhd">'+m.month+'</div>'
       +fieldRow('earning_basic_salary','Basic Salary')
       +fieldRow('earning_total_allowances','Total Allowances')
@@ -3155,7 +3204,19 @@ function renderComputed(fileId){
     +'</div>';
   }).join('');
 }
-function scrollToSec(key){S.secOpen[key]=true;render();var el=document.getElementById('sec-'+key);if(el&&el.scrollIntoView)el.scrollIntoView({block:'start',behavior:'smooth'});}
+// Intentional navigation to a step: open it, then scroll the workspace to it.
+// Synchronous direct assignment right after render() (render already restored the
+// prior scroll; this overrides it). Smooth behavior is unreliable on the fresh DOM.
+function scrollToSec(key){
+  S.secOpen[key]=true;render();
+  var el=document.getElementById('sec-'+key);
+  var wl=document.querySelector('.fd-wleft');
+  if(!el||!wl){if(el&&el.scrollIntoView)el.scrollIntoView({block:'start'});return;}
+  var top=Math.max(0,el.getBoundingClientRect().top-wl.getBoundingClientRect().top+wl.scrollTop-8);
+  wl.scrollTop=top;
+  el.classList.add('sec-land');
+  setTimeout(function(){var c=document.getElementById('sec-'+key);if(c)c.classList.remove('sec-land');},1100);
+}
 
 function renderFileDetail(){
   var d=FILE_DETAIL[S.fileId]||FILE_DETAIL.ec;
@@ -3250,7 +3311,8 @@ function renderFileDetail(){
   var s2Open=prc;                          // ② CED: rule mapping (prc already includes new补录-type gaps)
   // ③ is a GATED result light: grey 待定 until ①② clear, then green/red.
   // Suppresses mismatch noise that is merely a symptom of an unfinished ① or ②.
-  var s3=(s1Open||s2Open)?'wait':(nMismatch?'error':'done');
+  var reconAccepted=!!(S.justifiedAlerts[S.fileId]||{})['recon-mismatch'];
+  var s3=(s1Open||s2Open)?'wait':(nMismatch?(reconAccepted?'accepted':'error'):'done');
 
   // non-lineMode files keep the compact action center (no 3-step model)
   var actionCenter='<div class="ac'+(totalIssues?'':' ac-clear')+'">'
@@ -3336,19 +3398,23 @@ function renderFileDetail(){
     var autoMapped=customLines(S.fileId).filter(function(c){return (S.ruleMap[S.fileId]||{})[c.id];});
     var autoBanner=autoMapped.length?'<div class="sec-banner info">&#8505; '+autoMapped.length+' item'+(autoMapped.length>1?'s':'')+' added by Sales '+(autoMapped.length>1?'were':'was')+' auto-mapped to the income rules below — review and adjust only if needed.</div>':'';
     // ── §3 Step-3: GATED result. Mismatch triage (Sales-first, then CED): ①识别错(Sales) ②归类(CED) ③规则如此(CED跳过). ──
-    var mmBadge=bounced?'<span class="sec-badge red">Returned</span>'
-      :(s3==='error'?'<span class="sec-badge red">'+nMismatch+' Mismatch</span>'
+    var mmBadge=s3==='error'?'<span class="sec-badge red">'+nMismatch+' Mismatch</span>'
+      :(s3==='accepted'?'<span class="sec-badge grey">Accepted</span>'
       :(s3==='done'?'<span class="sec-badge green">Reconciled</span>'
       :'<span class="sec-badge grey">Pending</span>'));
     var mmBanner;
     if(s3==='wait')mmBanner='<div class="sec-banner grey">&#9203; Reconciliation pending — '+(s1Open?'waiting for Sales to complete Step 1 verification':'waiting for CED to apply Step 2 rules')+'. Totals will be validated once prior steps are complete.</div>';
     else if(s3==='error'){
-      mmBanner='<div class="sec-banner red">&#9888; '+nMismatch+' total'+(nMismatch>1?'s':'')+' do not match the printed payslip values. Possible causes: <b>① OCR read the wrong amount</b> (Sales to correct) · <b>② wrong field classification</b> (CED to adjust) · <b>③ rule is intentional</b> (CED to skip).'
-        +(bounced?'<br><b>File returned to Sales for amount verification.</b>'
-          :'<div class="vf-acts" style="margin-top:6px;"><button class="btn btn-sm" onclick="bounceToSales(\''+S.fileId+'\')">&#8617; Return to Sales to verify amounts</button>'
-            +'<button class="btn btn-sm" onclick="scrollToSec(\'map\')">Adjust / skip rule in Step 2 &#8594;</button></div>')
+      // Three distinct fixes, one per cause — each button's label matches where it takes you.
+      mmBanner='<div class="sec-banner red">&#9888; '+nMismatch+' total'+(nMismatch>1?'s':'')+' do not match the printed payslip. Pick the cause and fix it:'
+        +'<div class="vf-acts" style="margin-top:7px;">'
+          +'<button class="btn btn-sm" onclick="scrollToSec(\'items\')">&#9651; Adjust amount &mdash; go to Step 1</button>'
+          +'<button class="btn btn-sm" onclick="scrollToSec(\'map\')">&#9651; Adjust rule &mdash; go to Step 2</button>'
+          +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\'recon-mismatch\')">Skip &mdash; accept with reason</button>'
+        +'</div>'
       +'</div>';
     }
+    else if(s3==='accepted')mmBanner='<div class="sec-banner info">&#10003; Mismatch accepted with reason: <b>'+((S.justifiedAlerts[S.fileId]||{})['recon-mismatch']||'')+'</b> &nbsp;<button class="btn btn-sm" onclick="undoJustify(\''+S.fileId+'\',\'recon-mismatch\')">&#8635; Undo</button></div>';
     else mmBanner='<div class="sec-banner green">&#10003; All computed totals match printed values — reconciliation passed.</div>';
     var cItems=secCard('items','1','Step 1 · Line Items','Source line items — Sales review',s1Badge, s1Body);
     var cMap=secCard('map','2','Step 2 · Field Mapping','Line-item type &rarr; income field — CED',mapBadge, missBanner+autoBanner+renderRuleConfig(S.fileId));
