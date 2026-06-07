@@ -161,7 +161,7 @@ tr:hover td{background:#fafbfc;}
     <li><a href="#s1"><span class="toc-num">01</span>设计原则与角色分工</a></li>
     <li><a href="#s4"><span class="toc-num">04</span>Step 2 · 字段映射（CED）</a></li>
     <li><a href="#s2"><span class="toc-num">02</span>三步流程与角色视角</a></li>
-    <li><a href="#s5"><span class="toc-num">05</span>Step 3 · 加总校验与三因分诊</a></li>
+    <li><a href="#s5"><span class="toc-num">05</span>Step 3 · 加总校验与对不上时的处理</a></li>
     <li><a href="#s3"><span class="toc-num">03</span>Step 1 · 细项核实（Sales）</a></li>
     <li><a href="#s6"><span class="toc-num">06</span>全局约定：告警与改动反馈</a></li>
   </ul>
@@ -214,7 +214,7 @@ tr:hover td{background:#fafbfc;}
       <ul class="role-list">
         <li>把关每种细项归到哪个收入字段</li>
         <li>调整规则、复核 Sales 新增项的自动映射</li>
-        <li>对加总不符做三因分诊</li>
+        <li>总数对不上时，判断原因并处理</li>
         <li>信任 Sales 的数据，不重复核对金额</li>
       </ul>
     </div>
@@ -352,7 +352,7 @@ tr:hover td{background:#fafbfc;}
 <div class="sec" id="s5">
   <div class="sec-hd">
     <span class="sec-num">05</span>
-    <span class="sec-title">Step 3 · 加总校验与三因分诊</span>
+    <span class="sec-title">Step 3 · 加总校验与对不上时的处理</span>
     <span class="sec-sub">结果呈现</span>
   </div>
 
@@ -367,13 +367,13 @@ tr:hover td{background:#fafbfc;}
       <tr><td>有未处理告警</td><td>—</td><td>⏳ 待定（灰）</td><td>Sales 还没核完，结果不可信</td></tr>
       <tr><td>已清零</td><td>有待应用规则</td><td>⏳ 待定（灰）</td><td>规则改了没应用，算的是旧值</td></tr>
       <tr><td>已清零</td><td>已清零</td><td>✓ 一致（绿 · Reconciled）</td><td>数据和规则都确认，校验通过</td></tr>
-      <tr><td>已清零</td><td>已清零</td><td>✗ 不符（红 · Mismatch）</td><td>真实差异，进入三因分诊 ↓</td></tr>
+      <tr><td>已清零</td><td>已清零</td><td>✗ 不符（红 · Mismatch）</td><td>真实差异，按下面三种原因处理 ↓</td></tr>
       <tr><td colspan="2" style="text-align:center;color:var(--lt);">— 对不符接受原因后 —</td><td>◷ 已接受（灰 · Accepted）</td><td>已知业务差异，留原因跳过，可撤销</td></tr>
     </tbody>
   </table>
 
-  <h3>三因分诊：一个原因，一个按钮</h3>
-  <p>出现红色不符时，告警条直接给出三个互斥的处理入口，每个按钮的文字与它的跳转目标一致——点哪个就去哪一步。</p>
+  <h3>总数对不上：三种原因，三种改法</h3>
+  <p>出现红色不符时，告警条直接给出三个并列的处理入口，对应三种可能的原因。每个按钮的文字和它的跳转目标一致——点哪个就去哪一步。</p>
 
   <div class="decision-grid">
     <div class="decision-item">
@@ -397,7 +397,7 @@ tr:hover td{background:#fafbfc;}
   </div>
 
   <div class="note blue">
-    三个入口并列展示，避免只看到一个选项。"调金额"是 Sales 的活、"调规则 / 接受"是 CED 的活——分诊本身就体现了原则 1 的职责划分。
+    三个入口并列展示，避免只看到一个选项。"调金额"是 Sales 的活、"调规则 / 接受"是 CED 的活——这套分工本身就体现了原则 1 的职责划分。
   </div>
 </div>
 
@@ -464,7 +464,7 @@ tr:hover td{background:#fafbfc;}
       <tr><td><b>Missing Field</b></td><td>某必要项在 OCR 输出中完全没有来源细项</td><td><span class="tag sales">Sales</span></td><td>Step 1</td></tr>
       <tr><td><b>新增项映射</b></td><td>Sales 补录的细项类型需复核映射</td><td><span class="tag ced">CED</span></td><td>Step 2</td></tr>
       <tr><td><b>规则待应用</b></td><td>改了规则但还没点 Confirm &amp; Refresh</td><td><span class="tag ced">CED</span></td><td>Step 2</td></tr>
-      <tr><td><b>加总不符</b></td><td>计算值与工资单印刷总计不一致</td><td><span class="tag both">三因分诊</span></td><td>Step 3</td></tr>
+      <tr><td><b>加总不符</b></td><td>计算值与工资单印刷总计不一致</td><td><span class="tag both">按原因改</span></td><td>Step 3</td></tr>
     </tbody>
   </table>
 </div>
