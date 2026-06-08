@@ -23,9 +23,22 @@
 |------|------|
 | `05_签约/需求文档/e-acceptance-prototype.html` | **E-Acceptance 主原型文件（session-v9，持续迭代）** |
 | `05_签约/需求文档/_v4_reference.html` | v4 快照，保留为参考，不修改 |
-| `02_AIOCR/需求文档/aiocr-prototype.html` | **AIOCR 主原型文件（session-v9，持续迭代）** |
-| `02_AIOCR/需求文档/aiocr-prototype_v1_定稿.html` | **AIOCR v1 定稿快照（git tag `aiocr-v1`），保留参考，不修改** |
+| `02_AIOCR/需求文档/aiocr-prototype.html` | AIOCR 旧原型文件（参考用） |
+| `02_AIOCR/需求文档/aiocr-prototype_v1_定稿.html` | AIOCR v1 定稿快照（git tag `aiocr-v1`），保留参考，不修改 |
+| `02_AIOCR/需求文档/aiocr-外网复刻.html` | **AIOCR 交叉核验模块主原型（session-v9，持续迭代）** |
+| `02_AIOCR/需求文档/aiocr-外网复刻_交叉核验定稿.html` | **交叉核验模块定稿快照（git tag `交叉核验模块定稿`），不修改** |
+| `02_AIOCR/需求文档/aiocr-设计说明.html` | 交叉核验模块设计说明（持续迭代） |
+| `02_AIOCR/需求文档/aiocr-设计说明_交叉核验定稿.html` | **设计说明定稿快照（同 tag `交叉核验模块定稿`），不修改** |
 | `CLAUDE.md` | 本文件，项目记忆 + 任务看板 |
+
+### 交叉核验模块定稿核心能力（tag `交叉核验模块定稿`，2026-06-08 冻结）
+- 完整角色链路：Sales 入口（案件池 → 案件详情）+ CED 入口（待办列表 → 案件详情）
+- Step 1 人工核验：Eyeball Check（仅最近期）+ 缺失字段告警，两条独立告警栏
+- Step 1 金额暂存：`lineAmtDraft` 暂存，Sticky apply bar 显示变更数，Save 后联动 Step 3
+- Step 2 规则核验：规则引擎审核，人工覆盖确认后联动 Step 3
+- Step 3 不一致处理：三键操作（调数字 / 调规则 / 跳过接受），Accepted 状态
+- CED 洁净视图：CED 收到的申请单自动抹除所有告警，全项显示为已核验
+- 下游可溯性：Pending 标签 → Edited 标签 → 绿行闪烁 → Step 3 区段闪烁 → Toast 提示
 
 ### AIOCR v1 定稿核心能力（tag `aiocr-v1`，2026-06-01 冻结）
 - OCR 图文纠错：每字段常驻 ✏ Amend（Sales/CRA 可改，CED 只读）
