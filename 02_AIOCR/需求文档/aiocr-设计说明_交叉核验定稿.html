@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIOCR 收入核验模块</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#1f2937;
+  --ink2:#374151;
+  --sub:#6b7280;
+  --lt:#9ca3af;
+  --bg:#f5f6f7;
+  --card:#ffffff;
+  --bd:#e3e5e8;
+  --bd2:#eceef1;
+  --accent:#334155;
+  --accent-l:#f1f5f9;
+  --tag-bg:#eef0f3;
+  --tag-txt:#4b5563;
+  --green-bg:#f0f7f2;
+  --green-bd:#c6dfc9;
+  --green-tx:#1a5c2e;
+  --org-bg:#fdf6ed;
+  --org-bd:#e8cfab;
+  --org-tx:#7a4f1a;
+  --blue-bg:#f0f4fb;
+  --blue-bd:#c3d0e8;
+  --blue-tx:#2c3e6e;
+  --red-bg:#fdf1f0;
+  --red-bd:#e8c4bf;
+  --red-tx:#7a2520;
+}
+body{font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.7;}
+
+/* ── Layout ── */
+.wrap{max-width:960px;margin:0 auto;padding:40px 24px 80px;}
+
+/* ── Cover ── */
+.cover{background:var(--accent);color:#fff;border-radius:10px;padding:44px 48px;margin-bottom:36px;}
+.cover-title{font-size:26px;font-weight:700;line-height:1.3;}
+.cover-sub{font-size:14px;opacity:.65;margin-top:10px;}
+
+/* ── TOC ── */
+.toc{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:20px 28px;margin-bottom:36px;}
+.toc-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--sub);margin-bottom:12px;}
+.toc-list{list-style:none;columns:2;column-gap:32px;}
+.toc-list li{margin:4px 0;}
+.toc-list a{font-size:13px;color:var(--ink2);}
+.toc-list a:hover{color:var(--accent);}
+.toc-list .toc-num{color:var(--lt);margin-right:6px;font-size:12px;}
+
+/* ── Section ── */
+.sec{margin-bottom:40px;}
+.sec-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid var(--bd);}
+.sec-num{font-size:11px;font-weight:700;color:var(--lt);letter-spacing:.5px;padding:2px 8px;background:var(--tag-bg);border-radius:4px;}
+.sec-title{font-size:18px;font-weight:700;color:var(--ink);}
+.sec-sub{font-size:12px;color:var(--sub);margin-left:auto;}
+
+h3{font-size:14px;font-weight:700;color:var(--ink2);margin:22px 0 10px;}
+h3.first{margin-top:0;}
+p{margin-bottom:10px;color:var(--ink2);}
+ul,ol{padding-left:20px;margin-bottom:10px;color:var(--ink2);}
+li{margin:4px 0;}
+
+/* ── Cards / Callouts ── */
+.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:20px 24px;margin-bottom:14px;}
+.card-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--sub);margin-bottom:10px;}
+
+.note{border-radius:7px;padding:14px 18px;margin-bottom:14px;font-size:13px;line-height:1.6;}
+.note.green{background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green-tx);}
+.note.org{background:var(--org-bg);border:1px solid var(--org-bd);color:var(--org-tx);}
+.note.blue{background:var(--blue-bg);border:1px solid var(--blue-bd);color:var(--blue-tx);}
+.note.red{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red-tx);}
+.note b{font-weight:700;}
+
+/* ── Pipeline ── */
+.pipeline{display:flex;align-items:stretch;gap:0;margin:20px 0;border:1px solid var(--bd);border-radius:8px;overflow:hidden;}
+.pipe-step{flex:1;padding:18px 16px;background:var(--card);text-align:center;position:relative;}
+.pipe-step+.pipe-step{border-left:1px solid var(--bd);}
+.pipe-step::after{content:'›';position:absolute;right:-12px;top:50%;transform:translateY(-50%);color:var(--lt);font-size:18px;z-index:1;}
+.pipe-step:last-child::after{display:none;}
+.pipe-num{font-size:10px;font-weight:700;color:var(--lt);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;}
+.pipe-name{font-size:13px;font-weight:700;color:var(--ink);}
+.pipe-owner{font-size:11px;color:var(--sub);margin-top:4px;}
+
+/* ── Role comparison ── */
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0;}
+.role-card{border-radius:7px;padding:16px 18px;border:1px solid var(--bd);}
+.role-card.sales{background:#fafbfc;}
+.role-card.ced{background:#f7f8fa;}
+.role-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:2px 8px;border-radius:4px;margin-bottom:10px;}
+.role-tag.s{background:#e8f0fe;color:#2c4a8e;}
+.role-tag.c{background:#e6f0e6;color:#1a4d1a;}
+.role-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.role-list{font-size:12.5px;color:var(--ink2);}
+.role-list li{margin:3px 0;}
+
+/* ── Principles grid ── */
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0;}
+.principle-item{background:var(--card);border:1px solid var(--bd);border-radius:7px;padding:14px 16px;}
+.principle-num{font-size:11px;font-weight:700;color:var(--lt);margin-bottom:4px;}
+.principle-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.principle-desc{font-size:12.5px;color:var(--ink2);}
+
+/* ── Tables ── */
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin:14px 0;}
+th{background:#f3f4f6;color:var(--ink2);font-weight:700;padding:10px 14px;text-align:left;border-bottom:2px solid var(--bd);}
+td{padding:9px 14px;border-bottom:1px solid var(--bd2);vertical-align:top;color:var(--ink2);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafbfc;}
+.tag{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:4px;}
+.tag.sales{background:#e8f0fe;color:#2c4a8e;}
+.tag.ced{background:#e6f0e6;color:#1a4d1a;}
+.tag.both{background:#f3f4f6;color:#374151;}
+.tag.hard{background:#fdf1f0;color:#7a2520;}
+.tag.sys{background:#eef0f3;color:#4b5563;}
+
+/* ── Logic flow ── */
+.logic-chain{display:flex;flex-direction:column;gap:3px;margin:14px 0;}
+.logic-step{display:flex;align-items:flex-start;gap:12px;padding:10px 14px;background:var(--card);border:1px solid var(--bd);border-radius:6px;}
+.logic-ic{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px;}
+.logic-ic.s{background:#e8f0fe;color:#2c4a8e;}
+.logic-ic.c{background:#e6f0e6;color:#1a4d1a;}
+.logic-ic.sys{background:#eef0f3;color:#4b5563;}
+.logic-body{flex:1;}
+.logic-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.logic-desc{font-size:12px;color:var(--sub);}
+
+/* ── Decision box ── */
+.decision-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0;}
+.decision-item{border:1px solid var(--bd);border-radius:7px;padding:14px 16px;background:var(--card);}
+.decision-num{font-size:18px;font-weight:700;color:var(--lt);margin-bottom:6px;}
+.decision-cause{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.decision-owner{font-size:11px;color:var(--sub);margin-bottom:8px;}
+.decision-action{font-size:12px;color:var(--ink2);}
+
+/* ── Footer ── */
+.footer{border-top:1px solid var(--bd);padding-top:20px;margin-top:48px;font-size:12px;color:var(--lt);}
+
+@media print{
+  .cover{background:#334155!important;-webkit-print-color-adjust:exact;}
+  body{background:#fff;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ── Cover ── -->
+<div class="cover">
+  <div class="cover-title">AIOCR 收入核验模块</div>
+  <div class="cover-sub">设计说明 · 配合原型使用</div>
+</div>
+
+<!-- ── TOC ── -->
+<div class="toc">
+  <div class="toc-title">目录</div>
+  <ul class="toc-list">
+    <li><a href="#s1"><span class="toc-num">01</span>设计原则与角色分工</a></li>
+    <li><a href="#s2"><span class="toc-num">02</span>三步流程与角色视角</a></li>
+    <li><a href="#s3"><span class="toc-num">03</span>Step 1 · 细项核实（Sales）</a></li>
+    <li><a href="#s4"><span class="toc-num">04</span>Step 2 · 字段映射（CED）</a></li>
+    <li><a href="#s5"><span class="toc-num">05</span>Step 3 · 加总校验与对不上时的处理</a></li>
+    <li><a href="#s6"><span class="toc-num">06</span>全局约定：告警与改动反馈</a></li>
+  </ul>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ 01 ══ -->
+<div class="sec" id="s1">
+  <div class="sec-hd">
+    <span class="sec-num">01</span>
+    <span class="sec-title">设计原则与角色分工</span>
+  </div>
+
+  <div class="principle-grid">
+    <div class="principle-item">
+      <div class="principle-num">原则 1</div>
+      <div class="principle-title">职责分开，不交叉</div>
+      <div class="principle-desc">Sales 负责数据准确，CED 负责规则正确。谁的问题谁处理，不互相依赖。</div>
+    </div>
+    <div class="principle-item">
+      <div class="principle-num">原则 2</div>
+      <div class="principle-title">每条告警有明确归属</div>
+      <div class="principle-desc">每类告警只属于一个角色处理，不会出现"不知道该谁管"的情况。</div>
+    </div>
+    <div class="principle-item">
+      <div class="principle-num">原则 3</div>
+      <div class="principle-title">上游没做完，下游不乱报</div>
+      <div class="principle-desc">Step 1 或 Step 2 未完成时，Step 3 保持灰色待定，不提前报红，避免误导。</div>
+    </div>
+    <div class="principle-item">
+      <div class="principle-num">原则 4</div>
+      <div class="principle-title">数据与规则分层</div>
+      <div class="principle-desc">金额归 Sales 管，"细项属于哪个收入字段"的映射归 CED 把关。两层独立、可追溯。</div>
+    </div>
+  </div>
+
+  <h3>谁管什么</h3>
+  <div class="role-grid">
+    <div class="role-card sales">
+      <span class="role-tag s">Sales · 管数据</span>
+      <ul class="role-list">
+        <li>对照原件核实 OCR 提取的关键金额与全局信息</li>
+        <li>修正读错的金额</li>
+        <li>补录漏识别的细项（名称 + 金额）</li>
+        <li>确认无误后流转给 CED</li>
+      </ul>
+    </div>
+    <div class="role-card ced">
+      <span class="role-tag c">CED · 管规则</span>
+      <ul class="role-list">
+        <li>把关每种细项归到哪个收入字段</li>
+        <li>调整规则、复核 Sales 新增项的自动映射</li>
+        <li>总数对不上时，判断原因并处理</li>
+        <li>信任 Sales 的数据，不重复核对金额</li>
+      </ul>
+    </div>
+  </div>
+  <p style="font-size:12.5px;color:var(--sub);">字段内部的加减计算（如各津贴累加为 Total Allowances）是系统固定逻辑，两个角色都不需要配置。</p>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ 02 ══ -->
+<div class="sec" id="s2">
+  <div class="sec-hd">
+    <span class="sec-num">02</span>
+    <span class="sec-title">三步流程与角色视角</span>
+  </div>
+
+  <p>核验过程是一条"数据 → 规则 → 结果"的链路，三步依次依赖：金额没核实、规则没配好，加总结果就不可信。</p>
+
+  <div class="pipeline">
+    <div class="pipe-step">
+      <div class="pipe-num">Step 1</div>
+      <div class="pipe-name">细项核实</div>
+      <div class="pipe-owner">Sales · 出可信数据</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">Step 2</div>
+      <div class="pipe-name">字段映射</div>
+      <div class="pipe-owner">CED · 出完整规则</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">Step 3</div>
+      <div class="pipe-name">加总校验</div>
+      <div class="pipe-owner">结果 · 出可信收入</div>
+    </div>
+  </div>
+
+  <ul>
+    <li><b>Step 1 · 细项核实：</b>对照原件核实并补齐 OCR 提取的细项 → 产出可信的细项金额。详见第 3 节。</li>
+    <li><b>Step 2 · 字段映射：</b>定义每种细项归到哪个收入字段 → 产出完整的映射规则。详见第 4 节。</li>
+    <li><b>Step 3 · 加总校验：</b>按规则加总，与工资单印刷的 Gross / Deductions / Net 核对 → 产出可信的核验收入。详见第 5 节。</li>
+  </ul>
+
+  <h3>同一页面，两种阅读顺序</h3>
+  <p>逻辑顺序是 1→2→3，但两个角色的工作习惯相反。切换角色视图后，卡片顺序和默认展开自动调整；Step 编号始终不变，方便双方沟通对齐。</p>
+
+  <table>
+    <thead>
+      <tr><th style="width:16%;">维度</th><th>Sales 视图</th><th>CED 视图</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>卡片顺序</b></td><td>1 → 2 → 3（先核数据，再看结果）</td><td>3 → 2 → 1（先看结果，有问题再往上查）</td></tr>
+      <tr><td><b>默认展开</b></td><td>Step 1，直接进入核实</td><td>Step 3 + Step 2，先看结论和规则</td></tr>
+      <tr><td><b>关注点</b></td><td>金额有没有被读错、有没有漏行</td><td>各字段合计是否合理、归类是否正确</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note green">
+    <b>CED 收到的永远是干净件。</b>Sales 把 Step 1 的告警全部清零后才流转，所以 CED 视图默认没有告警、细项已标记为已核；CED 可以自行调整任何值，但不必重复核对。
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ 03 ══ -->
+<div class="sec" id="s3">
+  <div class="sec-hd">
+    <span class="sec-num">03</span>
+    <span class="sec-title">Step 1 · 细项核实</span>
+    <span class="sec-sub">Sales 负责</span>
+  </div>
+
+  <h3 class="first">页面结构：分区平铺</h3>
+  <p>细项按"区"平铺展示，各区是同级标题、之间有明显间隔，不再用 Tab（识别错时 Tab 名会很乱）。</p>
+  <ul>
+    <li><b>Document Information 区：</b>全局信息——雇主名称、员工 IC、是否纯佣金收入、EPF 方案。逐项核对。</li>
+    <li><b>Pay Period 区（按月一组）：</b>该月的收入项与扣减项，金额可直接修改；最近一份工资单排在最前。</li>
+  </ul>
+
+  <h3>两件事，两类独立告警</h3>
+  <p>Sales 在这一步只做两件事，对应两条<b>分开的</b>告警条——让人清楚这是两种不同的操作，各自独立处理、独立消失。</p>
+
+  <div class="role-grid">
+    <div class="role-card sales">
+      <span class="role-tag s">Eyeball Check · 人工核对</span>
+      <div style="font-size:12.5px;color:var(--ink2);margin-top:8px;">
+        <b>为什么：</b>AI 提取了值，但无法自证准确（图像边缘、关键收入项）。<br>
+        <b>怎么做：</b>对照右侧原件，逐行点 <b>Verify</b>，或一次 <b>Mark All Verified</b>（全局信息 + 细项一起确认）。<br>
+        <b>范围：</b>只挑关键项核对（如基本工资、绩效奖金），且只针对最近一份工资单，不逐月重复。
+      </div>
+    </div>
+    <div class="role-card ced">
+      <span class="role-tag" style="background:#fff4e0;color:#7a4f1a;">Missing Field · 必要字段缺失</span>
+      <div style="font-size:12.5px;color:var(--ink2);margin-top:8px;">
+        <b>为什么：</b>OCR 完全没识别到某必要项（不是读错，是根本没有）。<br>
+        <b>怎么做：</b><b>Add Item</b> 补录（填名称 + 金额），或 <b>Skip</b> 并写明原因。<br>
+        <b>补录即映射：</b>补录项会自动按默认规则接入字段，无需 Sales 进规则面板（见下）。
+      </div>
+    </div>
+  </div>
+
+  <h3>核对后的呈现</h3>
+  <ul>
+    <li>待核行用橙色底标出；鼠标移到告警条，下方对应行同步高亮，方便定位。</li>
+    <li>确认后该行<b>恢复普通样式</b>，只留一个 "Verified" 小标记——不长期保留绿色，避免页面花哨。</li>
+    <li>两类告警都处理完，Step 1 的告警全部消失，可流转给 CED。</li>
+  </ul>
+
+  <div class="note green">
+    <b>补录项如何自动映射：</b>Sales 补录的细项会自动套用默认收入字段（如收入类→Other Income），Sales 不进规则层。Step 2 会向 CED 提示"有新增项已自动映射"，CED 复核或调整即可——既不增加 Sales 负担，也不绕过 CED 的最终把关。
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ 04 ══ -->
+<div class="sec" id="s4">
+  <div class="sec-hd">
+    <span class="sec-num">04</span>
+    <span class="sec-title">Step 2 · 字段映射</span>
+    <span class="sec-sub">CED 负责</span>
+  </div>
+
+  <p>这一步只做一件事：定义<b>每种细项类型</b>归到哪个收入字段（如 Gaji Pokok → Basic Salary，某津贴 → Total Allowances）。只管归类，不碰金额。</p>
+
+  <div class="card">
+    <div class="card-title">关键特征</div>
+    <ul>
+      <li><b>与月份无关：</b>每种类型配置一次，对所有月份统一生效。</li>
+      <li><b>默认已预设：</b>常见类型有默认规则，CED 只处理需要改的规则和新增项。</li>
+      <li><b>新增项自动映射：</b>Sales 补录的细项已用默认规则接入，这里以一条提示呈现，CED 可直接调整目标字段。</li>
+      <li><b>改完要应用：</b>调整规则后点 <b>Confirm &amp; Refresh</b> 才生效，Step 3 随之重算（改动反馈见第 6 节）。</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ 05 ══ -->
+<div class="sec" id="s5">
+  <div class="sec-hd">
+    <span class="sec-num">05</span>
+    <span class="sec-title">Step 3 · 加总校验与对不上时的处理</span>
+    <span class="sec-sub">结果呈现</span>
+  </div>
+
+  <p>按 Step 2 规则把各细项累加到字段，逐月与工资单印刷的 Gross / Total Deductions / Net 核对。这一步的状态<b>受上游门控</b>：上游没做完就不报红。</p>
+
+  <h3 class="first">四种状态</h3>
+  <table>
+    <thead>
+      <tr><th>Step 1</th><th>Step 2</th><th>Step 3 状态</th><th>含义</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>有未处理告警</td><td>—</td><td>⏳ 待定（灰）</td><td>Sales 还没核完，结果不可信</td></tr>
+      <tr><td>已清零</td><td>有待应用规则</td><td>⏳ 待定（灰）</td><td>规则改了没应用，算的是旧值</td></tr>
+      <tr><td>已清零</td><td>已清零</td><td>✓ 一致（绿 · Reconciled）</td><td>数据和规则都确认，校验通过</td></tr>
+      <tr><td>已清零</td><td>已清零</td><td>✗ 不符（红 · Mismatch）</td><td>真实差异，按下面三种原因处理 ↓</td></tr>
+      <tr><td colspan="2" style="text-align:center;color:var(--lt);">— 对不符接受原因后 —</td><td>◷ 已接受（灰 · Accepted）</td><td>已知业务差异，留原因跳过，可撤销</td></tr>
+    </tbody>
+  </table>
+
+  <h3>总数对不上：三种原因，三种改法</h3>
+  <p>出现红色不符时，告警条直接给出三个并列的处理入口，对应三种可能的原因。每个按钮的文字和它的跳转目标一致——点哪个就去哪一步。</p>
+
+  <div class="decision-grid">
+    <div class="decision-item">
+      <div class="decision-num">①</div>
+      <div class="decision-cause">金额读错了</div>
+      <div class="decision-owner">→ Sales</div>
+      <div class="decision-action"><b>Adjust amount</b>：跳到 Step 1 改金额（如模糊把 6 读成 0），保存后 Step 3 重算。</div>
+    </div>
+    <div class="decision-item">
+      <div class="decision-num">②</div>
+      <div class="decision-cause">归类规则不对</div>
+      <div class="decision-owner">→ CED</div>
+      <div class="decision-action"><b>Adjust rule</b>：跳到 Step 2 改映射，应用后 Step 3 重算。</div>
+    </div>
+    <div class="decision-item">
+      <div class="decision-num">③</div>
+      <div class="decision-cause">规则本来如此</div>
+      <div class="decision-owner">→ CED</div>
+      <div class="decision-action"><b>Skip</b>：差异来自已知业务规则，写明原因接受，状态转为 Accepted（可撤销）。</div>
+    </div>
+  </div>
+
+  <div class="note blue">
+    三个入口并列展示，避免只看到一个选项。"调金额"是 Sales 的活、"调规则 / 接受"是 CED 的活——这套分工本身就体现了原则 1 的职责划分。
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════ 06 ══ -->
+<div class="sec" id="s6">
+  <div class="sec-hd">
+    <span class="sec-num">06</span>
+    <span class="sec-title">全局约定：告警与改动反馈</span>
+    <span class="sec-sub">跨步骤统一的呈现规则</span>
+  </div>
+
+  <h3 class="first">告警怎么呈现</h3>
+  <ul>
+    <li><b>统一橙色底：</b>所有"待处理"的告警和待核项用同一种橙色，不用多种颜色分散注意。</li>
+    <li><b>只说做什么 + 快捷按钮：</b>告警条不堆明细，具体明细在下方对应位置展示。</li>
+    <li><b>悬停联动：</b>鼠标移到告警条，下方对应字段同步淡橙高亮，便于定位。</li>
+    <li><b>处理完即消失：</b>每条告警独立处理；全部清掉后页面再无告警。</li>
+    <li><b>确认不留绿：</b>确认后的项恢复与普通字段一致的样式，只留一个小标记。</li>
+  </ul>
+
+  <h3>改动怎么让人"看得见、查得到"</h3>
+  <p>改金额（Step 1）和调规则（Step 2）都走同一套反馈机制——改动先暂存，保存后下游可见地重算，并留痕。</p>
+
+  <div class="logic-chain">
+    <div class="logic-step">
+      <div class="logic-ic s">改</div>
+      <div class="logic-body">
+        <div class="logic-title">就地修改</div>
+        <div class="logic-desc">改某行金额，或在 Step 2 调某条规则</div>
+      </div>
+    </div>
+    <div class="logic-step">
+      <div class="logic-ic sys">存</div>
+      <div class="logic-body">
+        <div class="logic-title">先暂存，下游不动</div>
+        <div class="logic-desc">改动标为 Pending / 待应用（橙色虚线），Step 3 暂不变，避免边改边跳</div>
+      </div>
+    </div>
+    <div class="logic-step">
+      <div class="logic-ic sys">用</div>
+      <div class="logic-body">
+        <div class="logic-title">一处保存</div>
+        <div class="logic-desc">点 Save &amp; refresh totals（金额）或 Confirm &amp; Refresh（规则），改动才应用</div>
+      </div>
+    </div>
+    <div class="logic-step">
+      <div class="logic-ic c">看</div>
+      <div class="logic-body">
+        <div class="logic-title">下游可见地重算 + 留痕</div>
+        <div class="logic-desc">Step 3 对应区域闪一下并重算、弹提示；改过的细项保留 "Edited" 角标，方便回查</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>告警目录（速查）</h3>
+  <table>
+    <thead>
+      <tr><th>告警</th><th>触发条件</th><th>归属</th><th>步骤</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>Hard Fail</b></td><td>字段值与系统记录不符，或关键字段识别失败</td><td><span class="tag hard">阻断</span></td><td>Step 1</td></tr>
+      <tr><td><b>Eyeball Check</b></td><td>AI 提取了值但无法自证准确（含图像质量边缘页）</td><td><span class="tag sales">Sales</span></td><td>Step 1</td></tr>
+      <tr><td><b>Missing Field</b></td><td>某必要项在 OCR 输出中完全没有来源细项</td><td><span class="tag sales">Sales</span></td><td>Step 1</td></tr>
+      <tr><td><b>新增项映射</b></td><td>Sales 补录的细项类型需复核映射</td><td><span class="tag ced">CED</span></td><td>Step 2</td></tr>
+      <tr><td><b>规则待应用</b></td><td>改了规则但还没点 Confirm &amp; Refresh</td><td><span class="tag ced">CED</span></td><td>Step 2</td></tr>
+      <tr><td><b>加总不符</b></td><td>计算值与工资单印刷总计不一致</td><td><span class="tag both">按原因改</span></td><td>Step 3</td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- ── Footer ── -->
+<div class="footer">
+  AIOCR 收入核验模块 · 设计说明 · 配合原型使用
+</div>
+
+</div><!-- /wrap -->
+</body>
+</html>
