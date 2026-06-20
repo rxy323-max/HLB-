@@ -40,6 +40,13 @@
 - CED 洁净视图：CED 收到的申请单自动抹除所有告警，全项显示为已核验
 - 下游可溯性：Pending 标签 → Edited 标签 → 绿行闪烁 → Step 3 区段闪烁 → Toast 提示
 
+### 0617 需求评审后的变更（已应用到 session-v9 当前文件，定稿快照不受影响）
+> 详见 [AIOCR_交叉核验评审纪要与优化方案_20260617.md](02_AIOCR/需求文档/AIOCR_交叉核验评审纪要与优化方案_20260617.md)（commit `1e778a3`）
+- **Step 3 不再有告警**：移除了上面"Step 3 不一致处理三键操作"——会议结论是 Step 3 是纯结果展示，不该再判断 mismatch；Step 2 的规则映射告警保留
+- Add Item to this Period 改为限定当前周期（之前会灌满所有 Pay Period，是个 bug）
+- Document Information 新增 Currency 字段
+- 待跟进（需要其他材料才能做）：Step 3 表格化展示（等危俊给 Income Calculator 真实参考）、非 payslip 文件的"仅 Step 1"折叠态样例、Pay Period 日期字段交互形式、后端提供 Step1-3 适用范围判断字段
+
 ### AIOCR v1 定稿核心能力（tag `aiocr-v1`，2026-06-01 冻结）
 - OCR 图文纠错：每字段常驻 ✏ Amend（Sales/CRA 可改，CED 只读）
 - Validation 规则引擎：三维度（File Consistency / Internal Logic / Business Validity）+ 存在性/Eyeball；左右分屏 + Bounding Box 选框联动 + 风险优先排序 + 公式化差异标红 + Hard Fail/Warning 标签；解突操作 Adopt/Amend/Justify/Replace
@@ -55,7 +62,8 @@
 
 ### 高优先级（下次会话先做）
 
-— 暂无 —
+- [ ] Step 3 改表格化展示（像 Income Calculator）—— **卡在**：需要先找危俊要真实 Income Calculator 页面截图/链接，不要凭空设计排布
+- [ ] 补一个非 payslip 简单收入文件样例，演示"只有 Step 1，无 Step 2/3"的折叠态
 
 ### 中优先级（可选继续迭代）
 
