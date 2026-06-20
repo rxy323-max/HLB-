@@ -264,7 +264,6 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 /* Step-1 Sales verify bar (replaces disconnected alert cards) */
 .vf-bar{margin:10px 12px;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;}
 .vf-todo{background:#fff8ec;border:1px solid #f0dcc0;}
-.vf-bounce{background:#fdeceb;border:1px solid #f3c4be;color:#9c2c20;}
 .vf-done{background:#eef8f1;border:1px solid #cfe8d6;color:#1a6b3c;font-weight:600;}
 .vf-hd{font-weight:700;color:#7a5c00;margin-bottom:5px;}
 .vf-list{margin:0 0 4px;padding-left:18px;color:#5a4a2a;}
@@ -1036,10 +1035,10 @@ var S={ screen:'menu', activeRole:'ced',   // demo nav: 'menu'|'cedlist'|'ceddet
         lineAmtDraft:{},      // {fileId:{'mIdx|type':amount}} — pending edits, not yet applied to totals
         compFlash:false,      // transient: flash Step-3 after amounts/rules are applied
         secOpen:{},           // {sectionKey:false} — collapsed sections (default open)
-        salesBounce:{},       // {fileId:true} — §3 mismatch bounced back to Sales to re-verify amount
         customLines:{},       // {fileId:[{id,ms,en,kind,ai,custom:true,type}]} — Sales-entered missing line items (Step 1)
         addLineTarget:null,   // fileId while the add-missing-item modal is open
         addLinePreset:null,   // required field key being filled from a missing-row prompt
+        addLineMIdx:null,     // pay period index the new line item is scoped to
         flash:{},             // {rowKey:true} — transient green pulse after a confirm
         role:'sales',         // 'sales' | 'ced' — drives card order + default-open (Sales 1→2→3, CED 3→2→1)
         lineMonthIdx:0,       // active month tab in Step-1 line items panel (0 = most recent month)
@@ -1321,6 +1320,7 @@ var RULE_ITEMS=[
 var EYEBALL_ITEMS=[
   {id:'ei_employer', label:'Employer Name',   val:'Malaysia Airlines Berhad (201401040794)'},
   {id:'ei_name',     label:'Employee IC / ID',val:'MOHD ZULKURNAIN · IC 800412-14-5371 · Staff No 8000633'},
+  {id:'ei_currency', label:'Currency',        val:'MYR'},
   {id:'ei_comm',     label:'Pure Commission', val:'No — salary-based employee'},
   {id:'ei_govt',     label:'EPF Scheme',      val:'Private sector (standard EPF)'}
 ];
@@ -1398,10 +1398,6 @@ function computeMonth(fileId,mIdx){
   out.net_pay_amount=grossAll-dedAll;        // printed net
   out.grossAll=grossAll; out.dedAll=dedAll; out.incomeGross=incomeGross;
   out.ocrGross=m.ocrGross; out.ocrDed=m.ocrDed; out.ocrNet=m.ocrNet;
-  // validation flags (computed vs OCR printed)
-  out.okGross=Math.abs(grossAll-m.ocrGross)<0.01;
-  out.okDed=Math.abs(dedAll-m.ocrDed)<0.01;
-  out.okNet=Math.abs((grossAll-dedAll)-m.ocrNet)<0.01;
   return out;
 }
 // Average verifiable (income) monthly income across the 3 months
@@ -1411,19 +1407,12 @@ function payslipAvgIncome(fileId){
 }
 // Collect step-② (missing required field) + step-④ (validation mismatch) issues
 function payslipIssues(fileId){
-  var missing=[],mismatch=[];
-  // ② required income buckets that received no line item
+  // Step 3 is pure result display now — only Step-1 completeness is tracked as an issue here.
+  var missing=[];
   var required=['earning_basic_salary','earning_overtime_pay'];
   var c0=computeMonth(fileId,0);
   required.forEach(function(k){if(!c0[k])missing.push(k);});
-  // ④ per-month reconciliation
-  PAYSLIP_MONTHS.forEach(function(m,i){
-    var c=computeMonth(fileId,i);
-    if(!c.okGross)mismatch.push({month:m.month,what:'Gross',calc:c.grossAll,ocr:c.ocrGross});
-    if(!c.okDed)mismatch.push({month:m.month,what:'Total Deductions',calc:c.dedAll,ocr:c.ocrDed});
-    if(!c.okNet)mismatch.push({month:m.month,what:'Net Pay',calc:c.grossAll-c.dedAll,ocr:c.ocrNet});
-  });
-  return {missing:missing,mismatch:mismatch};
+  return {missing:missing};
 }
 function isRuleModeFile(fileId){var d=FILE_DETAIL[fileId];return !!(d&&d.lineItemMode);}
 function lineAmtVal(fileId,mIdx,it){var base=it.custom?null:(it.kind==='earning'?PAYSLIP_MONTHS[mIdx].earn:PAYSLIP_MONTHS[mIdx].ded)[it.type];var ov=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type];return ov!=null?ov:(base||0);}
@@ -3158,13 +3147,10 @@ function verifyAllSales(fileId){
   setTimeout(function(){S.flash={};render();},760);
   showToast('All items verified — file is ready to route to CED.','ok');
 }
-// Step-3 CED → Sales: bounce a true total mismatch back for amount re-verification (CED trusts data, won't edit it)
-function bounceToSales(fileId){ if(!S.salesBounce)S.salesBounce={}; S.salesBounce[fileId]=true; S.secOpen.items=true; render(); }
-function clearBounce(fileId){ if(S.salesBounce)delete S.salesBounce[fileId]; render(); }
 // Step-1 Sales: 补录 a line item OCR missed entirely (data gap). Name + kind here; amounts entered per-month inline.
 // presetKey (optional): a required income field the user is filling in (e.g. 'earning_overtime_pay')
-function openAddLine(fileId,presetKey){ S.addLineTarget=fileId; S.addLinePreset=presetKey||null; render(); setTimeout(function(){var i=document.getElementById('al-name');if(i)i.focus();},30); }
-function closeAddLine(){ S.addLineTarget=null; S.addLinePreset=null; render(); }
+function openAddLine(fileId,presetKey,mIdx){ S.addLineTarget=fileId; S.addLinePreset=presetKey||null; S.addLineMIdx=(mIdx!=null?mIdx:0); render(); setTimeout(function(){var i=document.getElementById('al-name');if(i)i.focus();},30); }
+function closeAddLine(){ S.addLineTarget=null; S.addLinePreset=null; S.addLineMIdx=null; render(); }
 function saveAddLine(){
   var f=S.addLineTarget; if(!f)return;
   var preset=S.addLinePreset;
@@ -3174,20 +3160,22 @@ function saveAddLine(){
   if(!ms){document.getElementById('al-name').style.borderColor='#dc2626';return;}
   if(!S.customLines[f])S.customLines[f]=[];
   var id='c'+(Date.now().toString().slice(-6));
+  var mIdx=S.addLineMIdx!=null?S.addLineMIdx:0;
   // If filling a specific required field, map straight to it; otherwise a sensible default bucket
   var ai=preset?preset:(kind==='earning'?'earning_others':'deduction_other_deductions');
-  S.customLines[f].push({id:id,type:id,ms:ms,en:en||ms,kind:kind,custom:true,ai:ai});
+  // Scoped to the single period it was added from — add it again per-period if needed elsewhere
+  S.customLines[f].push({id:id,type:id,ms:ms,en:en||ms,kind:kind,custom:true,ai:ai,mIdx:mIdx});
   // Auto-insert the mapping rule so Sales never has to touch the rules panel — CED can still adjust it later
   if(!S.ruleMap[f])S.ruleMap[f]={}; S.ruleMap[f][id]=ai;
   // Filling a required field closes its "missing" prompt immediately
   if(preset){ if(!S.justifiedAlerts[f])S.justifiedAlerts[f]={}; S.justifiedAlerts[f]['miss:'+preset]='Added as line item'; }
-  S.addLineTarget=null; S.addLinePreset=null; S.secOpen.items=true;
-  // flash the new row across every pay period so the user sees it landed
+  S.addLineTarget=null; S.addLinePreset=null; S.addLineMIdx=null; S.secOpen.items=true;
+  // flash the new row in the period it was added to
   S.flash=S.flash||{};
-  for(var mi=0;mi<PAYSLIP_MONTHS.length;mi++)S.flash[mi+'|'+id]=true;
+  S.flash[mIdx+'|'+id]=true;
   render();
   setTimeout(function(){S.flash={};render();},900);
-  showToast(ms+' added &amp; auto-mapped to income rules. Enter its amount for each pay period.','ok');
+  showToast(ms+' added to '+(PAYSLIP_MONTHS[mIdx]?PAYSLIP_MONTHS[mIdx].month:'this period')+' &amp; auto-mapped to income rules.','ok');
 }
 function removeCustomLine(fileId,id){
   S.customLines[fileId]=(S.customLines[fileId]||[]).filter(function(c){return c.id!==id;});
@@ -3491,7 +3479,7 @@ function renderLineItems(fileId){
     return '<div class="li2-row li2-missing">'
       +'<span class="li2-loc" style="opacity:.3;">'+IC.locate+'</span>'
       +'<span class="li2-name">'+label+'<span class="li2-misstag">NOT DETECTED</span></span>'
-      +'<span class="li2-amt"><button class="li2-vbtn" onclick="openAddLine(\''+fileId+'\',\''+k+'\')">Add Item</button></span>'
+      +'<span class="li2-amt"><button class="li2-vbtn" onclick="openAddLine(\''+fileId+'\',\''+k+'\',0)">Add Item</button></span>'
       +'<span class="li2-vcol"><button class="li2-vbtn skip" onclick="openJustify(\''+fileId+'\',\'miss:'+k+'\')">Skip</button></span>'
     +'</div>';
   }
@@ -3512,8 +3500,9 @@ function renderLineItems(fileId){
   // Regions 2..n — one per pay period
   var groupsHtml=PAYSLIP_MONTHS.map(function(m,mIdx){
     var hasEdit=all.some(function(it){var k=mIdx+'|'+it.type;return (S.lineAmt[fileId]||{})[k]!=null||(S.lineAmtDraft[fileId]||{})[k]!=null;});
-    var earn=all.filter(function(x){return x.kind==='earning';}).map(function(it){return row(it,mIdx);}).join('');
-    var ded=all.filter(function(x){return x.kind==='deduction';}).map(function(it){return row(it,mIdx);}).join('');
+    // Custom (Added) lines are scoped to the period they were added from; RULE_ITEMS recur every period.
+    var earn=all.filter(function(x){return x.kind==='earning'&&(!x.custom||x.mIdx===mIdx);}).map(function(it){return row(it,mIdx);}).join('');
+    var ded=all.filter(function(x){return x.kind==='deduction'&&(!x.custom||x.mIdx===mIdx);}).map(function(it){return row(it,mIdx);}).join('');
     var period=periodLabels[mIdx]||('Pay Period '+(mIdx+1));
     var missingRowsHtml=(mIdx===0)?missingKeys.map(missingRow).join(''):'';
     return '<div class="li2-group">'
@@ -3524,7 +3513,7 @@ function renderLineItems(fileId){
       +'<div class="li2-cap">EARNINGS</div>'+earn+missingRowsHtml
       +'<div class="li2-cap">DEDUCTIONS</div>'+ded
       +'<div class="li2-gadd">'
-        +'<button class="li2-gadd-btn" onclick="openAddLine(\''+fileId+'\')">+ Add item to this period</button>'
+        +'<button class="li2-gadd-btn" onclick="openAddLine(\''+fileId+'\',null,'+mIdx+')">+ Add item to this period</button>'
       +'</div>'
     +'</div>';
   }).join('');
@@ -3554,11 +3543,10 @@ function renderComputed(fileId){
       var process=items.length>1?'<span class="cp-proc">'+items.map(function(x){return x.type.replace(/ (Allowance|Contr\.|Employee).*/,'')+' '+money(x.amt);}).join(' + ')+'</span>':'';
       return '<div class="cp-row"><span class="cp-lbl">'+label+process+'</span><span class="cp-val">RM '+money(c[key])+'</span></div>';
     }
-    function valRow(label,calc,ocr,ok){
+    function valRow(label,calc,ocr){
       return '<div class="cp-row cp-val-row"><span class="cp-lbl">'+label+'</span>'
         +'<span class="cp-calc">RM '+money(calc)+'</span>'
-        +'<span class="cp-vs">vs OCR</span><span class="cp-ocr">RM '+money(ocr)+'</span>'
-        +(ok?'<span class="cp-ok">&#10003;</span>':'<span class="cp-bad">&#9888; mismatch</span>')
+        +'<span class="cp-vs">printed: </span><span class="cp-ocr">RM '+money(ocr)+'</span>'
       +'</div>';
     }
     return '<div class="cp-month'+(S.compFlash?' cp-flash':'')+'">'
@@ -3573,9 +3561,9 @@ function renderComputed(fileId){
       +fieldRow('deduction_pcb_tax','PCB / Tax')
       +fieldRow('deduction_other_deductions','Other Deduction')
       +'<div class="cp-recon">'
-        +valRow('Gross (Σ all earnings)',c.grossAll,c.ocrGross,c.okGross)
-        +valRow('Total Deductions (Σ all)',c.dedAll,c.ocrDed,c.okDed)
-        +valRow('Net Pay',c.grossAll-c.dedAll,c.ocrNet,c.okNet)
+        +valRow('Gross (Σ all earnings)',c.grossAll,c.ocrGross)
+        +valRow('Total Deductions (Σ all)',c.dedAll,c.ocrDed)
+        +valRow('Net Pay',c.grossAll-c.dedAll,c.ocrNet)
       +'</div>'
       +'<div class="cp-income">Verifiable income (excl. policy items): <b>RM '+money(c.incomeGross)+'</b></div>'
     +'</div>';
@@ -3655,21 +3643,19 @@ function renderFileDetail(){
   var aEmpty=(allAlerts.length===0);
 
   // ── Alert ACTION CENTER (top, prominent): counts → routing + next-step + cards ──
-  var issues=lineMode?payslipIssues(S.fileId):{missing:[],mismatch:[]};
+  var issues=lineMode?payslipIssues(S.fileId):{missing:[]};
   var nVerify=allAlerts.filter(function(a){return a.kind==='eyeball'&&!resMap[a.id]&&!justMap[a.id];}).length;
   var nCheck=nw+nc-nVerify;            // remaining warnings / checks (non-eyeball)
   var nMissing=issues.missing.length;
-  var nMismatch=issues.mismatch.length;
-  var totalIssues=nh+nVerify+nCheck+nMissing+nMismatch;
+  var totalIssues=nh+nVerify+nCheck+nMissing;
   function aChip(n,label,cls,target){
     if(!n)return '';
     return '<span class="ac-chip '+cls+'" onclick="scrollToSec(\''+target+'\')">'+n+' '+label+'</span>';
   }
   var itemsSec=lineMode?'items':'fields';
-  // next-step priority: Hard → Missing → Mismatch → Verify → Check
+  // next-step priority: Hard → Missing → Verify → Check (Step 3 is pure display, no alert of its own)
   var next= nh?{t:'Resolve '+nh+' hard fail'+(nh>1?'s':''),s:itemsSec}
     : nMissing?{t:'Map '+nMissing+' missing required field'+(nMissing>1?'s':''),s:'map'}
-    : nMismatch?{t:'Review '+nMismatch+' total that doesn\'t reconcile',s:'comp'}
     : nVerify?{t:'Verify '+nVerify+' flagged field'+(nVerify>1?'s':''),s:itemsSec}
     : nCheck?{t:'Check '+nCheck+' field'+(nCheck>1?'s':''),s:itemsSec}
     : null;
@@ -3686,10 +3672,8 @@ function renderFileDetail(){
   var nMissEff=(lineMode&&!roleClean)?issues.missing.filter(function(k){return !justMap['miss:'+k];}).length:0;
   var s1Open=roleClean?0:(nh+nVerify+nCheck+nMissEff);   // ① Sales: recognition/eyeball + completeness
   var s2Open=prc;                          // ② CED: rule mapping (prc already includes new补录-type gaps)
-  // ③ is a GATED result light: grey 待定 until ①② clear, then green/red.
-  // Suppresses mismatch noise that is merely a symptom of an unfinished ① or ②.
-  var reconAccepted=!!(S.justifiedAlerts[S.fileId]||{})['recon-mismatch'];
-  var s3=(s1Open||s2Open)?'wait':(nMismatch?(reconAccepted?'accepted':'error'):'done');
+  // ③ is pure result display — no alert of its own, just gated on ①② being clear first.
+  var s3=(s1Open||s2Open)?'wait':'done';
 
   // non-lineMode files keep the compact action center (no 3-step model)
   var actionCenter='<div class="ac'+(totalIssues?'':' ac-clear')+'">'
@@ -3724,19 +3708,14 @@ function renderFileDetail(){
   // ── Left workspace ──
   var workspace;
   if(lineMode){
-    var bounced=!!(S.salesBounce&&S.salesBounce[S.fileId]);
     // ── §1 Step-1 (Sales): full line items + one verify action. CED receives this already clean. ──
     var salesItems=roleClean?[]:sorted.filter(function(a){return a.kind==='eyeball'&&!resMap[a.id]&&!justMap[a.id];});
     // completeness: required field with no source line → Sales to add or skip with note
     var missLeft=roleClean?[]:issues.missing.filter(function(k){return !justMap['miss:'+k];});
-    var s1Done=!bounced&&!salesItems.length&&!missLeft.length;
-    var s1Badge=bounced?'<span class="sec-badge red">Returned</span>'
-      :((salesItems.length||missLeft.length)?'<span class="sec-badge org">'+(salesItems.length+missLeft.length)+' Pending</span>':'<span class="sec-badge green">Verified</span>');
+    var s1Done=!salesItems.length&&!missLeft.length;
+    var s1Badge=(salesItems.length||missLeft.length)?'<span class="sec-badge org">'+(salesItems.length+missLeft.length)+' Pending</span>':'<span class="sec-badge green">Verified</span>';
     var verifyBar='';
-    if(bounced){
-      verifyBar='<div class="vf-bar vf-bounce">&#8617; <b>Returned by CED</b> — computed totals do not match the printed payslip values. Review the amounts against the source document, correct any errors, then mark complete.'
-        +'<div class="vf-acts"><button class="btn btn-pri btn-sm" onclick="clearBounce(\''+S.fileId+'\')">&#10003; Amounts confirmed — mark complete</button></div></div>';
-    } else if(roleClean){
+    if(roleClean){
       verifyBar='<div class="vf-note">Verified by Sales. You can adjust any value before approving.</div>';
     } else {
       // TWO separate orange alerts — they are two different operations, kept distinct.
@@ -3759,7 +3738,7 @@ function renderFileDetail(){
         verifyBar+='<div class="vf-bar vf-todo" onmouseenter="hlMissing()" onmouseleave="unhlAllLines()">'
           +'<div class="vf-hd">&#9888; Missing field &mdash; '+missLeft.length+' required field'+(missLeft.length>1?'s':'')+' not detected by OCR. Add the line item or skip with a note.</div>'
           +'<div class="vf-acts">'
-            +'<button class="btn btn-pri btn-sm" onclick="openAddLine(\''+S.fileId+'\',\''+missLeft[0]+'\')">+ Add Missing Item</button>'
+            +'<button class="btn btn-pri btn-sm" onclick="openAddLine(\''+S.fileId+'\',\''+missLeft[0]+'\',0)">+ Add Missing Item</button>'
             +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\'miss:'+missLeft[0]+'\')">Skip with Note</button>'
           +'</div>'
         +'</div>';
@@ -3775,24 +3754,11 @@ function renderFileDetail(){
     var autoMapped=customLines(S.fileId).filter(function(c){return (S.ruleMap[S.fileId]||{})[c.id];});
     var autoBanner=autoMapped.length?'<div class="sec-banner info">&#8505; '+autoMapped.length+' item'+(autoMapped.length>1?'s':'')+' added by Sales '+(autoMapped.length>1?'were':'was')+' auto-mapped to the income rules below — review and adjust only if needed.</div>':'';
     // ── §3 Step-3: GATED result. Mismatch triage (Sales-first, then CED): ①识别错(Sales) ②归类(CED) ③规则如此(CED跳过). ──
-    var mmBadge=s3==='error'?'<span class="sec-badge red">'+nMismatch+' Mismatch</span>'
-      :(s3==='accepted'?'<span class="sec-badge grey">Accepted</span>'
-      :(s3==='done'?'<span class="sec-badge green">Reconciled</span>'
-      :'<span class="sec-badge grey">Pending</span>'));
-    var mmBanner;
-    if(s3==='wait')mmBanner='<div class="sec-banner grey">&#9203; Reconciliation pending — '+(s1Open?'waiting for Sales to complete Step 1 verification':'waiting for CED to apply Step 2 rules')+'. Totals will be validated once prior steps are complete.</div>';
-    else if(s3==='error'){
-      // Three distinct fixes, one per cause — each button's label matches where it takes you.
-      mmBanner='<div class="sec-banner red">&#9888; '+nMismatch+' total'+(nMismatch>1?'s':'')+' do not match the printed payslip. Pick the cause and fix it:'
-        +'<div class="vf-acts" style="margin-top:7px;">'
-          +'<button class="btn btn-sm" onclick="scrollToSec(\'items\')">&#9651; Adjust amount &mdash; go to Step 1</button>'
-          +'<button class="btn btn-sm" onclick="scrollToSec(\'map\')">&#9651; Adjust rule &mdash; go to Step 2</button>'
-          +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\'recon-mismatch\')">Skip &mdash; accept with reason</button>'
-        +'</div>'
-      +'</div>';
-    }
-    else if(s3==='accepted')mmBanner='<div class="sec-banner info">&#10003; Mismatch accepted with reason: <b>'+((S.justifiedAlerts[S.fileId]||{})['recon-mismatch']||'')+'</b> &nbsp;<button class="btn btn-sm" onclick="undoJustify(\''+S.fileId+'\',\'recon-mismatch\')">&#8635; Undo</button></div>';
-    else mmBanner='<div class="sec-banner green">&#10003; All computed totals match printed values — reconciliation passed.</div>';
+    // Step 3 is pure result display — no mismatch judgment, no action buttons, just gated on ①② first.
+    var mmBadge=s3==='wait'?'<span class="sec-badge grey">Pending</span>':'<span class="sec-badge green">Reconciled</span>';
+    var mmBanner=s3==='wait'
+      ?'<div class="sec-banner grey">&#9203; Reconciliation pending — '+(s1Open?'waiting for Sales to complete Step 1 verification':'waiting for CED to apply Step 2 rules')+'. Totals will be shown once prior steps are complete.</div>'
+      :'';
     var cItems=secCard('items','1','Step 1 · Line Items','Source line items — Sales review',s1Badge, s1Body);
     var cMap=secCard('map','2','Step 2 · Field Mapping','Line-item type &rarr; income field — CED',mapBadge, missBanner+autoBanner+renderRuleConfig(S.fileId));
     var cComp=secCard('comp','3','Step 3 · Reconciliation','Computed totals vs printed values',mmBadge, mmBanner+renderComputed(S.fileId));
