@@ -292,7 +292,6 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .li2-en-key{color:#9aa1ab;}
 .li2-month{border-bottom:1px solid var(--bd2);}
 .li2-month:last-child{border-bottom:none;}
-.li2-mhd{font-size:11px;font-weight:700;color:#374151;background:#f3f5f8;padding:6px 14px;}
 .li2-cap{font-size:9.5px;font-weight:700;color:#9aa1ab;letter-spacing:.4px;padding:5px 14px 2px;}
 .li2-row{display:flex;align-items:center;gap:9px;padding:6px 14px;}
 .li2-row:hover{background:#fafbfc;}
@@ -367,27 +366,22 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .toast.hide{opacity:0;transform:translateY(10px);}
 .toast-ok{background:#15663b;}
 .toast .tk{margin-right:7px;color:#7ee2a8;font-weight:700;}
-/* ── ③④ computed fields ── */
-.cp-month{border-bottom:1px solid var(--bd2);padding-bottom:6px;}
-.cp-month:last-child{border-bottom:none;}
-.cp-row{display:flex;align-items:baseline;gap:10px;padding:5px 14px;font-size:12.5px;}
-.cp-lbl{flex:1;color:#374151;display:flex;flex-direction:column;}
-.cp-proc{font-size:10.5px;color:#9aa1ab;font-family:ui-monospace,Menlo,Consolas,monospace;margin-top:1px;}
-.cp-val{font-weight:600;color:#111827;font-family:ui-monospace,Menlo,Consolas,monospace;}
-.cp-recon{margin:6px 14px 4px;background:#f8f9fb;border:1px solid #eef0f3;border-radius:7px;padding:4px 0;}
+/* ── ③ computed fields — table layout, mirrors the real Income Calculator grid ── */
+.cp-tablewrap{overflow-x:auto;margin:8px 14px;border:1px solid var(--bd2);border-radius:7px;}
+.cp-table{border-collapse:collapse;width:100%;font-size:11.5px;white-space:nowrap;}
+.cp-table th,.cp-table td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--bd2);}
+.cp-table th{background:#f8f9fb;color:#5b6470;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.3px;}
+.cp-table td{font-family:ui-monospace,Menlo,Consolas,monospace;color:#111827;}
+.cp-table .cp-period{text-align:left;font-family:inherit;font-weight:600;color:#374151;background:#fafbfc;}
+.cp-table th.cp-sys,.cp-table td.cp-sys{background:#f4f5f7;color:#6b7280;}
+.cp-table tr.cp-agg td{font-weight:700;border-top:2px solid var(--bd2);background:#fbfbfc;}
+.cp-dash{color:#c3c8d0;}
 /* downstream flash when amounts/rules are applied — makes the linkage visible */
-.cp-month.cp-flash{animation:cpflash 1s ease-out;}
+.cp-table tr.cp-flash td{animation:cpflash 1s ease-out;}
 @keyframes cpflash{0%{background:#d4f4e0;}35%{background:#e2f8ea;}100%{background:transparent;}}
 /* brief highlight on the step a "go to Step N" button lands on */
 .sec.sec-land{animation:secland 1.1s ease-out;}
 @keyframes secland{0%,45%{box-shadow:0 0 0 2px #e3920f;}100%{box-shadow:0 0 0 0 rgba(227,146,15,0);}}
-.cp-val-row{padding:5px 12px;font-size:11.5px;}
-.cp-val-row .cp-lbl{flex:1;color:#5b6470;}
-.cp-calc{font-weight:700;color:#1e3a8a;font-family:ui-monospace,Menlo,Consolas,monospace;}
-.cp-vs{font-size:10px;color:#b6bcc6;}
-.cp-ocr{color:#374151;font-family:ui-monospace,Menlo,Consolas,monospace;}
-.cp-ok{color:#1f9d57;font-weight:700;}
-.cp-bad{color:#c0392b;font-weight:700;font-size:11px;}
 .cp-income{font-size:11.5px;color:#1a5c2e;background:#eef7f0;border-top:1px solid #d6ead9;padding:6px 14px;}
 .cp-income b{color:#14532d;}
 /* ── Collapsible alerts header ── */
@@ -1035,6 +1029,7 @@ var S={ screen:'menu', activeRole:'ced',   // demo nav: 'menu'|'cedlist'|'ceddet
         lineAmtDraft:{},      // {fileId:{'mIdx|type':amount}} — pending edits, not yet applied to totals
         compFlash:false,      // transient: flash Step-3 after amounts/rules are applied
         secOpen:{},           // {sectionKey:false} — collapsed sections (default open)
+        stepScheme:null,      // '1' (Step 1→2→3) | '2' (Step 3→2→1) — a design-option toggle, independent of role
         customLines:{},       // {fileId:[{id,ms,en,kind,ai,custom:true,type}]} — Sales-entered missing line items (Step 1)
         addLineTarget:null,   // fileId while the add-missing-item modal is open
         addLinePreset:null,   // required field key being filled from a missing-row prompt
@@ -1324,6 +1319,14 @@ var EYEBALL_ITEMS=[
   {id:'ei_comm',     label:'Pure Commission', val:'No — salary-based employee'},
   {id:'ei_govt',     label:'EPF Scheme',      val:'Private sector (standard EPF)'}
 ];
+// 方案1-only fields — match the real Income Calculator header; 方案2 keeps the shorter existing set
+var EYEBALL_ITEMS_SCHEME1_EXTRA=[
+  {id:'ei_epfpct',    label:'EPF %',                                      val:'11%'},
+  {id:'ei_convrate',  label:'Conversion Rate',                            val:'1'},
+  {id:'ei_mncplcglc', label:'Is Customer MNC/PLC/GLC',                    val:'No'},
+  {id:'ei_govtnoepf', label:'Government Employee without EPF Contribution',val:'No'}
+];
+function eyeItems(){return curScheme()==='1'?EYEBALL_ITEMS.concat(EYEBALL_ITEMS_SCHEME1_EXTRA):EYEBALL_ITEMS;}
 function ruleItem(id){return RULE_ITEMS.find(function(x){return x.id===id;});}
 // Sales-补录 custom line items (Step-1 data gap fill) merge into the same pipeline as OCR line items
 function customLines(fileId){return S.customLines[fileId]||[];}
@@ -1447,13 +1450,18 @@ function bucketItems(fileId,mIdx,bucketKey){
 function money(n){return (n==null?'':Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));}
 // default-open sections depend on role: Sales works 1→2→3 (Step1 open); CED works 3→2→1 (Step3+2 open, Step1 reference)
 function secDefaultOpen(k){
-  if(k==='fields')return true;            // non-lineMode files: always open
-  if(S.role==='sales')return k==='items'; // Sales: Step1 open, rest collapsed
-  return k==='comp'||k==='map';           // CED: Step3 + Step2 open, Step1 collapsed
+  if(k==='fields')return true;              // non-lineMode files: always open
+  if(curScheme()==='1')return k==='items';  // 方案1 data-first: Step1 open, rest collapsed
+  return k==='comp'||k==='map';             // 方案2 result-first: Step3 + Step2 open, Step1 collapsed
 }
 function secOpen(k){return (S.secOpen[k]===undefined)?secDefaultOpen(k):S.secOpen[k];}
 function toggleSec(k){S.secOpen[k]=!secOpen(k);render();}
 function setRole(r){S.role=r;S.secOpen={};render();}  // switching role resets section open-state to the role default
+// Which step order to show — a design-option choice (方案1 / 方案2), kept independent of S.role so
+// demoing one against the other never silently changes alert visibility or edit rights.
+// Defaults from role until the user explicitly picks one via the toggle.
+function curScheme(){return S.stepScheme||(S.role==='ced'?'2':'1');}
+function setScheme(s){S.stepScheme=s;S.secOpen={};render();}
 
 var SYNC_ROWS=[
   {f:'Conventional/Islamic',cur:'C',ocr:'C',st:'ok'},
@@ -2845,7 +2853,7 @@ function pulse(key){
 }
 // When every global field + every flagged line item is verified, clear the Step-1 eyeball alert
 function checkSalesComplete(fileId){
-  var allGlobal=EYEBALL_ITEMS.every(function(ei){return (S.eyeVerified[fileId]||{})[ei.id];});
+  var allGlobal=eyeItems().every(function(ei){return (S.eyeVerified[fileId]||{})[ei.id];});
   var allLines=true;
   RULE_ITEMS.forEach(function(it){
     if(!it.eyeCheck)return;
@@ -3133,7 +3141,7 @@ function verifyAllSales(fileId){
   S.alertResolved[fileId]['marginal-quality']=true;
   // Mark every global field + every flagged line item as verified in one action
   if(!S.eyeVerified[fileId])S.eyeVerified[fileId]={};
-  EYEBALL_ITEMS.forEach(function(ei){S.eyeVerified[fileId][ei.id]=true;});
+  eyeItems().forEach(function(ei){S.eyeVerified[fileId][ei.id]=true;});
   if(!S.lineVerified[fileId])S.lineVerified[fileId]={};
   RULE_ITEMS.forEach(function(it){
     if(!it.eyeCheck)return;
@@ -3141,7 +3149,7 @@ function verifyAllSales(fileId){
   });
   // pulse all the rows that were just confirmed
   S.flash=S.flash||{};
-  EYEBALL_ITEMS.forEach(function(ei){S.flash['doc|'+ei.id]=true;});
+  eyeItems().forEach(function(ei){S.flash['doc|'+ei.id]=true;});
   RULE_ITEMS.forEach(function(it){if(it.eyeCheck)S.flash['0|'+it.type]=true;});
   render();
   setTimeout(function(){S.flash={};render();},760);
@@ -3488,13 +3496,13 @@ function renderLineItems(fileId){
   var periodLabels=['Most recent payslip','Previous month','Earlier payslip'];
 
   // Region 1 — Document Information (same heading level as each Pay Period, not a separate card)
-  var docPending=EYEBALL_ITEMS.filter(function(ei){return !(clean||ev[ei.id]);}).length;
+  var docPending=eyeItems().filter(function(ei){return !(clean||ev[ei.id]);}).length;
   var docGroup='<div class="li2-group">'
     +'<div class="li2-ghd">'
       +'<span class="li2-gnum">Document Information</span>'
       +'<span class="li2-gtag'+(docPending?'':' done')+'">'+(docPending?docPending+' to verify':'&#10003; All verified')+'</span>'
     +'</div>'
-    +EYEBALL_ITEMS.map(docRow).join('')
+    +eyeItems().map(docRow).join('')
   +'</div>';
 
   // Regions 2..n — one per pay period
@@ -3534,40 +3542,53 @@ function renderLineItems(fileId){
   return applyBar+hint+docGroup+groupsHtml+addGroupBtn;
 }
 /* ── ③④ Computed fields with aggregation process + OCR reconciliation ── */
+// Step 3 — one row per pay period, one column per category, paired calc/printed columns for the
+// 3 aggregates (mirrors the real Income Calculator grid: entered value next to a greyed reference
+// value, no pass/fail judgment — see AIOCR_交叉核验评审纪要与优化方案_20260617.md §2).
 function renderComputed(fileId){
-  return PAYSLIP_MONTHS.map(function(m,mIdx){
-    var c=computeMonth(fileId,mIdx);
-    function fieldRow(key,label){
-      var items=bucketItems(fileId,mIdx,key);
-      if(!items.length)return '';
-      var process=items.length>1?'<span class="cp-proc">'+items.map(function(x){return x.type.replace(/ (Allowance|Contr\.|Employee).*/,'')+' '+money(x.amt);}).join(' + ')+'</span>':'';
-      return '<div class="cp-row"><span class="cp-lbl">'+label+process+'</span><span class="cp-val">RM '+money(c[key])+'</span></div>';
-    }
-    function valRow(label,calc,ocr){
-      return '<div class="cp-row cp-val-row"><span class="cp-lbl">'+label+'</span>'
-        +'<span class="cp-calc">RM '+money(calc)+'</span>'
-        +'<span class="cp-vs">printed: </span><span class="cp-ocr">RM '+money(ocr)+'</span>'
-      +'</div>';
-    }
-    return '<div class="cp-month'+(S.compFlash?' cp-flash':'')+'">'
-      +'<div class="li2-mhd">'+m.month+'</div>'
-      +fieldRow('earning_basic_salary','Basic Salary')
-      +fieldRow('earning_total_allowances','Total Allowances')
-      +fieldRow('earning_overtime_pay','Overtime')
-      +fieldRow('earning_bonus_commission','Bonus / Commission')
-      +fieldRow('earning_others','Other Income')
-      +fieldRow('deduction_epf_employee','EPF (Employee)')
-      +fieldRow('deduction_socso_eis','SOCSO / EIS')
-      +fieldRow('deduction_pcb_tax','PCB / Tax')
-      +fieldRow('deduction_other_deductions','Other Deduction')
-      +'<div class="cp-recon">'
-        +valRow('Gross (Σ all earnings)',c.grossAll,c.ocrGross)
-        +valRow('Total Deductions (Σ all)',c.dedAll,c.ocrDed)
-        +valRow('Net Pay',c.grossAll-c.dedAll,c.ocrNet)
-      +'</div>'
-      +'<div class="cp-income">Verifiable income (excl. policy items): <b>RM '+money(c.incomeGross)+'</b></div>'
-    +'</div>';
+  var months=PAYSLIP_MONTHS.map(function(m,mIdx){return {label:m.month,mIdx:mIdx,c:computeMonth(fileId,mIdx)};});
+  var cols=[
+    {label:'Basic Salary',         key:'earning_basic_salary',         get:function(c){return c.earning_basic_salary;}},
+    {label:'Total Allowances',     key:'earning_total_allowances',     get:function(c){return c.earning_total_allowances;}},
+    {label:'Overtime',             key:'earning_overtime_pay',         get:function(c){return c.earning_overtime_pay;}},
+    {label:'Bonus / Commission',   key:'earning_bonus_commission',     get:function(c){return c.earning_bonus_commission;}},
+    {label:'Other Income',        key:'earning_others',                get:function(c){return c.earning_others;}},
+    {label:'EPF (Employee)',       key:'deduction_epf_employee',       get:function(c){return c.deduction_epf_employee;}},
+    {label:'SOCSO / EIS',          key:'deduction_socso_eis',          get:function(c){return c.deduction_socso_eis;}},
+    {label:'PCB / Tax',            key:'deduction_pcb_tax',            get:function(c){return c.deduction_pcb_tax;}},
+    {label:'Other Deduction',      key:'deduction_other_deductions',   get:function(c){return c.deduction_other_deductions;}},
+    {label:'Gross (calc.)',        get:function(c){return c.grossAll;}},
+    {label:'Gross (printed)',      get:function(c){return c.ocrGross;}, sys:true},
+    {label:'Deductions (calc.)',   get:function(c){return c.dedAll;}},
+    {label:'Deductions (printed)', get:function(c){return c.ocrDed;}, sys:true},
+    {label:'Net Pay (calc.)',      get:function(c){return c.grossAll-c.dedAll;}},
+    {label:'Net Pay (printed)',    get:function(c){return c.ocrNet;}, sys:true},
+    {label:'Verifiable Income',    get:function(c){return c.incomeGross;}}
+  ];
+  // Hover a category cell to see which line items add up to it (the "see the formula" ask from 0617 review)
+  function formula(fileId,mIdx,key){
+    if(!key)return '';
+    var items=bucketItems(fileId,mIdx,key);
+    if(items.length<2)return '';
+    return ' title="'+items.map(function(x){return x.type+': RM '+money(x.amt);}).join(' + ').replace(/"/g,'&quot;')+'"';
+  }
+  function cell(v,sys,title){return '<td'+(sys?' class="cp-sys"':'')+(title||'')+'>'+(v?'RM '+money(v):'<span class="cp-dash">&mdash;</span>')+'</td>';}
+  var thead='<tr><th class="cp-period">Pay Period</th>'+cols.map(function(col){return '<th'+(col.sys?' class="cp-sys"':'')+'>'+col.label+'</th>';}).join('')+'</tr>';
+  var bodyRows=months.map(function(mo){
+    return '<tr'+(S.compFlash?' class="cp-flash"':'')+'><td class="cp-period">'+mo.label+'</td>'
+      +cols.map(function(col){return cell(col.get(mo.c),col.sys,formula(fileId,mo.mIdx,col.key));}).join('')+'</tr>';
   }).join('');
+  function aggRow(label,agg){
+    return '<tr class="cp-agg"><td class="cp-period">'+label+'</td>'
+      +cols.map(function(col){
+        var vals=months.map(function(mo){return col.get(mo.c)||0;});
+        return cell(agg(vals),col.sys);
+      }).join('')+'</tr>';
+  }
+  var totalRow=aggRow('Total',function(vals){return vals.reduce(function(a,b){return a+b;},0);});
+  var avgRow=aggRow('Average',function(vals){return vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length:0;});
+  return '<div class="cp-tablewrap"><table class="cp-table"><thead>'+thead+'</thead><tbody>'+bodyRows+totalRow+avgRow+'</tbody></table></div>'
+    +'<div class="cp-income">Average verifiable income across '+months.length+' period'+(months.length>1?'s':'')+' (excl. policy items): <b>RM '+money(payslipAvgIncome(fileId))+'</b></div>';
 }
 // Intentional navigation to a step: open it, then scroll the workspace to it.
 // Synchronous direct assignment right after render() (render already restored the
@@ -3720,7 +3741,7 @@ function renderFileDetail(){
     } else {
       // TWO separate orange alerts — they are two different operations, kept distinct.
       var evNow=S.eyeVerified[S.fileId]||{},lvNow=S.lineVerified[S.fileId]||{};
-      var pendDoc=EYEBALL_ITEMS.filter(function(ei){return !evNow[ei.id];}).length;
+      var pendDoc=eyeItems().filter(function(ei){return !evNow[ei.id];}).length;
       var pendLine=0;RULE_ITEMS.forEach(function(it){if(it.eyeCheck&&!lvNow['0|'+it.type])pendLine++;});
       var pendCheck=pendDoc+pendLine;
       // Alert A — Eyeball check (verify AI-extracted fields against the document)
@@ -3762,8 +3783,8 @@ function renderFileDetail(){
     var cItems=secCard('items','1','Step 1 · Line Items','Source line items — Sales review',s1Badge, s1Body);
     var cMap=secCard('map','2','Step 2 · Field Mapping','Line-item type &rarr; income field — CED',mapBadge, missBanner+autoBanner+renderRuleConfig(S.fileId));
     var cComp=secCard('comp','3','Step 3 · Reconciliation','Computed totals vs printed values',mmBadge, mmBanner+renderComputed(S.fileId));
-    // role view: Sales reads 1→2→3 (data-first); CED reads 3→2→1 (result-first, drills into rules)
-    workspace=(S.role==='sales')?(cItems+cMap+cComp):(cComp+cMap+cItems);
+    // 方案1: 1→2→3 (data-first); 方案2: 3→2→1 (result-first, drills into rules) — a layout choice, not a role rule
+    workspace=(curScheme()==='1')?(cItems+cMap+cComp):(cComp+cMap+cItems);
   } else {
     var renderGroups=d.groups;
     var groupsHtml=renderGroups.map(function(g){
@@ -3788,9 +3809,9 @@ function renderFileDetail(){
       +'<button class="fd-back" onclick="closeFile()">&#8249;</button>'
       +'<div><div class="fd-title">'+d.name+'</div><div class="fd-crumb">'+d.crumb+'</div></div>'
       +'<div class="sp"></div>'
-      +(lineMode?'<div class="role-tog" title="Switch between role views — each role sees a different step order and focus">'
-        +'<button class="role-btn'+(S.role==='sales'?' on':'')+'" onclick="setRole(\'sales\')">Sales View</button>'
-        +'<button class="role-btn'+(S.role==='ced'?' on':'')+'" onclick="setRole(\'ced\')">CED View</button>'
+      +(lineMode?'<div class="role-tog" title="Two step-order options — pick either regardless of role">'
+        +'<button class="role-btn'+(curScheme()==='1'?' on':'')+'" onclick="setScheme(\'1\')">方案1 (1&rarr;2&rarr;3)</button>'
+        +'<button class="role-btn'+(curScheme()==='2'?' on':'')+'" onclick="setScheme(\'2\')">方案2 (3&rarr;2&rarr;1)</button>'
       +'</div>':'')
       +'<button class="btn btn-sm">&#8249; Prev</button>'
       +'<button class="btn btn-sm">Next &#8250;</button>'
