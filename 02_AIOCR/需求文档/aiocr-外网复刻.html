@@ -376,6 +376,7 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .cp-table th.cp-sys,.cp-table td.cp-sys{background:#f4f5f7;color:#6b7280;}
 .cp-table tr.cp-agg td{font-weight:700;border-top:2px solid var(--bd2);background:#fbfbfc;}
 .cp-dash{color:#c3c8d0;}
+.cp-fnref{color:#2563eb;font-weight:700;margin-left:1px;}
 /* downstream flash when amounts/rules are applied — makes the linkage visible */
 .cp-table tr.cp-flash td{animation:cpflash 1s ease-out;}
 @keyframes cpflash{0%{background:#d4f4e0;}35%{background:#e2f8ea;}100%{background:transparent;}}
@@ -3565,29 +3566,47 @@ function renderComputed(fileId){
     {label:'Net Pay (printed)',    get:function(c){return c.ocrNet;}, sys:true},
     {label:'Verifiable Income',    get:function(c){return c.incomeGross;}}
   ];
-  // Hover a category cell to see which line items add up to it (the "see the formula" ask from 0617 review)
+  // Which line items add up to a category cell (the "see the formula" ask from 0617 review).
+  // Surfaced two ways: a numbered footnote (always visible, discoverable in a screenshot) and a
+  // hover title (quick peek) — table space stays tight either way, only a small superscript is added.
+  var footnotes=[];
   function formula(fileId,mIdx,key){
-    if(!key)return '';
+    if(!key)return null;
     var items=bucketItems(fileId,mIdx,key);
-    if(items.length<2)return '';
-    return ' title="'+items.map(function(x){return x.type+': RM '+money(x.amt);}).join(' + ').replace(/"/g,'&quot;')+'"';
+    if(items.length<2)return null;
+    return items.map(function(x){return x.type+': RM '+money(x.amt);}).join(' + ');
   }
-  function cell(v,sys,title){return '<td'+(sys?' class="cp-sys"':'')+(title||'')+'>'+(v?'RM '+money(v):'<span class="cp-dash">&mdash;</span>')+'</td>';}
+  function cell(v,sys,periodLabel,colLabel,fnText){
+    var sup='',title='';
+    if(fnText){
+      footnotes.push({period:periodLabel,col:colLabel,text:fnText});
+      sup='<sup class="cp-fnref">'+footnotes.length+'</sup>';
+      title=' title="'+fnText.replace(/"/g,'&quot;')+'"';
+    }
+    return '<td'+(sys?' class="cp-sys"':'')+title+'>'+(v?'RM '+money(v)+sup:'<span class="cp-dash">&mdash;</span>')+'</td>';
+  }
   var thead='<tr><th class="cp-period">Pay Period</th>'+cols.map(function(col){return '<th'+(col.sys?' class="cp-sys"':'')+'>'+col.label+'</th>';}).join('')+'</tr>';
   var bodyRows=months.map(function(mo){
     return '<tr'+(S.compFlash?' class="cp-flash"':'')+'><td class="cp-period">'+mo.label+'</td>'
-      +cols.map(function(col){return cell(col.get(mo.c),col.sys,formula(fileId,mo.mIdx,col.key));}).join('')+'</tr>';
+      +cols.map(function(col){return cell(col.get(mo.c),col.sys,mo.label,col.label,formula(fileId,mo.mIdx,col.key));}).join('')+'</tr>';
   }).join('');
   function aggRow(label,agg){
     return '<tr class="cp-agg"><td class="cp-period">'+label+'</td>'
       +cols.map(function(col){
         var vals=months.map(function(mo){return col.get(mo.c)||0;});
-        return cell(agg(vals),col.sys);
+        return cell(agg(vals),col.sys);   // Total/Average rows never get a footnote — they're not a single period's composition
       }).join('')+'</tr>';
   }
   var totalRow=aggRow('Total',function(vals){return vals.reduce(function(a,b){return a+b;},0);});
   var avgRow=aggRow('Average',function(vals){return vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length:0;});
+  // Collapsed by default, but the summary line is a visible, clickable affordance — not a silent hover.
+  var fnList=footnotes.length
+    ? '<details class="rc-log"><summary>&#9656; '+footnotes.length+' formula breakdown'+(footnotes.length>1?'s':'')+' &mdash; click to view</summary>'
+        +footnotes.map(function(f,i){return '<div class="li-log"><span class="li-log-t">'+(i+1)+'.</span><span class="li-log-raw">'+f.period+' &middot; '+f.col+'</span><span class="li-log-chg">'+f.text+'</span></div>';}).join('')
+      +'</details>'
+    : '';
   return '<div class="cp-tablewrap"><table class="cp-table"><thead>'+thead+'</thead><tbody>'+bodyRows+totalRow+avgRow+'</tbody></table></div>'
+    +fnList
     +'<div class="cp-income">Average verifiable income across '+months.length+' period'+(months.length>1?'s':'')+' (excl. policy items): <b>RM '+money(payslipAvgIncome(fileId))+'</b></div>';
 }
 // Intentional navigation to a step: open it, then scroll the workspace to it.
