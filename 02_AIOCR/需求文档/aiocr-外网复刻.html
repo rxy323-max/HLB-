@@ -3832,30 +3832,24 @@ function renderFileDetail(){
         +'<button class="role-btn'+(curScheme()==='1'?' on':'')+'" onclick="setScheme(\'1\')">方案1 (1&rarr;2&rarr;3)</button>'
         +'<button class="role-btn'+(curScheme()==='2'?' on':'')+'" onclick="setScheme(\'2\')">方案2 (3&rarr;2&rarr;1)</button>'
       +'</div>':'')
-      +'<button class="btn btn-sm">&#8249; Prev</button>'
+      +'<button class="btn btn-sm">&#8249; Previous</button>'
       +'<button class="btn btn-sm">Next &#8250;</button>'
+      +'<button class="btn btn-pri btn-sm" onclick="showToast(\'Saved.\',\'ok\')">Save</button>'
     +'</div>'
     +topBar
     +'<div class="fd-work">'
       +'<div class="fd-wleft">'+workspace+'</div>'
       +qPreview
     +'</div>'
-    // ── Footer ──
-    +'<div class="fd-bottom">'
-      +'<button class="btn btn-sm" onclick="openSync()">&#8635; Sync from OCR</button>'
-      +'<button class="btn btn-sm">Save Draft</button>'
-      +'<div style="margin-left:auto;display:flex;align-items:center;gap:10px;">'
-        +(isIncomeFile
-          ? '<span style="font-size:12px;color:#374151;">'+(lineMode?'Avg verifiable income (3 mo)':'Verifiable income')+': <b style="color:#1e3a8a;font-size:13px;">RM '+totalMonthly.toFixed(2)+'/mo</b>'
-              +(overrideCount?' <span style="color:#1f9d57;font-size:11px;">('+overrideCount+' confirmed rule'+(overrideCount>1?'s':'')+')</span>':'')
-              +'</span>'
-            +(lineMode&&pendingRules(S.fileId).length
-              ? '<button class="btn btn-pri btn-sm" disabled title="Confirm & Refresh pending rule changes first">&#10003; Confirm Classification</button>'
-              : '<button class="btn btn-pri btn-sm">&#10003; Confirm Classification</button>')
-          : '<button class="btn btn-sm">Save</button>'
-            +'<button class="btn btn-pri btn-sm" '+(nh?'disabled title="Resolve all Hard Fails first"':'')+'>'+(nh?'&#9940; Submit':'Submit &#8594;')+'</button>')
-      +'</div>'
-    +'</div>'
+    // ── Footer: income summary only (read-only). Save / Submit / Save-as-Draft live in the global
+    //    application-level button bar; rule confirmation lives inside Step 2 — no duplicates here. ──
+    +(isIncomeFile
+      ? '<div class="fd-bottom">'
+          +'<span style="margin-left:auto;font-size:12px;color:#374151;">'+(lineMode?'Avg verifiable income (3 mo)':'Verifiable income')+': <b style="color:#1e3a8a;font-size:13px;">RM '+totalMonthly.toFixed(2)+'/mo</b>'
+            +(overrideCount?' <span style="color:#1f9d57;font-size:11px;">('+overrideCount+' confirmed rule'+(overrideCount>1?'s':'')+')</span>':'')
+          +'</span>'
+        +'</div>'
+      : '')
   +'</div></div>';
 }
 
