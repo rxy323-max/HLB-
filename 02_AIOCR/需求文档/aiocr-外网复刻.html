@@ -424,6 +424,48 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .cc-print{display:block;font-size:9px;color:#9aa1ab;font-weight:500;margin-top:1px;}
 .cc-excluded .cc-name{color:#9aa1ab;font-weight:500;}
 .cc-exhint{text-align:left;font-size:10px;color:#b6bcc6;font-style:italic;}
+/* ── Transposed grid: rows = periods, columns = categories (Income Calculator style) ── */
+.cc-tcols{font-size:11px;}
+.cc-tcols th,.cc-tcols td{padding:6px 9px;white-space:nowrap;}
+.cc-tcols .cc-period{position:sticky;left:0;z-index:1;background:#fafbfc;text-align:left;min-width:78px;font-weight:600;color:#374151;box-shadow:1px 0 0 var(--bd2);}
+.cc-tcols thead .cc-period{z-index:2;}
+.cc-grphead th{text-align:center;font-size:9px;font-weight:800;letter-spacing:.5px;color:#6b7280;padding:3px 9px;border-bottom:1px solid var(--bd2);}
+.cc-grphead .cc-band-e{background:#f3f7f4;}
+.cc-grphead .cc-band-d{background:#f5f4f7;}
+.cc-grphead .cc-band-s{background:#eef7f0;color:#1a5c2e;}
+.cc-cath{cursor:pointer;text-align:right;color:#374151;}
+.cc-cath .cc-h-chev{margin-left:3px;font-size:8px;color:#b6bcc6;}
+.cc-cath:hover{background:#fff6ec;color:#b45309;}
+.cc-cath.sel{background:#fff1dd;color:#b45309;}
+.cc-cath.sel .cc-h-chev{color:#e3920f;}
+.cc-sumh{text-align:right;color:#1a5c2e;background:#f6faf7;font-weight:700;}
+.cc-catcell{cursor:pointer;}
+.cc-catcell:hover{background:#fffaf0;}
+.cc-val.sel{background:#fff8ee;box-shadow:inset 0 0 0 1px #f3dcb8;}
+.cc-avgrow td{font-weight:700;border-top:2px solid var(--bd2);background:#f7f8fa;}
+.cc-avgrow .cc-period{background:#f0f2f5;}
+/* breakdown panel below the grid */
+.cc-panel{margin:8px 14px 4px;border:1px solid #f0dcc0;border-radius:8px;overflow:hidden;background:#fffdf9;}
+.cc-panel-hd{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fff6ec;border-bottom:1px solid #f0dcc0;font-size:12px;color:#7a4a12;}
+.cc-panel-sub{font-weight:400;font-size:10.5px;color:#a98a5f;}
+.cc-panel-x{margin-left:auto;border:none;background:transparent;font-size:17px;line-height:1;color:#b08a52;cursor:pointer;padding:0 4px;}
+.cc-panel-x:hover{color:#7a4a12;}
+.cc-panel-empty{padding:12px;font-size:11.5px;color:#9aa1ab;}
+.cc-pi-table{border-collapse:collapse;width:100%;font-size:11px;}
+.cc-pi-table th,.cc-pi-table td{padding:6px 10px;border-bottom:1px solid #f1ece3;text-align:right;white-space:nowrap;}
+.cc-pi-table th{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#a98a5f;background:#fffaf2;}
+.cc-pi-table th.cc-pi-name,.cc-pi-table td.cc-pi-name{text-align:left;}
+.cc-pi-table tr.pending td{background:#fff8ec;}
+.cc-pi-name{font-weight:600;color:#1f2937;}
+.cc-pi-name .cc-loc{cursor:pointer;color:#c8a36a;display:inline-flex;vertical-align:middle;margin-right:6px;}
+.cc-pi-name .cc-loc:hover{color:#b45309;}
+.cc-pi-name .cc-en{display:block;font-size:9.5px;color:#a98a5f;font-weight:400;margin-top:1px;}
+.cc-pi-map{text-align:left;}
+/* excluded chip */
+.cc-exchip{margin:6px 14px;padding:7px 12px;font-size:11px;color:#6b7280;background:#f6f7f9;border:1px dashed #d6dae0;border-radius:7px;cursor:pointer;}
+.cc-exchip:hover{background:#eef1f5;}
+.cc-exchip.on{background:#fff1dd;border-color:#f0dcc0;color:#7a4a12;}
+.cc-exchip .cc-cnt{background:#e2e6ec;}
 /* ── Collapsible alerts header ── */
 .fd-alert-strip{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--bd);cursor:pointer;flex-shrink:0;}
 .fd-alert-strip:hover{background:#fafbfc;}
@@ -3583,15 +3625,15 @@ function renderLineItems(fileId){
   return applyBar+hint+docGroup+groupsHtml+addGroupBtn;
 }
 /* ── Step 2 · Income Computation ──
-   Rows = income/deduction CATEGORIES (the sum of the line items mapped to each); columns =
-   pay periods + Average. This is the nested model the client described: Step-2 mapping decided
-   which line item belongs to which category, and this table sums same-category items.
-   Click a category row (its title OR amount) to drill open the line items feeding it — there you
-   edit the amount AND re-map the category inline, no need to walk back to a separate step.
-   Edits stage as drafts; "Apply & refresh" commits them and recomputes. */
+   Rows = pay periods (different months); columns = income/deduction CATEGORIES (the sum of the
+   line items mapped to each) — same orientation as the real Income Calculator. Step-2 mapping
+   decided which line item belongs to which category; each category column sums same-category items.
+   Click a category column (its header OR any amount cell) to open its breakdown panel below the
+   grid — there you edit the line-item amounts AND re-map their category, no separate step needed.
+   Edits stage as drafts; "Apply & refresh" commits them and recomputes. Single panel open at a time. */
 function toggleCompCat(fileId,key){
-  if(!S.compExpand[fileId])S.compExpand[fileId]={};
-  S.compExpand[fileId][key]=!S.compExpand[fileId][key];
+  if(!S.compExpand)S.compExpand={};
+  S.compExpand[fileId]=(S.compExpand[fileId]===key)?null:key;
   render();
 }
 function applyComputeChanges(fileId){
@@ -3618,16 +3660,54 @@ function applyComputeChanges(fileId){
 function renderComputed(fileId){
   var months=PAYSLIP_MONTHS.map(function(m,mIdx){return {label:m.month,mIdx:mIdx,c:computeMonth(fileId,mIdx)};});
   var n=months.length;
-  var exp=(S.compExpand||{})[fileId]||{};
-  var nc=n+2;  // Category + N periods + Average
+  var sel=(S.compExpand||{})[fileId]||null;
   function money2(v){v=(typeof v==='number')?v:(parseFloat(v)||0);return v?('RM '+money(v)):'<span class="cp-dash">&mdash;</span>';}
-  function avgOf(get){var s=0;months.forEach(function(mo){var v=get(mo);s+=(typeof v==='number'?v:parseFloat(v)||0);});return s/(n||1);}
-  function valCells(get){return months.map(function(mo){return '<td class="cc-val">'+money2(get(mo))+'</td>';}).join('')+'<td class="cc-val cc-avg">'+money2(avgOf(get))+'</td>';}
+  function avgOf(get){var s=0;months.forEach(function(mo){var v=get(mo.c);s+=(typeof v==='number'?v:parseFloat(v)||0);});return s/(n||1);}
   function itemsIn(bucketKey,kind){return lineItemsAll(fileId).filter(function(it){return it.kind===kind && ruleApplied(fileId,it.id)===bucketKey;});}
 
-  // editable sub-rows (line items) under an expanded category
-  function subRows(items){
-    return items.map(function(it){
+  // ── column model: category columns (clickable → breakdown) + summary columns (read-only) ──
+  var earnCats=EARNING_BUCKETS.filter(function(b){return b.key!=='exclude';});
+  var dedCats=DEDUCTION_BUCKETS.filter(function(b){return b.key!=='exclude';});
+  var cols=[];
+  earnCats.forEach(function(b){cols.push({t:'cat',key:b.key,label:b.label,kind:'earning'});});
+  cols.push({t:'sum',key:'__gross',label:'Gross',get:function(c){return c.grossAll;},pr:function(c){return c.ocrGross;}});
+  dedCats.forEach(function(b){cols.push({t:'cat',key:b.key,label:b.label,kind:'deduction'});});
+  cols.push({t:'sum',key:'__dedtot',label:'Total Ded.',get:function(c){return c.dedAll;},pr:function(c){return c.ocrDed;}});
+  cols.push({t:'sum',key:'__net',label:'Net Pay',get:function(c){return c.grossAll-c.dedAll;},pr:function(c){return c.ocrNet;}});
+  cols.push({t:'sum',key:'__inc',label:'Verifiable',get:function(c){return c.incomeGross;}});
+  function colVal(c,col){return col.t==='cat'?c[col.key]:col.get(c);}
+
+  // ── two-tier header: group band + category columns ──
+  var grpHead='<tr class="cc-grphead"><th></th>'
+    +'<th colspan="'+(earnCats.length+1)+'" class="cc-band-e">EARNINGS</th>'
+    +'<th colspan="'+(dedCats.length+1)+'" class="cc-band-d">DEDUCTIONS</th>'
+    +'<th colspan="2" class="cc-band-s">NET / INCOME</th></tr>';
+  var head='<tr><th class="cc-name cc-period">Pay Period</th>'
+    +cols.map(function(col){
+      var clk=(col.t==='cat');
+      var cls=(clk?'cc-cath':'cc-sumh')+(sel===col.key?' sel':'');
+      return '<th class="'+cls+'"'+(clk?' onclick="toggleCompCat(\''+fileId+'\',\''+col.key+'\')" title="Click to break down"':'')+'>'+col.label+(clk?'<span class="cc-h-chev">&#9662;</span>':'')+'</th>';
+    }).join('')+'</tr>';
+
+  // ── body: one row per pay period, plus an Average row ──
+  function periodRow(label,c,flash,isAvg){
+    return '<tr'+(flash?' class="cp-flash"':'')+(isAvg?' class="cc-avgrow"':'')+'><td class="cc-name cc-period">'+label+'</td>'
+      +cols.map(function(col){
+        var clk=(col.t==='cat');
+        var pr=(col.pr&&c)?col.pr(c):null;
+        var v=isAvg?avgOf(function(cc){return colVal(cc,col);}):colVal(c,col);
+        var cls='cc-val'+(clk?' cc-catcell':'')+(sel===col.key?' sel':'');
+        return '<td class="'+cls+'"'+(clk?' onclick="toggleCompCat(\''+fileId+'\',\''+col.key+'\')"':'')+'>'+money2(v)+(pr!=null&&!isAvg?'<span class="cc-print">'+money(pr)+'</span>':'')+'</td>';
+      }).join('')
+    +'</tr>';
+  }
+  var body=months.map(function(mo){return periodRow(mo.label,mo.c,S.compFlash,false);}).join('')
+    +periodRow('Average',null,false,true);
+
+  // ── breakdown panel for the selected category (line items × per-period amounts + mapping) ──
+  function breakdownTable(items){
+    var hrow='<tr><th class="cc-pi-name">Line item</th>'+months.map(function(mo){return '<th>'+mo.label+'</th>';}).join('')+'<th class="cc-pi-map">Category</th></tr>';
+    var rows=items.map(function(it){
       var buckets=it.kind==='earning'?EARNING_BUCKETS:DEDUCTION_BUCKETS;
       var draft=ruleDraft(fileId,it.id);
       var opts=buckets.map(function(b){return '<option value="'+b.key+'"'+(draft===b.key?' selected':'')+'>'+b.label+'</option>';}).join('');
@@ -3636,52 +3716,33 @@ function renderComputed(fileId){
         var disp=lineDispAmt(fileId,mo.mIdx,it.type), applied=effectiveApplied(fileId,mo.mIdx,it.type);
         var amtPend=(S.lineAmtDraft[fileId]||{})[mo.mIdx+'|'+it.type]!=null && disp!==applied;
         return '<td class="cc-sub-amt"><span class="cc-rm">RM</span><input class="cc-amt-inp'+(amtPend?' pending':'')+'" value="'+(disp!=null?money(disp):'')+'" onchange="setLineAmt(\''+fileId+'\','+mo.mIdx+',\''+it.type+'\',this.value)"></td>';
-      }).join('')+'<td class="cc-val cc-avg cc-sub-mut">'+money2(avgOf(function(mo){return lineDispAmt(fileId,mo.mIdx,it.type);}))+'</td>';
-      return '<tr class="cc-sub'+(rulePend?' pending':'')+'" id="rc-'+it.id+'" onmouseenter="ruleHover(\''+fileId+'\',\''+it.id+'\')" onmouseleave="ruleUnhover(\''+it.id+'\')">'
-        +'<td class="cc-sub-name"><span class="cc-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'
-          +'<span class="cc-sub-lbl">'+it.ms+'<span class="cc-en">'+it.en+'</span></span>'
-          +'<select class="cc-map-sel'+(rulePend?' modified':'')+'" onchange="setRule(\''+fileId+'\',\''+it.id+'\',this.value)" onclick="event.stopPropagation()">'+opts+'</select></td>'
+      }).join('');
+      return '<tr'+(rulePend?' class="pending"':'')+' id="rc-'+it.id+'" onmouseenter="ruleHover(\''+fileId+'\',\''+it.id+'\')" onmouseleave="ruleUnhover(\''+it.id+'\')">'
+        +'<td class="cc-pi-name"><span class="cc-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'+it.ms+'<span class="cc-en">'+it.en+'</span></td>'
         +amtCells
+        +'<td class="cc-pi-map"><select class="cc-map-sel'+(rulePend?' modified':'')+'" onchange="setRule(\''+fileId+'\',\''+it.id+'\',this.value)">'+opts+'</select></td>'
       +'</tr>';
     }).join('');
+    return '<table class="cc-pi-table"><thead>'+hrow+'</thead><tbody>'+rows+'</tbody></table>';
   }
-  // a category row, drillable when it has line items
-  function catRow(bucket,kind){
-    if(bucket.key==='exclude')return '';
-    var items=itemsIn(bucket.key,kind);
-    var has=items.length>0, open=!!exp[bucket.key];
-    var head='<tr class="cc-cat'+(open?' open':'')+(has?' cc-clickable':'')+'"'+(has?' onclick="toggleCompCat(\''+fileId+'\',\''+bucket.key+'\')"':'')+'>'
-      +'<td class="cc-name"><span class="cc-chev'+(has?'':' cc-chev-off')+'">&#9656;</span>'+bucket.label+(has?'<span class="cc-cnt">'+items.length+'</span>':'')+'</td>'
-      +valCells(function(mo){return mo.c[bucket.key];})
-    +'</tr>';
-    return (open&&has)?head+subRows(items):head;
-  }
-  function sumRow(label,getCalc,getPrinted,cls){
-    return '<tr class="cc-sum '+(cls||'')+(S.compFlash?' cp-flash':'')+'"><td class="cc-name">'+label+'</td>'
-      +months.map(function(mo){var pr=getPrinted?getPrinted(mo):null;
-        return '<td class="cc-val">'+money2(getCalc(mo))+(pr!=null?'<span class="cc-print">printed '+money(pr)+'</span>':'')+'</td>';}).join('')
-      +'<td class="cc-val cc-avg">'+money2(avgOf(getCalc))+'</td>'
-    +'</tr>';
+  var panel='';
+  if(sel){
+    var items=null, label='';
+    if(sel==='__excluded'){items=lineItemsAll(fileId).filter(function(it){return ruleApplied(fileId,it.id)==='exclude';});label='Excluded — not counted';}
+    else{var col=null;cols.forEach(function(c){if(c.key===sel)col=c;});if(col&&col.t==='cat'){items=itemsIn(col.key,col.kind);label=col.label;}}
+    if(items){
+      panel='<div class="cc-panel">'
+        +'<div class="cc-panel-hd"><b>'+label+'</b> &middot; line items'
+          +'<span class="cc-panel-sub">edit an amount or re-map its category &mdash; mapping applies to all pay periods</span>'
+          +'<button class="cc-panel-x" onclick="toggleCompCat(\''+fileId+'\',\''+sel+'\')" title="Close">&times;</button></div>'
+        +(items.length?breakdownTable(items):'<div class="cc-panel-empty">No line items mapped here.</div>')
+      +'</div>';
+    }
   }
 
-  var head='<tr><th class="cc-name">Category</th>'+months.map(function(mo){return '<th>'+mo.label+'</th>';}).join('')+'<th class="cc-avg">Average</th></tr>';
-  var earnRows=EARNING_BUCKETS.map(function(b){return catRow(b,'earning');}).join('');
-  var dedRows=DEDUCTION_BUCKETS.map(function(b){return catRow(b,'deduction');}).join('');
-  var grossRow=sumRow('Gross &mdash; &Sigma; earnings',function(mo){return mo.c.grossAll;},function(mo){return mo.c.ocrGross;},'cc-gross');
-  var dedTot=sumRow('Total Deductions',function(mo){return mo.c.dedAll;},function(mo){return mo.c.ocrDed;},'cc-dedtot');
-  var netRow=sumRow('Net Pay',function(mo){return mo.c.grossAll-mo.c.dedAll;},function(mo){return mo.c.ocrNet;},'cc-net');
-  var incRow=sumRow('Verifiable Income (excl. policy items)',function(mo){return mo.c.incomeGross;},null,'cc-inc');
-
-  // excluded items — collapsible so they can be re-included
+  // excluded chip below the grid (re-include entry point)
   var exItems=lineItemsAll(fileId).filter(function(it){return ruleApplied(fileId,it.id)==='exclude';});
-  var exRow='';
-  if(exItems.length){
-    var openX=!!exp.__excluded;
-    exRow='<tr class="cc-cat cc-excluded cc-clickable'+(openX?' open':'')+'" onclick="toggleCompCat(\''+fileId+'\',\'__excluded\')">'
-      +'<td class="cc-name"><span class="cc-chev">&#9656;</span>Excluded &mdash; not counted<span class="cc-cnt">'+exItems.length+'</span></td>'
-      +'<td colspan="'+(n+1)+'" class="cc-exhint">re-map to include in income</td></tr>'
-      +(openX?subRows(exItems):'');
-  }
+  var exChip=exItems.length?'<div class="cc-exchip'+(sel==='__excluded'?' on':'')+'" onclick="toggleCompCat(\''+fileId+'\',\'__excluded\')">&#8709; Excluded &mdash; not counted <span class="cc-cnt">'+exItems.length+'</span> &middot; click to review / re-include</div>':'';
 
   var draftPend=pendingAmounts(fileId).length+pendingRules(fileId).length;
   var applyBar=draftPend
@@ -3696,12 +3757,10 @@ function renderComputed(fileId){
     : '';
 
   return applyBar
-    +'<div class="cc-hint">Click any category (its name or amount) to open the line items feeding it &mdash; adjust the amount or re-map its category right there. Mapping applies to all pay periods.</div>'
-    +'<div class="cp-tablewrap"><table class="cp-table cc-table"><thead>'+head+'</thead><tbody>'
-      +'<tr class="cc-grp"><td colspan="'+nc+'">EARNINGS</td></tr>'+earnRows+grossRow
-      +'<tr class="cc-grp"><td colspan="'+nc+'">DEDUCTIONS</td></tr>'+dedRows+dedTot
-      +netRow+incRow+exRow
-    +'</tbody></table></div>'
+    +'<div class="cc-hint">Click a category column header (or any of its amounts) to break it down below &mdash; adjust amounts or re-map line items there. Mapping applies to all pay periods.</div>'
+    +'<div class="cp-tablewrap"><table class="cp-table cc-table cc-tcols"><thead>'+grpHead+head+'</thead><tbody>'+body+'</tbody></table></div>'
+    +exChip
+    +panel
     +'<div class="cp-income">'+n+'-period average verifiable income (excl. policy items): <b>RM '+money(payslipAvgIncome(fileId))+'</b></div>'
     +logSec;
 }
