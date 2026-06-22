@@ -385,32 +385,45 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 @keyframes secland{0%,45%{box-shadow:0 0 0 2px #e3920f;}100%{box-shadow:0 0 0 0 rgba(227,146,15,0);}}
 .cp-income{font-size:11.5px;color:#1a5c2e;background:#eef7f0;border-top:1px solid #d6ead9;padding:6px 14px;}
 .cp-income b{color:#14532d;}
-/* ── Step 2 compact result table (calc value + printed reference stacked) ── */
-.cp-table2 th,.cp-table2 td{padding:9px 14px;}
-.cp-table2 th{line-height:1.35;}
-.cp2-en{display:block;font-weight:500;font-size:8.5px;color:#9aa1ab;text-transform:none;letter-spacing:0;margin-top:1px;}
-.cp2-main{font-weight:700;color:#111827;}
-.cp2-ref{font-size:9.5px;color:#9aa1ab;font-weight:500;margin-top:1px;}
-.cp-table2 td.cp2-inc{background:#f3f8f4;}
-.cp-table2 td.cp2-inc .cp2-main{color:#14532d;}
-.cp-table2 th.cp2-inc{background:#eaf4ec;color:#1a5c2e;}
-/* ── Step 2 editable income breakdown (the formula, now editable) ── */
-.bk-panel{margin-top:4px;border-top:1px solid var(--bd2);}
-.bk-hd{padding:10px 16px 2px;font-size:12px;font-weight:700;color:#374151;}
-.bk-sub{display:block;font-weight:400;font-size:10.5px;color:#9aa1ab;margin-top:2px;line-height:1.4;}
-.bk-row{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid #f1f3f6;}
-.bk-row:hover{background:#fafbfc;}
-.bk-row.hot{background:#fff6ec;box-shadow:inset 3px 0 0 #e3920f;}
-.bk-row.pending{background:#fffaf0;}
-.bk-row.rc-new{background:#fff6ec;}
-.bk-row .rc-loc{flex-shrink:0;cursor:pointer;color:#b6bcc6;display:inline-flex;}
-.bk-row .rc-loc:hover{color:#2563eb;}
-.bk-name{flex:1;min-width:120px;font-size:12px;color:#1f2937;font-weight:600;}
-.bk-name .rc-en{display:block;font-size:10px;color:#9aa1ab;font-weight:400;margin-top:1px;}
-.bk-need{display:inline-block;margin-left:6px;font-size:9px;font-weight:700;color:#b45309;background:#fde9cf;border-radius:4px;padding:1px 6px;vertical-align:middle;}
-.bk-amts{display:flex;gap:12px;flex-shrink:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:#374151;}
-.bk-amt i{font-style:normal;color:#9aa1ab;margin-right:3px;}
-.bk-map{flex-shrink:0;display:flex;align-items:center;gap:6px;min-width:190px;justify-content:flex-end;}
+/* ── Step 2 · Income Computation — category rows, drillable to editable line items ── */
+.cc-hint{font-size:11px;color:#6b7280;padding:8px 16px 2px;line-height:1.5;}
+.cc-table th,.cc-table td{padding:8px 12px;}
+.cc-table th{text-align:right;}
+.cc-table th.cc-name{text-align:left;}
+.cc-table .cc-name{text-align:left;font-family:inherit;font-weight:600;color:#374151;background:transparent;min-width:210px;}
+.cc-table th.cc-avg,.cc-table td.cc-avg{background:#f7f8fa;}
+.cc-grp td{background:#eef1f5;color:#6b7280;font-size:9.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:4px 12px;text-align:left;}
+.cc-cat td{border-bottom:1px solid #f1f3f6;}
+.cc-cat.cc-clickable{cursor:pointer;}
+.cc-cat.cc-clickable:hover td{background:#fafbfc;}
+.cc-cat.open .cc-name{font-weight:700;color:#111827;}
+.cc-chev{display:inline-block;width:12px;color:#9aa1ab;transition:transform .15s;margin-right:5px;font-size:10px;}
+.cc-cat.open .cc-chev{transform:rotate(90deg);}
+.cc-chev-off{visibility:hidden;}
+.cc-cnt{display:inline-block;margin-left:7px;font-size:9.5px;color:#9aa1ab;background:#eef1f5;border-radius:9px;padding:0 6px;font-weight:600;vertical-align:middle;}
+.cc-val{text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace;color:#111827;}
+/* editable line-item sub-rows */
+.cc-sub td{background:#fbfcfd;border-bottom:1px solid #f3f4f6;}
+.cc-sub.pending td{background:#fffaf0;}
+.cc-sub-name{padding-left:30px!important;font-family:inherit;white-space:nowrap;}
+.cc-sub-name .cc-loc{cursor:pointer;color:#b6bcc6;display:inline-flex;vertical-align:middle;margin-right:6px;}
+.cc-sub-name .cc-loc:hover{color:#2563eb;}
+.cc-sub-lbl{font-size:11.5px;color:#1f2937;font-weight:600;}
+.cc-sub-lbl .cc-en{display:block;font-size:9.5px;color:#9aa1ab;font-weight:400;margin-top:1px;}
+.cc-map-sel{display:block;margin-top:5px;font-size:10.5px;padding:2px 6px;border:1px solid var(--bd);border-radius:5px;background:#fff;max-width:200px;}
+.cc-map-sel.modified{border-color:#e3920f;background:#fff8ec;}
+.cc-sub-amt{text-align:right;white-space:nowrap;}
+.cc-sub-amt .cc-rm{font-size:9px;color:#b6bcc6;margin-right:3px;}
+.cc-amt-inp{width:74px;text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;}
+.cc-amt-inp.pending{border-color:#e3920f;background:#fff8ec;}
+.cc-sub-mut{color:#9aa1ab;}
+/* summary rows */
+.cc-sum td{font-weight:700;border-top:1px solid var(--bd2);background:#fafbfc;}
+.cc-sum.cc-gross td,.cc-sum.cc-dedtot td{background:#f4f6f8;}
+.cc-sum.cc-inc td{background:#eef7f0;color:#14532d;border-top:2px solid #cfe6d6;}
+.cc-print{display:block;font-size:9px;color:#9aa1ab;font-weight:500;margin-top:1px;}
+.cc-excluded .cc-name{color:#9aa1ab;font-weight:500;}
+.cc-exhint{text-align:left;font-size:10px;color:#b6bcc6;font-style:italic;}
 /* ── Collapsible alerts header ── */
 .fd-alert-strip{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--bd);cursor:pointer;flex-shrink:0;}
 .fd-alert-strip:hover{background:#fafbfc;}
@@ -1056,7 +1069,8 @@ var S={ screen:'menu', activeRole:'ced',   // demo nav: 'menu'|'cedlist'|'ceddet
         lineAmtDraft:{},      // {fileId:{'mIdx|type':amount}} — pending edits, not yet applied to totals
         compFlash:false,      // transient: flash Step-3 after amounts/rules are applied
         secOpen:{},           // {sectionKey:false} — collapsed sections (default open)
-        stepScheme:null,      // '1' (Step 1→2→3) | '2' (Step 3→2→1) — a design-option toggle, independent of role
+        stepScheme:null,      // '1' (Step 1→2) | '2' (Step 2→1) — a design-option toggle, independent of role
+        compExpand:{},        // {fileId:{bucketKey:true}} — which Step-2 category rows are drilled open
         customLines:{},       // {fileId:[{id,ms,en,kind,ai,custom:true,type}]} — Sales-entered missing line items (Step 1)
         addLineTarget:null,   // fileId while the add-missing-item modal is open
         addLinePreset:null,   // required field key being filled from a missing-row prompt
@@ -3568,94 +3582,128 @@ function renderLineItems(fileId){
     :'';
   return applyBar+hint+docGroup+groupsHtml+addGroupBtn;
 }
-/* ── ③④ Computed fields with aggregation process + OCR reconciliation ── */
-// Step 3 — one row per pay period, one column per category, paired calc/printed columns for the
-// 3 aggregates (mirrors the real Income Calculator grid: entered value next to a greyed reference
-// value, no pass/fail judgment — see AIOCR_交叉核验评审纪要与优化方案_20260617.md §2).
-// Step 2 · 收入核算 — merged result + editable mapping. Two stacked parts:
-//   (A) a COMPACT summary table (period × Verifiable/Gross/Deductions/Net, calc value with the
-//       printed value as a muted reference line) — far fewer columns than the old 16-col grid;
-//   (B) an editable income breakdown where every line item carries its category dropdown — the
-//       "formula" is now the place you re-classify. Changing a dropdown stages a draft; the
-//       summary above only moves after "应用并刷新" (confirmRuleChanges).
+/* ── Step 2 · Income Computation ──
+   Rows = income/deduction CATEGORIES (the sum of the line items mapped to each); columns =
+   pay periods + Average. This is the nested model the client described: Step-2 mapping decided
+   which line item belongs to which category, and this table sums same-category items.
+   Click a category row (its title OR amount) to drill open the line items feeding it — there you
+   edit the amount AND re-map the category inline, no need to walk back to a separate step.
+   Edits stage as drafts; "Apply & refresh" commits them and recomputes. */
+function toggleCompCat(fileId,key){
+  if(!S.compExpand[fileId])S.compExpand[fileId]={};
+  S.compExpand[fileId][key]=!S.compExpand[fileId][key];
+  render();
+}
+function applyComputeChanges(fileId){
+  var pa=pendingAmounts(fileId), pr=pendingRules(fileId);
+  if(!pa.length&&!pr.length)return;
+  S.flash=S.flash||{};
+  if(pa.length){ if(!S.lineAmt[fileId])S.lineAmt[fileId]={}; pa.forEach(function(k){S.lineAmt[fileId][k]=(S.lineAmtDraft[fileId]||{})[k];S.flash[k]=true;}); S.lineAmtDraft[fileId]={}; }
+  if(pr.length){
+    if(!S.ruleMap[fileId])S.ruleMap[fileId]={}; if(!S.incomeLog[fileId])S.incomeLog[fileId]=[];
+    var now=new Date(); var ts=('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2);
+    pr.forEach(function(id){
+      var it=ruleItemF(fileId,id);
+      var to=bucketLabel(it.kind,ruleDraft(fileId,id));
+      var from=it.custom&&!(S.ruleMap[fileId]||{})[id]?'(New item)':bucketLabel(it.kind,ruleApplied(fileId,id));
+      S.incomeLog[fileId].unshift({t:ts,raw:it.type,from:from,to:to});
+      S.ruleMap[fileId][id]=ruleDraft(fileId,id);
+    });
+    S.ruleDraft[fileId]={};
+  }
+  S.compFlash=true;render();
+  setTimeout(function(){S.compFlash=false;S.flash={};render();},950);
+  showToast('Applied &mdash; totals recalculated.','ok');
+}
 function renderComputed(fileId){
   var months=PAYSLIP_MONTHS.map(function(m,mIdx){return {label:m.month,mIdx:mIdx,c:computeMonth(fileId,mIdx)};});
-  function dual(calc,printed){return '<div class="cp2-main">RM '+money(calc)+'</div><div class="cp2-ref">印 '+money(printed)+'</div>';}
-  function single(v){return '<div class="cp2-main">RM '+money(v)+'</div>';}
-  var head='<tr><th class="cp-period">期次<span class="cp2-en">Pay Period</span></th>'
-    +'<th class="cp2-inc">可核收入<span class="cp2-en">Verifiable</span></th>'
-    +'<th>Gross<span class="cp2-en">计算 / 印</span></th>'
-    +'<th>总扣减<span class="cp2-en">Deductions</span></th>'
-    +'<th>Net Pay<span class="cp2-en">计算 / 印</span></th></tr>';
-  var body=months.map(function(mo){var c=mo.c;
-    return '<tr'+(S.compFlash?' class="cp-flash"':'')+'>'
-      +'<td class="cp-period">'+mo.label+'</td>'
-      +'<td class="cp2-inc">'+single(c.incomeGross)+'</td>'
-      +'<td>'+dual(c.grossAll,c.ocrGross)+'</td>'
-      +'<td>'+dual(c.dedAll,c.ocrDed)+'</td>'
-      +'<td>'+dual(c.grossAll-c.dedAll,c.ocrNet)+'</td>'
-    +'</tr>';
-  }).join('');
   var n=months.length;
-  function avg(f){return months.reduce(function(s,mo){return s+(f(mo.c)||0);},0)/(n||1);}
-  var avgRow='<tr class="cp-agg"><td class="cp-period">平均 Avg</td>'
-    +'<td class="cp2-inc">'+single(avg(function(c){return c.incomeGross;}))+'</td>'
-    +'<td>'+single(avg(function(c){return c.grossAll;}))+'</td>'
-    +'<td>'+single(avg(function(c){return c.dedAll;}))+'</td>'
-    +'<td>'+single(avg(function(c){return c.grossAll-c.dedAll;}))+'</td>'
-  +'</tr>';
-  var table='<div class="cp-tablewrap"><table class="cp-table cp-table2"><thead>'+head+'</thead><tbody>'+body+avgRow+'</tbody></table></div>'
-    +'<div class="cp-income">'+n+' 期平均可核收入（已剔除政策性扣项）：<b>RM '+money(payslipAvgIncome(fileId))+'</b></div>';
-  return table+renderIncomeBreakdown(fileId);
-}
-// (B) Editable income breakdown — the formula made editable. Each line item shows its per-period
-// amounts and a category dropdown; re-classifying it stages a draft (recompute on apply).
-function renderIncomeBreakdown(fileId){
-  var pend=pendingRules(fileId);
-  function amts(it){
-    return PAYSLIP_MONTHS.map(function(m,mIdx){
-      var v=lineAmtVal(fileId,mIdx,it);
-      return '<span class="bk-amt"><i>'+m.month.split('/')[0]+'月</i> '+(v?money(v):'&mdash;')+'</span>';
+  var exp=(S.compExpand||{})[fileId]||{};
+  var nc=n+2;  // Category + N periods + Average
+  function money2(v){v=(typeof v==='number')?v:(parseFloat(v)||0);return v?('RM '+money(v)):'<span class="cp-dash">&mdash;</span>';}
+  function avgOf(get){var s=0;months.forEach(function(mo){var v=get(mo);s+=(typeof v==='number'?v:parseFloat(v)||0);});return s/(n||1);}
+  function valCells(get){return months.map(function(mo){return '<td class="cc-val">'+money2(get(mo))+'</td>';}).join('')+'<td class="cc-val cc-avg">'+money2(avgOf(get))+'</td>';}
+  function itemsIn(bucketKey,kind){return lineItemsAll(fileId).filter(function(it){return it.kind===kind && ruleApplied(fileId,it.id)===bucketKey;});}
+
+  // editable sub-rows (line items) under an expanded category
+  function subRows(items){
+    return items.map(function(it){
+      var buckets=it.kind==='earning'?EARNING_BUCKETS:DEDUCTION_BUCKETS;
+      var draft=ruleDraft(fileId,it.id);
+      var opts=buckets.map(function(b){return '<option value="'+b.key+'"'+(draft===b.key?' selected':'')+'>'+b.label+'</option>';}).join('');
+      var rulePend=pendingRules(fileId).indexOf(it.id)!==-1;
+      var amtCells=months.map(function(mo){
+        var disp=lineDispAmt(fileId,mo.mIdx,it.type), applied=effectiveApplied(fileId,mo.mIdx,it.type);
+        var amtPend=(S.lineAmtDraft[fileId]||{})[mo.mIdx+'|'+it.type]!=null && disp!==applied;
+        return '<td class="cc-sub-amt"><span class="cc-rm">RM</span><input class="cc-amt-inp'+(amtPend?' pending':'')+'" value="'+(disp!=null?money(disp):'')+'" onchange="setLineAmt(\''+fileId+'\','+mo.mIdx+',\''+it.type+'\',this.value)"></td>';
+      }).join('')+'<td class="cc-val cc-avg cc-sub-mut">'+money2(avgOf(function(mo){return lineDispAmt(fileId,mo.mIdx,it.type);}))+'</td>';
+      return '<tr class="cc-sub'+(rulePend?' pending':'')+'" id="rc-'+it.id+'" onmouseenter="ruleHover(\''+fileId+'\',\''+it.id+'\')" onmouseleave="ruleUnhover(\''+it.id+'\')">'
+        +'<td class="cc-sub-name"><span class="cc-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'
+          +'<span class="cc-sub-lbl">'+it.ms+'<span class="cc-en">'+it.en+'</span></span>'
+          +'<select class="cc-map-sel'+(rulePend?' modified':'')+'" onchange="setRule(\''+fileId+'\',\''+it.id+'\',this.value)" onclick="event.stopPropagation()">'+opts+'</select></td>'
+        +amtCells
+      +'</tr>';
     }).join('');
   }
-  function row(it){
-    var draft=ruleDraft(fileId,it.id);
-    var isPending=pend.indexOf(it.id)!==-1;
-    var isNew=it.custom&&!(S.ruleMap[fileId]||{})[it.id];
-    var hot=S.locateLine===it.id;
-    var buckets=it.kind==='earning'?EARNING_BUCKETS:DEDUCTION_BUCKETS;
-    var opts=buckets.map(function(b){return '<option value="'+b.key+'"'+(draft===b.key?' selected':'')+'>'+b.label+'</option>';}).join('');
-    return '<div class="bk-row'+(hot?' hot':'')+(isPending?' pending':'')+(isNew?' rc-new':'')+'" id="rc-'+it.id+'"'
-        +' onmouseenter="ruleHover(\''+fileId+'\',\''+it.id+'\')" onmouseleave="ruleUnhover(\''+it.id+'\')">'
-      +'<span class="rc-loc" onclick="locateLine(\''+it.id+'\')" title="定位到原件">'+IC.locate+'</span>'
-      +'<div class="bk-name">'+it.ms+'<span class="rc-en">'+it.en+'</span>'+(it.custom?'<span class="rc-newtag">Sales 补录</span>':'')+(isNew?'<span class="bk-need">需归类</span>':'')+'</div>'
-      +'<div class="bk-amts">'+amts(it)+'</div>'
-      +'<div class="bk-map">'
-        +(isPending?'<span class="li-mod-dot" title="待应用"></span>':'')
-        +'<select class="ced-rule-sel'+(isPending?' modified':'')+(draft==='exclude'?' li-excl':'')+'" onchange="setRule(\''+fileId+'\',\''+it.id+'\',this.value)">'+opts+'</select>'
-      +'</div>'
-    +'</div>';
+  // a category row, drillable when it has line items
+  function catRow(bucket,kind){
+    if(bucket.key==='exclude')return '';
+    var items=itemsIn(bucket.key,kind);
+    var has=items.length>0, open=!!exp[bucket.key];
+    var head='<tr class="cc-cat'+(open?' open':'')+(has?' cc-clickable':'')+'"'+(has?' onclick="toggleCompCat(\''+fileId+'\',\''+bucket.key+'\')"':'')+'>'
+      +'<td class="cc-name"><span class="cc-chev'+(has?'':' cc-chev-off')+'">&#9656;</span>'+bucket.label+(has?'<span class="cc-cnt">'+items.length+'</span>':'')+'</td>'
+      +valCells(function(mo){return mo.c[bucket.key];})
+    +'</tr>';
+    return (open&&has)?head+subRows(items):head;
   }
-  var allLI=lineItemsAll(fileId);
-  var earnRows=allLI.filter(function(x){return x.kind==='earning';}).map(row).join('');
-  var dedRows=allLI.filter(function(x){return x.kind==='deduction';}).map(row).join('');
-  var applyBar=pend.length
-    ? '<div class="li-apply li-apply-sticky"><span class="li-apply-txt">&#9998; <b>'+pend.length+' 处归类变更待应用</b> — 上方结果在应用后刷新。</span>'
-        +'<button class="btn btn-pri btn-sm" onclick="confirmRuleChanges(\''+fileId+'\')">&#8635; 应用并刷新</button></div>'
+  function sumRow(label,getCalc,getPrinted,cls){
+    return '<tr class="cc-sum '+(cls||'')+(S.compFlash?' cp-flash':'')+'"><td class="cc-name">'+label+'</td>'
+      +months.map(function(mo){var pr=getPrinted?getPrinted(mo):null;
+        return '<td class="cc-val">'+money2(getCalc(mo))+(pr!=null?'<span class="cc-print">printed '+money(pr)+'</span>':'')+'</td>';}).join('')
+      +'<td class="cc-val cc-avg">'+money2(avgOf(getCalc))+'</td>'
+    +'</tr>';
+  }
+
+  var head='<tr><th class="cc-name">Category</th>'+months.map(function(mo){return '<th>'+mo.label+'</th>';}).join('')+'<th class="cc-avg">Average</th></tr>';
+  var earnRows=EARNING_BUCKETS.map(function(b){return catRow(b,'earning');}).join('');
+  var dedRows=DEDUCTION_BUCKETS.map(function(b){return catRow(b,'deduction');}).join('');
+  var grossRow=sumRow('Gross &mdash; &Sigma; earnings',function(mo){return mo.c.grossAll;},function(mo){return mo.c.ocrGross;},'cc-gross');
+  var dedTot=sumRow('Total Deductions',function(mo){return mo.c.dedAll;},function(mo){return mo.c.ocrDed;},'cc-dedtot');
+  var netRow=sumRow('Net Pay',function(mo){return mo.c.grossAll-mo.c.dedAll;},function(mo){return mo.c.ocrNet;},'cc-net');
+  var incRow=sumRow('Verifiable Income (excl. policy items)',function(mo){return mo.c.incomeGross;},null,'cc-inc');
+
+  // excluded items — collapsible so they can be re-included
+  var exItems=lineItemsAll(fileId).filter(function(it){return ruleApplied(fileId,it.id)==='exclude';});
+  var exRow='';
+  if(exItems.length){
+    var openX=!!exp.__excluded;
+    exRow='<tr class="cc-cat cc-excluded cc-clickable'+(openX?' open':'')+'" onclick="toggleCompCat(\''+fileId+'\',\'__excluded\')">'
+      +'<td class="cc-name"><span class="cc-chev">&#9656;</span>Excluded &mdash; not counted<span class="cc-cnt">'+exItems.length+'</span></td>'
+      +'<td colspan="'+(n+1)+'" class="cc-exhint">re-map to include in income</td></tr>'
+      +(openX?subRows(exItems):'');
+  }
+
+  var draftPend=pendingAmounts(fileId).length+pendingRules(fileId).length;
+  var applyBar=draftPend
+    ? '<div class="li-apply li-apply-sticky"><span class="li-apply-txt">&#9998; <b>'+draftPend+' change'+(draftPend>1?'s':'')+' pending</b> &mdash; totals refresh after you apply.</span>'
+        +'<button class="btn btn-pri btn-sm" onclick="applyComputeChanges(\''+fileId+'\')">&#8635; Apply &amp; refresh</button></div>'
     : '';
   var log=S.incomeLog[fileId]||[];
   var logSec=log.length
-    ? '<details class="rc-log"><summary>归类变更记录 ('+log.length+') — 审计留痕</summary>'
+    ? '<details class="rc-log"><summary>Change log ('+log.length+') &mdash; audit-recorded</summary>'
         +log.map(function(e){return '<div class="li-log"><span class="li-log-t">'+e.t+'</span><span class="li-log-raw">'+e.raw+'</span><span class="li-log-chg">'+e.from+' &rarr; <b>'+e.to+'</b></span></div>';}).join('')
       +'</details>'
     : '';
-  return '<div class="bk-panel">'
-    +applyBar
-    +'<div class="bk-hd">收入构成与归类<span class="bk-sub">每个细项归到哪个科目都可改；归类按类型生效（应用到所有期次）。改完点上方「应用并刷新」。</span></div>'
-    +'<div class="rc-grp">EARNINGS · 收入</div>'+earnRows
-    +'<div class="rc-grp">DEDUCTIONS · 扣减</div>'+dedRows
-    +logSec
-  +'</div>';
+
+  return applyBar
+    +'<div class="cc-hint">Click any category (its name or amount) to open the line items feeding it &mdash; adjust the amount or re-map its category right there. Mapping applies to all pay periods.</div>'
+    +'<div class="cp-tablewrap"><table class="cp-table cc-table"><thead>'+head+'</thead><tbody>'
+      +'<tr class="cc-grp"><td colspan="'+nc+'">EARNINGS</td></tr>'+earnRows+grossRow
+      +'<tr class="cc-grp"><td colspan="'+nc+'">DEDUCTIONS</td></tr>'+dedRows+dedTot
+      +netRow+incRow+exRow
+    +'</tbody></table></div>'
+    +'<div class="cp-income">'+n+'-period average verifiable income (excl. policy items): <b>RM '+money(payslipAvgIncome(fileId))+'</b></div>'
+    +logSec;
 }
 // Intentional navigation to a step: open it, then scroll the workspace to it.
 // Synchronous direct assignment right after render() (render already restored the
@@ -3831,11 +3879,11 @@ function renderFileDetail(){
     //    Field Mapping" is gone — its dropdowns now live inside the income breakdown here, so you
     //    classify and see the result in the same place (client feedback: drop the extra layer).
     //    Changing a category stages a draft; "应用并刷新" (confirmRuleChanges) recomputes. ──
-    var compPend=pendingRules(S.fileId).length;
-    var compBadge=compPend?'<span class="sec-badge org">'+compPend+' 待应用</span>':'<span class="sec-badge green">已核算</span>';
-    var cItems=secCard('items','1','Step 1 · 核对识别','OCR 细项 vs 原件 — Sales 核对',s1Badge, s1Body);
-    var cComp=secCard('comp','2','Step 2 · 收入核算','归类与结果一体 · 改归类后应用刷新',compBadge, renderComputed(S.fileId));
-    // 方案1: 核对→核算 (data-first); 方案2: 核算→核对 (result-first) — ordering only.
+    var compPend=pendingAmounts(S.fileId).length+pendingRules(S.fileId).length;
+    var compBadge=compPend?'<span class="sec-badge org">'+compPend+' Pending</span>':'<span class="sec-badge green">Computed</span>';
+    var cItems=secCard('items','1','Step 1 · Verify','Confirm OCR line items against the document',s1Badge, s1Body);
+    var cComp=secCard('comp','2','Step 2 · Income Computation','Categorised totals — click any amount to adjust mapping or value',compBadge, renderComputed(S.fileId));
+    // 方案1: Verify→Compute (data-first); 方案2: Compute→Verify (result-first) — ordering only.
     workspace=(curScheme()==='1')?(cItems+cComp):(cComp+cItems);
   } else {
     var renderGroups=d.groups;
@@ -3862,8 +3910,8 @@ function renderFileDetail(){
       +'<div><div class="fd-title">'+d.name+'</div><div class="fd-crumb">'+d.crumb+'</div></div>'
       +'<div class="sp"></div>'
       +(lineMode?'<div class="role-tog" title="Two step-order options — pick either regardless of role">'
-        +'<button class="role-btn'+(curScheme()==='1'?' on':'')+'" onclick="setScheme(\'1\')">方案1 (核对&rarr;核算)</button>'
-        +'<button class="role-btn'+(curScheme()==='2'?' on':'')+'" onclick="setScheme(\'2\')">方案2 (核算&rarr;核对)</button>'
+        +'<button class="role-btn'+(curScheme()==='1'?' on':'')+'" onclick="setScheme(\'1\')">方案1 (1&rarr;2)</button>'
+        +'<button class="role-btn'+(curScheme()==='2'?' on':'')+'" onclick="setScheme(\'2\')">方案2 (2&rarr;1)</button>'
       +'</div>':'')
       +'<button class="btn btn-sm">&#8249; Previous</button>'
       +'<button class="btn btn-sm">Next &#8250;</button>'
