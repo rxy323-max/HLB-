@@ -385,6 +385,32 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 @keyframes secland{0%,45%{box-shadow:0 0 0 2px #e3920f;}100%{box-shadow:0 0 0 0 rgba(227,146,15,0);}}
 .cp-income{font-size:11.5px;color:#1a5c2e;background:#eef7f0;border-top:1px solid #d6ead9;padding:6px 14px;}
 .cp-income b{color:#14532d;}
+/* ── Step 2 compact result table (calc value + printed reference stacked) ── */
+.cp-table2 th,.cp-table2 td{padding:9px 14px;}
+.cp-table2 th{line-height:1.35;}
+.cp2-en{display:block;font-weight:500;font-size:8.5px;color:#9aa1ab;text-transform:none;letter-spacing:0;margin-top:1px;}
+.cp2-main{font-weight:700;color:#111827;}
+.cp2-ref{font-size:9.5px;color:#9aa1ab;font-weight:500;margin-top:1px;}
+.cp-table2 td.cp2-inc{background:#f3f8f4;}
+.cp-table2 td.cp2-inc .cp2-main{color:#14532d;}
+.cp-table2 th.cp2-inc{background:#eaf4ec;color:#1a5c2e;}
+/* ── Step 2 editable income breakdown (the formula, now editable) ── */
+.bk-panel{margin-top:4px;border-top:1px solid var(--bd2);}
+.bk-hd{padding:10px 16px 2px;font-size:12px;font-weight:700;color:#374151;}
+.bk-sub{display:block;font-weight:400;font-size:10.5px;color:#9aa1ab;margin-top:2px;line-height:1.4;}
+.bk-row{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid #f1f3f6;}
+.bk-row:hover{background:#fafbfc;}
+.bk-row.hot{background:#fff6ec;box-shadow:inset 3px 0 0 #e3920f;}
+.bk-row.pending{background:#fffaf0;}
+.bk-row.rc-new{background:#fff6ec;}
+.bk-row .rc-loc{flex-shrink:0;cursor:pointer;color:#b6bcc6;display:inline-flex;}
+.bk-row .rc-loc:hover{color:#2563eb;}
+.bk-name{flex:1;min-width:120px;font-size:12px;color:#1f2937;font-weight:600;}
+.bk-name .rc-en{display:block;font-size:10px;color:#9aa1ab;font-weight:400;margin-top:1px;}
+.bk-need{display:inline-block;margin-left:6px;font-size:9px;font-weight:700;color:#b45309;background:#fde9cf;border-radius:4px;padding:1px 6px;vertical-align:middle;}
+.bk-amts{display:flex;gap:12px;flex-shrink:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:#374151;}
+.bk-amt i{font-style:normal;color:#9aa1ab;margin-right:3px;}
+.bk-map{flex-shrink:0;display:flex;align-items:center;gap:6px;min-width:190px;justify-content:flex-end;}
 /* ── Collapsible alerts header ── */
 .fd-alert-strip{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--bd);cursor:pointer;flex-shrink:0;}
 .fd-alert-strip:hover{background:#fafbfc;}
@@ -1449,11 +1475,11 @@ function bucketItems(fileId,mIdx,bucketKey){
   }).map(function(it){return {type:it.type,amt:lineAmtVal(fileId,mIdx,it)};});
 }
 function money(n){return (n==null?'':Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));}
-// default-open sections depend on role: Sales works 1→2→3 (Step1 open); CED works 3→2→1 (Step3+2 open, Step1 reference)
+// 2-step income flow: both steps open by default — client wants the result visible without
+// clicking through layers. Scheme only controls ORDER (see curScheme), not which is open.
 function secDefaultOpen(k){
   if(k==='fields')return true;              // non-lineMode files: always open
-  if(curScheme()==='1')return k==='items';  // 方案1 data-first: Step1 open, rest collapsed
-  return k==='comp'||k==='map';             // 方案2 result-first: Step3 + Step2 open, Step1 collapsed
+  return k==='items'||k==='comp';
 }
 function secOpen(k){return (S.secOpen[k]===undefined)?secDefaultOpen(k):S.secOpen[k];}
 function toggleSec(k){S.secOpen[k]=!secOpen(k);render();}
@@ -3546,68 +3572,90 @@ function renderLineItems(fileId){
 // Step 3 — one row per pay period, one column per category, paired calc/printed columns for the
 // 3 aggregates (mirrors the real Income Calculator grid: entered value next to a greyed reference
 // value, no pass/fail judgment — see AIOCR_交叉核验评审纪要与优化方案_20260617.md §2).
+// Step 2 · 收入核算 — merged result + editable mapping. Two stacked parts:
+//   (A) a COMPACT summary table (period × Verifiable/Gross/Deductions/Net, calc value with the
+//       printed value as a muted reference line) — far fewer columns than the old 16-col grid;
+//   (B) an editable income breakdown where every line item carries its category dropdown — the
+//       "formula" is now the place you re-classify. Changing a dropdown stages a draft; the
+//       summary above only moves after "应用并刷新" (confirmRuleChanges).
 function renderComputed(fileId){
   var months=PAYSLIP_MONTHS.map(function(m,mIdx){return {label:m.month,mIdx:mIdx,c:computeMonth(fileId,mIdx)};});
-  var cols=[
-    {label:'Basic Salary',         key:'earning_basic_salary',         get:function(c){return c.earning_basic_salary;}},
-    {label:'Total Allowances',     key:'earning_total_allowances',     get:function(c){return c.earning_total_allowances;}},
-    {label:'Overtime',             key:'earning_overtime_pay',         get:function(c){return c.earning_overtime_pay;}},
-    {label:'Bonus / Commission',   key:'earning_bonus_commission',     get:function(c){return c.earning_bonus_commission;}},
-    {label:'Other Income',        key:'earning_others',                get:function(c){return c.earning_others;}},
-    {label:'EPF (Employee)',       key:'deduction_epf_employee',       get:function(c){return c.deduction_epf_employee;}},
-    {label:'SOCSO / EIS',          key:'deduction_socso_eis',          get:function(c){return c.deduction_socso_eis;}},
-    {label:'PCB / Tax',            key:'deduction_pcb_tax',            get:function(c){return c.deduction_pcb_tax;}},
-    {label:'Other Deduction',      key:'deduction_other_deductions',   get:function(c){return c.deduction_other_deductions;}},
-    {label:'Gross (calc.)',        get:function(c){return c.grossAll;}},
-    {label:'Gross (printed)',      get:function(c){return c.ocrGross;}, sys:true},
-    {label:'Deductions (calc.)',   get:function(c){return c.dedAll;}},
-    {label:'Deductions (printed)', get:function(c){return c.ocrDed;}, sys:true},
-    {label:'Net Pay (calc.)',      get:function(c){return c.grossAll-c.dedAll;}},
-    {label:'Net Pay (printed)',    get:function(c){return c.ocrNet;}, sys:true},
-    {label:'Verifiable Income',    get:function(c){return c.incomeGross;}}
-  ];
-  // Which line items add up to a category cell (the "see the formula" ask from 0617 review).
-  // Surfaced two ways: a numbered footnote (always visible, discoverable in a screenshot) and a
-  // hover title (quick peek) — table space stays tight either way, only a small superscript is added.
-  var footnotes=[];
-  function formula(fileId,mIdx,key){
-    if(!key)return null;
-    var items=bucketItems(fileId,mIdx,key);
-    if(items.length<2)return null;
-    return items.map(function(x){return x.type+': RM '+money(x.amt);}).join(' + ');
-  }
-  function cell(v,sys,periodLabel,colLabel,fnText){
-    var sup='',title='';
-    if(fnText){
-      footnotes.push({period:periodLabel,col:colLabel,text:fnText});
-      sup='<sup class="cp-fnref">'+footnotes.length+'</sup>';
-      title=' title="'+fnText.replace(/"/g,'&quot;')+'"';
-    }
-    return '<td'+(sys?' class="cp-sys"':'')+title+'>'+(v?'RM '+money(v)+sup:'<span class="cp-dash">&mdash;</span>')+'</td>';
-  }
-  var thead='<tr><th class="cp-period">Pay Period</th>'+cols.map(function(col){return '<th'+(col.sys?' class="cp-sys"':'')+'>'+col.label+'</th>';}).join('')+'</tr>';
-  var bodyRows=months.map(function(mo){
-    return '<tr'+(S.compFlash?' class="cp-flash"':'')+'><td class="cp-period">'+mo.label+'</td>'
-      +cols.map(function(col){return cell(col.get(mo.c),col.sys,mo.label,col.label,formula(fileId,mo.mIdx,col.key));}).join('')+'</tr>';
+  function dual(calc,printed){return '<div class="cp2-main">RM '+money(calc)+'</div><div class="cp2-ref">印 '+money(printed)+'</div>';}
+  function single(v){return '<div class="cp2-main">RM '+money(v)+'</div>';}
+  var head='<tr><th class="cp-period">期次<span class="cp2-en">Pay Period</span></th>'
+    +'<th class="cp2-inc">可核收入<span class="cp2-en">Verifiable</span></th>'
+    +'<th>Gross<span class="cp2-en">计算 / 印</span></th>'
+    +'<th>总扣减<span class="cp2-en">Deductions</span></th>'
+    +'<th>Net Pay<span class="cp2-en">计算 / 印</span></th></tr>';
+  var body=months.map(function(mo){var c=mo.c;
+    return '<tr'+(S.compFlash?' class="cp-flash"':'')+'>'
+      +'<td class="cp-period">'+mo.label+'</td>'
+      +'<td class="cp2-inc">'+single(c.incomeGross)+'</td>'
+      +'<td>'+dual(c.grossAll,c.ocrGross)+'</td>'
+      +'<td>'+dual(c.dedAll,c.ocrDed)+'</td>'
+      +'<td>'+dual(c.grossAll-c.dedAll,c.ocrNet)+'</td>'
+    +'</tr>';
   }).join('');
-  function aggRow(label,agg){
-    return '<tr class="cp-agg"><td class="cp-period">'+label+'</td>'
-      +cols.map(function(col){
-        var vals=months.map(function(mo){return col.get(mo.c)||0;});
-        return cell(agg(vals),col.sys);   // Total/Average rows never get a footnote — they're not a single period's composition
-      }).join('')+'</tr>';
+  var n=months.length;
+  function avg(f){return months.reduce(function(s,mo){return s+(f(mo.c)||0);},0)/(n||1);}
+  var avgRow='<tr class="cp-agg"><td class="cp-period">平均 Avg</td>'
+    +'<td class="cp2-inc">'+single(avg(function(c){return c.incomeGross;}))+'</td>'
+    +'<td>'+single(avg(function(c){return c.grossAll;}))+'</td>'
+    +'<td>'+single(avg(function(c){return c.dedAll;}))+'</td>'
+    +'<td>'+single(avg(function(c){return c.grossAll-c.dedAll;}))+'</td>'
+  +'</tr>';
+  var table='<div class="cp-tablewrap"><table class="cp-table cp-table2"><thead>'+head+'</thead><tbody>'+body+avgRow+'</tbody></table></div>'
+    +'<div class="cp-income">'+n+' 期平均可核收入（已剔除政策性扣项）：<b>RM '+money(payslipAvgIncome(fileId))+'</b></div>';
+  return table+renderIncomeBreakdown(fileId);
+}
+// (B) Editable income breakdown — the formula made editable. Each line item shows its per-period
+// amounts and a category dropdown; re-classifying it stages a draft (recompute on apply).
+function renderIncomeBreakdown(fileId){
+  var pend=pendingRules(fileId);
+  function amts(it){
+    return PAYSLIP_MONTHS.map(function(m,mIdx){
+      var v=lineAmtVal(fileId,mIdx,it);
+      return '<span class="bk-amt"><i>'+m.month.split('/')[0]+'月</i> '+(v?money(v):'&mdash;')+'</span>';
+    }).join('');
   }
-  var totalRow=aggRow('Total',function(vals){return vals.reduce(function(a,b){return a+b;},0);});
-  var avgRow=aggRow('Average',function(vals){return vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length:0;});
-  // Collapsed by default, but the summary line is a visible, clickable affordance — not a silent hover.
-  var fnList=footnotes.length
-    ? '<details class="rc-log"><summary>&#9656; '+footnotes.length+' formula breakdown'+(footnotes.length>1?'s':'')+' &mdash; click to view</summary>'
-        +footnotes.map(function(f,i){return '<div class="li-log"><span class="li-log-t">'+(i+1)+'.</span><span class="li-log-raw">'+f.period+' &middot; '+f.col+'</span><span class="li-log-chg">'+f.text+'</span></div>';}).join('')
+  function row(it){
+    var draft=ruleDraft(fileId,it.id);
+    var isPending=pend.indexOf(it.id)!==-1;
+    var isNew=it.custom&&!(S.ruleMap[fileId]||{})[it.id];
+    var hot=S.locateLine===it.id;
+    var buckets=it.kind==='earning'?EARNING_BUCKETS:DEDUCTION_BUCKETS;
+    var opts=buckets.map(function(b){return '<option value="'+b.key+'"'+(draft===b.key?' selected':'')+'>'+b.label+'</option>';}).join('');
+    return '<div class="bk-row'+(hot?' hot':'')+(isPending?' pending':'')+(isNew?' rc-new':'')+'" id="rc-'+it.id+'"'
+        +' onmouseenter="ruleHover(\''+fileId+'\',\''+it.id+'\')" onmouseleave="ruleUnhover(\''+it.id+'\')">'
+      +'<span class="rc-loc" onclick="locateLine(\''+it.id+'\')" title="定位到原件">'+IC.locate+'</span>'
+      +'<div class="bk-name">'+it.ms+'<span class="rc-en">'+it.en+'</span>'+(it.custom?'<span class="rc-newtag">Sales 补录</span>':'')+(isNew?'<span class="bk-need">需归类</span>':'')+'</div>'
+      +'<div class="bk-amts">'+amts(it)+'</div>'
+      +'<div class="bk-map">'
+        +(isPending?'<span class="li-mod-dot" title="待应用"></span>':'')
+        +'<select class="ced-rule-sel'+(isPending?' modified':'')+(draft==='exclude'?' li-excl':'')+'" onchange="setRule(\''+fileId+'\',\''+it.id+'\',this.value)">'+opts+'</select>'
+      +'</div>'
+    +'</div>';
+  }
+  var allLI=lineItemsAll(fileId);
+  var earnRows=allLI.filter(function(x){return x.kind==='earning';}).map(row).join('');
+  var dedRows=allLI.filter(function(x){return x.kind==='deduction';}).map(row).join('');
+  var applyBar=pend.length
+    ? '<div class="li-apply li-apply-sticky"><span class="li-apply-txt">&#9998; <b>'+pend.length+' 处归类变更待应用</b> — 上方结果在应用后刷新。</span>'
+        +'<button class="btn btn-pri btn-sm" onclick="confirmRuleChanges(\''+fileId+'\')">&#8635; 应用并刷新</button></div>'
+    : '';
+  var log=S.incomeLog[fileId]||[];
+  var logSec=log.length
+    ? '<details class="rc-log"><summary>归类变更记录 ('+log.length+') — 审计留痕</summary>'
+        +log.map(function(e){return '<div class="li-log"><span class="li-log-t">'+e.t+'</span><span class="li-log-raw">'+e.raw+'</span><span class="li-log-chg">'+e.from+' &rarr; <b>'+e.to+'</b></span></div>';}).join('')
       +'</details>'
     : '';
-  return '<div class="cp-tablewrap"><table class="cp-table"><thead>'+thead+'</thead><tbody>'+bodyRows+totalRow+avgRow+'</tbody></table></div>'
-    +fnList
-    +'<div class="cp-income">Average verifiable income across '+months.length+' period'+(months.length>1?'s':'')+' (excl. policy items): <b>RM '+money(payslipAvgIncome(fileId))+'</b></div>';
+  return '<div class="bk-panel">'
+    +applyBar
+    +'<div class="bk-hd">收入构成与归类<span class="bk-sub">每个细项归到哪个科目都可改；归类按类型生效（应用到所有期次）。改完点上方「应用并刷新」。</span></div>'
+    +'<div class="rc-grp">EARNINGS · 收入</div>'+earnRows
+    +'<div class="rc-grp">DEDUCTIONS · 扣减</div>'+dedRows
+    +logSec
+  +'</div>';
 }
 // Intentional navigation to a step: open it, then scroll the workspace to it.
 // Synchronous direct assignment right after render() (render already restored the
@@ -3703,17 +3751,10 @@ function renderFileDetail(){
   var activeAlerts=sorted.filter(function(a){return !resMap[a.id]&&!justMap[a.id];});
   var alertCards=activeAlerts.length?'<div class="ac-cards">'+activeAlerts.map(function(a){return fdAlertCard(a,S.fileId);}).join('')+'</div>':'';
 
-  // ── Step state machine (drives §3 cascade gating). lineMode has NO top nav —
-  //    the 3 vertical "Step N" cards + their header badges carry progress & alert entry. ──
-  var prc=lineMode?pendingRules(S.fileId).length:0;
+  // ── 2-step income flow. lineMode has NO top nav — the two vertical "Step N" cards carry everything.
+  //    Step 2 (income computation) holds the rule mapping inline; no separate mapping step. ──
   // CED always receives a clean, Sales-verified file → no Step-1 alerts for the CED view
   var roleClean=(lineMode&&S.role==='ced');
-  // completeness (required field with no source line) is a Step-1 SALES task — add item or skip with reason
-  var nMissEff=(lineMode&&!roleClean)?issues.missing.filter(function(k){return !justMap['miss:'+k];}).length:0;
-  var s1Open=roleClean?0:(nh+nVerify+nCheck+nMissEff);   // ① Sales: recognition/eyeball + completeness
-  var s2Open=prc;                          // ② CED: rule mapping (prc already includes new补录-type gaps)
-  // ③ is pure result display — no alert of its own, just gated on ①② being clear first.
-  var s3=(s1Open||s2Open)?'wait':'done';
 
   // non-lineMode files keep the compact action center (no 3-step model)
   var actionCenter='<div class="ac'+(totalIssues?'':' ac-clear')+'">'
@@ -3786,24 +3827,16 @@ function renderFileDetail(){
       // When everything is done both bars disappear — the section badge + per-row marks carry the state.
     }
     var s1Body=verifyBar+renderLineItems(S.fileId);
-    // ── §2 Step-2 (CED): PURE type→field mapping. Default rules pre-exist; only NEW Sales补录 types need a rule. Amounts never matter here. ──
-    var nNew=newTypeGaps(S.fileId).length;
-    var mapBadge=prc?'<span class="sec-badge org">'+prc+' Pending</span>':'<span class="sec-badge green">Rules OK</span>';
-    var missBanner=(nNew?'<div class="sec-banner org">&#9888; <b>'+nNew+' new item'+(nNew>1?'s':'')+' added by Sales</b> need field mapping — assign an income or deduction field for each, then click Confirm Update.</div>':'');
-    // Items Sales added were auto-mapped — surface a quiet "what changed" note rather than an action alert
-    var autoMapped=customLines(S.fileId).filter(function(c){return (S.ruleMap[S.fileId]||{})[c.id];});
-    var autoBanner=autoMapped.length?'<div class="sec-banner info">&#8505; '+autoMapped.length+' item'+(autoMapped.length>1?'s':'')+' added by Sales '+(autoMapped.length>1?'were':'was')+' auto-mapped to the income rules below — review and adjust only if needed.</div>':'';
-    // ── §3 Step-3: GATED result. Mismatch triage (Sales-first, then CED): ①识别错(Sales) ②归类(CED) ③规则如此(CED跳过). ──
-    // Step 3 is pure result display — no mismatch judgment, no action buttons, just gated on ①② first.
-    var mmBadge=s3==='wait'?'<span class="sec-badge grey">Pending</span>':'<span class="sec-badge green">Reconciled</span>';
-    var mmBanner=s3==='wait'
-      ?'<div class="sec-banner grey">&#9203; Reconciliation pending — '+(s1Open?'waiting for Sales to complete Step 1 verification':'waiting for CED to apply Step 2 rules')+'. Totals will be shown once prior steps are complete.</div>'
-      :'';
-    var cItems=secCard('items','1','Step 1 · Line Items','Source line items — Sales review',s1Badge, s1Body);
-    var cMap=secCard('map','2','Step 2 · Field Mapping','Line-item type &rarr; income field — CED',mapBadge, missBanner+autoBanner+renderRuleConfig(S.fileId));
-    var cComp=secCard('comp','3','Step 3 · Reconciliation','Computed totals vs printed values',mmBadge, mmBanner+renderComputed(S.fileId));
-    // 方案1: 1→2→3 (data-first); 方案2: 3→2→1 (result-first, drills into rules) — a layout choice, not a role rule
-    workspace=(curScheme()==='1')?(cItems+cMap+cComp):(cComp+cMap+cItems);
+    // ── Step 2 · 收入核算: result + editable mapping merged into one. The old separate "Step 2 ·
+    //    Field Mapping" is gone — its dropdowns now live inside the income breakdown here, so you
+    //    classify and see the result in the same place (client feedback: drop the extra layer).
+    //    Changing a category stages a draft; "应用并刷新" (confirmRuleChanges) recomputes. ──
+    var compPend=pendingRules(S.fileId).length;
+    var compBadge=compPend?'<span class="sec-badge org">'+compPend+' 待应用</span>':'<span class="sec-badge green">已核算</span>';
+    var cItems=secCard('items','1','Step 1 · 核对识别','OCR 细项 vs 原件 — Sales 核对',s1Badge, s1Body);
+    var cComp=secCard('comp','2','Step 2 · 收入核算','归类与结果一体 · 改归类后应用刷新',compBadge, renderComputed(S.fileId));
+    // 方案1: 核对→核算 (data-first); 方案2: 核算→核对 (result-first) — ordering only.
+    workspace=(curScheme()==='1')?(cItems+cComp):(cComp+cItems);
   } else {
     var renderGroups=d.groups;
     var groupsHtml=renderGroups.map(function(g){
@@ -3829,8 +3862,8 @@ function renderFileDetail(){
       +'<div><div class="fd-title">'+d.name+'</div><div class="fd-crumb">'+d.crumb+'</div></div>'
       +'<div class="sp"></div>'
       +(lineMode?'<div class="role-tog" title="Two step-order options — pick either regardless of role">'
-        +'<button class="role-btn'+(curScheme()==='1'?' on':'')+'" onclick="setScheme(\'1\')">方案1 (1&rarr;2&rarr;3)</button>'
-        +'<button class="role-btn'+(curScheme()==='2'?' on':'')+'" onclick="setScheme(\'2\')">方案2 (3&rarr;2&rarr;1)</button>'
+        +'<button class="role-btn'+(curScheme()==='1'?' on':'')+'" onclick="setScheme(\'1\')">方案1 (核对&rarr;核算)</button>'
+        +'<button class="role-btn'+(curScheme()==='2'?' on':'')+'" onclick="setScheme(\'2\')">方案2 (核算&rarr;核对)</button>'
       +'</div>':'')
       +'<button class="btn btn-sm">&#8249; Previous</button>'
       +'<button class="btn btn-sm">Next &#8250;</button>'
