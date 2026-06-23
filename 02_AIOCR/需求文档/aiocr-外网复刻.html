@@ -272,7 +272,7 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .vf-acts{display:flex;gap:8px;margin-top:7px;}
 /* neutral, non-alert confirmation note (e.g. CED clean view) */
 .vf-note{margin:10px 12px 2px;font-size:11.5px;color:#8a92a0;padding:2px 2px;}
-/* 补录 custom line (Step 1 data gap fill) */
+/* back-filled custom line (Step 1 data gap fill) */
 .li2-new{display:inline-block;margin-left:7px;font-size:9.5px;font-weight:700;color:#7c3aed;background:#f3edff;border:1px solid #e0d3fb;border-radius:8px;padding:1px 6px;vertical-align:middle;}
 .li2-cust{background:#fbf9ff;}
 .li2-rm{margin-left:6px;color:#c2c8d2;cursor:pointer;font-size:14px;font-weight:700;}
@@ -1402,7 +1402,7 @@ var EYEBALL_ITEMS=[
   {id:'ei_comm',     label:'Pure Commission', val:'No — salary-based employee'},
   {id:'ei_govt',     label:'EPF Scheme',      val:'Private sector (standard EPF)'}
 ];
-// 方案1-only fields — match the real Income Calculator header; 方案2 keeps the shorter existing set
+// Option 1-only fields — match the real Income Calculator header; Option 2 keeps the shorter existing set
 var EYEBALL_ITEMS_SCHEME1_EXTRA=[
   {id:'ei_epfpct',    label:'EPF %',                                      val:'11%'},
   {id:'ei_convrate',  label:'Conversion Rate',                            val:'1'},
@@ -1411,7 +1411,7 @@ var EYEBALL_ITEMS_SCHEME1_EXTRA=[
 ];
 function eyeItems(){return curScheme()==='1'?EYEBALL_ITEMS.concat(EYEBALL_ITEMS_SCHEME1_EXTRA):EYEBALL_ITEMS;}
 function ruleItem(id){return RULE_ITEMS.find(function(x){return x.id===id;});}
-// Sales-补录 custom line items (Step-1 data gap fill) merge into the same pipeline as OCR line items
+// Sales-added custom line items (Step-1 data gap fill) merge into the same pipeline as OCR line items
 function customLines(fileId){return S.customLines[fileId]||[];}
 function lineItemsAll(fileId){return RULE_ITEMS.concat(customLines(fileId));}
 function ruleItemF(fileId,id){return RULE_ITEMS.find(function(x){return x.id===id;})||customLines(fileId).find(function(x){return x.id===id;});}
@@ -1437,7 +1437,7 @@ function setRule(fileId,id,bucket){if(!S.ruleDraft[fileId])S.ruleDraft[fileId]={
 function pendingRules(fileId){
   var d=S.ruleDraft[fileId]||{},out=[];
   Object.keys(d).forEach(function(id){if(d[id]!==ruleApplied(fileId,id))out.push(id);});
-  // Sales-补录 new types not yet committed to a rule are pending CED confirmation (even at AI default)
+  // Sales-added new types not yet committed to a rule are pending CED confirmation (even at AI default)
   newTypeGaps(fileId).forEach(function(c){if(out.indexOf(c.id)===-1)out.push(c.id);});
   return out;
 }
@@ -1471,7 +1471,7 @@ function computeMonth(fileId,mIdx){
   lineItemsAll(fileId).forEach(function(it){
     var ov=(S.lineAmt[fileId]||{})[mIdx+'|'+it.type];
     var amt;
-    if(it.custom){ if(ov==null)return; amt=ov; }        // 补录 line: amount comes ONLY from Sales entry, per month
+    if(it.custom){ if(ov==null)return; amt=ov; }        // back-filled line: amount comes ONLY from Sales entry, per month
     else { var base=(it.kind==='earning'?m.earn:m.ded)[it.type]; if(base==null)return; amt=(ov!=null?ov:base); }
     if(it.kind==='earning')grossAll+=amt;else dedAll+=amt;
     var bucket=ruleApplied(fileId,it.id);
@@ -1540,7 +1540,7 @@ function secDefaultOpen(k){
 function secOpen(k){return (S.secOpen[k]===undefined)?secDefaultOpen(k):S.secOpen[k];}
 function toggleSec(k){S.secOpen[k]=!secOpen(k);render();}
 function setRole(r){S.role=r;S.secOpen={};render();}  // switching role resets section open-state to the role default
-// Which step order to show — a design-option choice (方案1 / 方案2), kept independent of S.role so
+// Which step order to show — a design-option choice (Option 1 / Option 2), kept independent of S.role so
 // demoing one against the other never silently changes alert visibility or edit rights.
 // Defaults from role until the user explicitly picks one via the toggle.
 function curScheme(){return S.stepScheme||(S.role==='ced'?'2':'1');}
@@ -3238,7 +3238,7 @@ function verifyAllSales(fileId){
   setTimeout(function(){S.flash={};render();},760);
   showToast('All items verified — file is ready to route to CED.','ok');
 }
-// Step-1 Sales: 补录 a line item OCR missed entirely (data gap). Name + kind here; amounts entered per-month inline.
+// Step-1 Sales: back-fill a line item OCR missed entirely (data gap). Name + kind here; amounts entered per-month inline.
 // presetKey (optional): a required income field the user is filling in (e.g. 'earning_overtime_pay')
 function openAddLine(fileId,presetKey,mIdx){ S.addLineTarget=fileId; S.addLinePreset=presetKey||null; S.addLineMIdx=(mIdx!=null?mIdx:0); render(); setTimeout(function(){var i=document.getElementById('al-name');if(i)i.focus();},30); }
 function closeAddLine(){ S.addLineTarget=null; S.addLinePreset=null; S.addLineMIdx=null; render(); }
@@ -3934,15 +3934,15 @@ function renderFileDetail(){
       // When everything is done both bars disappear — the section badge + per-row marks carry the state.
     }
     var s1Body=verifyBar+renderLineItems(S.fileId);
-    // ── Step 2 · 收入核算: result + editable mapping merged into one. The old separate "Step 2 ·
+    // ── Step 2 · Income Computation: result + editable mapping merged into one. The old separate "Step 2 ·
     //    Field Mapping" is gone — its dropdowns now live inside the income breakdown here, so you
     //    classify and see the result in the same place (client feedback: drop the extra layer).
-    //    Changing a category stages a draft; "应用并刷新" (confirmRuleChanges) recomputes. ──
+    //    Changing a category stages a draft; "Apply & refresh" (confirmRuleChanges) recomputes. ──
     var compPend=pendingAmounts(S.fileId).length+pendingRules(S.fileId).length;
     var compBadge=compPend?'<span class="sec-badge org">'+compPend+' Pending</span>':'<span class="sec-badge green">Computed</span>';
     var cItems=secCard('items','1','Step 1 · Verify','Confirm OCR line items against the document',s1Badge, s1Body);
     var cComp=secCard('comp','2','Step 2 · Income Computation','Categorised totals — click any amount to adjust mapping or value',compBadge, renderComputed(S.fileId));
-    // 方案1: Verify→Compute (data-first); 方案2: Compute→Verify (result-first) — ordering only.
+    // Option 1: Verify→Compute (data-first); Option 2: Compute→Verify (result-first) — ordering only.
     workspace=(curScheme()==='1')?(cItems+cComp):(cComp+cItems);
   } else {
     var renderGroups=d.groups;
@@ -3969,8 +3969,8 @@ function renderFileDetail(){
       +'<div><div class="fd-title">'+d.name+'</div><div class="fd-crumb">'+d.crumb+'</div></div>'
       +'<div class="sp"></div>'
       +(lineMode?'<div class="role-tog" title="Two step-order options — pick either regardless of role">'
-        +'<button class="role-btn'+(curScheme()==='1'?' on':'')+'" onclick="setScheme(\'1\')">方案1 (1&rarr;2)</button>'
-        +'<button class="role-btn'+(curScheme()==='2'?' on':'')+'" onclick="setScheme(\'2\')">方案2 (2&rarr;1)</button>'
+        +'<button class="role-btn'+(curScheme()==='1'?' on':'')+'" onclick="setScheme(\'1\')">Option 1 (1&rarr;2)</button>'
+        +'<button class="role-btn'+(curScheme()==='2'?' on':'')+'" onclick="setScheme(\'2\')">Option 2 (2&rarr;1)</button>'
       +'</div>':'')
       +'<button class="btn btn-sm">&#8249; Previous</button>'
       +'<button class="btn btn-sm">Next &#8250;</button>'
