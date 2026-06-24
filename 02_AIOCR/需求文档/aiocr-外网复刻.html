@@ -463,6 +463,14 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .cc-pi-name .cc-loc:hover{color:#b45309;}
 .cc-pi-name .cc-en{display:block;font-size:9.5px;color:#a98a5f;font-weight:400;margin-top:1px;}
 .cc-pi-map{text-align:left;}
+.cc-pi-map .cc-map-sel{display:inline-block;vertical-align:middle;}
+.cc-pi-rm{margin-left:8px;border:none;background:transparent;color:#c0392b;font-size:16px;line-height:1;cursor:pointer;padding:0 4px;vertical-align:middle;border-radius:4px;}
+.cc-pi-rm:hover{background:#fde8e6;}
+.cc-pi-added{display:inline-block;margin-left:8px;font-size:9px;font-weight:700;color:#1d6f42;background:#e3f3e9;border-radius:4px;padding:1px 6px;vertical-align:middle;text-transform:uppercase;letter-spacing:.3px;}
+.cc-pi-empty{text-align:center!important;color:#9aa1ab;font-style:italic;font-size:11px;}
+.cc-pi-addrow td{padding:8px 14px;background:#fffaf2;border-bottom:none;}
+.cc-addbtn{border:1px dashed #d8b98c;background:#fff;color:#9a6a1e;font-size:11.5px;font-weight:600;border-radius:6px;padding:6px 14px;cursor:pointer;}
+.cc-addbtn:hover{background:#fff6ec;border-color:#c8a36a;}
 /* excluded chip */
 .cc-exchip{margin:6px 14px;padding:7px 12px;font-size:11px;color:#6b7280;background:#f6f7f9;border:1px dashed #d6dae0;border-radius:7px;cursor:pointer;}
 .cc-exchip:hover{background:#eef1f5;}
@@ -1119,6 +1127,8 @@ var S={ screen:'menu', activeRole:'ced',   // demo nav: 'menu'|'cedlist'|'ceddet
         addLineTarget:null,   // fileId while the add-missing-item modal is open
         addLinePreset:null,   // required field key being filled from a missing-row prompt
         addLineMIdx:null,     // pay period index the new line item is scoped to
+        addLineBucket:null,   // target category bucket when adding from a Step-2 category breakdown
+        addLineKind:null,     // earning|deduction for the category-add path
         flash:{},             // {rowKey:true} — transient green pulse after a confirm
         role:'sales',         // 'sales' | 'ced' — drives card order + default-open (Sales 1→2→3, CED 3→2→1)
         lineMonthIdx:0,       // active month tab in Step-1 line items panel (0 = most recent month)
@@ -3242,33 +3252,35 @@ function verifyAllSales(fileId){
 }
 // Step-1 Sales: back-fill a line item OCR missed entirely (data gap). Name + kind here; amounts entered per-month inline.
 // presetKey (optional): a required income field the user is filling in (e.g. 'earning_overtime_pay')
-function openAddLine(fileId,presetKey,mIdx){ S.addLineTarget=fileId; S.addLinePreset=presetKey||null; S.addLineMIdx=(mIdx!=null?mIdx:0); render(); setTimeout(function(){var i=document.getElementById('al-name');if(i)i.focus();},30); }
-function closeAddLine(){ S.addLineTarget=null; S.addLinePreset=null; S.addLineMIdx=null; render(); }
+function openAddLine(fileId,presetKey,mIdx){ S.addLineTarget=fileId; S.addLinePreset=presetKey||null; S.addLineBucket=null; S.addLineKind=null; S.addLineMIdx=(mIdx!=null?mIdx:0); render(); setTimeout(function(){var i=document.getElementById('al-name');if(i)i.focus();},30); }
+// Step-2: add a brand-new line item straight into a category (bucket preset, kind locked to it).
+function openAddToCat(fileId,bucketKey,kind){ S.addLineTarget=fileId; S.addLineBucket=bucketKey; S.addLineKind=kind; S.addLinePreset=null; S.addLineMIdx=0; render(); setTimeout(function(){var i=document.getElementById('al-name');if(i)i.focus();},30); }
+function closeAddLine(){ S.addLineTarget=null; S.addLinePreset=null; S.addLineBucket=null; S.addLineKind=null; S.addLineMIdx=null; render(); }
 function saveAddLine(){
   var f=S.addLineTarget; if(!f)return;
-  var preset=S.addLinePreset;
+  var preset=S.addLinePreset, bucket=S.addLineBucket;
   var ms=(document.getElementById('al-name').value||'').trim();
   var en=(document.getElementById('al-en').value||'').trim();
-  var kind=document.getElementById('al-kind').value;
+  var kind=bucket?S.addLineKind:document.getElementById('al-kind').value;
   if(!ms){document.getElementById('al-name').style.borderColor='#dc2626';return;}
   if(!S.customLines[f])S.customLines[f]=[];
   var id='c'+(Date.now().toString().slice(-6));
   var mIdx=S.addLineMIdx!=null?S.addLineMIdx:0;
-  // If filling a specific required field, map straight to it; otherwise a sensible default bucket
-  var ai=preset?preset:(kind==='earning'?'earning_others':'deduction_other_deductions');
-  // Scoped to the single period it was added from — add it again per-period if needed elsewhere
+  // Category-add → map straight to that bucket; missing-field → map to that field; else a default bucket
+  var ai=bucket?bucket:(preset?preset:(kind==='earning'?'earning_others':'deduction_other_deductions'));
   S.customLines[f].push({id:id,type:id,ms:ms,en:en||ms,kind:kind,custom:true,ai:ai,mIdx:mIdx});
-  // Auto-insert the mapping rule so Sales never has to touch the rules panel — CED can still adjust it later
+  // Auto-insert the mapping rule so it lands in the right category immediately — still adjustable later
   if(!S.ruleMap[f])S.ruleMap[f]={}; S.ruleMap[f][id]=ai;
   // Filling a required field closes its "missing" prompt immediately
   if(preset){ if(!S.justifiedAlerts[f])S.justifiedAlerts[f]={}; S.justifiedAlerts[f]['miss:'+preset]='Added as line item'; }
-  S.addLineTarget=null; S.addLinePreset=null; S.addLineMIdx=null; S.secOpen.items=true;
-  // flash the new row in the period it was added to
+  S.addLineTarget=null; S.addLinePreset=null; S.addLineBucket=null; S.addLineKind=null; S.addLineMIdx=null;
+  if(bucket){S.secOpen.comp=true;}else{S.secOpen.items=true;}
+  // flash the new row
   S.flash=S.flash||{};
   S.flash[mIdx+'|'+id]=true;
   render();
   setTimeout(function(){S.flash={};render();},900);
-  showToast(ms+' added to '+(PAYSLIP_MONTHS[mIdx]?PAYSLIP_MONTHS[mIdx].month:'this period')+' &amp; auto-mapped to income rules.','ok');
+  showToast(ms+' added to '+(bucket?bucketLabel(kind,bucket):(PAYSLIP_MONTHS[mIdx]?PAYSLIP_MONTHS[mIdx].month:'this period'))+'. Enter its amount per period.','ok');
 }
 function removeCustomLine(fileId,id){
   S.customLines[fileId]=(S.customLines[fileId]||[]).filter(function(c){return c.id!==id;});
@@ -3282,17 +3294,23 @@ function removeCustomLine(fileId,id){
 var FIELD_LABELS={'earning_basic_salary':'Basic Salary','earning_overtime_pay':'Overtime Pay','earning_total_allowances':'Total Allowances','earning_bonus_commission':'Bonus / Commission','deduction_epf_employee':'EPF (Employee)','deduction_pcb_tax':'Tax (PCB)'};
 function renderAddLineModal(){
   if(!S.addLineTarget)return '';
-  var preset=S.addLinePreset;
+  var preset=S.addLinePreset, bucket=S.addLineBucket;
   var pLabel=preset?(FIELD_LABELS[preset]||preset):'';
   var pKind=preset?(preset.indexOf('earning')===0?'earning':'deduction'):'';
-  var noteHtml=preset
-    ?'<div class="arm-note">Filling in <b>'+pLabel+'</b>, which OCR did not detect. Confirm the name as printed on the document, then enter the amount per pay period. It is mapped to the income rules automatically.</div>'
-    :'<div class="arm-note">Use this when OCR missed a line item that is visible in the source document. Enter its name and type — it is added to the income rules automatically, and you fill the amount per pay period afterwards.</div>';
-  var kindSel=preset
-    ?'<select id="al-kind" class="inp" style="width:100%;" disabled><option value="'+pKind+'" selected>'+(pKind==='earning'?'Earning':'Deduction')+'</option></select>'
+  var bKind=S.addLineKind, bLabel=bucket?bucketLabel(bKind,bucket):'';
+  var title=bucket?('Add line item — '+bLabel):(preset?'Add '+pLabel:'Add Missing Item');
+  var noteHtml=bucket
+    ?'<div class="arm-note">Adds a new line item under <b>'+bLabel+'</b> ('+(bKind==='earning'?'earning':'deduction')+'). Enter its name as printed on the document; fill the amount per pay period afterwards. You can re-map it to another category anytime.</div>'
+    :(preset
+      ?'<div class="arm-note">Filling in <b>'+pLabel+'</b>, which OCR did not detect. Confirm the name as printed on the document, then enter the amount per pay period. It is mapped to the income rules automatically.</div>'
+      :'<div class="arm-note">Use this when OCR missed a line item that is visible in the source document. Enter its name and type — it is added to the income rules automatically, and you fill the amount per pay period afterwards.</div>');
+  var lockKind=preset||bucket;
+  var lockedKindVal=bucket?bKind:pKind;
+  var kindSel=lockKind
+    ?'<select id="al-kind" class="inp" style="width:100%;" disabled><option value="'+lockedKindVal+'" selected>'+(lockedKindVal==='earning'?'Earning':'Deduction')+'</option></select>'
     :'<select id="al-kind" class="inp" style="width:100%;"><option value="earning">Earning</option><option value="deduction">Deduction</option></select>';
   return '<div class="ov" style="z-index:80;"><div class="add-rule-modal" style="width:460px;">'
-    +'<div class="arm-hdr"><h3>'+(preset?'Add '+pLabel:'Add Missing Item')+'</h3><button class="docs-x" onclick="closeAddLine()">&times;</button></div>'
+    +'<div class="arm-hdr"><h3>'+title+'</h3><button class="docs-x" onclick="closeAddLine()">&times;</button></div>'
     +'<div class="arm-body">'
       +noteHtml
       +'<div class="arm-row"><label class="arm-lbl">Item name (original text)<span style="color:#dc2626;">*</span></label>'
@@ -3707,7 +3725,10 @@ function renderComputed(fileId){
     +periodRow('Average',null,false,true);
 
   // ── breakdown panel for the selected category (line items × per-period amounts + mapping) ──
-  function breakdownTable(items){
+  //    addBucket/addKind set → show a "+ Add line item" row that creates a new item in this category.
+  //    Custom (added) items get an × to remove them. OCR items leave the category by re-mapping to Exclude.
+  function breakdownTable(items,addBucket,addKind){
+    var ncolp=months.length+2;
     var hrow='<tr><th class="cc-pi-name">Line item</th>'+months.map(function(mo){return '<th>'+mo.label+'</th>';}).join('')+'<th class="cc-pi-map">Category</th></tr>';
     var rows=items.map(function(it){
       var buckets=it.kind==='earning'?EARNING_BUCKETS:DEDUCTION_BUCKETS;
@@ -3719,25 +3740,28 @@ function renderComputed(fileId){
         var amtPend=(S.lineAmtDraft[fileId]||{})[mo.mIdx+'|'+it.type]!=null && disp!==applied;
         return '<td class="cc-sub-amt"><span class="cc-rm">RM</span><input class="cc-amt-inp'+(amtPend?' pending':'')+'" value="'+(disp!=null?money(disp):'')+'" onchange="setLineAmt(\''+fileId+'\','+mo.mIdx+',\''+it.type+'\',this.value)"></td>';
       }).join('');
+      var rm=it.custom?'<button class="cc-pi-rm" title="Remove this added item" onclick="removeCustomLine(\''+fileId+'\',\''+it.id+'\')">&times;</button>':'';
       return '<tr'+(rulePend?' class="pending"':'')+' id="rc-'+it.id+'" onmouseenter="ruleHover(\''+fileId+'\',\''+it.id+'\')" onmouseleave="ruleUnhover(\''+it.id+'\')">'
-        +'<td class="cc-pi-name"><span class="cc-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'+it.ms+'<span class="cc-en">'+it.en+'</span></td>'
+        +'<td class="cc-pi-name"><span class="cc-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'+it.ms+'<span class="cc-en">'+it.en+'</span>'+(it.custom?'<span class="cc-pi-added">added</span>':'')+'</td>'
         +amtCells
-        +'<td class="cc-pi-map"><select class="cc-map-sel'+(rulePend?' modified':'')+'" onchange="setRule(\''+fileId+'\',\''+it.id+'\',this.value)">'+opts+'</select></td>'
+        +'<td class="cc-pi-map"><select class="cc-map-sel'+(rulePend?' modified':'')+'" onchange="setRule(\''+fileId+'\',\''+it.id+'\',this.value)">'+opts+'</select>'+rm+'</td>'
       +'</tr>';
     }).join('');
-    return '<table class="cc-pi-table"><thead>'+hrow+'</thead><tbody>'+rows+'</tbody></table>';
+    var emptyRow=items.length?'':'<tr><td class="cc-pi-empty" colspan="'+ncolp+'">No line items here yet.</td></tr>';
+    var addRow=addBucket?'<tr class="cc-pi-addrow"><td colspan="'+ncolp+'"><button class="cc-addbtn" onclick="openAddToCat(\''+fileId+'\',\''+addBucket+'\',\''+addKind+'\')">+ Add line item</button></td></tr>':'';
+    return '<table class="cc-pi-table"><thead>'+hrow+'</thead><tbody>'+rows+emptyRow+addRow+'</tbody></table>';
   }
   var panel='';
   if(sel){
-    var items=null, label='';
+    var items=null, label='', addBucket=null, addKind=null;
     if(sel==='__excluded'){items=lineItemsAll(fileId).filter(function(it){return ruleApplied(fileId,it.id)==='exclude';});label='Excluded — not counted';}
-    else{var col=null;cols.forEach(function(c){if(c.key===sel)col=c;});if(col&&col.t==='cat'){items=itemsIn(col.key,col.kind);label=col.label;}}
+    else{var col=null;cols.forEach(function(c){if(c.key===sel)col=c;});if(col&&col.t==='cat'){items=itemsIn(col.key,col.kind);label=col.label;addBucket=col.key;addKind=col.kind;}}
     if(items){
       panel='<div class="cc-panel">'
         +'<div class="cc-panel-hd"><b>'+label+'</b> &middot; line items'
-          +'<span class="cc-panel-sub">re-mapping applies to all periods</span>'
+          +'<span class="cc-panel-sub">edit amount &middot; re-map (applies to all periods) &middot; add or remove items</span>'
           +'<button class="cc-panel-x" onclick="toggleCompCat(\''+fileId+'\',\''+sel+'\')" title="Close">&times;</button></div>'
-        +(items.length?breakdownTable(items):'<div class="cc-panel-empty">No line items mapped here.</div>')
+        +breakdownTable(items,addBucket,addKind)
       +'</div>';
     }
   }
