@@ -241,7 +241,7 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .sec-ttl{font-size:13px;font-weight:700;color:#1f2937;}
 .sec-sub{font-size:11px;color:#9aa1ab;}
 .sec-badge{font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;}
-.sec-badge.org{background:#eef1f5;color:#64748b;}.sec-badge.red{background:#fdeceb;color:#c0392b;}.sec-badge.green{background:#eef1f5;color:#475569;}
+.sec-badge.org{background:#fff4e0;color:#b8860b;}.sec-badge.red{background:#fdeceb;color:#c0392b;}.sec-badge.green{background:#eef1f5;color:#475569;}
 .sec-chev{margin-left:auto;color:#9aa1ab;font-size:11px;transition:transform .15s;}
 .sec.open .sec-chev{transform:rotate(180deg);}
 .sec-bd{}
@@ -265,7 +265,7 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .sec-alerts-wrap .ac-cards{padding:0;}
 /* Step-1 Sales verify bar (replaces disconnected alert cards) */
 .vf-bar{margin:10px 12px;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;}
-.vf-todo{background:#f4f5f7;border:1px solid #e0e4ea;}
+.vf-todo{background:#fff7ec;border:1px solid #f0d3a3;color:#7a4a12;}
 .vf-done{background:#eef8f1;border:1px solid #cfe8d6;color:#1a6b3c;font-weight:600;}
 .vf-hd{font-weight:700;color:#7a5c00;margin-bottom:5px;}
 .vf-list{margin:0 0 4px;padding-left:18px;color:#5a4a2a;}
@@ -343,24 +343,24 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 /* ── unified per-row verify column (always last column, after the amount) ── */
 .li2-vcol{flex-shrink:0;width:96px;display:flex;justify-content:flex-end;}
 .li2-docval{flex-shrink:0;font-size:12px;color:#374151;text-align:right;max-width:330px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.li2-vbtn{font-size:10px;padding:3px 11px;border:1px solid #c3c8d2;border-radius:5px;background:#fff;color:#475569;cursor:pointer;font-weight:600;white-space:nowrap;}
-.li2-vbtn:hover{background:#f4f5f7;border-color:#9aa1ab;}
+.li2-vbtn{font-size:10px;padding:3px 11px;border:1px solid #e3a857;border-radius:5px;background:#fff;color:#b9701b;cursor:pointer;font-weight:600;white-space:nowrap;}
+.li2-vbtn:hover{background:#fff1df;border-color:#d98a2b;}
 .li2-vbtn.skip{border-color:#d1d5db;color:#6b7280;}
 .li2-vbtn.skip:hover{background:#f3f4f6;border-color:#9aa1ab;}
 .li2-vmark{font-size:10.5px;color:#9aa1ab;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;}
 .li2-vmark .ck{color:#475569;font-weight:700;}
-/* needs-check = pending manual verify → soft neutral, only while unverified */
-.li2-row.needs-check{background:#f4f5f7;box-shadow:inset 3px 0 0 #b6bcc6;}
-.li2-row.needs-check:hover{background:#eef1f5;}
+/* needs-check = pending manual verify → soft orange, only while unverified */
+.li2-row.needs-check{background:#fff6ec;box-shadow:inset 3px 0 0 #f0a23c;}
+.li2-row.needs-check:hover{background:#fff0e0;}
 /* hover from the verify bar cross-highlights the pending rows a touch stronger */
 .li2-row.li2-hl{background:#e2e8f0!important;}
 /* brief green pulse on confirm/save, then settle back to the normal row style */
 .li2-row.li2-flash{animation:li2flash .85s ease-out;}
 @keyframes li2flash{0%{background:#dbe2ea;}25%{background:#dbe2ea;}100%{background:transparent;}}
 /* ── Missing field placeholder row ── */
-.li2-row.li2-missing{background:#f4f5f7;box-shadow:inset 3px 0 0 #b6bcc6;}
+.li2-row.li2-missing{background:#fff6ec;box-shadow:inset 3px 0 0 #f0a23c;}
 .li2-missing .li2-name{color:#9ca3af;}
-.li2-misstag{font-size:9.5px;font-weight:700;color:#64748b;background:#eef1f5;border-radius:4px;padding:1px 6px;margin-left:7px;vertical-align:middle;}
+.li2-misstag{font-size:9.5px;font-weight:700;color:#b9701b;background:#fdebd3;border-radius:4px;padding:1px 6px;margin-left:7px;vertical-align:middle;}
 /* ── toast (render-independent micro feedback) ── */
 #toast-host{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;}
 .toast{background:#222b39;color:#fff;font-size:12.5px;line-height:1.45;padding:9px 16px;border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.22);opacity:0;transform:translateY(10px);transition:opacity .22s,transform .22s;max-width:440px;}
@@ -427,6 +427,9 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .cc-excluded .cc-name{color:#9aa1ab;font-weight:500;}
 .cc-exhint{text-align:left;font-size:10px;color:#b6bcc6;font-style:italic;}
 /* ── Transposed grid: rows = periods, columns = categories (Income Calculator style) ── */
+/* the embedded calculator gets a blue frame to read as "the calculator" */
+.cc-calc-wrap{border:2px solid #3b7bd4;border-radius:8px;box-shadow:0 0 0 3px rgba(59,123,212,.08);}
+.cc-calc-wrap .cc-grphead .cc-band-s{background:#eaf1fb;color:#2c5aa0;}
 .cc-tcols{font-size:12px;}
 .cc-tcols th,.cc-tcols td{padding:10px 14px;white-space:nowrap;}
 .cc-tcols .cc-period{position:sticky;left:0;z-index:1;background:#fafbfc;text-align:left;min-width:84px;font-weight:600;color:#374151;box-shadow:1px 0 0 var(--bd2);}
@@ -3783,7 +3786,7 @@ function renderComputed(fileId){
 
   return applyBar
     +'<div class="cc-hint">Totals up top; every category&#39;s line items are listed below. Click a category column to filter the breakdown to just that one.</div>'
-    +'<div class="cp-tablewrap"><table class="cp-table cc-table cc-tcols"><thead>'+grpHead+head+'</thead><tbody>'+body+'</tbody></table></div>'
+    +'<div class="cp-tablewrap cc-calc-wrap"><table class="cp-table cc-table cc-tcols"><thead>'+grpHead+head+'</thead><tbody>'+body+'</tbody></table></div>'
     +'<div class="cp-income">'+n+'-period average verifiable income (excl. policy items): <b>RM '+money(payslipAvgIncome(fileId))+'</b></div>'
     +breakdown
     +logSec;
