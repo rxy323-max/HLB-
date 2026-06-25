@@ -471,11 +471,15 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .cc-pi-addrow td{padding:8px 14px;background:#fffaf2;border-bottom:none;}
 .cc-addbtn{border:1px dashed #d8b98c;background:#fff;color:#9a6a1e;font-size:11.5px;font-weight:600;border-radius:6px;padding:6px 14px;cursor:pointer;}
 .cc-addbtn:hover{background:#fff6ec;border-color:#c8a36a;}
-/* excluded chip */
-.cc-exchip{margin:6px 14px;padding:7px 12px;font-size:11px;color:#6b7280;background:#f6f7f9;border:1px dashed #d6dae0;border-radius:7px;cursor:pointer;}
-.cc-exchip:hover{background:#eef1f5;}
-.cc-exchip.on{background:#fff1dd;border-color:#f0dcc0;color:#7a4a12;}
-.cc-exchip .cc-cnt{background:#e2e6ec;}
+/* ── Breakdown (all categories shown by default; group-header rows; click a column to filter) ── */
+.cc-bd-hd{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7280;padding:14px 18px 4px;}
+.cc-bd-wrap{margin-top:2px;}
+.cc-filterbar{margin:0 18px 6px;padding:7px 12px;font-size:11.5px;color:#7a4a12;background:#fff6ec;border:1px solid #f0dcc0;border-radius:7px;display:flex;align-items:center;gap:10px;}
+.cc-showall{margin-left:auto;border:1px solid #e0c79c;background:#fff;color:#9a6a1e;font-size:11px;font-weight:600;border-radius:6px;padding:4px 10px;cursor:pointer;}
+.cc-showall:hover{background:#fff1dd;}
+.cc-grp-row td{background:#eef1f5;color:#374151;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;text-align:left!important;padding:7px 14px;border-bottom:1px solid var(--bd2);cursor:pointer;}
+.cc-grp-row:hover td{background:#e6eaf0;}
+.cc-grp-row .cc-cnt{margin-left:8px;font-size:9.5px;font-weight:600;color:#6b7280;background:#dde2e9;border-radius:9px;padding:0 6px;}
 /* ── Collapsible alerts header ── */
 .fd-alert-strip{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--bd);cursor:pointer;flex-shrink:0;}
 .fd-alert-strip:hover{background:#fafbfc;}
@@ -3706,7 +3710,7 @@ function renderComputed(fileId){
     +cols.map(function(col){
       var clk=(col.t==='cat');
       var cls=(clk?'cc-cath':'cc-sumh')+(sel===col.key?' sel':'');
-      return '<th class="'+cls+'"'+(clk?' onclick="toggleCompCat(\''+fileId+'\',\''+col.key+'\')" title="Click to break down"':'')+'>'+col.label+(clk?'<span class="cc-h-chev">&#9662;</span>':'')+'</th>';
+      return '<th class="'+cls+'"'+(clk?' onclick="toggleCompCat(\''+fileId+'\',\''+col.key+'\')" title="Filter the breakdown below to this category"':'')+'>'+col.label+(clk?'<span class="cc-h-chev">&#9662;</span>':'')+'</th>';
     }).join('')+'</tr>';
 
   // ── body: one row per pay period, plus an Average row ──
@@ -3724,51 +3728,56 @@ function renderComputed(fileId){
   var body=months.map(function(mo){return periodRow(mo.label,mo.c,S.compFlash,false);}).join('')
     +periodRow('Average',null,false,true);
 
-  // ── breakdown panel for the selected category (line items × per-period amounts + mapping) ──
-  //    addBucket/addKind set → show a "+ Add line item" row that creates a new item in this category.
-  //    Custom (added) items get an × to remove them. OCR items leave the category by re-mapping to Exclude.
-  function breakdownTable(items,addBucket,addKind){
-    var ncolp=months.length+2;
-    var hrow='<tr><th class="cc-pi-name">Line item</th>'+months.map(function(mo){return '<th>'+mo.label+'</th>';}).join('')+'<th class="cc-pi-map">Category</th></tr>';
-    var rows=items.map(function(it){
-      var buckets=it.kind==='earning'?EARNING_BUCKETS:DEDUCTION_BUCKETS;
-      var draft=ruleDraft(fileId,it.id);
-      var opts=buckets.map(function(b){return '<option value="'+b.key+'"'+(draft===b.key?' selected':'')+'>'+b.label+'</option>';}).join('');
-      var rulePend=pendingRules(fileId).indexOf(it.id)!==-1;
-      var amtCells=months.map(function(mo){
-        var disp=lineDispAmt(fileId,mo.mIdx,it.type), applied=effectiveApplied(fileId,mo.mIdx,it.type);
-        var amtPend=(S.lineAmtDraft[fileId]||{})[mo.mIdx+'|'+it.type]!=null && disp!==applied;
-        return '<td class="cc-sub-amt"><span class="cc-rm">RM</span><input class="cc-amt-inp'+(amtPend?' pending':'')+'" value="'+(disp!=null?money(disp):'')+'" onchange="setLineAmt(\''+fileId+'\','+mo.mIdx+',\''+it.type+'\',this.value)"></td>';
-      }).join('');
-      var rm=it.custom?'<button class="cc-pi-rm" title="Remove this added item" onclick="removeCustomLine(\''+fileId+'\',\''+it.id+'\')">&times;</button>':'';
-      return '<tr'+(rulePend?' class="pending"':'')+' id="rc-'+it.id+'" onmouseenter="ruleHover(\''+fileId+'\',\''+it.id+'\')" onmouseleave="ruleUnhover(\''+it.id+'\')">'
-        +'<td class="cc-pi-name"><span class="cc-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'+it.ms+'<span class="cc-en">'+it.en+'</span>'+(it.custom?'<span class="cc-pi-added">added</span>':'')+'</td>'
-        +amtCells
-        +'<td class="cc-pi-map"><select class="cc-map-sel'+(rulePend?' modified':'')+'" onchange="setRule(\''+fileId+'\',\''+it.id+'\',this.value)">'+opts+'</select>'+rm+'</td>'
-      +'</tr>';
+  // ── Breakdown below the grid (0625 review): every category's line items are shown BY DEFAULT so
+  //    the reviewer scans the whole picture in one screen — no clicking needed. Clicking a category
+  //    column up top FILTERS this to just that one. Category dropdown sits in the 2nd column for quick
+  //    re-classification; amounts editable; custom items get an × ; "+ Add line item" per category. ──
+  var ncolp=months.length+2;
+  function itemRow(it){
+    var buckets=it.kind==='earning'?EARNING_BUCKETS:DEDUCTION_BUCKETS;
+    var draft=ruleDraft(fileId,it.id);
+    var opts=buckets.map(function(b){return '<option value="'+b.key+'"'+(draft===b.key?' selected':'')+'>'+b.label+'</option>';}).join('');
+    var rulePend=pendingRules(fileId).indexOf(it.id)!==-1;
+    var rm=it.custom?'<button class="cc-pi-rm" title="Remove this added item" onclick="removeCustomLine(\''+fileId+'\',\''+it.id+'\')">&times;</button>':'';
+    var amtCells=months.map(function(mo){
+      var disp=lineDispAmt(fileId,mo.mIdx,it.type), applied=effectiveApplied(fileId,mo.mIdx,it.type);
+      var amtPend=(S.lineAmtDraft[fileId]||{})[mo.mIdx+'|'+it.type]!=null && disp!==applied;
+      return '<td class="cc-sub-amt"><span class="cc-rm">RM</span><input class="cc-amt-inp'+(amtPend?' pending':'')+'" value="'+(disp!=null?money(disp):'')+'" onchange="setLineAmt(\''+fileId+'\','+mo.mIdx+',\''+it.type+'\',this.value)"></td>';
     }).join('');
-    var emptyRow=items.length?'':'<tr><td class="cc-pi-empty" colspan="'+ncolp+'">No line items here yet.</td></tr>';
-    var addRow=addBucket?'<tr class="cc-pi-addrow"><td colspan="'+ncolp+'"><button class="cc-addbtn" onclick="openAddToCat(\''+fileId+'\',\''+addBucket+'\',\''+addKind+'\')">+ Add line item</button></td></tr>':'';
-    return '<table class="cc-pi-table"><thead>'+hrow+'</thead><tbody>'+rows+emptyRow+addRow+'</tbody></table>';
+    return '<tr'+(rulePend?' class="pending"':'')+' id="rc-'+it.id+'" onmouseenter="ruleHover(\''+fileId+'\',\''+it.id+'\')" onmouseleave="ruleUnhover(\''+it.id+'\')">'
+      +'<td class="cc-pi-name"><span class="cc-loc" onclick="locateLine(\''+it.id+'\')" title="Locate in document">'+IC.locate+'</span>'+it.ms+'<span class="cc-en">'+it.en+'</span>'+(it.custom?'<span class="cc-pi-added">added</span>':'')+'</td>'
+      +'<td class="cc-pi-map"><select class="cc-map-sel'+(rulePend?' modified':'')+'" onchange="setRule(\''+fileId+'\',\''+it.id+'\',this.value)">'+opts+'</select>'+rm+'</td>'
+      +amtCells
+    +'</tr>';
   }
-  var panel='';
-  if(sel){
-    var items=null, label='', addBucket=null, addKind=null;
-    if(sel==='__excluded'){items=lineItemsAll(fileId).filter(function(it){return ruleApplied(fileId,it.id)==='exclude';});label='Excluded — not counted';}
-    else{var col=null;cols.forEach(function(c){if(c.key===sel)col=c;});if(col&&col.t==='cat'){items=itemsIn(col.key,col.kind);label=col.label;addBucket=col.key;addKind=col.kind;}}
-    if(items){
-      panel='<div class="cc-panel">'
-        +'<div class="cc-panel-hd"><b>'+label+'</b> &middot; line items'
-          +'<span class="cc-panel-sub">edit amount &middot; re-map (applies to all periods) &middot; add or remove items</span>'
-          +'<button class="cc-panel-x" onclick="toggleCompCat(\''+fileId+'\',\''+sel+'\')" title="Close">&times;</button></div>'
-        +breakdownTable(items,addBucket,addKind)
-      +'</div>';
-    }
+  function groupBody(g){
+    var ghd='<tr class="cc-grp-row"'+(g.key?' onclick="toggleCompCat(\''+fileId+'\',\''+g.key+'\')"':'')+'><td colspan="'+ncolp+'">'+g.label+(g.items.length?'<span class="cc-cnt">'+g.items.length+'</span>':'')+'</td></tr>';
+    var rows=g.items.map(itemRow).join('');
+    var emptyRow=g.items.length?'':'<tr><td class="cc-pi-empty" colspan="'+ncolp+'">No line items here yet.</td></tr>';
+    var addRow=g.addBucket?'<tr class="cc-pi-addrow"><td colspan="'+ncolp+'"><button class="cc-addbtn" onclick="openAddToCat(\''+fileId+'\',\''+g.addBucket+'\',\''+g.addKind+'\')">+ Add line item</button></td></tr>':'';
+    return ghd+rows+emptyRow+addRow;
   }
-
-  // excluded chip below the grid (re-include entry point)
-  var exItems=lineItemsAll(fileId).filter(function(it){return ruleApplied(fileId,it.id)==='exclude';});
-  var exChip=exItems.length?'<div class="cc-exchip'+(sel==='__excluded'?' on':'')+'" onclick="toggleCompCat(\''+fileId+'\',\'__excluded\')">&#8709; Excluded &mdash; not counted <span class="cc-cnt">'+exItems.length+'</span> &middot; click to review / re-include</div>':'';
+  // which category groups to render: filtered to one when a column is selected, else all (non-empty) + excluded
+  var groups=[];
+  if(sel==='__excluded'){
+    groups.push({label:'Excluded — not counted',key:'__excluded',items:lineItemsAll(fileId).filter(function(it){return ruleApplied(fileId,it.id)==='exclude';}),addBucket:null});
+  } else if(sel){
+    var scol=null;cols.forEach(function(c){if(c.key===sel)scol=c;});
+    if(scol&&scol.t==='cat')groups.push({label:scol.label,key:scol.key,items:itemsIn(scol.key,scol.kind),addBucket:scol.key,addKind:scol.kind});
+  } else {
+    earnCats.forEach(function(b){var its=itemsIn(b.key,'earning');if(its.length)groups.push({label:b.label,key:b.key,items:its,addBucket:b.key,addKind:'earning'});});
+    dedCats.forEach(function(b){var its=itemsIn(b.key,'deduction');if(its.length)groups.push({label:b.label,key:b.key,items:its,addBucket:b.key,addKind:'deduction'});});
+    var exc=lineItemsAll(fileId).filter(function(it){return ruleApplied(fileId,it.id)==='exclude';});
+    if(exc.length)groups.push({label:'Excluded — not counted',key:'__excluded',items:exc,addBucket:null});
+  }
+  var bdHead='<tr><th class="cc-pi-name">Line item</th><th class="cc-pi-map">Category</th>'+months.map(function(mo){return '<th>'+mo.label+'</th>';}).join('')+'</tr>';
+  var selLabel='';cols.forEach(function(c){if(c.key===sel)selLabel=c.label;});if(sel==='__excluded')selLabel='Excluded';
+  var filterBar=sel
+    ?'<div class="cc-filterbar">Filtered to <b>'+selLabel+'</b><button class="cc-showall" onclick="toggleCompCat(\''+fileId+'\',\''+sel+'\')">&#8592; Show all categories</button></div>'
+    :'';
+  var breakdown='<div class="cc-bd-hd">Line-item breakdown'+(sel?'':' &mdash; all categories')+'</div>'
+    +filterBar
+    +'<div class="cp-tablewrap cc-bd-wrap"><table class="cp-table cc-pi-table"><thead>'+bdHead+'</thead><tbody>'+groups.map(groupBody).join('')+'</tbody></table></div>';
 
   var draftPend=pendingAmounts(fileId).length+pendingRules(fileId).length;
   var applyBar=draftPend
@@ -3783,11 +3792,10 @@ function renderComputed(fileId){
     : '';
 
   return applyBar
-    +'<div class="cc-hint">Click a category column to break it down &mdash; edit amounts or re-map its line items.</div>'
+    +'<div class="cc-hint">Totals up top; every category&#39;s line items are listed below. Click a category column to filter the breakdown to just that one.</div>'
     +'<div class="cp-tablewrap"><table class="cp-table cc-table cc-tcols"><thead>'+grpHead+head+'</thead><tbody>'+body+'</tbody></table></div>'
-    +exChip
-    +panel
     +'<div class="cp-income">'+n+'-period average verifiable income (excl. policy items): <b>RM '+money(payslipAvgIncome(fileId))+'</b></div>'
+    +breakdown
     +logSec;
 }
 // Intentional navigation to a step: open it, then scroll the workspace to it.
