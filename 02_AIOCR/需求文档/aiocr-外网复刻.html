@@ -412,7 +412,9 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .cc-sub-name .cc-loc:hover{color:#2563eb;}
 .cc-sub-lbl{font-size:11.5px;color:#1f2937;font-weight:600;}
 .cc-sub-lbl .cc-en{display:block;font-size:9.5px;color:#9aa1ab;font-weight:400;margin-top:1px;}
-.cc-map-sel{display:block;margin-top:5px;font-size:10.5px;padding:2px 6px;border:1px solid var(--bd);border-radius:5px;background:#fff;max-width:200px;}
+/* category dropdown — quiet by default (text + caret), frames only on hover/focus */
+.cc-map-sel{font-size:11px;padding:3px 6px;border:1px solid transparent;border-radius:5px;background:transparent;max-width:210px;color:#1f2937;cursor:pointer;}
+.cc-map-sel:hover,.cc-map-sel:focus{border-color:var(--bd);background:#fff;}
 .cc-map-sel.modified{border-color:#94a3b8;background:#f1f5f9;}
 .cc-sub-amt{text-align:right;white-space:nowrap;}
 .cc-sub-amt .cc-rm{font-size:9px;color:#b6bcc6;margin-right:3px;}
@@ -466,20 +468,27 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .cc-pi-map .cc-map-sel{display:inline-block;vertical-align:middle;}
 .cc-pi-rm{margin-left:8px;border:none;background:transparent;color:#9aa1ab;font-size:16px;line-height:1;cursor:pointer;padding:0 4px;vertical-align:middle;border-radius:4px;}
 .cc-pi-rm:hover{background:#f0f1f4;color:#c0392b;}
+/* read-only amounts in Step 2 (edited in Step 1) + per-row "edit in Step 1" pencil */
+.cc-sub-amt.cc-ro{color:#374151;font-family:ui-monospace,Menlo,Consolas,monospace;}
+.cc-pi-edit{text-align:center;width:30px;}
+.cc-editlink{border:none;background:transparent;color:#c3c8d2;font-size:13px;line-height:1;cursor:pointer;padding:2px 4px;border-radius:4px;}
+.cc-editlink:hover{color:#b9701b;background:#fff6ec;}
+.cc-bd-note{font-weight:400;font-size:10px;color:#9aa1ab;text-transform:none;letter-spacing:0;margin-left:8px;}
 .cc-pi-added{display:inline-block;margin-left:8px;font-size:9px;font-weight:700;color:#6b7280;background:#eef1f5;border-radius:4px;padding:1px 6px;vertical-align:middle;text-transform:uppercase;letter-spacing:.3px;}
 .cc-pi-empty{text-align:center!important;color:#9aa1ab;font-style:italic;font-size:11px;}
-.cc-pi-addrow td{padding:8px 14px;background:#f8f9fb;border-bottom:none;}
-.cc-addbtn{border:1px dashed #c3c8d2;background:#fff;color:#475569;font-size:11.5px;font-weight:600;border-radius:6px;padding:6px 14px;cursor:pointer;}
-.cc-addbtn:hover{background:#f4f5f7;border-color:#9aa1ab;}
+.cc-pi-addrow td{padding:4px 14px 12px;background:transparent;border-bottom:none;}
+.cc-addbtn{border:none;background:transparent;color:#3b7bd4;font-size:11px;font-weight:600;padding:2px 0;cursor:pointer;}
+.cc-addbtn:hover{text-decoration:underline;}
 /* ── Breakdown (all categories shown by default; group-header rows; click a column to filter) ── */
 .cc-bd-hd{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7280;padding:14px 18px 4px;}
 .cc-bd-wrap{margin-top:2px;}
 .cc-filterbar{margin:0 18px 6px;padding:7px 12px;font-size:11.5px;color:#475569;background:#eef1f5;border:1px solid #dde2e9;border-radius:7px;display:flex;align-items:center;gap:10px;}
 .cc-showall{margin-left:auto;border:1px solid #cbd2db;background:#fff;color:#475569;font-size:11px;font-weight:600;border-radius:6px;padding:4px 10px;cursor:pointer;}
 .cc-showall:hover{background:#e2e8f0;}
-.cc-grp-row td{background:#eef1f5;color:#374151;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;text-align:left!important;padding:7px 14px;border-bottom:1px solid var(--bd2);cursor:pointer;}
-.cc-grp-row:hover td{background:#e6eaf0;}
-.cc-grp-row .cc-cnt{margin-left:8px;font-size:9.5px;font-weight:600;color:#6b7280;background:#dde2e9;border-radius:9px;padding:0 6px;}
+/* group label = light section heading, not a heavy band */
+.cc-grp-row td{background:transparent;color:#6b7280;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left!important;padding:13px 14px 4px;border-bottom:none;border-top:1px solid #eef0f3;cursor:pointer;}
+.cc-grp-row:first-child td{border-top:none;}
+.cc-grp-row:hover td{color:#374151;}
 /* ── Collapsible alerts header ── */
 .fd-alert-strip{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--bd);cursor:pointer;flex-shrink:0;}
 .fd-alert-strip:hover{background:#fafbfc;}
@@ -3653,6 +3662,13 @@ function toggleCompCat(fileId,key){
   S.compExpand[fileId]=(S.compExpand[fileId]===key)?null:key;
   render();
 }
+// Step-2 amounts are read-only — jump to Step 1 to edit, flashing that line item across periods.
+function editAmtInStep1(fileId,type){
+  S.flash=S.flash||{};
+  PAYSLIP_MONTHS.forEach(function(m,mi){S.flash[mi+'|'+type]=true;});
+  scrollToSec('items');
+  setTimeout(function(){S.flash={};render();},1600);
+}
 function applyComputeChanges(fileId){
   var pa=pendingAmounts(fileId), pr=pendingRules(fileId);
   if(!pa.length&&!pr.length)return;
@@ -3725,26 +3741,27 @@ function renderComputed(fileId){
   //    the reviewer scans the whole picture in one screen — no clicking needed. Clicking a category
   //    column up top FILTERS this to just that one. Category dropdown sits in the 2nd column for quick
   //    re-classification; amounts editable; custom items get an × ; "+ Add line item" per category. ──
-  var ncolp=months.length+2;
+  var ncolp=months.length+3;  // name + category + N periods + edit-in-Step1
   function itemRow(it){
     var buckets=it.kind==='earning'?EARNING_BUCKETS:DEDUCTION_BUCKETS;
     var draft=ruleDraft(fileId,it.id);
     var opts=buckets.map(function(b){return '<option value="'+b.key+'"'+(draft===b.key?' selected':'')+'>'+b.label+'</option>';}).join('');
     var rulePend=pendingRules(fileId).indexOf(it.id)!==-1;
     var rm=it.custom?'<button class="cc-pi-rm" title="Remove this added item" onclick="removeCustomLine(\''+fileId+'\',\''+it.id+'\')">&times;</button>':'';
+    // amounts are READ-ONLY here — they're verified & edited in Step 1; this view only classifies.
     var amtCells=months.map(function(mo){
-      var disp=lineDispAmt(fileId,mo.mIdx,it.type), applied=effectiveApplied(fileId,mo.mIdx,it.type);
-      var amtPend=(S.lineAmtDraft[fileId]||{})[mo.mIdx+'|'+it.type]!=null && disp!==applied;
-      return '<td class="cc-sub-amt"><span class="cc-rm">RM</span><input class="cc-amt-inp'+(amtPend?' pending':'')+'" value="'+(disp!=null?money(disp):'')+'" onchange="setLineAmt(\''+fileId+'\','+mo.mIdx+',\''+it.type+'\',this.value)"></td>';
+      var v=effectiveApplied(fileId,mo.mIdx,it.type);
+      return '<td class="cc-sub-amt cc-ro">'+(v?money(v):'<span class="cp-dash">&mdash;</span>')+'</td>';
     }).join('');
     return '<tr'+(rulePend?' class="pending"':'')+' id="rc-'+it.id+'">'
       +'<td class="cc-pi-name">'+it.ms+'<span class="cc-en">'+it.en+'</span>'+(it.custom?'<span class="cc-pi-added">added</span>':'')+'</td>'
       +'<td class="cc-pi-map"><select class="cc-map-sel'+(rulePend?' modified':'')+'" onchange="setRule(\''+fileId+'\',\''+it.id+'\',this.value)">'+opts+'</select>'+rm+'</td>'
       +amtCells
+      +'<td class="cc-pi-edit"><button class="cc-editlink" title="Edit this amount in Step 1" onclick="editAmtInStep1(\''+fileId+'\',\''+it.type+'\')">&#9998;</button></td>'
     +'</tr>';
   }
   function groupBody(g){
-    var ghd='<tr class="cc-grp-row"'+(g.key?' onclick="toggleCompCat(\''+fileId+'\',\''+g.key+'\')"':'')+'><td colspan="'+ncolp+'">'+g.label+(g.items.length?'<span class="cc-cnt">'+g.items.length+'</span>':'')+'</td></tr>';
+    var ghd='<tr class="cc-grp-row"'+(g.key?' onclick="toggleCompCat(\''+fileId+'\',\''+g.key+'\')"':'')+'><td colspan="'+ncolp+'">'+g.label+'</td></tr>';
     var rows=g.items.map(itemRow).join('');
     var emptyRow=g.items.length?'':'<tr><td class="cc-pi-empty" colspan="'+ncolp+'">No line items here yet.</td></tr>';
     var addRow=g.addBucket?'<tr class="cc-pi-addrow"><td colspan="'+ncolp+'"><button class="cc-addbtn" onclick="openAddToCat(\''+fileId+'\',\''+g.addBucket+'\',\''+g.addKind+'\')">+ Add line item</button></td></tr>':'';
@@ -3763,19 +3780,19 @@ function renderComputed(fileId){
     var exc=lineItemsAll(fileId).filter(function(it){return ruleApplied(fileId,it.id)==='exclude';});
     if(exc.length)groups.push({label:'Excluded — not counted',key:'__excluded',items:exc,addBucket:null});
   }
-  var bdHead='<tr><th class="cc-pi-name">Line item</th><th class="cc-pi-map">Category</th>'+months.map(function(mo){return '<th>'+mo.label+'</th>';}).join('')+'</tr>';
+  var bdHead='<tr><th class="cc-pi-name">Line item</th><th class="cc-pi-map">Category</th>'+months.map(function(mo){return '<th>'+mo.label+'</th>';}).join('')+'<th class="cc-pi-edit"></th></tr>';
   var selLabel='';cols.forEach(function(c){if(c.key===sel)selLabel=c.label;});if(sel==='__excluded')selLabel='Excluded';
   var filterBar=sel
     ?'<div class="cc-filterbar">Filtered to <b>'+selLabel+'</b><button class="cc-showall" onclick="toggleCompCat(\''+fileId+'\',\''+sel+'\')">&#8592; Show all categories</button></div>'
     :'';
-  var breakdown='<div class="cc-bd-hd">Line-item breakdown'+(sel?'':' &mdash; all categories')+'</div>'
+  var breakdown='<div class="cc-bd-hd">Line-item breakdown <span class="cc-bd-note">classify here &middot; amounts come from Step 1 (&#9998; to edit)</span></div>'
     +filterBar
     +'<div class="cp-tablewrap cc-bd-wrap"><table class="cp-table cc-pi-table"><thead>'+bdHead+'</thead><tbody>'+groups.map(groupBody).join('')+'</tbody></table></div>';
 
-  var draftPend=pendingAmounts(fileId).length+pendingRules(fileId).length;
-  var applyBar=draftPend
-    ? '<div class="li-apply li-apply-sticky"><span class="li-apply-txt">&#9998; <b>'+draftPend+' change'+(draftPend>1?'s':'')+' pending</b> &mdash; totals refresh after you apply.</span>'
-        +'<button class="btn btn-pri btn-sm" onclick="applyComputeChanges(\''+fileId+'\')">&#8635; Apply &amp; refresh</button></div>'
+  var rulePendN=pendingRules(fileId).length;
+  var applyBar=rulePendN
+    ? '<div class="li-apply li-apply-sticky"><span class="li-apply-txt">&#9998; <b>'+rulePendN+' classification change'+(rulePendN>1?'s':'')+' pending</b> &mdash; totals refresh after you apply.</span>'
+        +'<button class="btn btn-pri btn-sm" onclick="confirmRuleChanges(\''+fileId+'\')">&#8635; Apply &amp; refresh</button></div>'
     : '';
   var log=S.incomeLog[fileId]||[];
   var logSec=log.length
