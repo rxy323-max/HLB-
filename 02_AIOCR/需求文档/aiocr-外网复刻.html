@@ -488,6 +488,8 @@ tbody td{padding:11px 10px;border-bottom:1px solid var(--bd2);vertical-align:mid
 .cc-grp-row td{background:#f7f8fa;color:#475569;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;text-align:left!important;padding:8px 14px;border-bottom:1px solid #e5e8ec;border-top:2px solid #d3d9e0;cursor:pointer;}
 .cc-grp-row:first-child td{border-top:none;}
 .cc-grp-row:hover td{color:#1f2937;background:#f1f3f6;}
+/* category aggregated total per period on the group header row (small, ties to the calculator) */
+.cc-grp-row .cc-grp-sum{text-align:right;font-weight:600;font-size:10px;color:#6b7280;font-family:ui-monospace,Menlo,Consolas,monospace;text-transform:none;letter-spacing:0;}
 /* ── Collapsible alerts header ── */
 .fd-alert-strip{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--bd);cursor:pointer;flex-shrink:0;}
 .fd-alert-strip:hover{background:#fafbfc;}
@@ -3765,11 +3767,14 @@ function renderComputed(fileId){
     +'</tr>';
   }
   function groupBody(g){
-    var ghd='<tr class="cc-grp-row"'+(g.key?' onclick="toggleCompCat(\''+fileId+'\',\''+g.key+'\')"':'')+'><td colspan="'+ncolp+'">'+g.label+'</td></tr>';
+    // group header carries the category's aggregated total per period (small), tying the breakdown
+    // back to the calculator. No "add" here — all adding (months / line items) happens in Step 1.
+    var isCat=(g.key&&g.key!=='__excluded');
+    var sumCells=months.map(function(mo){var v=isCat?mo.c[g.key]:null;return '<td class="cc-grp-sum">'+(v?money(v):'')+'</td>';}).join('');
+    var ghd='<tr class="cc-grp-row"'+(g.key?' onclick="toggleCompCat(\''+fileId+'\',\''+g.key+'\')"':'')+'><td colspan="2" class="cc-grp-lbl">'+g.label+'</td>'+sumCells+'</tr>';
     var rows=g.items.map(itemRow).join('');
-    var emptyRow=g.items.length?'':'<tr><td class="cc-pi-empty" colspan="'+ncolp+'">No line items here yet.</td></tr>';
-    var addRow=g.addBucket?'<tr class="cc-pi-addrow"><td colspan="'+ncolp+'"><button class="cc-addbtn" onclick="openAddToCat(\''+fileId+'\',\''+g.addBucket+'\',\''+g.addKind+'\')">+ Add line item</button></td></tr>':'';
-    return ghd+rows+emptyRow+addRow;
+    var emptyRow=g.items.length?'':'<tr><td class="cc-pi-empty" colspan="'+ncolp+'">No line items here — add them in Step 1.</td></tr>';
+    return ghd+rows+emptyRow;
   }
   // which category groups to render: filtered to one when a column is selected, else all (non-empty) + excluded
   var groups=[];
