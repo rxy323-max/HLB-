@@ -1210,7 +1210,7 @@ var FILE_DETAIL={
     ]},
   epf:{ name:'1147 EPF Statement.pdf', crumb:'Applicant Income &rsaquo; EPF Statement', doc:'epf',
     alerts:[
-      {id:'genrules', title:'General Document Rules', sev:'hard', dim:'Business Validity', kind:'recency',
+      {id:'genrules', title:'General document rules', sev:'hard', dim:'Business Validity', kind:'recency',
         cmp:'Contribution month <span class="bad">Jun-2025</span> &nbsp;&middot;&nbsp; Expected &le; 2 months from application_date (M-2)',
         acts:['replace'], rec:'replace', locate:'statement_date'},
       {id:'datecmp', title:'EPF Statement - statement_date Date Compare', sev:'warn', dim:'Internal Logic', kind:'datefmt',
@@ -1287,14 +1287,14 @@ var CROSSVAL=[
   {orig:'AINA WAHIDA MYVI H.pdf',name:'Driving License.pdf',subject:'Applicant',cat:'Personal Identity',type:'Driving License',ocr:'Validation Failed',rules:['Driving License - id_no Consistency']},
   {orig:'AINA WAHIDA MYVI H.pdf',name:'Mykad.pdf',subject:'Applicant',cat:'Personal Identity',type:'Mykad',ocr:'Validation Failed',rules:['Mykad - id_no Consistency']},
   {orig:'AINA WAHIDA @ MYVI 1.5H VSO.pdf',name:'VSO.pdf',subject:'Applicant',cat:'Collateral/Others',type:'VSO',ocr:'Validation Failed',rules:['VSO - id_no Consistency','Eyeball Check']},
-  {orig:'IC.pdf',name:'Driving License.pdf',subject:'Applicant',cat:'Personal Identity',type:'Driving License',ocr:'Validation Failed',rules:['Driving License - customer_name Consistency','General Document Rules']},
+  {orig:'IC.pdf',name:'Driving License.pdf',subject:'Applicant',cat:'Personal Identity',type:'Driving License',ocr:'Validation Failed',rules:['Driving License - customer_name Consistency','General document rules']},
   {orig:'IC.pdf',name:'Mykad.pdf',subject:'Applicant',cat:'Personal Identity',type:'Mykad',ocr:'Validation Failed',rules:['Mykad - id_no Consistency','Mykad - customer_name Consistency','Eyeball Check']},
   {orig:'VOC INCOME.pdf',name:'Information On Seller.pdf',subject:'Applicant',cat:'Seller Documents',type:'Information On Seller',ocr:'Validation Failed',rules:['Information On Seller - constitution Exist','Information On Seller - date_established Exist','Information On Seller - paid_up_capital Exist','Information On Seller - signature_date Exist','Information On Seller - witness_date Exist','Information On Seller - address Exist','Information On Seller - has_company_stamp Exist','Information On Seller - is_authentic_declared Exist','Information On Seller - is_bank_authorized Exist','Information On Seller - witness_name Exist']},
   {orig:'VOC INCOME.pdf',name:'EPF Statement.pdf',subject:'Applicant',cat:'Applicant Income',type:'EPF Statement',ocr:'Validation Failed',rules:['EPF - customer_name Consistency','EPF - id_no Consistency','EPF - statement_date Date Compare']},
-  {orig:'VOC INCOME.pdf',name:'Individual Bank Statement.pdf',subject:'Applicant',cat:'Applicant Income',type:'Individual Bank Statement',ocr:'Validation Failed',rules:['Individual Bank Statement - customer_name Consistency','General Document Rules']},
+  {orig:'VOC INCOME.pdf',name:'Individual Bank Statement.pdf',subject:'Applicant',cat:'Applicant Income',type:'Individual Bank Statement',ocr:'Validation Failed',rules:['Individual Bank Statement - customer_name Consistency','General document rules']},
   {orig:'VOC INCOME.pdf',name:'Payslip.pdf',subject:'Applicant',cat:'Applicant Income',type:'Payslip',ocr:'Validation Failed',rules:['Payslip - customer_name Consistency','Payslip - id_no Consistency','Eyeball Check']},
-  {orig:'VOC INCOME.pdf',name:'VOC.pdf',subject:'Applicant',cat:'Collateral/Others',type:'VOC',ocr:'Validation Failed',rules:['VOC - chassis_no Consistency','VOC - engine_no Consistency','VOC - vehicle_model Consistency','General Document Rules','Eyeball Check']},
-  {orig:'VSO.pdf',name:'VSO.pdf',subject:'Applicant',cat:'Collateral/Others',type:'VSO',ocr:'Validation Failed',rules:['VSO - customer_name Consistency','VSO - id_no Consistency','VSO - chassis_no Exist','VSO - engine_no Exist','VSO - vehicle_model Exist','VSO - total_sales_price Exist','VSO - deposit_amount Exist','General Document Rules','Eyeball Check']}
+  {orig:'VOC INCOME.pdf',name:'VOC.pdf',subject:'Applicant',cat:'Collateral/Others',type:'VOC',ocr:'Validation Failed',rules:['VOC - chassis_no Consistency','VOC - engine_no Consistency','VOC - vehicle_model Consistency','General document rules','Eyeball Check']},
+  {orig:'VSO.pdf',name:'VSO.pdf',subject:'Applicant',cat:'Collateral/Others',type:'VSO',ocr:'Validation Failed',rules:['VSO - customer_name Consistency','VSO - id_no Consistency','VSO - chassis_no Exist','VSO - engine_no Exist','VSO - vehicle_model Exist','VSO - total_sales_price Exist','VSO - deposit_amount Exist','General document rules','Eyeball Check']}
 ];
 function xvalDetailId(type){return {'Mykad':'mykad','EPF Statement':'epf','EC Form':'ec','VSO':'vso','Payslip':'payslip'}[type]||'mykad';}
 
@@ -1484,7 +1484,7 @@ function confirmRuleChanges(fileId){
   S.ruleDraft[fileId]={};
   S.compFlash=true;render();
   setTimeout(function(){S.compFlash=false;render();},950);
-  showToast('Rules applied &mdash; Step 3 totals recalculated.','ok');
+  showToast('Applied &mdash; totals recalculated.','ok');
 }
 // Recompute one month from the APPLIED rule mapping.
 //   buckets        = income-classified sums (exclude dropped)
@@ -1548,7 +1548,7 @@ function applyAmountChanges(fileId){
   S.compFlash=true;S.flash=S.flash||{};pend.forEach(function(k){S.flash[k]=true;});
   render();
   setTimeout(function(){S.compFlash=false;S.flash={};render();},950);
-  showToast('Saved &mdash; Step 3 totals recalculated.','ok');
+  showToast('Saved &mdash; totals recalculated.','ok');
 }
 // line items mapped into a given bucket for a month (for the aggregation "process")
 function bucketItems(fileId,mIdx,bucketKey){
@@ -2641,7 +2641,7 @@ function renderCrossVal(){
       +'<td style="text-align:center;">'+countCell+'</td>'
       +'<td>'+rulesCell+'</td>'
       +'<td style="text-align:center;"><span class="qmark" title="Justification">?</span></td>'
-      +'<td><div class="acts"><span class="aic" title="Download">'+IC.dl+'</span><span class="aic" title="Open &amp; resolve" onclick="openFile(\''+did+'\')">'+IC.edit+'</span></div></td>'
+      +'<td><div class="acts"><span class="aic" title="Download">'+IC.dl+'</span><span class="aic" title="Review" onclick="openFile(\''+did+'\')">'+IC.edit+'</span></div></td>'
     +'</tr>';
   }).join('');
   return ''
@@ -2842,9 +2842,9 @@ function resolveAlertAct(fileId,alertId,how){
 }
 function sevMeta(s){return s==='hard'?{t:'Hard Fail',c:'sev-hard'}:s==='warn'?{t:'Warning',c:'sev-warn'}:{t:'Needs Check',c:'sev-check'};}
 function guidanceLine(a){
-  if(a.kind==='eyeball')return '<strong>Verify All</strong> — manually confirm the flagged fields against the physical document. AI cannot verify these automatically. If verification is not possible, use <strong>Justify &amp; proceed</strong>.';
-  if(a.kind==='exist')return 'OCR did not detect this field. Open the source document to check &mdash; if it exists, <strong>Amend</strong> to enter the value manually. If genuinely absent, <strong>Justify &amp; proceed</strong>.';
-  return 'AI misread the value → <strong>Amend</strong> to correct. Document non-compliant → <strong>Replace Document</strong>. Issue acceptable with a reason → <strong>Justify &amp; proceed</strong>.';
+  if(a.kind==='eyeball')return '<strong>Verify All</strong> — manually confirm the flagged fields against the physical document. AI cannot verify these automatically. If verification is not possible, use <strong>Justification</strong>.';
+  if(a.kind==='exist')return 'OCR did not detect this field. Open the source document to check &mdash; if it exists, <strong>Amend scanned result</strong> to enter the value manually. If genuinely absent, <strong>Justification</strong>.';
+  return 'AI misread the value → <strong>Amend scanned result</strong> to correct. Document non-compliant → <strong>Replace Document</strong>. Issue acceptable with a reason → <strong>Justification</strong>.';
 }
 function fdAlertCard(a,fileId){
   // ── Justified state ──
@@ -2862,7 +2862,7 @@ function fdAlertCard(a,fileId){
   var sm=sevMeta(a.sev);
   var acts=a.acts.map(function(k){return actBtn(k,fileId,a.id,a.rec);}).join('');
   // Justify — always tertiary (text-link style)
-  var justifyBtn='<button class="justify-btn" onclick="openJustify(\''+fileId+'\',\''+a.id+'\')">'+(a.sev==='hard'?'Justify (note required)':'Justify &amp; proceed')+'</button>';
+  var justifyBtn='<button class="justify-btn" onclick="openJustify(\''+fileId+'\',\''+a.id+'\')">'+(a.sev==='hard'?'Justification (note required)':'Justification')+'</button>';
   if(resolved){
     var how=resolved.how==='adopt'?('Adopted reference <b>'+resolved.note+'</b>'):
       resolved.how==='replace'?'Replacement requested':
@@ -3105,14 +3105,14 @@ function renderJustifyModal(){
   var alert=allAlerts.find(function(a){return a.id===t.alertId;})||{};
   var isHard=alert.sev==='hard';
   return '<div class="ov" style="z-index:80;"><div class="add-rule-modal" style="width:440px;">'
-    +'<div class="arm-hdr"><h3>Justify &amp; proceed</h3><button class="docs-x" onclick="closeJustify()">&times;</button></div>'
+    +'<div class="arm-hdr"><h3>Justification</h3><button class="docs-x" onclick="closeJustify()">&times;</button></div>'
     +'<div class="arm-body">'
       +'<div class="arm-note">'+(isHard?'<strong style="color:#c0392b;">Hard Fail</strong> — a justification note is <strong>required</strong> to proceed. This is logged and auditable.':'This issue will be marked as justified. A note is recommended.')+'<br><br>Justification means: <em>"I acknowledge this issue and take responsibility that it is acceptable to proceed."</em></div>'
       +'<div class="arm-row"><label class="arm-lbl">Justification note'+(isHard?' <span style="color:#dc2626;">*required</span>':'')+'</label>'
         +'<textarea id="justify-inp" class="inp" style="width:100%;min-height:80px;resize:vertical;" placeholder="e.g. Customer confirmed correct — ID number mismatch is due to old IC number still in system. Physical document verified."></textarea>'
       +'</div>'
     +'</div>'
-    +'<div class="arm-foot"><button class="btn" onclick="closeJustify()">Cancel</button><button class="btn btn-pri" onclick="saveJustify()">Justify &amp; proceed</button></div>'
+    +'<div class="arm-foot"><button class="btn" onclick="closeJustify()">Cancel</button><button class="btn btn-pri" onclick="saveJustify()">Justification</button></div>'
   +'</div></div>';
 }
 // ── Inline field edit ──────────────────────────────────────────
@@ -3642,12 +3642,12 @@ function renderLineItems(fileId){
   +'</div>';
 
   var hint='<div class="li2-hint">Malay text with <span class="li2-en-key">grey English translation</span>. Edit any amount directly. '
-    +(clean?'This file was verified by Sales before routing — you can still adjust any value.':'Orange rows need a manual check against the source document — click <b>Verify</b> on each, or use <b>Mark All Verified</b> above.')
+    +(clean?'This file was verified by Sales before routing — you can still adjust any value.':'Orange rows need a manual check against the source document — click <b>Verify</b> on each, or use <b>Verify All</b> above.')
     +'</div>';
   // Sticky apply bar — staged amount edits don't reach Step-3 totals until saved
   var pend=pendingAmounts(fileId);
   var applyBar=pend.length
-    ?'<div class="li-apply li-apply-sticky"><span class="li-apply-txt">&#9998; <b>'+pend.length+' amount change'+(pend.length>1?'s':'')+' staged</b> — Step 3 totals refresh after you save.</span>'
+    ?'<div class="li-apply li-apply-sticky"><span class="li-apply-txt">&#9998; <b>'+pend.length+' amount change'+(pend.length>1?'s':'')+' staged</b> — totals refresh after you save.</span>'
       +'<button class="btn btn-pri btn-sm" onclick="applyAmountChanges(\''+fileId+'\')">&#10003; Save &amp; refresh totals</button></div>'
     :'';
   return applyBar+hint+docGroup+groupsHtml+addGroupBtn;
@@ -3968,10 +3968,10 @@ function renderFileDetail(){
       // Alert A — Eyeball check (verify AI-extracted fields against the document)
       if(pendCheck){
         verifyBar+='<div class="vf-bar vf-todo">'
-          +'<div class="vf-hd">&#128065; Eyeball check &mdash; '+pendCheck+' field'+(pendCheck>1?'s':'')+' need a manual check against the source document.</div>'
+          +'<div class="vf-hd">&#128065; Eyeball Check &mdash; '+pendCheck+' field'+(pendCheck>1?'s':'')+' need a manual check against the source document.</div>'
           +'<div class="vf-acts">'
-            +'<button class="btn btn-pri btn-sm" onclick="verifyAllSales(\''+S.fileId+'\')">&#10003; Mark All Verified</button>'
-            +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\''+(salesItems.length?salesItems[0].id:'pseye')+'\')">Skip with Note</button>'
+            +'<button class="btn btn-pri btn-sm" onclick="verifyAllSales(\''+S.fileId+'\')">&#10003; Verify All</button>'
+            +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\''+(salesItems.length?salesItems[0].id:'pseye')+'\')">Justification</button>'
           +'</div>'
         +'</div>';
       }
@@ -3981,7 +3981,7 @@ function renderFileDetail(){
           +'<div class="vf-hd">&#9888; Missing field &mdash; '+missLeft.length+' required field'+(missLeft.length>1?'s':'')+' not detected by OCR. Add the line item or skip with a note.</div>'
           +'<div class="vf-acts">'
             +'<button class="btn btn-pri btn-sm" onclick="openAddLine(\''+S.fileId+'\',\''+missLeft[0]+'\',0)">+ Add Missing Item</button>'
-            +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\'miss:'+missLeft[0]+'\')">Skip with Note</button>'
+            +'<button class="btn btn-sm" onclick="openJustify(\''+S.fileId+'\',\'miss:'+missLeft[0]+'\')">Justification</button>'
           +'</div>'
         +'</div>';
       }
@@ -3995,7 +3995,7 @@ function renderFileDetail(){
     var compPend=pendingAmounts(S.fileId).length+pendingRules(S.fileId).length;
     var compBadge=compPend?'<span class="sec-badge org">'+compPend+' Pending</span>':'<span class="sec-badge green">Computed</span>';
     var cItems=secCard('items','1','Step 1 · Verify','Confirm OCR line items against the document',s1Badge, s1Body);
-    var cComp=secCard('comp','2','Step 2 · Income Computation','Categorised totals — click any amount to adjust mapping or value',compBadge, renderComputed(S.fileId));
+    var cComp=secCard('comp','2','Step 2 · Income Computation','Categorised totals — change a category here; amounts are edited in Step 1',compBadge, renderComputed(S.fileId));
     // Option 1: Verify→Compute (data-first); Option 2: Compute→Verify (result-first) — ordering only.
     workspace=(curScheme()==='1')?(cItems+cComp):(cComp+cItems);
   } else {
