@@ -15,6 +15,23 @@
 
 > 已同步执行的对齐 + 修正项见文末"附"。
 
+## 7. Step 1 / Step 2 按钮文案统一（本轮新增，commit 待补）
+
+原文档无"暂存→应用"模型的对应术语（属原型新增），故在**两步内部统一措辞**，消除不一致：
+
+| 位置 | 改前 | 改后（统一）| 说明 |
+|------|------|-----------|------|
+| Step 1 金额暂存条文案 | `N amount change(s) staged — totals refresh after you save` | `N amount change(s) pending — totals refresh after you apply` | 与 Step 2 用同一句式（staged→pending、save→apply）|
+| Step 1 金额应用按钮 | `✓ Save & refresh totals` | `↻ Apply & refresh` | 与 Step 2 同按钮（图标 ↻、措辞一致）|
+| Step 1 应用 Toast | `Saved — totals recalculated.` | `Applied — totals recalculated.` | 与 Step 2 同 Toast |
+| Step 2 归类暂存条/按钮/Toast | `…classification change(s) pending` · `↻ Apply & refresh` · `Applied — totals recalculated.` | 不变（作为统一基准）| — |
+| Step 1 每期加项 | `+ Add item to this period` | `+ Add line item` | 与拆解区/功能命名一致；作用域由所在期次隐含 |
+| Step 1 缺失行次按钮 | `Skip` | `Justification` | 与缺失告警栏一致（决策 1）|
+| Step 1 缺失行主按钮 | `Add Item` | 不变 | 该字段的补录确认 |
+| Step 1 加期次 | `+ Add Pay Period` | 不变 | 与"加细项"区分（加月份）|
+
+> **统一原则**：两步的"暂存→应用"动作共用同一套句式与按钮（`N <名词> change(s) pending — totals refresh after you apply` ／ `↻ Apply & refresh` ／ `Applied — totals recalculated.`），仅名词随上下文变（amount / classification）。
+
 > **判定列**：`对齐` = 改为原文档官方文案 · `保留` = 原型新增、原文档无对应，保留并说明含义 · `修正` = 原型自身过时/不一致文案需改（多为两步合并后残留的"Step 3"）· `待定` = 需你拍板
 > **对齐基线**：原文档 §3.1.4 告警处理、§3.1.4.8 操作按钮、表9 文件状态、§3.1.3 结果展示。
 

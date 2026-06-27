@@ -1548,7 +1548,7 @@ function applyAmountChanges(fileId){
   S.compFlash=true;S.flash=S.flash||{};pend.forEach(function(k){S.flash[k]=true;});
   render();
   setTimeout(function(){S.compFlash=false;S.flash={};render();},950);
-  showToast('Saved &mdash; totals recalculated.','ok');
+  showToast('Applied &mdash; totals recalculated.','ok');
 }
 // line items mapped into a given bucket for a month (for the aggregation "process")
 function bucketItems(fileId,mIdx,bucketKey){
@@ -3599,7 +3599,7 @@ function renderLineItems(fileId){
     return '<div class="li2-row li2-missing">'
       +'<span class="li2-name">'+label+'<span class="li2-misstag">NOT DETECTED</span></span>'
       +'<span class="li2-amt"><button class="li2-vbtn" onclick="openAddLine(\''+fileId+'\',\''+k+'\',0)">Add Item</button></span>'
-      +'<span class="li2-vcol"><button class="li2-vbtn skip" onclick="openJustify(\''+fileId+'\',\'miss:'+k+'\')">Skip</button></span>'
+      +'<span class="li2-vcol"><button class="li2-vbtn skip" onclick="openJustify(\''+fileId+'\',\'miss:'+k+'\')">Justification</button></span>'
     +'</div>';
   }
 
@@ -3632,7 +3632,7 @@ function renderLineItems(fileId){
       +'<div class="li2-cap">EARNINGS</div>'+earn+missingRowsHtml
       +'<div class="li2-cap">DEDUCTIONS</div>'+ded
       +'<div class="li2-gadd">'
-        +'<button class="li2-gadd-btn" onclick="openAddLine(\''+fileId+'\',null,'+mIdx+')">+ Add item to this period</button>'
+        +'<button class="li2-gadd-btn" onclick="openAddLine(\''+fileId+'\',null,'+mIdx+')">+ Add line item</button>'
       +'</div>'
     +'</div>';
   }).join('');
@@ -3647,8 +3647,8 @@ function renderLineItems(fileId){
   // Sticky apply bar — staged amount edits don't reach Step-3 totals until saved
   var pend=pendingAmounts(fileId);
   var applyBar=pend.length
-    ?'<div class="li-apply li-apply-sticky"><span class="li-apply-txt">&#9998; <b>'+pend.length+' amount change'+(pend.length>1?'s':'')+' staged</b> — totals refresh after you save.</span>'
-      +'<button class="btn btn-pri btn-sm" onclick="applyAmountChanges(\''+fileId+'\')">&#10003; Save &amp; refresh totals</button></div>'
+    ?'<div class="li-apply li-apply-sticky"><span class="li-apply-txt">&#9998; <b>'+pend.length+' amount change'+(pend.length>1?'s':'')+' pending</b> &mdash; totals refresh after you apply.</span>'
+      +'<button class="btn btn-pri btn-sm" onclick="applyAmountChanges(\''+fileId+'\')">&#8635; Apply &amp; refresh</button></div>'
     :'';
   return applyBar+hint+docGroup+groupsHtml+addGroupBtn;
 }
