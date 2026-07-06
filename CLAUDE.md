@@ -20,6 +20,8 @@
 |------|------|
 | `05_签约/需求文档/e-acceptance-prototype.html` | **主原型文件（当前 v8，持续迭代）** |
 | `05_签约/需求文档/_v4_reference.html` | v4 快照，保留为参考，不修改 |
+| `06_放款/README.md` | **STP 放款需求整理**（放款条件、流程、OCR 文件清单、上下游交互四主题） |
+| `06_放款/参考资料/` | 放款主 FRS（05 CrediOS_FRS_HP_Disbursement）、CRA 业务规则 & Defect Code 附录 xlsx、STP 放款需求清单 xlsx、Business Rule Validation 工作台原型 HTML |
 
 ---
 
