@@ -167,6 +167,49 @@
   .ouse.b .badge{background:var(--accent-soft);color:var(--accent)}
   .ouse p{margin:0;font-size:13px;color:var(--ink-soft)}
 
+  /* subhead within section */
+  .subh{font-size:15px;font-weight:670;margin:30px 0 4px;display:flex;align-items:center;gap:9px}
+  .subh .sx{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600}
+  .subh-lead{color:var(--ink-soft);font-size:13.5px;margin:0 0 16px;max-width:64ch}
+
+  /* doc classification buckets */
+  .buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:18px}
+  .bk{border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px;background:var(--surface);border-top:3px solid var(--line-strong)}
+  .bk.reuse{border-top-color:var(--ink-faint)}
+  .bk.sys{border-top-color:var(--accent)}
+  .bk.ocr{border-top-color:var(--auto)}
+  .bk.tbd{border-top-color:var(--manual)}
+  .bk .bt{font-weight:670;font-size:14px;margin:0 0 3px;display:flex;align-items:center;gap:8px}
+  .bk .bcount{font-family:var(--mono);font-size:11px;color:var(--ink-faint);font-weight:600}
+  .bk .bd{font-size:12.5px;color:var(--ink-soft);margin:5px 0 8px}
+  .bk .bl{font-size:12px;color:var(--ink);line-height:1.5}
+  .pill{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:2px 8px;border-radius:100px;font-weight:600;white-space:nowrap}
+  .p-reuse{background:var(--surface-2);color:var(--ink-soft)}
+  .p-sys{background:var(--accent-soft);color:var(--accent)}
+  .p-ocr{background:var(--auto-soft);color:var(--auto)}
+  .p-tbd{background:var(--manual-soft);color:var(--manual)}
+
+  /* table */
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+  .tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}
+  .tbl th,.tbl td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--line);vertical-align:middle}
+  .tbl th{background:var(--surface-2);font-weight:640;color:var(--ink-soft);font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;position:sticky;top:0}
+  .tbl td{color:var(--ink-soft)}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl .doc{color:var(--ink);font-weight:580}
+
+  /* engine vs workbench split */
+  .layer{border:1px solid var(--line);border-radius:var(--radius);padding:16px 17px;background:var(--surface)}
+  .layer.eng{border-top:3px solid var(--auto)}
+  .layer.wb{border-top:3px solid var(--manual)}
+  .layer .lt{font-weight:670;font-size:15px;margin:0 0 3px;display:flex;align-items:center;gap:9px}
+  .layer.eng .lt{color:var(--auto)}
+  .layer.wb .lt{color:var(--manual)}
+  .layer .lsub{font-size:12px;color:var(--ink-faint);margin:0 0 11px}
+  .layer ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px}
+  .layer li{font-size:13px;color:var(--ink-soft)}
+  .layer li b{color:var(--ink);font-weight:600}
+
   /* open questions */
   .oq{display:flex;flex-direction:column;gap:10px}
   .oq .q{display:flex;gap:12px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--manual);border-radius:var(--radius);padding:12px 15px}
@@ -191,7 +234,7 @@
   <div class="meta">
     <span><strong>范围</strong> HP / iHP 车贷 · Disbursement 放款阶段</span>
     <span><strong>用途</strong> 内部走查 · 需求确认</span>
-    <span><strong>底稿</strong> 放款 FRS · CRA 业务规则 · STP 需求清单 · OCR 字段清单</span>
+    <span><strong>底稿</strong> 放款 FRS · CRA 业务规则&amp;缺陷码 · 规则校验工作台 · STP 需求清单 · OCR 文书清单</span>
   </div>
   <div class="legend">
     <span class="lg"><span class="dot a"></span>系统 / OCR / 专家规则</span>
@@ -333,13 +376,99 @@
   </div>
 </section>
 
-<!-- 4 · OCR -->
+<!-- 4 · OCR × CRA 复核工作台 -->
 <section>
-  <div class="sec-h"><span class="sec-n">04</span><h2>OCR 的两层用途</h2></div>
-  <p class="sec-lead">不是「两种 OCR」，而是同一份 OCR 结果的两种下游用途。B 的前提仍是 A——先把字段可靠抽出来，才能既反显、又喂规则。</p>
+  <div class="sec-h"><span class="sec-n">04</span><h2>OCR × CRA 复核工作台（职责边界）</h2></div>
+  <p class="sec-lead">回答两个设计问题：<b>哪些文书进 OCR</b>（按数据来源界定），以及<b>哪些校验放 OCR 引擎、哪些留 CRA 工作台</b>（按可确定性与置信度界定）。</p>
+
+  <!-- 4.1 两层用途 -->
+  <div class="subh"><span class="sx">4.1</span>OCR 的两层用途</div>
+  <p class="subh-lead">不是「两种 OCR」，而是同一份 OCR 结果的两种下游用途。B 的前提仍是 A——先把字段可靠抽出来，才能既反显、又喂规则。</p>
   <div class="ocr">
-    <div class="ouse a"><p class="tt"><span class="badge">全案件通用</span>A · 反显填入（提效）</p><p>抽取字段自动回填放款维护页，CRA 由「手工敲」变「目视核对 + 确认」（对应规则校验工作台的 Confirm / Error / Edit）；三色状态监控 OCR 进度。人始终在环里，OCR 是帮手。</p></div>
+    <div class="ouse a"><p class="tt"><span class="badge">全案件通用</span>A · 反显填入（提效）</p><p>抽取字段自动回填放款维护页，CRA 由「手工敲」变「目视核对 + 确认」；三色状态监控 OCR 进度。人始终在环里，OCR 是帮手。</p></div>
     <div class="ouse b"><p class="tt"><span class="badge">STP 候选</span>B · 支撑规则自动校验（免检铺路）</p><p>交叉验证通过后，抽取结果喂给专家规则做全量自动核对；全过则该复核环节可由规则替代人工，案子具备走 STP 自动放款的前提。</p></div>
+  </div>
+
+  <!-- 4.2 哪些文书进 OCR -->
+  <div class="subh"><span class="sx">4.2</span>哪些文书进 OCR —— 按「数据从哪来」界定</div>
+  <p class="subh-lead">放款文书不是都要 OCR。产品在文书清单里用「OCR fileds」列做了分流：只有<b>外部新增文书</b>才需要 OCR 提取；已在前阶段采集的、或系统自己生成的，直接复用数据。</p>
+  <div class="buckets">
+    <div class="bk reuse">
+      <p class="bt"><span class="pill p-reuse">已有</span></p>
+      <p class="bd">前阶段（进件/签约）已采集并核验，放款阶段直接复用，不重复 OCR。</p>
+      <p class="bl">NRIC · Passport · Driving License · Seller's IC</p>
+    </div>
+    <div class="bk sys">
+      <p class="bt"><span class="pill p-sys">系统文书</span></p>
+      <p class="bd">由系统生成，字段本就结构化在库里，无需 OCR，系统直接提供数据。</p>
+      <p class="bl">HP Agreement &amp; T&amp;C · Application Form · 2nd Schedule · Biometric 结果</p>
+    </div>
+    <div class="bk ocr">
+      <p class="bt"><span class="pill p-ocr">需 OCR</span></p>
+      <p class="bd">放款阶段首次出现的外部文书，须 OCR 抽字段并交叉校验。<b>这就是放款 OCR 的真实范围。</b></p>
+      <p class="bl">Vehicle Invoice · VOC · Road Tax · Insurance Cover Note · Delivery Order · IBG Letter · FIS/JPJ Result · E-hakmilik · Credit Note(Admin Fee) · Loan Suspense Receipt</p>
+    </div>
+    <div class="bk tbd">
+      <p class="bt"><span class="pill p-tbd">待定</span></p>
+      <p class="bd">尚未确认是否纳入 OCR，需与产品对齐。</p>
+      <p class="bl">SI Form（自动扣款协议）</p>
+    </div>
+  </div>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>文书</th><th>OCR 分类</th><th>场景 / 说明</th></tr></thead>
+      <tbody>
+        <tr><td class="doc">Vehicle Invoice</td><td><span class="pill p-ocr">需 OCR</span></td><td>新车</td></tr>
+        <tr><td class="doc">VOC</td><td><span class="pill p-ocr">需 OCR</span></td><td>仅二手车</td></tr>
+        <tr><td class="doc">Road Tax Disc / JPJ Receipt</td><td><span class="pill p-ocr">需 OCR</span></td><td>税</td></tr>
+        <tr><td class="doc">Insurance Cover Note</td><td><span class="pill p-ocr">需 OCR</span></td><td>保险</td></tr>
+        <tr><td class="doc">Delivery Order（交车凭证）</td><td><span class="pill p-ocr">需 OCR</span></td><td>交车凭证</td></tr>
+        <tr><td class="doc">IBG Letter</td><td><span class="pill p-ocr">需 OCR</span></td><td>打款给另一个账户</td></tr>
+        <tr><td class="doc">FIS / JPJ Result</td><td><span class="pill p-ocr">需 OCR</span></td><td>抵押登记结果</td></tr>
+        <tr><td class="doc">E-hakmilik copy</td><td><span class="pill p-ocr">需 OCR</span></td><td>抵押登记凭证</td></tr>
+        <tr><td class="doc">Credit Note - Admin Fee</td><td><span class="pill p-ocr">需 OCR</span></td><td>交付 HLB 的 RM250 管理费</td></tr>
+        <tr><td class="doc">Loan Suspense Receipt（首付凭证）</td><td><span class="pill p-ocr">需 OCR</span></td><td>首付凭证</td></tr>
+        <tr><td class="doc">NRIC / Passport / Driving License</td><td><span class="pill p-reuse">已有</span></td><td>进件阶段已采集核验</td></tr>
+        <tr><td class="doc">Seller's IC</td><td><span class="pill p-reuse">已有</span></td><td>已有</td></tr>
+        <tr><td class="doc">HP Agreement / Application Form / 2nd Schedule</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成，字段已知</td></tr>
+        <tr><td class="doc">Biometric</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成结果</td></tr>
+        <tr><td class="doc">SI Form</td><td><span class="pill p-tbd">待定</span></td><td>自动扣款协议</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 4.3 校验放哪里 -->
+  <div class="subh"><span class="sx">4.3</span>校验放哪里 —— OCR 引擎 vs CRA 工作台</div>
+  <p class="subh-lead">OCR 引擎负责「能自动算的」，CRA 工作台负责「要人判断的」。校验规则见附件《Business Rule Validation》原型（三栏工作台）与《CRA Business Rules &amp; Defect Code》规则清单，每条规则挂一个 Defect Code。</p>
+  <div class="ocr">
+    <div class="layer eng">
+      <p class="lt">OCR 引擎层 · 自动</p>
+      <p class="lsub">高置信提取 + 确定性规则，机器可判定</p>
+      <ul>
+        <li><b>字段提取</b>：从「需 OCR」文书抽结构化字段</li>
+        <li><b>确定性专家规则自动跑</b>：日期比对 / 算术加总 / 固定值(如 Admin fee=RM270) / 金额一致 / 地区匹配 / 表单版本映射</li>
+        <li><b>产出</b>：Pass / Fail；失败自动登记对应 <b>Defect Code</b>，二次提交通过后自动置 Rectified</li>
+      </ul>
+    </div>
+    <div class="layer wb">
+      <p class="lt">CRA 复核工作台层 · 人工</p>
+      <p class="lsub">需人眼判断、无数字对照、或引擎判不了的</p>
+      <ul>
+        <li><b>结果确认 / 纠错</b>：对每条规则 Confirm / Error / Edit（改 OCR 值 + 填 Reason）</li>
+        <li><b>低置信字段</b>：OCR 置信度低于阈值的推人工目视校准</li>
+        <li><b>孤立关键字段</b>：无跨文件数字可比对的，须人工目视确认</li>
+        <li><b>特殊文书判断</b>：某场景是否缺必备文件、Hard Fail 是否放行等，最终裁量权在 CRA</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 4.4 划分原则 -->
+  <div class="subh"><span class="sx">4.4</span>划分原则（界定边界的四条准则）</div>
+  <div class="cards">
+    <div class="card"><span class="num">P1</span><p class="h">数据来源定「是否 OCR」</p><p class="why">已有 / 系统文书 → 复用或系统提供，不 OCR；外部新增文书 → OCR 提取。</p></div>
+    <div class="card"><span class="num">P2</span><p class="h">可确定性定「是否自动」</p><p class="why">能写成确定公式、且有数字对照物 → 引擎自动跑；需人眼判断、无对照 → 留 CRA 工作台。</p></div>
+    <div class="card"><span class="num">P3</span><p class="h">置信度定「分流」</p><p class="why">高置信 + 规则全过 → 自动确认（STP 可直通）；低置信 / 规则失败 / 孤立字段 → 推工作台。</p></div>
+    <div class="card"><span class="num">P4</span><p class="h">最终裁量权归 CRA</p><p class="why">OCR / 规则只产出结果与缺陷建议；Confirm / Override / 放行的决定权始终在人。</p></div>
   </div>
 </section>
 
