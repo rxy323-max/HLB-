@@ -61,20 +61,6 @@
   h2{font-size:21px;margin:0;font-weight:680}
   .sec-lead{color:var(--ink-soft);margin:10px 0 24px;max-width:62ch}
 
-  /* scope banner */
-  .scope{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .sc{border-radius:var(--radius);padding:16px 18px;border:1px solid var(--line)}
-  .sc.in{background:var(--auto-soft);border-color:var(--auto)}
-  .sc.out{background:var(--surface-2);border-color:var(--line-strong)}
-  .sc h4{margin:0 0 8px;font-size:14.5px;display:flex;align-items:center;gap:8px}
-  .sc.in h4{color:var(--auto)}
-  .sc.out h4{color:var(--ink-faint)}
-  .sc ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
-  .sc li{font-size:13.5px;color:var(--ink-soft)}
-  .sc li b{color:var(--ink)}
-  .next-note{margin-top:14px;background:var(--manual-soft);border:1px solid var(--manual);border-radius:var(--radius);padding:13px 16px;font-size:14px;color:var(--ink)}
-  .next-note b{color:var(--manual)}
-
   /* goal cards */
   .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px}
@@ -82,29 +68,37 @@
   .card .h{font-weight:660;font-size:15px;margin:5px 0 6px}
   .card .why{font-size:13px;color:var(--ink-soft);margin:0;line-height:1.55}
 
-  /* buckets */
-  .buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  /* buckets (brief, no doc lists inside) */
+  .buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:18px}
   .bk{border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px;background:var(--surface);border-top:3px solid var(--line-strong)}
   .bk.reuse{border-top-color:var(--ink-faint)}
   .bk.sys{border-top-color:var(--accent)}
   .bk.ocr{border-top-color:var(--auto)}
   .bk .bt{font-weight:670;font-size:14px;margin:0 0 3px}
-  .bk .bd{font-size:12.5px;color:var(--ink-soft);margin:5px 0 8px}
-  .bk .bl{font-size:12px;color:var(--ink);line-height:1.55;margin:0}
+  .bk .bd{font-size:12.5px;color:var(--ink-soft);margin:5px 0 0}
   .pill{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:2px 8px;border-radius:100px;font-weight:600;white-space:nowrap}
   .p-reuse{background:var(--surface-2);color:var(--ink-soft)}
   .p-sys{background:var(--accent-soft);color:var(--accent)}
   .p-ocr{background:var(--auto-soft);color:var(--auto)}
 
-  /* delivery flow */
-  .flow-scroll{overflow-x:auto;padding:6px 0 14px}
-  .pipe{display:flex;align-items:stretch;min-width:740px}
-  .node{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);padding:12px 14px;min-width:130px;flex:none;display:flex;flex-direction:column;justify-content:center;gap:3px}
+  /* doc table */
+  .tbl-wrap{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden}
+  .tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+  .tbl th,.tbl td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--line);vertical-align:middle}
+  .tbl th{background:var(--surface-2);font-weight:640;color:var(--ink-soft);font-size:11.5px;letter-spacing:.03em;text-transform:uppercase}
+  .tbl td{color:var(--ink-soft)}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl .doc{color:var(--ink);font-weight:580}
+
+  /* delivery flow — fixed width, no scroll, wraps for PDF */
+  .pipe{display:flex;align-items:stretch;flex-wrap:wrap;gap:10px 0;margin:6px 0 8px}
+  .node{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);padding:12px 14px;flex:1 1 0;min-width:150px;display:flex;flex-direction:column;justify-content:center;gap:3px}
   .node .t{font-weight:660;font-size:14px}
   .node .d{font-size:11.5px;color:var(--ink-faint);line-height:1.45}
   .node.sys{border-color:var(--accent);background:var(--accent-soft)}
   .node.man{border-color:var(--manual);background:var(--manual-soft)}
-  .arrow{align-self:center;color:var(--line-strong);flex:none;padding:0 10px;font-size:18px;font-weight:700;line-height:1}
+  .arrow{align-self:center;color:var(--line-strong);flex:none;padding:0 8px;font-size:17px;font-weight:700;line-height:1}
+
   .stage-tags{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 14px}
   .stg{font-size:12px;font-family:var(--mono);font-weight:600;padding:3px 10px;border-radius:100px}
   .stg.s1{background:var(--accent-soft);color:var(--accent)}
@@ -121,10 +115,12 @@
   .callout p{margin:0;color:var(--ink);font-size:14px}
   .callout .k{font-weight:680;color:var(--accent)}
 
-  .foot{padding:28px 0 0;color:var(--ink-faint);font-size:12.5px}
+  .next-note{margin-top:16px;background:var(--manual-soft);border:1px solid var(--manual);border-radius:var(--radius);padding:13px 16px;font-size:14px;color:var(--ink)}
+  .next-note b{color:var(--manual)}
 
   @media (max-width:680px){
-    .scope{grid-template-columns:1fr}
+    .pipe{flex-direction:column}
+    .arrow{transform:rotate(90deg);padding:2px 0;align-self:flex-start;margin-left:20px}
   }
 </style>
 
@@ -132,39 +128,13 @@
 <header>
   <p class="eyebrow">HLB LOAD$ · 放款模块 · Batch 3</p>
   <h1>OCR 需求范围说明<br>（CRA 团队沟通版）</h1>
-  <p class="sub">本次沟通聚焦放款环节 OCR 的<b>业务目标、功能范围、交付逻辑</b>三件事。STP 全流程（含统计口径与后续业务流设计）将于<b>下周专场说明</b>，今天不展开。</p>
+  <p class="sub">本材料说明放款环节 OCR 的<b>业务目标、功能范围、交付逻辑</b>。</p>
   <div class="meta">
     <span><strong>对象</strong> CRA 团队</span>
     <span><strong>范围</strong> 放款阶段 OCR</span>
     <span><strong>性质</strong> 需求范围对齐 · 讨论稿</span>
   </div>
 </header>
-
-<!-- 0 · 范围声明 -->
-<section>
-  <div class="sec-h"><span class="sec-n">00</span><h2>本次沟通范围</h2></div>
-  <p class="sec-lead">先立边界：今天只谈 OCR 本身，不谈 STP 全流程。</p>
-
-  <div class="scope">
-    <div class="sc in">
-      <h4>✓ 今天讨论</h4>
-      <ul>
-        <li><b>OCR 业务目标</b>：为什么在放款环节引入 OCR</li>
-        <li><b>OCR 功能范围</b>：哪些文书进 OCR、OCR 做什么</li>
-        <li><b>交付逻辑</b>：OCR 数据如何同步到 CRA、双阶段校验怎么走、前端如何反馈</li>
-      </ul>
-    </div>
-    <div class="sc out">
-      <h4>✕ 今天不展开</h4>
-      <ul>
-        <li>STP 全流程设计与分流规则</li>
-        <li>STP 统计口径 / SCP 口径定义</li>
-        <li>放款后续业务流（Post Maintenance 等）细节</li>
-      </ul>
-    </div>
-  </div>
-  <div class="next-note"><b>下周安排：</b>将组织 Batch 3 专场沟通，完整说明 STP 放款全流程（含 OCR 在其中的位置、分流规则与统计口径）。今天讨论中涉及 STP 的问题，统一记录后带到下周专场。</div>
-</section>
 
 <!-- 1 · 业务目标 -->
 <section>
@@ -173,7 +143,7 @@
   <div class="cards">
     <div class="card"><span class="num">G1</span><p class="h">减少人工录入</p><p class="why">放款文书的字段由系统自动提取并回填到 CRA 界面，CRA 由「手工敲数据」变为「目视核对 + 确认」，降低录入工作量与手误。</p></div>
     <div class="card"><span class="num">G2</span><p class="h">提升核验质量与一致性</p><p class="why">提取结果自动执行跨文件交叉校验与业务规则检查，规则统一、口径一致，不依赖个人经验；发现问题自动登记缺陷（Defect Code）。</p></div>
-    <div class="card"><span class="num">G3</span><p class="h">为流程自动化打基础</p><p class="why">结构化、可信的 OCR 数据是后续流程自动化的前提。自动化的整体设计（STP）下周专场说明。</p></div>
+    <div class="card"><span class="num">G3</span><p class="h">为流程自动化打基础</p><p class="why">结构化、可信的 OCR 数据是后续流程自动化的前提。</p></div>
   </div>
   <div class="callout"><p><span class="k">定位说明：</span>OCR 只承担「字段提取 / 反显填入」的角色，<b>不替代 CRA 的复核</b>。所有校验结果的确认、修改、放行，最终决定权始终在 CRA。</p></div>
 </section>
@@ -188,18 +158,37 @@
     <div class="bk reuse">
       <p class="bt"><span class="pill p-reuse">已有</span></p>
       <p class="bd">前阶段已采集核验，直接复用数据，不重复 OCR。</p>
-      <p class="bl">NRIC · Passport · Driving License · Seller's IC</p>
     </div>
     <div class="bk sys">
       <p class="bt"><span class="pill p-sys">系统文书</span></p>
       <p class="bd">系统自己生成，字段已结构化在库，无需 OCR。</p>
-      <p class="bl">HP Agreement &amp; T&amp;C · Application Form · 2nd Schedule · Biometric 结果</p>
     </div>
     <div class="bk ocr">
       <p class="bt"><span class="pill p-ocr">需 OCR</span></p>
       <p class="bd">放款阶段首次出现的外部文书——<b>这是本次 OCR 的范围</b>。</p>
-      <p class="bl">Vehicle Invoice · VOC · Road Tax · Insurance Cover Note · Delivery Order · IBG Letter · FIS/JPJ Result · E-hakmilik · Credit Note(Admin Fee) · Loan Suspense Receipt</p>
     </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>文书</th><th>分类</th><th>场景 / 说明</th></tr></thead>
+      <tbody>
+        <tr><td class="doc">Vehicle Invoice</td><td><span class="pill p-ocr">需 OCR</span></td><td>新车</td></tr>
+        <tr><td class="doc">VOC</td><td><span class="pill p-ocr">需 OCR</span></td><td>仅二手车</td></tr>
+        <tr><td class="doc">Road Tax Disc / JPJ Receipt</td><td><span class="pill p-ocr">需 OCR</span></td><td>税</td></tr>
+        <tr><td class="doc">Insurance Cover Note</td><td><span class="pill p-ocr">需 OCR</span></td><td>保险</td></tr>
+        <tr><td class="doc">Delivery Order</td><td><span class="pill p-ocr">需 OCR</span></td><td>交车凭证</td></tr>
+        <tr><td class="doc">IBG Letter</td><td><span class="pill p-ocr">需 OCR</span></td><td>打款给另一个账户</td></tr>
+        <tr><td class="doc">FIS / JPJ Result</td><td><span class="pill p-ocr">需 OCR</span></td><td>抵押登记结果</td></tr>
+        <tr><td class="doc">E-hakmilik copy</td><td><span class="pill p-ocr">需 OCR</span></td><td>抵押登记凭证</td></tr>
+        <tr><td class="doc">Credit Note - Admin Fee</td><td><span class="pill p-ocr">需 OCR</span></td><td>交付 HLB 的管理费</td></tr>
+        <tr><td class="doc">Loan Suspense Receipt</td><td><span class="pill p-ocr">需 OCR</span></td><td>首付凭证</td></tr>
+        <tr><td class="doc">NRIC / Passport / Driving License</td><td><span class="pill p-reuse">已有</span></td><td>进件阶段已采集核验</td></tr>
+        <tr><td class="doc">Seller's IC</td><td><span class="pill p-reuse">已有</span></td><td>已有</td></tr>
+        <tr><td class="doc">HP Agreement / Application Form / 2nd Schedule</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成，字段已知</td></tr>
+        <tr><td class="doc">Biometric</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成结果</td></tr>
+      </tbody>
+    </table>
   </div>
 
   <div class="stage-tags" style="margin-top:22px"><span class="stg s1">2.2 OCR 做什么 —— 四个动作</span></div>
@@ -222,18 +211,16 @@
   </ol>
 
   <div class="stage-tags" style="margin-top:22px"><span class="stg s1">3.2 双阶段校验机制</span></div>
-  <div class="flow-scroll">
-    <div class="pipe">
-      <div class="node sys"><span class="t">① OCR 工作台</span><span class="d">文件规则核验：分类确认、字段校准、文件层校验</span></div>
-      <span class="arrow">→</span>
-      <div class="node"><span class="t">提交核验</span><span class="d">用户确认 OCR 结果</span></div>
-      <span class="arrow">→</span>
-      <div class="node man"><span class="t">② CRA 工作台</span><span class="d">专家业务规则检查：业务层规则执行与结果确认</span></div>
-      <span class="arrow">→</span>
-      <div class="node"><span class="t">主页反显</span><span class="d">结果供用户二次确认</span></div>
-    </div>
+  <div class="pipe">
+    <div class="node sys"><span class="t">① OCR 工作台</span><span class="d">文件规则核验：分类确认、字段校准、文件层校验</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="t">提交核验</span><span class="d">用户确认 OCR 结果</span></div>
+    <span class="arrow">→</span>
+    <div class="node man"><span class="t">② CRA 工作台</span><span class="d">专家业务规则检查：业务层规则执行与结果确认</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="t">主页反显</span><span class="d">结果供用户二次确认</span></div>
   </div>
-  <p class="sec-lead" style="margin-top:4px">即：CRA 先在 <b>OCR 工作台</b>完成文件规则核验，随后返回 <b>CRA 工作台</b>进行专家业务规则检查——两个阶段、两个工作台，各管一层规则。</p>
+  <p class="sec-lead" style="margin-top:8px">即：CRA 先在 <b>OCR 工作台</b>完成文件规则核验，随后返回 <b>CRA 工作台</b>进行专家业务规则检查——两个阶段、两个工作台，各管一层规则。</p>
 
   <div class="stage-tags" style="margin-top:18px"><span class="stg s2">3.3 前端交互反馈</span></div>
   <ol class="steps">
@@ -242,7 +229,7 @@
   </ol>
 </section>
 
-<!-- 4 · 下一步 -->
+<!-- 4 · 确认事项与下一步 -->
 <section>
   <div class="sec-h"><span class="sec-n">04</span><h2>今天需要确认的事项 &amp; 下一步</h2></div>
   <div class="cards">
@@ -250,7 +237,6 @@
     <div class="card"><span class="num">Q2</span><p class="h">数据同步方案</p><p class="why">CRA 从 CDM 拉取 + 放款团队决定界面填充方式——该模式是否确认？</p></div>
     <div class="card"><span class="num">Q3</span><p class="h">双阶段校验动线</p><p class="why">先 OCR 工作台、后 CRA 工作台的操作动线，与 CRA 现有作业习惯是否匹配？</p></div>
   </div>
-  <div class="next-note" style="margin-top:16px"><b>下一步：</b>① 今天的确认与修改意见回收后更新本材料；② <b>下周 Batch 3 专场</b>完整说明 STP 放款全流程（含 OCR 在全流程中的位置、分流规则与统计口径）。</div>
-  <div class="foot"><p>本材料为 Batch 3 OCR 需求范围讨论稿，配套详细材料（STP 放款全流程可视化梳理、CRA 业务规则清单等）见项目文档库 06_放款 目录。</p></div>
+  <div class="next-note"><b>下一步：</b>下周与 Howie 一起，专场讨论 STP 放款全流程。</div>
 </section>
 </div>
