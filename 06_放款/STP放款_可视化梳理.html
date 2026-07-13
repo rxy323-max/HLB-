@@ -14,13 +14,13 @@
     --line:#dbe1e0;
     --line-strong:#c3cccb;
 
-    --accent:#0b5f5c;      /* petrol teal — 系统 / OCR */
+    --accent:#0b5f5c;
     --accent-soft:#e3efee;
-    --auto:#1f7a52;        /* STP 自动 */
+    --auto:#1f7a52;
     --auto-soft:#e2f0e8;
-    --manual:#a9691a;      /* CRA 人工 */
+    --manual:#a9691a;
     --manual-soft:#f5ebd9;
-    --block:#b0392e;       /* 拦截 / 不合格 */
+    --block:#b0392e;
     --block-soft:#f6e3e0;
 
     --radius:10px;
@@ -65,7 +65,6 @@
   }
   .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px 96px}
 
-  /* header */
   header{padding:52px 0 30px;border-bottom:1px solid var(--line)}
   .eyebrow{font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:650;margin:0 0 12px}
   h1{font-size:clamp(26px,4.4vw,38px);line-height:1.18;margin:0 0 12px;font-weight:720;text-wrap:balance;letter-spacing:-.01em}
@@ -73,7 +72,6 @@
   .meta{margin-top:20px;display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--ink-faint)}
   .meta span strong{color:var(--ink-soft);font-weight:600}
 
-  /* legend */
   .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
   .lg{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);padding:5px 11px;border-radius:100px}
   .dot{width:9px;height:9px;border-radius:3px;flex:none}
@@ -86,19 +84,18 @@
   h2{font-size:22px;margin:0;font-weight:680;letter-spacing:-.01em}
   .sec-lead{color:var(--ink-soft);margin:10px 0 26px;max-width:64ch}
 
-  /* callout */
   .callout{background:var(--accent-soft);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:16px 18px;margin:0 0 26px}
   .callout p{margin:0;color:var(--ink)}
   .callout .k{font-weight:680;color:var(--accent)}
 
-  /* ---- flow pipeline ---- */
-  .flow-scroll{overflow-x:auto;padding:6px 2px 14px;margin:0 -4px}
-  .pipe{display:flex;align-items:stretch;gap:0;min-width:760px}
-  .node{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);padding:12px 14px;min-width:118px;display:flex;flex-direction:column;justify-content:center;gap:3px}
+  /* flow pipeline */
+  .flow-scroll{overflow-x:auto;padding:6px 0 14px}
+  .pipe{display:flex;align-items:stretch;min-width:780px}
+  .node{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);padding:12px 14px;min-width:120px;flex:none;display:flex;flex-direction:column;justify-content:center;gap:3px}
   .node .t{font-weight:660;font-size:14px}
   .node .d{font-size:11.5px;color:var(--ink-faint);line-height:1.4}
   .node.sys{border-color:var(--accent);background:var(--accent-soft)}
-  .arrow{align-self:center;color:var(--line-strong);flex:none;padding:0 9px;font-size:18px;font-weight:700}
+  .arrow{align-self:center;color:var(--line-strong);flex:none;padding:0 10px;font-size:18px;font-weight:700;line-height:1}
   .input-tag{font-size:11.5px;color:var(--ink-faint);border:1px dashed var(--line-strong);border-radius:7px;padding:6px 10px;margin-bottom:12px;display:inline-block}
 
   .branch{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -111,12 +108,12 @@
   .tag{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:5px;font-weight:600}
   .lane.auto .tag{background:var(--auto);color:#fff}
   .lane.man .tag{background:var(--manual);color:#fff}
-  .rejoin{margin-top:14px;display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap;font-size:13px;color:var(--ink-soft)}
-  .rejoin .node{min-width:auto}
+  .rejoin{margin-top:16px;display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;font-size:13px;color:var(--ink-soft)}
+  .rejoin .node{min-width:auto;flex:none}
 
-  /* ---- condition cards ---- */
+  /* condition cards */
   .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:12px}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px;position:relative}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px}
   .card .num{font-family:var(--mono);font-size:12px;color:var(--block);font-weight:700}
   .card .h{font-weight:660;font-size:15px;margin:5px 0 6px}
   .card .why{font-size:13px;color:var(--ink-soft);margin:0;line-height:1.55}
@@ -131,6 +128,7 @@
   .sw .name{font-family:var(--mono);font-size:13px;font-weight:650;color:var(--accent)}
   .sw .desc{font-size:13px;color:var(--ink-soft);margin:8px 0 0}
   .sw .desc b{color:var(--ink)}
+  .sw .desc code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
 
   /* roles + steps */
   .roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:24px}
@@ -140,7 +138,7 @@
   .role .rr{font-size:12.5px;color:var(--ink-soft);margin:0}
   .chip{width:8px;height:8px;border-radius:2px;flex:none}
 
-  ol.steps{list-style:none;counter-reset:s;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+  ol.steps{list-style:none;counter-reset:s;margin:0;padding:0;display:flex;flex-direction:column}
   ol.steps li{counter-increment:s;display:flex;gap:14px;padding:11px 0;border-top:1px dashed var(--line)}
   ol.steps li:first-child{border-top:0}
   ol.steps li::before{content:counter(s);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:6px;width:26px;height:24px;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
@@ -161,61 +159,52 @@
   /* ocr two uses */
   .ocr{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
   .ouse{border:1px solid var(--line);border-radius:var(--radius);padding:16px 17px;background:var(--surface)}
-  .ouse .tt{font-weight:670;font-size:15px;margin:0 0 8px;display:flex;gap:9px;align-items:center}
-  .ouse .badge{font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:100px;font-weight:600}
+  .ouse .tt{font-weight:670;font-size:15px;margin:0 0 8px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .ouse .badge{font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:100px;font-weight:600;flex:none}
   .ouse.a .badge{background:var(--auto-soft);color:var(--auto)}
   .ouse.b .badge{background:var(--accent-soft);color:var(--accent)}
   .ouse p{margin:0;font-size:13px;color:var(--ink-soft)}
 
   /* subhead within section */
-  .subh{font-size:15px;font-weight:670;margin:30px 0 4px;display:flex;align-items:center;gap:9px}
-  .subh .sx{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600}
+  .subh{font-size:15px;font-weight:670;margin:34px 0 4px;display:flex;align-items:center;gap:9px}
+  .subh:first-of-type{margin-top:0}
+  .subh .sx{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600;flex:none}
   .subh-lead{color:var(--ink-soft);font-size:13.5px;margin:0 0 16px;max-width:64ch}
 
   /* doc classification buckets */
-  .buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:18px}
+  .buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:18px}
   .bk{border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px;background:var(--surface);border-top:3px solid var(--line-strong)}
   .bk.reuse{border-top-color:var(--ink-faint)}
   .bk.sys{border-top-color:var(--accent)}
   .bk.ocr{border-top-color:var(--auto)}
-  .bk.tbd{border-top-color:var(--manual)}
-  .bk .bt{font-weight:670;font-size:14px;margin:0 0 3px;display:flex;align-items:center;gap:8px}
-  .bk .bcount{font-family:var(--mono);font-size:11px;color:var(--ink-faint);font-weight:600}
+  .bk .bt{font-weight:670;font-size:14px;margin:0 0 3px}
   .bk .bd{font-size:12.5px;color:var(--ink-soft);margin:5px 0 8px}
-  .bk .bl{font-size:12px;color:var(--ink);line-height:1.5}
+  .bk .bl{font-size:12px;color:var(--ink);line-height:1.55;margin:0}
   .pill{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:2px 8px;border-radius:100px;font-weight:600;white-space:nowrap}
   .p-reuse{background:var(--surface-2);color:var(--ink-soft)}
   .p-sys{background:var(--accent-soft);color:var(--accent)}
   .p-ocr{background:var(--auto-soft);color:var(--auto)}
-  .p-tbd{background:var(--manual-soft);color:var(--manual)}
 
   /* table */
   .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
-  .tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}
+  .tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:540px}
   .tbl th,.tbl td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--line);vertical-align:middle}
-  .tbl th{background:var(--surface-2);font-weight:640;color:var(--ink-soft);font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;position:sticky;top:0}
+  .tbl th{background:var(--surface-2);font-weight:640;color:var(--ink-soft);font-size:11.5px;letter-spacing:.03em;text-transform:uppercase}
   .tbl td{color:var(--ink-soft)}
   .tbl tr:last-child td{border-bottom:0}
   .tbl .doc{color:var(--ink);font-weight:580}
 
   /* engine vs workbench split */
-  .layer{border:1px solid var(--line);border-radius:var(--radius);padding:16px 17px;background:var(--surface)}
-  .layer.eng{border-top:3px solid var(--auto)}
-  .layer.wb{border-top:3px solid var(--manual)}
-  .layer .lt{font-weight:670;font-size:15px;margin:0 0 3px;display:flex;align-items:center;gap:9px}
+  .layer{border:1px solid var(--line);border-radius:var(--radius);padding:16px 17px;background:var(--surface);border-top:3px solid var(--line-strong)}
+  .layer.eng{border-top-color:var(--auto)}
+  .layer.wb{border-top-color:var(--manual)}
+  .layer .lt{font-weight:670;font-size:15px;margin:0 0 3px}
   .layer.eng .lt{color:var(--auto)}
   .layer.wb .lt{color:var(--manual)}
   .layer .lsub{font-size:12px;color:var(--ink-faint);margin:0 0 11px}
   .layer ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px}
   .layer li{font-size:13px;color:var(--ink-soft)}
   .layer li b{color:var(--ink);font-weight:600}
-
-  /* open questions */
-  .oq{display:flex;flex-direction:column;gap:10px}
-  .oq .q{display:flex;gap:12px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--manual);border-radius:var(--radius);padding:12px 15px}
-  .oq .q .mk{color:var(--manual);font-weight:700;flex:none}
-  .oq .q p{margin:0;font-size:13.5px;color:var(--ink-soft)}
-  .oq .q b{color:var(--ink)}
 
   .foot{padding:30px 0 0;color:var(--ink-faint);font-size:12.5px}
   .foot code{font-family:var(--mono);background:var(--surface-2);padding:1px 6px;border-radius:5px;color:var(--ink-soft)}
@@ -230,7 +219,7 @@
 <header>
   <p class="eyebrow">HLB LOAD$ · 放款模块</p>
   <h1>STP 放款需求梳理 · 内部讨论稿</h1>
-  <p class="sub">把「放款条件、放款流程、上下游交互」合并为一份可视化参考，用于内部讨论与口径确认。核心结论见下方模型修正。</p>
+  <p class="sub">把「放款条件、放款流程、上下游交互、OCR 职责边界」合并为一份可视化参考，用于内部讨论与口径确认。</p>
   <div class="meta">
     <span><strong>范围</strong> HP / iHP 车贷 · Disbursement 放款阶段</span>
     <span><strong>用途</strong> 内部走查 · 需求确认</span>
@@ -246,11 +235,11 @@
 
 <!-- 0 · 核心模型 -->
 <section>
-  <div class="sec-h"><span class="sec-n">00</span><h2>核心模型（口径修正）</h2></div>
+  <div class="sec-h"><span class="sec-n">00</span><h2>核心模型</h2></div>
   <p class="sec-lead">所有放款案件走的是同一条主干；STP 是主干末端的自动化增强，不是另一条独立流程。</p>
 
   <div class="callout">
-    <p><span class="k">关键修正：</span>OCR 只承担「字段填入 / 反显」这一个角色，它<b>不替代复核</b>。复核环节对所有放款案件始终存在。只要过 STP 放款，业务上 OCR 作为填入，仍由 CRA 复核（人工，或由专家规则系统化执行）。STP 自动化的是<b>放款执行动作</b>（建户 / 打款 / 文书 / 邮件），不是复核本身。</p>
+    <p><span class="k">关键口径：</span>OCR 只承担「字段填入 / 反显」这一个角色，它<b>不替代复核</b>。复核环节对所有放款案件始终存在。只要过 STP 放款，业务上 OCR 作为填入，仍由 CRA 复核（人工，或由专家规则系统化执行）。STP 自动化的是<b>放款执行动作</b>（建户 / 打款 / 文书 / 邮件），不是复核本身。</p>
   </div>
 
   <span class="input-tag">输入：放款方式（新车 / 二手 / FBR / FBT …）作为分类与规则的判定依据</span>
@@ -313,7 +302,7 @@
 
   <div class="switches">
     <div class="sw"><span class="name">STP_SWITCH</span><p class="desc">全局总开关，<b>默认 OFF</b>。管理层的「一键刹车」——ON 时合格案子走自动放款，OFF 时即使合格也降级回 CRA Authorizer 人工。用于上线初期或异常时的运营级风控。</p></div>
-    <div class="sw"><span class="name">Full Maintenance Indicator</span><p class="desc">决定放款后收尾是否一次做完。<b>Yes</b>：放款→文书→邮件一次到底；<b>No</b>：只做到放款，状态置 <code style="font-family:var(--mono);font-size:12px">Funded Pending Post Maintenance</code>，转 <b>Post Maintenance</b> 队列由人工补做后续文书 / 账务。</p></div>
+    <div class="sw"><span class="name">Full Maintenance Indicator</span><p class="desc">决定放款后收尾是否一次做完。<b>Yes</b>：放款→文书→邮件一次到底；<b>No</b>：只做到放款，状态置 <code>Funded Pending Post Maintenance</code>，转 <b>Post Maintenance</b> 队列由人工补做后续文书 / 账务。</p></div>
   </div>
 </section>
 
@@ -381,7 +370,6 @@
   <div class="sec-h"><span class="sec-n">04</span><h2>OCR × CRA 复核工作台（职责边界）</h2></div>
   <p class="sec-lead">回答两个设计问题：<b>哪些文书进 OCR</b>（按数据来源界定），以及<b>哪些校验放 OCR 引擎、哪些留 CRA 工作台</b>（按可确定性与置信度界定）。</p>
 
-  <!-- 4.1 两层用途 -->
   <div class="subh"><span class="sx">4.1</span>OCR 的两层用途</div>
   <p class="subh-lead">不是「两种 OCR」，而是同一份 OCR 结果的两种下游用途。B 的前提仍是 A——先把字段可靠抽出来，才能既反显、又喂规则。</p>
   <div class="ocr">
@@ -389,9 +377,8 @@
     <div class="ouse b"><p class="tt"><span class="badge">STP 候选</span>B · 支撑规则自动校验（免检铺路）</p><p>交叉验证通过后，抽取结果喂给专家规则做全量自动核对；全过则该复核环节可由规则替代人工，案子具备走 STP 自动放款的前提。</p></div>
   </div>
 
-  <!-- 4.2 哪些文书进 OCR -->
   <div class="subh"><span class="sx">4.2</span>哪些文书进 OCR —— 按「数据从哪来」界定</div>
-  <p class="subh-lead">放款文书不是都要 OCR。产品在文书清单里用「OCR fileds」列做了分流：只有<b>外部新增文书</b>才需要 OCR 提取；已在前阶段采集的、或系统自己生成的，直接复用数据。</p>
+  <p class="subh-lead">放款文书不是都要 OCR。只有<b>外部新增文书</b>才需要 OCR 提取；已在前阶段采集的、或系统自己生成的，直接复用数据。</p>
   <div class="buckets">
     <div class="bk reuse">
       <p class="bt"><span class="pill p-reuse">已有</span></p>
@@ -408,11 +395,6 @@
       <p class="bd">放款阶段首次出现的外部文书，须 OCR 抽字段并交叉校验。<b>这就是放款 OCR 的真实范围。</b></p>
       <p class="bl">Vehicle Invoice · VOC · Road Tax · Insurance Cover Note · Delivery Order · IBG Letter · FIS/JPJ Result · E-hakmilik · Credit Note(Admin Fee) · Loan Suspense Receipt</p>
     </div>
-    <div class="bk tbd">
-      <p class="bt"><span class="pill p-tbd">待定</span></p>
-      <p class="bd">尚未确认是否纳入 OCR，需与产品对齐。</p>
-      <p class="bl">SI Form（自动扣款协议）</p>
-    </div>
   </div>
   <div class="tbl-wrap">
     <table class="tbl">
@@ -426,20 +408,18 @@
         <tr><td class="doc">IBG Letter</td><td><span class="pill p-ocr">需 OCR</span></td><td>打款给另一个账户</td></tr>
         <tr><td class="doc">FIS / JPJ Result</td><td><span class="pill p-ocr">需 OCR</span></td><td>抵押登记结果</td></tr>
         <tr><td class="doc">E-hakmilik copy</td><td><span class="pill p-ocr">需 OCR</span></td><td>抵押登记凭证</td></tr>
-        <tr><td class="doc">Credit Note - Admin Fee</td><td><span class="pill p-ocr">需 OCR</span></td><td>交付 HLB 的 RM250 管理费</td></tr>
-        <tr><td class="doc">Loan Suspense Receipt（首付凭证）</td><td><span class="pill p-ocr">需 OCR</span></td><td>首付凭证</td></tr>
+        <tr><td class="doc">Credit Note - Admin Fee</td><td><span class="pill p-ocr">需 OCR</span></td><td>交付 HLB 的管理费</td></tr>
+        <tr><td class="doc">Loan Suspense Receipt</td><td><span class="pill p-ocr">需 OCR</span></td><td>首付凭证</td></tr>
         <tr><td class="doc">NRIC / Passport / Driving License</td><td><span class="pill p-reuse">已有</span></td><td>进件阶段已采集核验</td></tr>
         <tr><td class="doc">Seller's IC</td><td><span class="pill p-reuse">已有</span></td><td>已有</td></tr>
         <tr><td class="doc">HP Agreement / Application Form / 2nd Schedule</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成，字段已知</td></tr>
         <tr><td class="doc">Biometric</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成结果</td></tr>
-        <tr><td class="doc">SI Form</td><td><span class="pill p-tbd">待定</span></td><td>自动扣款协议</td></tr>
       </tbody>
     </table>
   </div>
 
-  <!-- 4.3 校验放哪里 -->
   <div class="subh"><span class="sx">4.3</span>校验放哪里 —— OCR 引擎 vs CRA 工作台</div>
-  <p class="subh-lead">OCR 引擎负责「能自动算的」，CRA 工作台负责「要人判断的」。校验规则见附件《Business Rule Validation》原型（三栏工作台）与《CRA Business Rules &amp; Defect Code》规则清单，每条规则挂一个 Defect Code。</p>
+  <p class="subh-lead">OCR 引擎负责「能自动算的」，CRA 工作台负责「要人判断的」。校验规则每条挂一个 Defect Code。</p>
   <div class="ocr">
     <div class="layer eng">
       <p class="lt">OCR 引擎层 · 自动</p>
@@ -462,7 +442,6 @@
     </div>
   </div>
 
-  <!-- 4.4 划分原则 -->
   <div class="subh"><span class="sx">4.4</span>划分原则（界定边界的四条准则）</div>
   <div class="cards">
     <div class="card"><span class="num">P1</span><p class="h">数据来源定「是否 OCR」</p><p class="why">已有 / 系统文书 → 复用或系统提供，不 OCR；外部新增文书 → OCR 提取。</p></div>
@@ -470,21 +449,9 @@
     <div class="card"><span class="num">P3</span><p class="h">置信度定「分流」</p><p class="why">高置信 + 规则全过 → 自动确认（STP 可直通）；低置信 / 规则失败 / 孤立字段 → 推工作台。</p></div>
     <div class="card"><span class="num">P4</span><p class="h">最终裁量权归 CRA</p><p class="why">OCR / 规则只产出结果与缺陷建议；Confirm / Override / 放行的决定权始终在人。</p></div>
   </div>
-</section>
-
-<!-- 5 · 待确认 -->
-<section>
-  <div class="sec-h"><span class="sec-n">05</span><h2>待确认 / 讨论点</h2></div>
-  <div class="oq">
-    <div class="q"><span class="mk">?</span><p><b>STP 定义口径</b>：放款 FRS 原文写「Sales 提交后、funding 前无 CRA 人工介入」，与本稿「复核环节始终存在（人工或规则化）」需在评审对齐措辞。</p></div>
-    <div class="q"><span class="mk">?</span><p><b>E-Hakmilik Lodgement &gt; 30 天</b>：反欺诈拦截规则，负责人待定、需求未确认。</p></div>
-    <div class="q"><span class="mk">?</span><p><b>E-Hakmilik 权限分离</b>：查询权限与处理权限的划分维度待确认。</p></div>
-    <div class="q"><span class="mk">?</span><p><b>Dealer LOU / E-hak 邮件发送标志</b>：参数记录方案未定，相关邮件判断逻辑暂被注释。</p></div>
-    <div class="q"><span class="mk">?</span><p><b>2027 年 1 月 EIR 定价切换</b>：计算类校验规则如何快速适配。</p></div>
-  </div>
 
   <div class="foot">
-    <p>配套文件：<code>06_放款/README.md</code>（四主题结论）· <code>06_放款/STP放款_CRA_OCR_需求梳理.md</code>（业务解读 + 客户比例数据清单）· <code>06_放款/参考资料/</code>（放款 FRS、CRA 业务规则&缺陷码、STP 需求清单、规则校验原型、OCR 字段清单初稿）。</p>
+    <p>配套文件：<code>06_放款/README.md</code> · <code>06_放款/STP放款_CRA_OCR_需求梳理.md</code> · <code>06_放款/参考资料/</code>（放款 FRS、CRA 业务规则&amp;缺陷码、STP 需求清单、规则校验原型、OCR 文书清单初稿）。</p>
   </div>
 </section>
 </div>
