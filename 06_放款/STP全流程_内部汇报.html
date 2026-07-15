@@ -1,0 +1,440 @@
+<title>STP 放款全流程与 AIOCR 定位 · 内部汇报</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --sans: ui-sans-serif,-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",system-ui,sans-serif;
+    --mono: ui-monospace,"SF Mono","Cascadia Code","Noto Sans Mono",Consolas,monospace;
+
+    --ground:#f2f4f4;
+    --surface:#ffffff;
+    --surface-2:#eef1f1;
+    --ink:#17211f;
+    --ink-soft:#4c5a57;
+    --ink-faint:#7d8a87;
+    --line:#dbe1e0;
+    --line-strong:#c3cccb;
+
+    --accent:#0b5f5c;
+    --accent-soft:#e3efee;
+    --auto:#1f7a52;
+    --auto-soft:#e2f0e8;
+    --manual:#a9691a;
+    --manual-soft:#f5ebd9;
+    --block:#b0392e;
+    --block-soft:#f6e3e0;
+
+    --radius:10px;
+    --maxw:980px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ground:#0e1413;--surface:#151e1c;--surface-2:#1b2725;
+      --ink:#e7edeb;--ink-soft:#a7b4b1;--ink-faint:#74827f;
+      --line:#26332f;--line-strong:#33433f;
+      --accent:#4bbfb6;--accent-soft:#123230;
+      --auto:#54c08a;--auto-soft:#122e22;
+      --manual:#d7a24e;--manual-soft:#33260f;
+      --block:#e07a6f;--block-soft:#341b18;
+    }
+  }
+  :root[data-theme="light"]{
+    --ground:#f2f4f4;--surface:#ffffff;--surface-2:#eef1f1;
+    --ink:#17211f;--ink-soft:#4c5a57;--ink-faint:#7d8a87;
+    --line:#dbe1e0;--line-strong:#c3cccb;
+    --accent:#0b5f5c;--accent-soft:#e3efee;
+    --auto:#1f7a52;--auto-soft:#e2f0e8;
+    --manual:#a9691a;--manual-soft:#f5ebd9;
+    --block:#b0392e;--block-soft:#f6e3e0;
+  }
+  :root[data-theme="dark"]{
+    --ground:#0e1413;--surface:#151e1c;--surface-2:#1b2725;
+    --ink:#e7edeb;--ink-soft:#a7b4b1;--ink-faint:#74827f;
+    --line:#26332f;--line-strong:#33433f;
+    --accent:#4bbfb6;--accent-soft:#123230;
+    --auto:#54c08a;--auto-soft:#122e22;
+    --manual:#d7a24e;--manual-soft:#33260f;
+    --block:#e07a6f;--block-soft:#341b18;
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--ground);color:var(--ink);
+    font-family:var(--sans);line-height:1.65;
+    font-size:16px;letter-spacing:.01em;
+  }
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px 96px}
+
+  header{padding:52px 0 30px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:650;margin:0 0 12px}
+  h1{font-size:clamp(26px,4.4vw,38px);line-height:1.18;margin:0 0 12px;font-weight:720;text-wrap:balance;letter-spacing:-.01em}
+  .sub{color:var(--ink-soft);font-size:16px;max-width:62ch;margin:0}
+  .meta{margin-top:20px;display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--ink-faint)}
+  .meta span strong{color:var(--ink-soft);font-weight:600}
+
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+  .lg{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);padding:5px 11px;border-radius:100px}
+  .dot{width:9px;height:9px;border-radius:3px;flex:none}
+  .dot.a{background:var(--accent)}.dot.g{background:var(--auto)}.dot.m{background:var(--manual)}.dot.r{background:var(--block)}
+
+  section{padding:44px 0;border-bottom:1px solid var(--line)}
+  section:last-of-type{border-bottom:0}
+  .sec-h{display:flex;align-items:baseline;gap:12px;margin:0 0 6px}
+  .sec-n{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:600;flex:none}
+  h2{font-size:22px;margin:0;font-weight:680;letter-spacing:-.01em}
+  .sec-lead{color:var(--ink-soft);margin:10px 0 26px;max-width:64ch}
+
+  .callout{background:var(--accent-soft);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:16px 18px;margin:0 0 26px}
+  .callout p{margin:0;color:var(--ink)}
+  .callout .k{font-weight:680;color:var(--accent)}
+
+  /* flow pipeline */
+  .flow-scroll{padding:6px 0 14px}
+  .pipe{display:flex;align-items:stretch;flex-wrap:wrap;gap:10px 0}
+  .node{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);padding:12px 14px;flex:1 1 0;min-width:118px;display:flex;flex-direction:column;justify-content:center;gap:3px}
+  .node .t{font-weight:660;font-size:14px}
+  .node .d{font-size:11.5px;color:var(--ink-faint);line-height:1.4}
+  .node.sys{border-color:var(--accent);background:var(--accent-soft)}
+  .arrow{align-self:center;color:var(--line-strong);flex:none;padding:0 10px;font-size:18px;font-weight:700;line-height:1}
+  .input-tag{font-size:11.5px;color:var(--ink-faint);border:1px dashed var(--line-strong);border-radius:7px;padding:6px 10px;margin-bottom:12px;display:inline-block}
+
+  .branch{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .lane{border-radius:var(--radius);padding:15px 16px;border:1px solid var(--line)}
+  .lane.auto{background:var(--auto-soft);border-color:var(--auto)}
+  .lane.man{background:var(--manual-soft);border-color:var(--manual)}
+  .lane h4{margin:0 0 4px;font-size:14.5px;display:flex;align-items:center;gap:8px}
+  .lane.auto h4{color:var(--auto)}.lane.man h4{color:var(--manual)}
+  .lane p{margin:0;font-size:12.5px;color:var(--ink-soft)}
+  .tag{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:5px;font-weight:600}
+  .lane.auto .tag{background:var(--auto);color:#fff}
+  .lane.man .tag{background:var(--manual);color:#fff}
+  .rejoin{margin-top:16px;display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;font-size:13px;color:var(--ink-soft)}
+  .rejoin .node{min-width:auto;flex:none}
+
+  /* condition cards */
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:12px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px}
+  .card .num{font-family:var(--mono);font-size:12px;color:var(--block);font-weight:700}
+  .card .h{font-weight:660;font-size:15px;margin:5px 0 6px}
+  .card .why{font-size:13px;color:var(--ink-soft);margin:0;line-height:1.55}
+
+  .gate{margin-top:16px;background:var(--block-soft);border:1px solid var(--block);border-radius:var(--radius);padding:15px 18px}
+  .gate h4{margin:0 0 8px;color:var(--block);font-size:15px}
+  .gate ol{margin:0;padding-left:20px;font-size:13.5px;color:var(--ink)}
+  .gate li{margin:4px 0}
+
+  .switches{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+  .sw{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px}
+  .sw .name{font-family:var(--mono);font-size:13px;font-weight:650;color:var(--accent)}
+  .sw .desc{font-size:13px;color:var(--ink-soft);margin:8px 0 0}
+  .sw .desc b{color:var(--ink)}
+  .sw .desc code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+
+  /* roles + steps */
+  .roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:24px}
+  .role{border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px;background:var(--surface)}
+  .role .rn{font-weight:670;font-size:14.5px;margin:0 0 5px;display:flex;align-items:center;gap:8px}
+  .role.sys .rn{color:var(--accent)}
+  .role .rr{font-size:12.5px;color:var(--ink-soft);margin:0}
+  .chip{width:8px;height:8px;border-radius:2px;flex:none}
+
+  ol.steps{list-style:none;counter-reset:s;margin:0;padding:0;display:flex;flex-direction:column}
+  ol.steps li{counter-increment:s;display:flex;gap:14px;padding:11px 0;border-top:1px dashed var(--line)}
+  ol.steps li:first-child{border-top:0}
+  ol.steps li::before{content:counter(s);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:6px;width:26px;height:24px;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
+  ol.steps .st{font-weight:640;font-size:14.5px}
+  ol.steps .sd{font-size:13px;color:var(--ink-soft)}
+
+  /* upstream / downstream */
+  .io{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .col{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+  .col .ch{padding:12px 15px;font-weight:670;font-size:14px;border-bottom:1px solid var(--line)}
+  .col.up .ch{background:var(--surface-2)}
+  .col.mid .ch{background:var(--accent-soft);color:var(--accent)}
+  .col.down .ch{background:var(--surface-2)}
+  .col ul{margin:0;padding:12px 15px 14px 30px;display:flex;flex-direction:column;gap:9px}
+  .col li{font-size:13px;color:var(--ink-soft)}
+  .col li b{color:var(--ink);font-weight:620}
+
+  /* ocr two uses */
+  .ocr{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+  .ouse{border:1px solid var(--line);border-radius:var(--radius);padding:16px 17px;background:var(--surface)}
+  .ouse .tt{font-weight:670;font-size:15px;margin:0 0 8px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .ouse .badge{font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:100px;font-weight:600;flex:none}
+  .ouse.a .badge{background:var(--auto-soft);color:var(--auto)}
+  .ouse.b .badge{background:var(--accent-soft);color:var(--accent)}
+  .ouse p{margin:0;font-size:13px;color:var(--ink-soft)}
+
+  /* subhead within section */
+  .subh{font-size:15px;font-weight:670;margin:34px 0 4px;display:flex;align-items:center;gap:9px}
+  .subh:first-of-type{margin-top:0}
+  .subh .sx{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600;flex:none}
+  .subh-lead{color:var(--ink-soft);font-size:13.5px;margin:0 0 16px;max-width:64ch}
+
+  /* doc classification buckets */
+  .buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:18px}
+  .bk{border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px;background:var(--surface);border-top:3px solid var(--line-strong)}
+  .bk.reuse{border-top-color:var(--ink-faint)}
+  .bk.sys{border-top-color:var(--accent)}
+  .bk.ocr{border-top-color:var(--auto)}
+  .bk .bt{font-weight:670;font-size:14px;margin:0 0 3px}
+  .bk .bd{font-size:12.5px;color:var(--ink-soft);margin:5px 0 8px}
+  .bk .bl{font-size:12px;color:var(--ink);line-height:1.55;margin:0}
+  .pill{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:2px 8px;border-radius:100px;font-weight:600;white-space:nowrap}
+  .p-reuse{background:var(--surface-2);color:var(--ink-soft)}
+  .p-sys{background:var(--accent-soft);color:var(--accent)}
+  .p-ocr{background:var(--auto-soft);color:var(--auto)}
+
+  /* table */
+  .tbl-wrap{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden}
+  .tbl{width:100%;border-collapse:collapse;font-size:13px}
+  .tbl th,.tbl td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--line);vertical-align:middle}
+  .tbl th{background:var(--surface-2);font-weight:640;color:var(--ink-soft);font-size:11.5px;letter-spacing:.03em;text-transform:uppercase}
+  .tbl td{color:var(--ink-soft)}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl .doc{color:var(--ink);font-weight:580}
+
+  /* engine vs workbench split */
+  .layer{border:1px solid var(--line);border-radius:var(--radius);padding:16px 17px;background:var(--surface);border-top:3px solid var(--line-strong)}
+  .layer.eng{border-top-color:var(--auto)}
+  .layer.wb{border-top-color:var(--manual)}
+  .layer .lt{font-weight:670;font-size:15px;margin:0 0 3px}
+  .layer.eng .lt{color:var(--auto)}
+  .layer.wb .lt{color:var(--manual)}
+  .layer .lsub{font-size:12px;color:var(--ink-faint);margin:0 0 11px}
+  .layer ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px}
+  .layer li{font-size:13px;color:var(--ink-soft)}
+  .layer li b{color:var(--ink);font-weight:600}
+
+  .foot{padding:30px 0 0;color:var(--ink-faint);font-size:12.5px}
+  .foot code{font-family:var(--mono);background:var(--surface-2);padding:1px 6px;border-radius:5px;color:var(--ink-soft)}
+
+  @media (max-width:720px){
+    .pipe{flex-direction:column}
+    .arrow{transform:rotate(90deg);padding:2px 0;align-self:flex-start;margin-left:20px}
+    .branch,.switches,.ocr{grid-template-columns:1fr}
+    .io{grid-template-columns:1fr}
+  }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">CrediOS Batch3 · 内部汇报</p>
+  <h1>STP 放款全流程与 AIOCR 定位</h1>
+  <p class="sub">面向管理层的一页式汇报材料：为什么做 STP、直通条件、全流程与角色、AIOCR 的定位/需求/功能、上下游交互、当前进展。</p>
+  <div class="legend">
+    <span class="lg"><span class="dot a"></span>系统 / OCR / 专家规则</span>
+    <span class="lg"><span class="dot g"></span>STP 自动放款</span>
+    <span class="lg"><span class="dot m"></span>CRA 人工处理</span>
+    <span class="lg"><span class="dot r"></span>拦截 / 不合格</span>
+  </div>
+</header>
+
+<!-- 01 价值 -->
+<section>
+  <div class="sec-h"><span class="sec-n">01</span><h2>为什么做 STP 放款</h2></div>
+  <p class="sec-lead"><b>STP 定义</b>：Sales 将放款申请提交给 CRA 后，直至完成放款（funding），全程无需 CRA 人工经手执行动作。</p>
+  <div class="cards">
+    <div class="card"><span class="num">V1</span><p class="h">释放 CRA 人力</p><p class="why">干净案件的录入、核对、执行由系统完成，CRA 聚焦复杂与例外案件。</p></div>
+    <div class="card"><span class="num">V2</span><p class="h">缩短放款时效</p><p class="why">合格案件免排队等待人工维护与授权，提交后自动完成打款与文书。</p></div>
+    <div class="card"><span class="num">V3</span><p class="h">风控一致性</p><p class="why">校验规则系统化统一执行，不依赖个人经验；全程留痕（Defect Code、STP 标识、System teller ID），可审计可统计。</p></div>
+  </div>
+</section>
+
+<!-- 02 核心模型 -->
+<section>
+  <div class="sec-h"><span class="sec-n">02</span><h2>核心模型：一条主干，末端分流</h2></div>
+  <p class="sec-lead">所有放款案件走同一条主干；STP 是主干末端的自动化增强，不是另一条独立流程。</p>
+  <div class="callout">
+    <p><span class="k">关键口径：</span>OCR 只承担「字段填入 / 反显」，<b>不替代复核</b>；复核对所有案件始终存在（人工，或由专家规则系统化执行）。STP 自动化的是<b>放款执行动作</b>（建户 / 打款 / 文书 / 邮件），不是复核本身。</p>
+  </div>
+  <div class="flow-scroll">
+    <div class="pipe">
+      <div class="node"><span class="t">Sales 提交</span><span class="d">收齐材料上传</span></div>
+      <span class="arrow">→</span>
+      <div class="node sys"><span class="t">OCR 分类·填入</span><span class="d">抽字段反显回填</span></div>
+      <span class="arrow">→</span>
+      <div class="node"><span class="t">CRA 复核</span><span class="d">结果确认 / 交叉验证</span></div>
+      <span class="arrow">→</span>
+      <div class="node sys"><span class="t">业务规则校验</span><span class="d">14 类专家规则</span></div>
+      <span class="arrow">→</span>
+      <div class="node"><span class="t">分流</span><span class="d">按资格与结果</span></div>
+    </div>
+  </div>
+  <div class="branch">
+    <div class="lane man">
+      <h4><span class="tag">人工</span>CRA 人工处理</h4>
+      <p>不合格 / 规则未过 / 总开关 OFF：CRA Checker 维护、Authorizer 授权，全程人工。</p>
+    </div>
+    <div class="lane auto">
+      <h4><span class="tag">STP</span>STP 自动放款</h4>
+      <p>合格且规则通过、总开关 ON：系统按 OCR 结果自动填充并自动执行放款。</p>
+    </div>
+  </div>
+  <div class="rejoin">
+    <span>两条路汇合 →</span>
+    <div class="node"><span class="t">放款执行</span><span class="d">Host 维护·建户·打款·文书·邮件</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="t">生效</span></div>
+  </div>
+</section>
+
+<!-- 03 条件 -->
+<section>
+  <div class="sec-h"><span class="sec-n">03</span><h2>STP 直通条件（9 条 + 时效闸 + 双开关）</h2></div>
+  <p class="sec-lead">直通只面向「简单、干净、无风险裁量」的案件。9 条须<b>同时满足</b>，任一不满足即落人工。<b>口径说明</b>：在 FRS 原 7 条基础上，经业务确认新增 E-Acceptance 与 Panel Dealer 两条，进一步收紧直通范围。</p>
+  <div class="cards">
+    <div class="card"><span class="num">01</span><p class="h">个人 Individual</p><p class="why">公司 / 合伙涉及决议、授权签字人、多担保人、多语言文书，判断复杂。</p></div>
+    <div class="card"><span class="num">02</span><p class="h">新车 New car</p><p class="why">二手 / 复新需验 VOC、payoff、车检、AP 进口证等额外材料。</p></div>
+    <div class="card"><span class="num">03</span><p class="h">E-Acceptance 电子签约<span class="pill p-ocr" style="margin-left:8px">新增</span></p><p class="why">签约数据与协议日期系统内生成、文书系统直出，无需依赖纸质合同提取与人工核对。</p></div>
+    <div class="card"><span class="num">04</span><p class="h">Panel Dealer 名单内车商<span class="pill p-ocr" style="margin-left:8px">新增</span></p><p class="why">名单内车商资质已核、首付款流程标准，无需 Non-Panel 场景的额外凭证核验。</p></div>
+    <div class="card"><span class="num">05</span><p class="h">唯一受益人且与 Dealer 系统一致</p><p class="why">「钱打给谁」无歧义，资金流向已由系统交叉确认。</p></div>
+    <div class="card"><span class="num">06</span><p class="h">无清偿 No payoff</p><p class="why">不涉及替客户结清旧贷、协调旧贷款行、暂记账户处理。</p></div>
+    <div class="card"><span class="num">07</span><p class="h">非 FBT</p><p class="why">车未过户先放款属额外风险敞口，需人工核车商额度与担保。</p></div>
+    <div class="card"><span class="num">08</span><p class="h">无定存质押 No FD pledge</p><p class="why">无需人工核 FD 金额 / 质押期限 / LOSO 与批复一致性。</p></div>
+    <div class="card"><span class="num">09</span><p class="h">非 Floor Stock 车商</p><p class="why">批发融资车商属高风险类别，需额外核整体敞口。</p></div>
+  </div>
+  <div class="gate">
+    <h4>＋ 时效硬闸：90 天三层级校验</h4>
+    <ol>
+      <li>当前日期 ≤ 首次批复日 + 90 天 → 放行；否则查下一层</li>
+      <li>（FBR/FBT）车辆注册日缺失 → 拦；注册日 ≤ 首批日 + 90 天 → 放行；否则查下一层</li>
+      <li>LOU 展期日缺失 → 拦；当前日期 ≤ LOU 展期日 + 90 天 → 放行；否则拦</li>
+    </ol>
+  </div>
+  <div class="switches">
+    <div class="sw"><span class="name">STP_SWITCH</span><p class="desc">全局总开关，<b>默认 OFF</b>。管理层的「一键刹车」——ON 时合格案子走自动放款，OFF 时即使合格也降级回 CRA Authorizer 人工。运营级风控抓手。</p></div>
+    <div class="sw"><span class="name">Full Maintenance Indicator</span><p class="desc"><b>Yes</b>：放款→文书→邮件一次到底；<b>No</b>：只做到放款，转 <b>Post Maintenance</b> 队列人工补做后续文书 / 账务。</p></div>
+  </div>
+</section>
+
+<!-- 04 流程与角色 -->
+<section>
+  <div class="sec-h"><span class="sec-n">04</span><h2>全流程与角色</h2></div>
+  <p class="sec-lead">四个角色、八个流程段。STP 场景下，系统即第四个作业者（独立 System teller ID 留痕）。</p>
+  <div class="roles">
+    <div class="role"><p class="rn"><span class="chip" style="background:var(--ink-soft)"></span>Sales 销售</p><p class="rr">收齐材料上传、E-Hakmilik 抵押登记、查 FIS / Dealer 资格、提交放款申请。</p></div>
+    <div class="role"><p class="rn"><span class="chip" style="background:var(--manual)"></span>CRA Checker / Maintenance</p><p class="rr">OCR 结果确认、放款信息维护、缺陷处理、规则未过案件人工核对。</p></div>
+    <div class="role"><p class="rn"><span class="chip" style="background:var(--manual)"></span>CRA Authorizer</p><p class="rr">放款授权；限额＝批准额+费用+税；与最近 checker 不同人（双人原则）。</p></div>
+    <div class="role sys"><p class="rn"><span class="chip" style="background:var(--accent)"></span>System / AIOCR + 专家规则</p><p class="rr">分类、提取、交叉验证、规则自动校验、（STP）自动放款。</p></div>
+  </div>
+  <ol class="steps">
+    <li><div><div class="st">Sales 提交段</div><div class="sd">E-Hakmilik 登记 → FIS 查询 → Dealer 资格 → 上传 → 提交（触发 Host Acceptance：CIF / 额度 / 抵押创建）</div></div></li>
+    <li><div><div class="st">系统预处理</div><div class="sd">文件分类 → 完整性校验 → OCR 提取 → 交叉验证</div></div></li>
+    <li><div><div class="st">预分流</div><div class="sd">交叉验证通过且自动路由 ON → 专家规则；否则 → CRA 人工队列</div></div></li>
+    <li><div><div class="st">专家规则校验</div><div class="sd">14 类规则；通过 → STP 决策；失败 → 人工队列 + 自动登记缺陷</div></div></li>
+    <li><div><div class="st">人工维护 / 授权</div><div class="sd">（非 STP 或开关 OFF）Checker 维护 → Authorizer 授权</div></div></li>
+    <li><div><div class="st">放款执行（两路共用）</div><div class="sd">Host Maintenance → 建户 → 打款 → 文书生成 → 邮件；接口超时进 Error Queue</div></div></li>
+    <li><div><div class="st">收尾</div><div class="sd">Full Maintenance 一次做完；否则 → Post Maintenance 补做</div></div></li>
+    <li><div><div class="st">放款后</div><div class="sd">LHDN 电子印花税、RBS / eTracker 状态回传、对账 / 绩效报表</div></div></li>
+  </ol>
+</section>
+
+<!-- 05 AIOCR -->
+<section>
+  <div class="sec-h"><span class="sec-n">05</span><h2>AIOCR：定位、需求与功能</h2></div>
+  <p class="sec-lead">OCR 是 STP 的地基——先把字段可靠抽出来，反显才有内容、规则才有输入、直通才有前提。</p>
+
+  <div class="subh"><span class="sx">5.1</span>定位与两层用途</div>
+  <div class="ocr">
+    <div class="ouse a"><p class="tt"><span class="badge">全案件通用</span>A · 反显填入（提效）</p><p>字段自动回填放款维护页，CRA 由「手工敲」变「目视核对 + 确认」；三色状态监控进度。人始终在环。</p></div>
+    <div class="ouse b"><p class="tt"><span class="badge">STP 候选</span>B · 支撑规则自动校验（免检铺路）</p><p>交叉验证通过后喂给专家规则全量自动核对；全过则复核环节由规则系统化执行，案件具备直通前提。</p></div>
+  </div>
+
+  <div class="subh"><span class="sx">5.2</span>文书范围（按数据来源界定，共 16 类）</div>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th style="width:40px">#</th><th>文书</th><th>分类</th><th>场景 / 说明</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td class="doc">Vehicle Invoice</td><td><span class="pill p-ocr">需 OCR</span></td><td>新车</td></tr>
+        <tr><td>2</td><td class="doc">VOC</td><td><span class="pill p-ocr">需 OCR</span></td><td>仅二手车（条件文书）</td></tr>
+        <tr><td>3</td><td class="doc">Road Tax Disc / JPJ Receipt</td><td><span class="pill p-ocr">需 OCR</span></td><td>税</td></tr>
+        <tr><td>4</td><td class="doc">Insurance Cover Note</td><td><span class="pill p-ocr">需 OCR</span></td><td>保险</td></tr>
+        <tr><td>5</td><td class="doc">Delivery Order</td><td><span class="pill p-ocr">需 OCR</span></td><td>交车凭证</td></tr>
+        <tr><td>6</td><td class="doc">IBG Letter</td><td><span class="pill p-ocr">需 OCR</span></td><td>打款给另一账户</td></tr>
+        <tr><td>7</td><td class="doc">FIS / JPJ Result</td><td><span class="pill p-ocr">需 OCR</span></td><td>抵押登记结果</td></tr>
+        <tr><td>8</td><td class="doc">E-hakmilik copy</td><td><span class="pill p-ocr">需 OCR</span></td><td>抵押登记凭证</td></tr>
+        <tr><td>9</td><td class="doc">Credit Note - Admin Fee</td><td><span class="pill p-ocr">需 OCR</span></td><td>交付 HLB 的管理费</td></tr>
+        <tr><td>10</td><td class="doc">NRIC (MyKad)</td><td><span class="pill p-reuse">已有</span></td><td>进件已采集核验，复用</td></tr>
+        <tr><td>11</td><td class="doc">Passport</td><td><span class="pill p-reuse">已有</span></td><td>进件已采集核验，复用</td></tr>
+        <tr><td>12</td><td class="doc">Driving License</td><td><span class="pill p-reuse">已有</span></td><td>进件已采集核验，复用</td></tr>
+        <tr><td>13</td><td class="doc">HP Agreement &amp; T&amp;C</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成，字段已知</td></tr>
+        <tr><td>14</td><td class="doc">Application Form</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成，字段已知</td></tr>
+        <tr><td>15</td><td class="doc">2nd Schedule</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成，字段已知</td></tr>
+        <tr><td>16</td><td class="doc">Biometric</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成结果</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="sec-lead" style="margin:12px 0 0;font-size:13px">注：E-Acceptance 与 Panel Dealer 纳入直通条件后，纸质签约与 Non-Panel / 直客场景专属文书（Seller's IC、Loan Suspense Receipt）已移出本期 OCR 范围。</p>
+
+  <div class="subh"><span class="sx">5.3</span>功能：四个动作 + 交付逻辑</div>
+  <ol class="steps">
+    <li><div><div class="st">自动分类</div><div class="sd">上传无需预选类型，自动识别文书类别（含一个 PDF 多份文书拆分）。</div></div></li>
+    <li><div><div class="st">字段提取</div><div class="sd">按各文书字段清单提取结构化数据，产出置信度。</div></div></li>
+    <li><div><div class="st">文件规则核验（OCR 工作台）</div><div class="sd">完整性、跨文件一致性、日期/金额/固定值等确定性校验；低置信推人工目视校准。</div></div></li>
+    <li><div><div class="st">结果交付（CDM）</div><div class="sd">结构化数据写入 CDM，CRA 端直接拉取，由放款团队决定界面填充方式。</div></div></li>
+  </ol>
+  <div class="pipe" style="margin-top:16px">
+    <div class="node sys"><span class="t">① OCR 工作台</span><span class="d">文件规则核验</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="t">提交核验</span><span class="d">确认 OCR 结果</span></div>
+    <span class="arrow">→</span>
+    <div class="node man"><span class="t">② CRA 工作台</span><span class="d">专家业务规则检查</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="t">主页反显</span><span class="d">二次确认</span></div>
+  </div>
+  <p class="sec-lead" style="margin:8px 0 0;font-size:13px">双阶段校验：两个阶段、两个工作台、各管一层规则；提交后前端加载动效，结果返回主页反显供二次确认。</p>
+
+  <div class="subh"><span class="sx">5.4</span>职责边界四原则</div>
+  <div class="cards">
+    <div class="card"><span class="num">P1</span><p class="h">数据来源定「是否 OCR」</p><p class="why">已有 / 系统文书 → 复用；外部新增文书 → OCR 提取。</p></div>
+    <div class="card"><span class="num">P2</span><p class="h">可确定性定「是否自动」</p><p class="why">能写成公式且有对照物 → 引擎自动跑；需人眼判断 → 留工作台。</p></div>
+    <div class="card"><span class="num">P3</span><p class="h">置信度定「分流」</p><p class="why">高置信 + 规则全过 → 自动确认；低置信 / 失败 / 孤立字段 → 推工作台。</p></div>
+    <div class="card"><span class="num">P4</span><p class="h">最终裁量权归 CRA</p><p class="why">OCR / 规则只出结果与建议；Confirm / Override / 放行始终在人。</p></div>
+  </div>
+</section>
+
+<!-- 06 上下游 -->
+<section>
+  <div class="sec-h"><span class="sec-n">06</span><h2>上下游交互</h2></div>
+  <div class="io">
+    <div class="col up">
+      <div class="ch">↑ 上游（输入）</div>
+      <ul>
+        <li><b>签约模块</b>：Acceptance 完成是前提；签约文书归档为 OCR 比对基准（Version 1）</li>
+        <li><b>审批链路</b>：首次批复日（90 天基准）、CED 批准额度</li>
+        <li><b>CILT</b>：V1 vs V2 差异熔断切变更流程，审计字段强制 Reason Code</li>
+      </ul>
+    </div>
+    <div class="col mid">
+      <div class="ch">↔ 本阶段横向</div>
+      <ul>
+        <li><b>FIS / JPJ</b>：抵押登记与车辆注册状态</li>
+        <li><b>Dealer 管理</b>：Panel / FBR/FBT 资格、Floor Stock 指标</li>
+        <li><b>HOST 核心</b>：建户、打款；超时重试 + Error Queue</li>
+        <li><b>AIOCR 引擎</b>：分类 / 提取 / 交叉验证</li>
+      </ul>
+    </div>
+    <div class="col down">
+      <div class="ch">↓ 下游（产出）</div>
+      <ul>
+        <li><b>文书与邮件</b>：合并 PDF（专属 PIN 加密）、多语言模板</li>
+        <li><b>LHDN</b>：电子印花税批量 XML</li>
+        <li><b>RBS / eTracker</b>：放款状态回传，客户侧可查</li>
+        <li><b>报表 / EDW</b>：对账、绩效、STP Indicator 过滤</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 07 进展 -->
+<section>
+  <div class="sec-h"><span class="sec-n">07</span><h2>当前进展与下一步</h2></div>
+  <ol class="steps">
+    <li><div><div class="st">OCR 范围与交付逻辑已与 CRA 团队对齐</div><div class="sd">文书清单（16 类）、CDM 数据同步模式、双阶段校验动线均已沟通确认。</div></div></li>
+    <li><div><div class="st">STP 直通口径已收紧确认</div><div class="sd">在 FRS 原 7 条基础上新增 E-Acceptance 与 Panel Dealer 两条，共 9 条；相应移出两份场景专属文书。</div></div></li>
+    <li><div><div class="st">下一步：STP 全流程专场评审</div><div class="sd">与 Howie 专场评审 STP 全流程设计（分流规则、统计口径）。</div></div></li>
+    <li><div><div class="st">下一步：STP 覆盖率测算</div><div class="sd">向业务方索取放款案件基数与各维度占比（个人/新车/E-A/Panel 等联合占比），测算可直通比例，支撑投入产出评估。</div></div></li>
+  </ol>
+</section>
+</div>

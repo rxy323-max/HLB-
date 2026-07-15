@@ -145,17 +145,19 @@
 <!-- 2 · STP 条件（文书筛选依据） -->
 <section>
   <div class="sec-h"><span class="sec-n">02</span><h2>STP 直通条件 —— 文书筛选的依据</h2></div>
-  <p class="sec-lead">OCR 文书清单不是凭空拟定的：STP 直通只面向满足以下条件的「干净案件」，文书范围据此收敛。以下 7 条须<b>同时满足</b>，另有 90 天时效校验。</p>
+  <p class="sec-lead">OCR 文书清单不是凭空拟定的：STP 直通只面向满足以下条件的「干净案件」，文书范围据此收敛。以下 9 条须<b>同时满足</b>，另有 90 天时效校验。</p>
   <div class="cards">
     <div class="card"><span class="num">01</span><p class="h">个人 Individual</p><p class="why">公司 / 合伙涉及决议、授权签字人、多担保人等复杂判断，不进直通。</p></div>
     <div class="card"><span class="num">02</span><p class="h">新车 New car</p><p class="why">二手 / 复新需验 VOC、payoff、车检、AP 进口证等额外材料，变量多。</p></div>
-    <div class="card"><span class="num">03</span><p class="h">唯一受益人且与 Dealer 系统一致</p><p class="why">「钱打给谁」必须无歧义，资金流向已由系统交叉确认。</p></div>
-    <div class="card"><span class="num">04</span><p class="h">无清偿 No payoff</p><p class="why">不涉及替客户结清旧贷、协调旧贷款行、暂记账户处理。</p></div>
-    <div class="card"><span class="num">05</span><p class="h">非 FBT</p><p class="why">车未过户先放款属额外风险敞口，需人工核车商额度与担保。</p></div>
-    <div class="card"><span class="num">06</span><p class="h">无定存质押 No FD pledge</p><p class="why">无需人工核 FD 金额 / 质押期限 / LOSO 与批复一致性。</p></div>
-    <div class="card"><span class="num">07</span><p class="h">非 Floor Stock 车商</p><p class="why">批发融资车商属高风险类别，需额外核车商整体敞口。</p></div>
+    <div class="card"><span class="num">03</span><p class="h">E-Acceptance 电子签约</p><p class="why">签约数据与协议日期在系统内生成，签约文书系统直出，无需依赖纸质合同的提取与人工核对。</p></div>
+    <div class="card"><span class="num">04</span><p class="h">Panel Dealer 名单内车商</p><p class="why">名单内车商资质已核，首付款流程标准，无需 Non-Panel 场景的额外凭证核验。</p></div>
+    <div class="card"><span class="num">05</span><p class="h">唯一受益人且与 Dealer 系统一致</p><p class="why">「钱打给谁」必须无歧义，资金流向已由系统交叉确认。</p></div>
+    <div class="card"><span class="num">06</span><p class="h">无清偿 No payoff</p><p class="why">不涉及替客户结清旧贷、协调旧贷款行、暂记账户处理。</p></div>
+    <div class="card"><span class="num">07</span><p class="h">非 FBT</p><p class="why">车未过户先放款属额外风险敞口，需人工核车商额度与担保。</p></div>
+    <div class="card"><span class="num">08</span><p class="h">无定存质押 No FD pledge</p><p class="why">无需人工核 FD 金额 / 质押期限 / LOSO 与批复一致性。</p></div>
+    <div class="card"><span class="num">09</span><p class="h">非 Floor Stock 车商</p><p class="why">批发融资车商属高风险类别，需额外核车商整体敞口。</p></div>
   </div>
-  <div class="callout"><p><span class="k">与文书清单的关系：</span>满足上述条件的 STP 干净案件，所需外部文书即下一节「需 OCR」清单的主体；条件之外的场景（如二手车的 VOC、Non-Panel Dealer 的首付凭证）作为<b>条件文书</b>保留在清单中，服务于非 STP 的常规案件。</p></div>
+  <div class="callout"><p><span class="k">与文书清单的关系：</span>满足上述条件的 STP 干净案件，所需外部文书即下一节「需 OCR」清单的主体。E-Acceptance 与 Panel Dealer 纳入条件后，纸质签约与 Non-Panel / 直客场景的专属文书（Seller's IC、Loan Suspense Receipt）<b>不再纳入本次 OCR 范围</b>；二手车 VOC 等作为条件文书保留，服务于非 STP 的常规案件。</p></div>
 </section>
 
 <!-- 3 · 功能范围 -->
@@ -192,15 +194,13 @@
         <tr><td>7</td><td class="doc">FIS / JPJ Result</td><td><span class="pill p-ocr">需 OCR</span></td><td>抵押登记结果</td></tr>
         <tr><td>8</td><td class="doc">E-hakmilik copy</td><td><span class="pill p-ocr">需 OCR</span></td><td>抵押登记凭证</td></tr>
         <tr><td>9</td><td class="doc">Credit Note - Admin Fee</td><td><span class="pill p-ocr">需 OCR</span></td><td>交付 HLB 的管理费</td></tr>
-        <tr><td>10</td><td class="doc">Loan Suspense Receipt</td><td><span class="pill p-ocr">需 OCR</span></td><td>首付凭证（Non-Panel Dealer 场景强相关）</td></tr>
-        <tr><td>11</td><td class="doc">NRIC (MyKad)</td><td><span class="pill p-reuse">已有</span></td><td>进件阶段已采集核验</td></tr>
-        <tr><td>12</td><td class="doc">Passport</td><td><span class="pill p-reuse">已有</span></td><td>进件阶段已采集核验</td></tr>
-        <tr><td>13</td><td class="doc">Driving License</td><td><span class="pill p-reuse">已有</span></td><td>进件阶段已采集核验</td></tr>
-        <tr><td>14</td><td class="doc">Seller's IC</td><td><span class="pill p-reuse">已有</span></td><td>已有</td></tr>
-        <tr><td>15</td><td class="doc">HP Agreement &amp; T&amp;C</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成，字段已知</td></tr>
-        <tr><td>16</td><td class="doc">Application Form</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成，字段已知</td></tr>
-        <tr><td>17</td><td class="doc">2nd Schedule</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成，字段已知</td></tr>
-        <tr><td>18</td><td class="doc">Biometric</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成结果</td></tr>
+        <tr><td>10</td><td class="doc">NRIC (MyKad)</td><td><span class="pill p-reuse">已有</span></td><td>进件阶段已采集核验</td></tr>
+        <tr><td>11</td><td class="doc">Passport</td><td><span class="pill p-reuse">已有</span></td><td>进件阶段已采集核验</td></tr>
+        <tr><td>12</td><td class="doc">Driving License</td><td><span class="pill p-reuse">已有</span></td><td>进件阶段已采集核验</td></tr>
+        <tr><td>13</td><td class="doc">HP Agreement &amp; T&amp;C</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成，字段已知</td></tr>
+        <tr><td>14</td><td class="doc">Application Form</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成，字段已知</td></tr>
+        <tr><td>15</td><td class="doc">2nd Schedule</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成，字段已知</td></tr>
+        <tr><td>16</td><td class="doc">Biometric</td><td><span class="pill p-sys">系统文书</span></td><td>系统生成结果</td></tr>
       </tbody>
     </table>
   </div>

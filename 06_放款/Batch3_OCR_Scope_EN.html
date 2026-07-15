@@ -1,0 +1,256 @@
+<title>CrediOS Batch3 - AIOCR · OCR Scope of Requirements</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --sans: ui-sans-serif,-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",system-ui,sans-serif;
+    --mono: ui-monospace,"SF Mono","Cascadia Code","Noto Sans Mono",Consolas,monospace;
+    --ground:#f2f4f4;--surface:#ffffff;--surface-2:#eef1f1;
+    --ink:#17211f;--ink-soft:#4c5a57;--ink-faint:#7d8a87;
+    --line:#dbe1e0;--line-strong:#c3cccb;
+    --accent:#0b5f5c;--accent-soft:#e3efee;
+    --auto:#1f7a52;--auto-soft:#e2f0e8;
+    --manual:#a9691a;--manual-soft:#f5ebd9;
+    --block:#b0392e;--block-soft:#f6e3e0;
+    --radius:10px;--maxw:920px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ground:#0e1413;--surface:#151e1c;--surface-2:#1b2725;
+      --ink:#e7edeb;--ink-soft:#a7b4b1;--ink-faint:#74827f;
+      --line:#26332f;--line-strong:#33433f;
+      --accent:#4bbfb6;--accent-soft:#123230;
+      --auto:#54c08a;--auto-soft:#122e22;
+      --manual:#d7a24e;--manual-soft:#33260f;
+      --block:#e07a6f;--block-soft:#341b18;
+    }
+  }
+  :root[data-theme="light"]{
+    --ground:#f2f4f4;--surface:#ffffff;--surface-2:#eef1f1;
+    --ink:#17211f;--ink-soft:#4c5a57;--ink-faint:#7d8a87;
+    --line:#dbe1e0;--line-strong:#c3cccb;
+    --accent:#0b5f5c;--accent-soft:#e3efee;
+    --auto:#1f7a52;--auto-soft:#e2f0e8;
+    --manual:#a9691a;--manual-soft:#f5ebd9;
+    --block:#b0392e;--block-soft:#f6e3e0;
+  }
+  :root[data-theme="dark"]{
+    --ground:#0e1413;--surface:#151e1c;--surface-2:#1b2725;
+    --ink:#e7edeb;--ink-soft:#a7b4b1;--ink-faint:#74827f;
+    --line:#26332f;--line-strong:#33433f;
+    --accent:#4bbfb6;--accent-soft:#123230;
+    --auto:#54c08a;--auto-soft:#122e22;
+    --manual:#d7a24e;--manual-soft:#33260f;
+    --block:#e07a6f;--block-soft:#341b18;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.65;font-size:16px;letter-spacing:.01em}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px 90px}
+
+  header{padding:48px 0 28px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:650;margin:0 0 12px}
+  h1{font-size:clamp(24px,4vw,34px);line-height:1.2;margin:0 0 12px;font-weight:720;text-wrap:balance}
+  .sub{color:var(--ink-soft);font-size:15.5px;max-width:60ch;margin:0}
+  .meta{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--ink-faint)}
+  .meta span strong{color:var(--ink-soft);font-weight:600}
+
+  section{padding:40px 0;border-bottom:1px solid var(--line)}
+  section:last-of-type{border-bottom:0}
+  .sec-h{display:flex;align-items:baseline;gap:12px;margin:0 0 6px}
+  .sec-n{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:600;flex:none}
+  h2{font-size:21px;margin:0;font-weight:680}
+  .sec-lead{color:var(--ink-soft);margin:10px 0 24px;max-width:62ch}
+
+  /* goal cards */
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px}
+  .card .num{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:700}
+  .card .h{font-weight:660;font-size:15px;margin:5px 0 6px}
+  .card .why{font-size:13px;color:var(--ink-soft);margin:0;line-height:1.55}
+
+  /* buckets (brief, no doc lists inside) */
+  .buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:18px}
+  .bk{border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px;background:var(--surface);border-top:3px solid var(--line-strong)}
+  .bk.reuse{border-top-color:var(--ink-faint)}
+  .bk.sys{border-top-color:var(--accent)}
+  .bk.ocr{border-top-color:var(--auto)}
+  .bk .bt{font-weight:670;font-size:14px;margin:0 0 3px}
+  .bk .bd{font-size:12.5px;color:var(--ink-soft);margin:5px 0 0}
+  .pill{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:2px 8px;border-radius:100px;font-weight:600;white-space:nowrap}
+  .p-reuse{background:var(--surface-2);color:var(--ink-soft)}
+  .p-sys{background:var(--accent-soft);color:var(--accent)}
+  .p-ocr{background:var(--auto-soft);color:var(--auto)}
+
+  /* doc table */
+  .tbl-wrap{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden}
+  .tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+  .tbl th,.tbl td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--line);vertical-align:middle}
+  .tbl th{background:var(--surface-2);font-weight:640;color:var(--ink-soft);font-size:11.5px;letter-spacing:.03em;text-transform:uppercase}
+  .tbl td{color:var(--ink-soft)}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl .doc{color:var(--ink);font-weight:580}
+
+  /* delivery flow — fixed width, no scroll, wraps for PDF */
+  .pipe{display:flex;align-items:stretch;flex-wrap:wrap;gap:10px 0;margin:6px 0 8px}
+  .node{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);padding:12px 14px;flex:1 1 0;min-width:150px;display:flex;flex-direction:column;justify-content:center;gap:3px}
+  .node .t{font-weight:660;font-size:14px}
+  .node .d{font-size:11.5px;color:var(--ink-faint);line-height:1.45}
+  .node.sys{border-color:var(--accent);background:var(--accent-soft)}
+  .node.man{border-color:var(--manual);background:var(--manual-soft)}
+  .arrow{align-self:center;color:var(--line-strong);flex:none;padding:0 8px;font-size:17px;font-weight:700;line-height:1}
+
+  .stage-tags{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 14px}
+  .stg{font-size:12px;font-family:var(--mono);font-weight:600;padding:3px 10px;border-radius:100px}
+  .stg.s1{background:var(--accent-soft);color:var(--accent)}
+  .stg.s2{background:var(--manual-soft);color:var(--manual)}
+
+  ol.steps{list-style:none;counter-reset:s;margin:18px 0 0;padding:0;display:flex;flex-direction:column}
+  ol.steps li{counter-increment:s;display:flex;gap:14px;padding:11px 0;border-top:1px dashed var(--line)}
+  ol.steps li:first-child{border-top:0}
+  ol.steps li::before{content:counter(s);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:6px;width:26px;height:24px;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
+  ol.steps .st{font-weight:640;font-size:14.5px}
+  ol.steps .sd{font-size:13px;color:var(--ink-soft)}
+
+  .callout{background:var(--accent-soft);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:15px 17px;margin:22px 0 0}
+  .callout p{margin:0;color:var(--ink);font-size:14px}
+  .callout .k{font-weight:680;color:var(--accent)}
+
+  .next-note{margin-top:16px;background:var(--manual-soft);border:1px solid var(--manual);border-radius:var(--radius);padding:13px 16px;font-size:14px;color:var(--ink)}
+  .next-note b{color:var(--manual)}
+
+  @media (max-width:680px){
+    .pipe{flex-direction:column}
+    .arrow{transform:rotate(90deg);padding:2px 0;align-self:flex-start;margin-left:20px}
+  }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">CrediOS Batch3 - AIOCR</p>
+  <h1>OCR Scope of Requirements</h1>
+</header>
+
+<!-- 1 -->
+<section>
+  <div class="sec-h"><span class="sec-n">01</span><h2>OCR Business Objectives</h2></div>
+  <p class="sec-lead">Introducing OCR at the disbursement stage addresses three objectives:</p>
+  <div class="cards">
+    <div class="card"><span class="num">G1</span><p class="h">Reduce manual data entry</p><p class="why">Fields on disbursement documents are automatically extracted and populated into the CRA screens; CRA shifts from "typing data manually" to "visual check + confirm", reducing workload and keying errors.</p></div>
+    <div class="card"><span class="num">G2</span><p class="h">Improve verification quality &amp; consistency</p><p class="why">Extracted results automatically run cross-document checks and business rule validation with uniform rules and consistent standards; issues automatically register a Defect Code.</p></div>
+    <div class="card"><span class="num">G3</span><p class="h">Lay the foundation for process automation</p><p class="why">Structured, trusted OCR data is the prerequisite for downstream process automation.</p></div>
+  </div>
+  <div class="callout"><p><span class="k">Positioning:</span> OCR plays the role of <b>field extraction / auto-fill only</b> — it does <b>not</b> replace CRA review. The final decision to confirm, correct, or release any validation result always rests with CRA.</p></div>
+</section>
+
+<!-- 2 -->
+<section>
+  <div class="sec-h"><span class="sec-n">02</span><h2>STP Eligibility Rules — Basis for Document Scoping</h2></div>
+  <p class="sec-lead">The OCR document list is not arbitrary: STP applies only to "clean cases" meeting the conditions below, and the document scope converges accordingly. All 9 rules must be met <b>simultaneously</b>, plus a 90-day validity check.</p>
+  <div class="cards">
+    <div class="card"><span class="num">01</span><p class="h">Individual</p><p class="why">Corporate / partnership cases involve resolutions, authorized signatories, multiple guarantors — too much judgment for straight-through.</p></div>
+    <div class="card"><span class="num">02</span><p class="h">New car</p><p class="why">Used / recond cars require VOC, payoff, inspection, AP import permits — too many variables.</p></div>
+    <div class="card"><span class="num">03</span><p class="h">E-Acceptance</p><p class="why">Acceptance data and agreement date are generated in-system, with system-issued documents — no dependency on extracting and manually checking paper agreements.</p></div>
+    <div class="card"><span class="num">04</span><p class="h">Panel Dealer</p><p class="why">Panel dealers are pre-vetted with standard deposit handling — no extra receipt verification required for non-panel scenarios.</p></div>
+    <div class="card"><span class="num">05</span><p class="h">Single beneficiary, matching dealer system</p><p class="why">"Who receives the money" must be unambiguous; the fund flow is cross-confirmed by the system.</p></div>
+    <div class="card"><span class="num">06</span><p class="h">No payoff</p><p class="why">No settlement of an existing loan — no settlement calculation, no coordination with a previous lender, no suspense handling.</p></div>
+    <div class="card"><span class="num">07</span><p class="h">Not FBT</p><p class="why">Funding before ownership transfer is extra risk exposure requiring manual checks on dealer limits and indemnities.</p></div>
+    <div class="card"><span class="num">08</span><p class="h">No FD pledge</p><p class="why">No manual verification of FD amount / pledge tenor / LOSO consistency against the approval.</p></div>
+    <div class="card"><span class="num">09</span><p class="h">No Floor Stock dealer</p><p class="why">Wholesale-financing dealers are a high-risk category requiring extra exposure checks.</p></div>
+  </div>
+  <div class="callout"><p><span class="k">Relationship to the document list:</span> the external documents required by STP clean cases form the core of the "OCR required" list in the next section. With E-Acceptance and Panel Dealer included as eligibility rules, documents specific to paper acceptance and non-panel / direct-seller scenarios (Seller's IC, Loan Suspense Receipt) are <b>excluded from this OCR scope</b>; conditional documents such as VOC (used cars) remain in the list to serve regular non-STP cases.</p></div>
+</section>
+
+<!-- 3 -->
+<section>
+  <div class="sec-h"><span class="sec-n">03</span><h2>OCR Functional Scope</h2></div>
+  <p class="sec-lead">Defined along two dimensions: which documents go through OCR (by data source), and what OCR does with them (four actions).</p>
+
+  <div class="stage-tags"><span class="stg s1">3.1 Document scope — three categories by "where the data comes from"</span></div>
+  <div class="buckets">
+    <div class="bk reuse">
+      <p class="bt"><span class="pill p-reuse">Already captured</span></p>
+      <p class="bd">Collected and verified in earlier stages; data is reused — no repeat OCR.</p>
+    </div>
+    <div class="bk sys">
+      <p class="bt"><span class="pill p-sys">System-generated</span></p>
+      <p class="bd">Generated by the system; fields already structured in the database — no OCR needed.</p>
+    </div>
+    <div class="bk ocr">
+      <p class="bt"><span class="pill p-ocr">OCR required</span></p>
+      <p class="bd">External documents appearing for the first time at disbursement — <b>this is the OCR scope</b>.</p>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th style="width:44px">#</th><th>Document</th><th>Category</th><th>Scenario / Notes</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td class="doc">Vehicle Invoice</td><td><span class="pill p-ocr">OCR required</span></td><td>New car</td></tr>
+        <tr><td>2</td><td class="doc">VOC</td><td><span class="pill p-ocr">OCR required</span></td><td>Used car only</td></tr>
+        <tr><td>3</td><td class="doc">Road Tax Disc / JPJ Receipt</td><td><span class="pill p-ocr">OCR required</span></td><td>Tax</td></tr>
+        <tr><td>4</td><td class="doc">Insurance Cover Note</td><td><span class="pill p-ocr">OCR required</span></td><td>Insurance</td></tr>
+        <tr><td>5</td><td class="doc">Delivery Order</td><td><span class="pill p-ocr">OCR required</span></td><td>Proof of delivery</td></tr>
+        <tr><td>6</td><td class="doc">IBG Letter</td><td><span class="pill p-ocr">OCR required</span></td><td>Payment to an alternate account</td></tr>
+        <tr><td>7</td><td class="doc">FIS / JPJ Result</td><td><span class="pill p-ocr">OCR required</span></td><td>Collateral lodgement result</td></tr>
+        <tr><td>8</td><td class="doc">E-hakmilik copy</td><td><span class="pill p-ocr">OCR required</span></td><td>Lodgement certificate</td></tr>
+        <tr><td>9</td><td class="doc">Credit Note - Admin Fee</td><td><span class="pill p-ocr">OCR required</span></td><td>Admin fee payable to HLB</td></tr>
+        <tr><td>10</td><td class="doc">NRIC (MyKad)</td><td><span class="pill p-reuse">Already captured</span></td><td>Captured and verified at application stage</td></tr>
+        <tr><td>11</td><td class="doc">Passport</td><td><span class="pill p-reuse">Already captured</span></td><td>Captured and verified at application stage</td></tr>
+        <tr><td>12</td><td class="doc">Driving License</td><td><span class="pill p-reuse">Already captured</span></td><td>Captured and verified at application stage</td></tr>
+        <tr><td>13</td><td class="doc">HP Agreement &amp; T&amp;C</td><td><span class="pill p-sys">System-generated</span></td><td>System output, fields known</td></tr>
+        <tr><td>14</td><td class="doc">Application Form</td><td><span class="pill p-sys">System-generated</span></td><td>System output, fields known</td></tr>
+        <tr><td>15</td><td class="doc">2nd Schedule</td><td><span class="pill p-sys">System-generated</span></td><td>System output, fields known</td></tr>
+        <tr><td>16</td><td class="doc">Biometric</td><td><span class="pill p-sys">System-generated</span></td><td>System-generated result</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="stage-tags" style="margin-top:22px"><span class="stg s1">3.2 What OCR does — four actions</span></div>
+  <ol class="steps">
+    <li><div><div class="st">Auto classification</div><div class="sd">Sales upload without pre-selecting file types; the system identifies document categories automatically (including splitting multiple documents within one PDF).</div></div></li>
+    <li><div><div class="st">Field extraction</div><div class="sd">Structured data is extracted per the agreed field list for each document type, with confidence scores.</div></div></li>
+    <li><div><div class="st">Document rule verification (OCR Workbench)</div><div class="sd">Document-level rules run on extracted results: completeness, cross-document consistency, deterministic checks on dates / amounts / fixed values; low-confidence fields go to manual visual calibration.</div></div></li>
+    <li><div><div class="st">Result delivery</div><div class="sd">Structured data is written to CDM for the CRA side to retrieve (delivery logic in the next section).</div></div></li>
+  </ol>
+</section>
+
+<!-- 4 -->
+<section>
+  <div class="sec-h"><span class="sec-n">04</span><h2>Delivery Logic: Data Sync &amp; Two-Stage Validation</h2></div>
+  <p class="sec-lead">This section is the key interaction design to confirm together.</p>
+
+  <div class="stage-tags"><span class="stg s1">4.1 Data synchronization</span></div>
+  <ol class="steps">
+    <li><div><div class="st">CRA retrieves OCR structured data from CDM</div><div class="sd">After extraction and verification, structured results land in CDM; the CRA side retrieves them directly, and <b>the disbursement team decides how the data populates the CRA screens</b>.</div></div></li>
+  </ol>
+
+  <div class="stage-tags" style="margin-top:22px"><span class="stg s1">4.2 Two-stage validation</span></div>
+  <div class="pipe">
+    <div class="node sys"><span class="t">① OCR Workbench</span><span class="d">Document rule verification: classification confirmation, field calibration, document-level checks</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="t">Submit</span><span class="d">User confirms OCR results</span></div>
+    <span class="arrow">→</span>
+    <div class="node man"><span class="t">② CRA Workbench</span><span class="d">Expert business rule check: business-level rule execution and confirmation</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="t">Result display</span><span class="d">Results shown on the main page for second confirmation</span></div>
+  </div>
+  <p class="sec-lead" style="margin-top:8px">In short: CRA first completes document rule verification in the <b>OCR Workbench</b>, then returns to the <b>CRA Workbench</b> for expert business rule checking — two stages, two workbenches, each owning one layer of rules.</p>
+
+  <div class="stage-tags" style="margin-top:18px"><span class="stg s2">4.3 Front-end feedback</span></div>
+  <ol class="steps">
+    <li><div><div class="st">Loading indicator after submission</div><div class="sd">After the user submits, the front end shows a loading indicator while waiting for the business check results from the back end.</div></div></li>
+    <li><div><div class="st">Results displayed on the main page</div><div class="sd">Once returned, business check results are displayed on the main page for the user's second confirmation.</div></div></li>
+  </ol>
+</section>
+
+<!-- 5 -->
+<section>
+  <div class="sec-h"><span class="sec-n">05</span><h2>Items to Confirm &amp; Next Step</h2></div>
+  <div class="cards">
+    <div class="card"><span class="num">Q1</span><p class="h">Document scope</p><p class="why">Is the "OCR required" list complete? Any documents CRA believes must be added or can be removed?</p></div>
+    <div class="card"><span class="num">Q2</span><p class="h">Data sync approach</p><p class="why">CRA retrieves from CDM + the disbursement team decides screen population — is this model confirmed?</p></div>
+    <div class="card"><span class="num">Q3</span><p class="h">Two-stage workflow</p><p class="why">OCR Workbench first, then CRA Workbench — does this flow match CRA's current working practice?</p></div>
+  </div>
+  <div class="next-note"><b>Next step:</b> a dedicated session next week, together with Howie, on the end-to-end STP disbursement flow.</div>
+</section>
+</div>
