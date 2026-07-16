@@ -209,37 +209,37 @@
   <ol class="steps">
     <li><div><div class="st">自动分类</div><div class="sd">Sales 上传无需预先选择文件类型，系统自动识别文书类别（含一个 PDF 内多份文书的拆分）。</div></div></li>
     <li><div><div class="st">字段提取</div><div class="sd">按每类文书约定的字段清单提取结构化数据，产出置信度。</div></div></li>
-    <li><div><div class="st">文件规则核验（OCR 工作台）</div><div class="sd">对提取结果执行文件层规则：完整性、跨文件一致性、日期/金额/固定值等确定性校验；低置信字段推人工目视校准。</div></div></li>
-    <li><div><div class="st">结果交付</div><div class="sd">结构化数据写入 CDM，供 CRA 侧拉取使用（交付逻辑见下一节）。</div></div></li>
+    <li><div><div class="st">文件核对（OCR 工作台）</div><div class="sd">先把文件本身核清楚：材料齐不齐、几份文件之间对不对得上、日期 / 金额 / 固定费用这类能直接算的检查；机器没把握的字段，推给人对着原件看一眼。</div></div></li>
+    <li><div><div class="st">结果交付</div><div class="sd">核对完的数据写入 CDM，CRA 那边直接取用（怎么取、怎么核，见下一节）。</div></div></li>
   </ol>
 </section>
 
 <!-- 4 · 交付逻辑 -->
 <section>
-  <div class="sec-h"><span class="sec-n">04</span><h2>交付逻辑：数据同步与双阶段校验</h2></div>
-  <p class="sec-lead">本节是今天双方需要重点确认的交互方案。</p>
+  <div class="sec-h"><span class="sec-n">04</span><h2>数据怎么给到 CRA、怎么核</h2></div>
+  <p class="sec-lead">这一节是今天要重点确认的：数据怎么同步过来、核对怎么走、页面上怎么反馈。</p>
 
-  <div class="stage-tags"><span class="stg s1">4.1 数据同步模式</span></div>
+  <div class="stage-tags"><span class="stg s1">4.1 数据怎么同步</span></div>
   <ol class="steps">
-    <li><div><div class="st">CRA 端从 CDM 拉取 OCR 结构化数据</div><div class="sd">OCR 完成提取与核验后，结构化结果落 CDM；CRA 端直接拉取，<b>由放款团队决定如何填充至 CRA 界面</b>。</div></div></li>
+    <li><div><div class="st">CRA 端从 CDM 拉取 OCR 数据</div><div class="sd">OCR 读完、核完的数据落在 CDM；CRA 端直接拉取，<b>放款团队来定这些数据怎么填到 CRA 的页面上</b>。</div></div></li>
   </ol>
 
-  <div class="stage-tags" style="margin-top:22px"><span class="stg s1">4.2 双阶段校验机制</span></div>
+  <div class="stage-tags" style="margin-top:22px"><span class="stg s1">4.2 核对分两步走</span></div>
   <div class="pipe">
-    <div class="node sys"><span class="t">① OCR 工作台</span><span class="d">文件规则核验：分类确认、字段校准、文件层校验</span></div>
+    <div class="node sys"><span class="t">① OCR 工作台</span><span class="d">核文件：分类对不对、字段读得准不准</span></div>
     <span class="arrow">→</span>
-    <div class="node"><span class="t">提交核验</span><span class="d">用户确认 OCR 结果</span></div>
+    <div class="node"><span class="t">提交</span><span class="d">确认 OCR 结果没问题</span></div>
     <span class="arrow">→</span>
-    <div class="node man"><span class="t">② CRA 工作台</span><span class="d">专家业务规则检查：业务层规则执行与结果确认</span></div>
+    <div class="node man"><span class="t">② CRA 工作台</span><span class="d">核业务：跑业务规则、确认结果</span></div>
     <span class="arrow">→</span>
-    <div class="node"><span class="t">主页反显</span><span class="d">结果供用户二次确认</span></div>
+    <div class="node"><span class="t">主页看结果</span><span class="d">再点一次确认</span></div>
   </div>
-  <p class="sec-lead" style="margin-top:8px">即：CRA 先在 <b>OCR 工作台</b>完成文件规则核验，随后返回 <b>CRA 工作台</b>进行专家业务规则检查——两个阶段、两个工作台，各管一层规则。</p>
+  <p class="sec-lead" style="margin-top:8px">简单说：先在 <b>OCR 工作台</b>把文件本身核清楚，提交后回到 <b>CRA 工作台</b>跑业务规则——一步核文件、一步核业务，各管一摊。</p>
 
-  <div class="stage-tags" style="margin-top:18px"><span class="stg s2">4.3 前端交互反馈</span></div>
+  <div class="stage-tags" style="margin-top:18px"><span class="stg s2">4.3 页面上怎么反馈</span></div>
   <ol class="steps">
-    <li><div><div class="st">提交后加载动效</div><div class="sd">用户提交核验后，前端展示加载动效，等待后台接口返回业务检查结果。</div></div></li>
-    <li><div><div class="st">主页反显结果</div><div class="sd">业务检查结果返回后，在主页反显，供用户进行二次确认。</div></div></li>
+    <li><div><div class="st">提交后显示加载中</div><div class="sd">点了提交后页面转圈等待，后台在跑业务检查。</div></div></li>
+    <li><div><div class="st">结果直接显示在主页</div><div class="sd">检查结果回来后直接摆在主页上，看一眼没问题，再点一次确认就行。</div></div></li>
   </ol>
 </section>
 
@@ -249,8 +249,8 @@
   <div class="cards">
     <div class="card"><span class="num">Q1</span><p class="h">文书范围</p><p class="why">「需 OCR」清单是否完整？是否有 CRA 认为必须纳入 / 可以剔除的文书？</p></div>
     <div class="card"><span class="num">Q2</span><p class="h">数据同步方案</p><p class="why">CRA 从 CDM 拉取 + 放款团队决定界面填充方式——该模式是否确认？</p></div>
-    <div class="card"><span class="num">Q3</span><p class="h">双阶段校验动线</p><p class="why">先 OCR 工作台、后 CRA 工作台的操作动线，与 CRA 现有作业习惯是否匹配？</p></div>
+    <div class="card"><span class="num">Q3</span><p class="h">两步核对的动线</p><p class="why">先 OCR 工作台核文件、再 CRA 工作台核业务，这个走法跟 CRA 现在的干活习惯合不合？</p></div>
   </div>
-  <div class="next-note"><b>下一步：</b>下周与 Howie 一起，专场讨论 STP 放款全流程。</div>
+  <div class="next-note"><b>下一步（两件事）：</b><br>① 下周与 Howie 一起，专场讨论 STP 放款全流程；<br>② 用在线表格同步全部文件的字段清单与校验规则，大家在线反馈意见。</div>
 </section>
 </div>
