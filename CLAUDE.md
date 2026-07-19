@@ -155,6 +155,14 @@
   - 顶部：Skip All Biometric 链接 + Switch to EA 链接
   - 底部：DC 状态横幅（Pending / Complete）
   - `renderManualPanel()` + `renderPersonCard()` 替代原来的两个函数
+- [x] **二稿标签**：`draft-v2` tag（commit 6c4e975），可 `git diff draft-v2 session-v9` 对比
+- [x] **三项 UX 修正**：Manual 完成态移除（DC 状态、Signed 标签、Dev Tool 场景全删）；EA Step 3 OTP 拆两步（失败→Send OTP 按钮→OTP 输入面板替换右侧）；Restart Service 按钮三处全删
+- [x] **Amendment (CILT) 四状态流程**：cilt-approved → ready → sent → confirmed；EA/Manual 双模式；Footer Confirm 联动（Manual 常显 disabled，Amendment confirmed 后 enable）
+- [x] **Remarks 全场景覆盖**：matched 选填不拦截 / unmatched 必填拦截（EA S1、S3、Manual bio 全部）；左栏面板同步显示
+- [x] **Document Library tab 移除**：单一 Acceptance 视图；History 弹窗保留供 Amendment 版本展示；完成横幅改 Document Centre
+- [x] **Amendment 补充（FRS 对照）**：CrediOS 触发说明行；confirmed 态 View Version History（v1 保留+v2 生效，防覆盖）+ View EA Log；EA Log 确认后显示 Amendment (1st) 行；头部状态 Amendment Pending/Confirmed 联动
+- [x] **e-Tracker 客户视图弹窗**：手机框 4 屏（SMS → 状态页+Review Now → 变更高亮审阅+勾选 Confirm → 成功页）；客户 Confirm 实时推进 LOAD$ 状态到 confirmed；入口在 sent 态 "Preview Customer View" 按钮
+- [x] **Dev Tool 重组**：5 个手风琴分组（Entry/EA Main/EA Exceptions/Manual/Amendment）+ 计数徽章；11 步 Walkthrough 步进器（Prev/Next）；applyScenario 支持 data-sc 查找 + keepOpen
 - [x] **Manual bio "Proceed Offline" 重命名 + 强制警告**：
   - "Skip Bio" → "Proceed Offline"（卡片头部按钮）
   - "Skip All Biometric" → "Proceed All Offline"（顶部操作栏）
