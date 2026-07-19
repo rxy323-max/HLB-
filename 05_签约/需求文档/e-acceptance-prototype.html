@@ -224,6 +224,32 @@ tr:hover td{background:#fafafa;}
 .amd-waiting-steps{font-size:12px;color:#3c4043;line-height:2;padding:8px 0;}
 .amd-waiting-steps span{display:block;}
 
+/* ── e-Tracker customer preview (phone frame) ── */
+.et-phone{width:330px;background:#fff;border:9px solid #202124;border-radius:26px;overflow:hidden;margin:0 auto;box-shadow:0 8px 30px rgba(0,0,0,.25);}
+.et-statusbar{background:#202124;color:#fff;font-size:10px;padding:4px 14px;display:flex;justify-content:space-between;}
+.et-body{height:470px;overflow-y:auto;background:#f4f5f7;}
+.et-appbar{background:#123c6e;color:#fff;padding:12px 16px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.et-sms-wrap{padding:16px 12px;display:flex;flex-direction:column;gap:8px;}
+.et-sms-from{font-size:11px;color:#5f6368;text-align:center;}
+.et-sms-bubble{background:#e8eaed;border-radius:14px;padding:10px 14px;font-size:12px;line-height:1.6;color:#202124;max-width:88%;}
+.et-sms-link{color:#1967d2;text-decoration:underline;cursor:pointer;font-weight:600;}
+.et-sms-time{font-size:10px;color:#9aa0a6;margin-left:4px;}
+.et-stage{display:flex;align-items:flex-start;gap:10px;padding:7px 0;}
+.et-stage-dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;margin-top:1px;}
+.et-stage-done .et-stage-dot{background:#137333;color:#fff;}
+.et-stage-cur .et-stage-dot{background:#b45309;color:#fff;}
+.et-stage-todo .et-stage-dot{background:#e8eaed;color:#9aa0a6;}
+.et-stage-name{font-size:12px;font-weight:500;color:#202124;}
+.et-stage-cur .et-stage-name{color:#b45309;font-weight:700;}
+.et-stage-todo .et-stage-name{color:#9aa0a6;}
+.et-amd-banner{background:#fef7e0;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;margin:12px 0;}
+.et-hl-field{background:#fff8c4;border:1px solid #f5e08a;border-radius:6px;padding:8px 12px;margin-bottom:8px;}
+.et-hl-label{font-size:10px;color:#80868b;text-transform:uppercase;letter-spacing:.4px;}
+.et-hl-old{font-size:11px;color:#9aa0a6;text-decoration:line-through;}
+.et-hl-new{font-size:13px;font-weight:700;color:#202124;}
+.et-step-ind{display:flex;gap:6px;align-items:center;font-size:11px;color:#9aa0a6;}
+.et-step-ind b{color:#1967d2;}
+
 /* ── Manual doc cards ── */
 .ma-instruction{background:#f8f9fa;border-radius:6px;padding:10px 14px;font-size:12px;color:#3c4043;line-height:1.6;margin-bottom:14px;}
 .ma-applicant{margin-bottom:16px;}
@@ -310,6 +336,20 @@ tr:hover td{background:#fafafa;}
 .dev-btn{display:block;width:100%;text-align:left;padding:6px 10px;border:none;border-radius:5px;background:#f8f9fa;font-size:12px;color:#3c4043;cursor:pointer;margin-bottom:3px;}
 .dev-btn:hover{background:#e8f0fe;color:#1967d2;}
 .dev-btn.active{background:#1967d2;color:#fff;}
+/* accordion groups */
+.dev-acc-hdr{display:flex;align-items:center;justify-content:space-between;width:100%;padding:7px 8px;border:none;border-radius:5px;background:transparent;font-size:10px;color:#5f6368;font-weight:700;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;margin-top:2px;}
+.dev-acc-hdr:hover{background:#f1f3f4;}
+.dev-acc-hdr .dev-cnt{background:#e8eaed;color:#5f6368;border-radius:8px;padding:1px 7px;font-size:10px;font-weight:600;}
+.dev-acc-hdr .dev-caret{font-size:9px;color:#9aa0a6;margin-left:6px;transition:transform .15s;}
+.dev-acc.open .dev-acc-hdr .dev-caret{transform:rotate(90deg);}
+.dev-acc-body{display:none;padding:2px 0 4px;}
+.dev-acc.open .dev-acc-body{display:block;}
+/* walkthrough stepper */
+.dev-walk{display:flex;align-items:center;gap:6px;background:#1e2235;border-radius:6px;padding:7px 8px;margin-bottom:10px;}
+.dev-walk button{border:none;border-radius:4px;background:#3a4160;color:#fff;font-size:11px;padding:4px 8px;cursor:pointer;flex-shrink:0;}
+.dev-walk button:hover{background:#4c548a;}
+.dev-walk button:disabled{opacity:.35;cursor:default;}
+.dev-walk-label{flex:1;font-size:11px;color:#c8cbe0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 .text-muted{color:#9aa0a6;font-size:12px;}
 
@@ -366,58 +406,11 @@ tr:hover td{background:#fafafa;}
       </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="tabs">
-      <div class="tab active" onclick="switchMainTab('doclib',this)">Document Library</div>
-      <div class="tab" onclick="switchMainTab('acceptance',this)">Acceptance</div>
-    </div>
+    <!-- Single view: Acceptance -->
     <div class="tab-body">
 
-      <!-- ══ Document Library ══ -->
-      <div class="tab-panel active" id="tp-doclib">
-
-        <!-- ── Contract Documents ── -->
-        <div class="dl-sec-hdr">
-          <div>
-            <div class="dl-sec-title">Contract Documents</div>
-            <div class="dl-sec-sub">Supporting documents for this application — available before and after signing, regardless of signing mode</div>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
-            <label style="font-size:12px;color:#5f6368;">Role:</label>
-            <select class="sel-sm" onchange="filterDocs(this.value)"><option value="">All</option><option>Primary</option><option>Other</option></select>
-            <input class="inp-search" type="text" placeholder="Search..." oninput="searchDocs(this.value)" style="width:150px;">
-            <button class="btn btn-secondary btn-sm" onclick="alert('Batch downloading selected documents...')">Batch Download</button>
-          </div>
-        </div>
-        <table>
-          <thead><tr>
-            <th style="width:32px;"><input type="checkbox" onclick="document.querySelectorAll('.dchk-c').forEach(c=>c.checked=this.checked)"></th>
-            <th style="width:36px;">No.</th><th>Document</th>
-            <th style="width:90px;">Role</th>
-            <th style="width:195px;">Latest Version</th>
-            <th style="width:210px;">Action</th>
-          </tr></thead>
-          <tbody id="contractDocsBody"></tbody>
-        </table>
-
-        <!-- ── Signing Documents ── -->
-        <div class="dl-section">
-          <div class="dl-sec-hdr">
-            <div>
-              <div class="dl-sec-title">
-                Signing Documents
-                <span id="dlSigningBadge" class="badge bd-blue" style="display:none;">—</span>
-              </div>
-              <div class="dl-sec-sub" id="dlSigningSub">Mode-specific documents prepared for customer signing — version history tracked here</div>
-            </div>
-          </div>
-          <div id="dlSigningContent"></div>
-        </div>
-
-      </div>
-
       <!-- ══ Acceptance ══ -->
-      <div class="tab-panel" id="tp-acceptance">
+      <div class="tab-panel active" id="tp-acceptance">
 
         <!-- Mode Gate — one-time entry, hidden after mode is selected -->
         <div id="modeGate" style="display:none;">
@@ -489,8 +482,7 @@ tr:hover td{background:#fafafa;}
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
               <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#5f6368;">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                Signed documents archived to Document Library.
-                <button class="lnk" onclick="viewDocLib()">View in Document Library →</button>
+                Signed documents archived to Document Centre.
               </div>
               <button class="btn btn-secondary btn-sm" onclick="openEALog()">View E-Acceptance Log</button>
             </div>
@@ -614,65 +606,103 @@ tr:hover td{background:#fafafa;}
   </div>
 </div>
 
+<!-- ═══ MODAL: e-Tracker Customer Preview ═══ -->
+<div class="modal-overlay" id="modalETracker">
+  <div class="modal" style="width:420px;background:#f1f3f4;">
+    <div class="modal-hdr" style="background:#fff;">
+      <h3>Customer View — e-Tracker</h3>
+      <button class="modal-x" onclick="closeModal('modalETracker')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:18px 12px;">
+      <div class="et-phone">
+        <div class="et-statusbar"><span>9:41</span><span>▲▼ ●●●</span></div>
+        <div class="et-body" id="etPhoneBody"></div>
+      </div>
+    </div>
+    <div class="modal-ftr" style="background:#fff;align-items:center;justify-content:space-between;">
+      <div class="et-step-ind" id="etStepInd"></div>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modalETracker')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ DEV TOOL ═══ -->
 <div class="dev-tool">
   <div class="dev-panel" id="devPanel">
     <div class="dev-title">Scenarios — v9</div>
 
-    <div class="dev-group">Entry Point</div>
-    <button class="dev-btn" onclick="applyScenario('gate',this)">[ Gate ] No guarantor</button>
-    <button class="dev-btn" onclick="applyScenario('m-gate',this)">[ Gate ] With guarantor</button>
-    <div class="dev-sep"></div>
+    <!-- Walkthrough stepper: steps through the happy-path demo sequence -->
+    <div class="dev-walk">
+      <button id="devWalkPrev" onclick="devWalk(-1)">◀</button>
+      <span class="dev-walk-label" id="devWalkLabel">Walkthrough — press ▶</span>
+      <button id="devWalkNext" onclick="devWalk(1)">▶</button>
+    </div>
 
-    <div class="dev-group">E-Acceptance · Step 1 Identity Verification</div>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-disc',this)">Disconnected</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-ready',this)">Device ready</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-matched',this)">✓ Matched (1st attempt)</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-fail1',this)">✗ Failed — attempt 1/3</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-fail2',this)">✗ Failed — attempt 2/3</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s1-fail3',this)">✗ Max retries → auto-switch</button>
+    <div class="dev-acc open" id="devAcc-entry">
+      <button class="dev-acc-hdr" onclick="devToggleAcc('entry')"><span>Entry Point <span class="dev-caret">▶</span></span><span class="dev-cnt">2</span></button>
+      <div class="dev-acc-body">
+        <button class="dev-btn" data-sc="gate" onclick="applyScenario('gate',this)">[ Gate ] No guarantor</button>
+        <button class="dev-btn" data-sc="m-gate" onclick="applyScenario('m-gate',this)">[ Gate ] With guarantor</button>
+      </div>
+    </div>
 
-    <div class="dev-sep"></div>
-    <div class="dev-group">E-Acceptance · Step 2 RIB Portal</div>
-    <button class="dev-btn" onclick="applyScenario('ea-s2-wait',this)">Awaiting customer at RIB</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s2-done',this)">✓ RIB Accepted</button>
+    <div class="dev-acc" id="devAcc-eamain">
+      <button class="dev-acc-hdr" onclick="devToggleAcc('eamain')"><span>EA · Main Flow <span class="dev-caret">▶</span></span><span class="dev-cnt">6</span></button>
+      <div class="dev-acc-body">
+        <button class="dev-btn" data-sc="ea-s1-disc" onclick="applyScenario('ea-s1-disc',this)">S1 · Disconnected</button>
+        <button class="dev-btn" data-sc="ea-s1-ready" onclick="applyScenario('ea-s1-ready',this)">S1 · Device ready</button>
+        <button class="dev-btn" data-sc="ea-s1-matched" onclick="applyScenario('ea-s1-matched',this)">S1 · ✓ Matched</button>
+        <button class="dev-btn" data-sc="ea-s2-wait" onclick="applyScenario('ea-s2-wait',this)">S2 · Awaiting customer at RIB</button>
+        <button class="dev-btn" data-sc="ea-s2-done" onclick="applyScenario('ea-s2-done',this)">S2 · ✓ RIB Accepted</button>
+        <button class="dev-btn" data-sc="ea-s3-ready" onclick="applyScenario('ea-s3-ready',this)">S3 · Device ready</button>
+        <button class="dev-btn" data-sc="ea-complete" onclick="applyScenario('ea-complete',this)">✓ E-Acceptance Completed</button>
+      </div>
+    </div>
 
-    <div class="dev-sep"></div>
-    <div class="dev-group">E-Acceptance · Step 3 Confirmation</div>
-    <button class="dev-btn" onclick="applyScenario('ea-s3-ready',this)">Device ready</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s3-fail1',this)">✗ Failed — attempt 1/3</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s3-fail2',this)">✗ Failed — attempt 2/3</button>
-    <button class="dev-btn" onclick="applyScenario('ea-s3-otp',this)">✗ Max retries → Send OTP step</button>
-    <button class="dev-btn" onclick="applyScenario('ea-complete',this)">✓ E-Acceptance Completed</button>
+    <div class="dev-acc" id="devAcc-eaexc">
+      <button class="dev-acc-hdr" onclick="devToggleAcc('eaexc')"><span>EA · Exceptions <span class="dev-caret">▶</span></span><span class="dev-cnt">6</span></button>
+      <div class="dev-acc-body">
+        <button class="dev-btn" data-sc="ea-s1-fail1" onclick="applyScenario('ea-s1-fail1',this)">S1 · ✗ Failed 1/3</button>
+        <button class="dev-btn" data-sc="ea-s1-fail2" onclick="applyScenario('ea-s1-fail2',this)">S1 · ✗ Failed 2/3</button>
+        <button class="dev-btn" data-sc="ea-s1-fail3" onclick="applyScenario('ea-s1-fail3',this)">S1 · ✗ 3/3 → force Manual</button>
+        <button class="dev-btn" data-sc="ea-s3-fail1" onclick="applyScenario('ea-s3-fail1',this)">S3 · ✗ Failed 1/3</button>
+        <button class="dev-btn" data-sc="ea-s3-fail2" onclick="applyScenario('ea-s3-fail2',this)">S3 · ✗ Failed 2/3</button>
+        <button class="dev-btn" data-sc="ea-s3-otp" onclick="applyScenario('ea-s3-otp',this)">S3 · ✗ 3/3 → OTP fallback</button>
+      </div>
+    </div>
 
-    <div class="dev-sep"></div>
-    <div class="dev-group">E-Acceptance · Amendment (CILT)</div>
-    <button class="dev-btn" onclick="applyScenario('ea-amendment',this)">CILT approved — Action Required</button>
-    <button class="dev-btn" onclick="applyScenario('ea-amendment-ready',this)">Ready — Pending Notification</button>
-    <button class="dev-btn" onclick="applyScenario('ea-amendment-sent',this)">SMS Sent — Awaiting Customer</button>
-    <button class="dev-btn" onclick="applyScenario('ea-amendment-done',this)">✓ Customer Confirmed</button>
+    <div class="dev-acc" id="devAcc-manual">
+      <button class="dev-acc-hdr" onclick="devToggleAcc('manual')"><span>Manual Acceptance <span class="dev-caret">▶</span></span><span class="dev-cnt">9</span></button>
+      <div class="dev-acc-body">
+        <div class="dev-group">No Guarantor</div>
+        <button class="dev-btn" data-sc="m-ng-disc" onclick="applyScenario('m-ng-disc',this)">Disconnected</button>
+        <button class="dev-btn" data-sc="m-ng-ready" onclick="applyScenario('m-ng-ready',this)">Device ready</button>
+        <button class="dev-btn" data-sc="m-ng-matched" onclick="applyScenario('m-ng-matched',this)">✓ Matched</button>
+        <button class="dev-btn" data-sc="m-ng-fail" onclick="applyScenario('m-ng-fail',this)">✗ Unmatched</button>
+        <button class="dev-btn" data-sc="m-ng-skip" onclick="applyScenario('m-ng-skip',this)">Proceed Offline</button>
+        <div class="dev-group">With Guarantor</div>
+        <button class="dev-btn" data-sc="m-g-disc" onclick="applyScenario('m-g-disc',this)">Both: Disconnected</button>
+        <button class="dev-btn" data-sc="m-g-p-matched" onclick="applyScenario('m-g-p-matched',this)">Primary ✓ · Guarantor active</button>
+        <button class="dev-btn" data-sc="m-g-both-matched" onclick="applyScenario('m-g-both-matched',this)">Both ✓ Matched</button>
+        <button class="dev-btn" data-sc="m-g-skip" onclick="applyScenario('m-g-skip',this)">Both: Proceed Offline</button>
+      </div>
+    </div>
 
-    <div class="dev-sep"></div>
-    <div class="dev-group">Manual — No Guarantor</div>
-    <button class="dev-btn" onclick="applyScenario('m-ng-disc',this)">Disconnected</button>
-    <button class="dev-btn" onclick="applyScenario('m-ng-ready',this)">Device ready</button>
-    <button class="dev-btn" onclick="applyScenario('m-ng-matched',this)">✓ Matched</button>
-    <button class="dev-btn" onclick="applyScenario('m-ng-fail',this)">✗ Unmatched (proceed anyway)</button>
-    <button class="dev-btn" onclick="applyScenario('m-ng-skip',this)">Skipped</button>
-
-    <div class="dev-sep"></div>
-    <div class="dev-group">Manual — With Guarantor</div>
-    <button class="dev-btn" onclick="applyScenario('m-g-disc',this)">Both: Disconnected</button>
-    <button class="dev-btn" onclick="applyScenario('m-g-p-matched',this)">Primary ✓ done · Guarantor active</button>
-    <button class="dev-btn" onclick="applyScenario('m-g-both-matched',this)">Both ✓ Matched</button>
-    <button class="dev-btn" onclick="applyScenario('m-g-skip',this)">Both: Skipped</button>
-
-    <div class="dev-sep"></div>
-    <div class="dev-group">Manual · Amendment (CILT)</div>
-    <button class="dev-btn" onclick="applyScenario('m-amendment',this)">CILT approved — Action Required</button>
-    <button class="dev-btn" onclick="applyScenario('m-amendment-ready',this)">Ready — Pending Notification</button>
-    <button class="dev-btn" onclick="applyScenario('m-amendment-sent',this)">SMS Sent — Awaiting Customer</button>
-    <button class="dev-btn" onclick="applyScenario('m-amendment-done',this)">✓ Customer Confirmed</button>
+    <div class="dev-acc" id="devAcc-amd">
+      <button class="dev-acc-hdr" onclick="devToggleAcc('amd')"><span>Amendment (CILT) <span class="dev-caret">▶</span></span><span class="dev-cnt">8</span></button>
+      <div class="dev-acc-body">
+        <div class="dev-group">On E-Acceptance</div>
+        <button class="dev-btn" data-sc="ea-amendment" onclick="applyScenario('ea-amendment',this)">① CILT approved</button>
+        <button class="dev-btn" data-sc="ea-amendment-ready" onclick="applyScenario('ea-amendment-ready',this)">② Ready — pending SMS</button>
+        <button class="dev-btn" data-sc="ea-amendment-sent" onclick="applyScenario('ea-amendment-sent',this)">③ SMS sent — awaiting customer</button>
+        <button class="dev-btn" data-sc="ea-amendment-done" onclick="applyScenario('ea-amendment-done',this)">④ ✓ Customer confirmed</button>
+        <div class="dev-group">On Manual</div>
+        <button class="dev-btn" data-sc="m-amendment" onclick="applyScenario('m-amendment',this)">① CILT approved</button>
+        <button class="dev-btn" data-sc="m-amendment-ready" onclick="applyScenario('m-amendment-ready',this)">② Ready — pending SMS</button>
+        <button class="dev-btn" data-sc="m-amendment-sent" onclick="applyScenario('m-amendment-sent',this)">③ SMS sent — awaiting customer</button>
+        <button class="dev-btn" data-sc="m-amendment-done" onclick="applyScenario('m-amendment-done',this)">④ ✓ Customer confirmed</button>
+      </div>
+    </div>
 
   </div>
   <button class="dev-fab" onclick="document.getElementById('devPanel').classList.toggle('open')" title="Scenarios">⚙</button>
@@ -692,29 +722,6 @@ const ICO_WARN_SM=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" s
 // ═══════════════════════════════════════════════
 //  DATA
 // ═══════════════════════════════════════════════
-// Contract Documents — mode-agnostic, always visible
-const CONTRACT_DOCS=[
-  {id:1,name:'Letter of Undertaking',role:'Other',ver:'v1',date:'2026-05-18 22:12:13'},
-  {id:2,name:'HP Application Form',role:'Primary',ver:'v1',date:'2026-05-19 18:37:47'},
-  {id:6,name:'HpEconsentLogAsp',role:'Other',ver:'v1',date:'2026-05-19 11:04:18'},
-];
-// Signing Documents — generated per signing mode; History tracked here
-const SIGNING_DOCS_EA=[
-  {id:3,name:'HP Agreement with T&C',role:'Primary',ver:'v1',date:'2026-05-18 22:12:14'},
-  {id:4,name:'HP Agreement Second Schedule',role:'Primary',ver:'v1',date:'2026-05-18 22:12:14'},
-  {id:5,name:'Product Disclosure Sheet',role:'Primary',ver:'v1',date:'2026-05-18 22:12:14'},
-];
-const SIGNING_DOCS_MANUAL=[
-  {id:3,name:'HP Agreement with T&C',role:'Primary',ver:'v1',date:'2026-05-18 22:12:14'},
-  {id:4,name:'HP Agreement Second Schedule',role:'Primary',ver:'v1',date:'2026-05-18 22:12:14'},
-  {id:5,name:'Product Disclosure Sheet',role:'Primary',ver:'v1',date:'2026-05-18 22:12:14'},
-];
-const MANUAL_DOCS=[
-  {name:'HP Application Form.pdf',ver:'v1',id:'DTFF02026042978618',date:'2026-05-18 18:49:42'},
-  {name:'HP Agreement with T&C.pdf',ver:'v1',id:'DTFF02026051178660',date:'2026-05-18 17:43:16'},
-  {name:'HP Agreement Second Schedule.pdf',ver:'v1',id:'DTFF02026043078624',date:'2026-05-18 17:35:29'},
-  {name:'Product Disclosure Sheet.pdf',ver:'v1',id:'DTFF02026051178651',date:'2026-05-18 17:35:27'},
-];
 const AMD_DOCS=[
   {name:'HP Agreement with T&C.pdf',ver:'v2',changed:true,fields:'Financial Amount, Interest Rate, Monthly Installment'},
   {name:'HP Agreement Second Schedule.pdf',ver:'v2',changed:true,fields:'APR, Duration, Installment Count'},
@@ -727,7 +734,7 @@ const AMD_CHANGES=[
 ];
 const EA_LOG={
   initial:{type:'Hirer Initial Acceptance',pds:'Y',ss:'Y',hpa:'Y',app4:'—',status:'Completed',dt:'20/05/2026 04:50 PM',remark:'Biometric Acceptance'},
-  amendment:{type:'Hirer Amendment Acceptance (1st)',pds:'Y',ss:'Y',hpa:'Y',app4:'—',status:'Completed',dt:'20/05/2026 05:30 PM',remark:'Biometric Acceptance'},
+  amendment:{type:'Hirer Amendment Acceptance (1st)',pds:'Y',ss:'Y',hpa:'Y',app4:'—',status:'Completed',dt:'20/05/2026 05:02 PM',remark:'e-Tracker Remote Acceptance'},
   bank:{type:'Bank Acceptance',pds:'—',ss:'—',hpa:'—',app4:'—',status:'Completed',dt:'21/05/2026 09:00 AM',remark:'Funded'},
 };
 // Per-person data for Manual Acceptance (bio + their specific signing docs)
@@ -767,91 +774,9 @@ let S={
 //  INIT
 // ═══════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
-  renderContractDocs();
-  // Start on Acceptance tab with mode gate shown
+  // Start with mode gate shown
   applyScenario('gate', null);
 });
-
-// ═══════════════════════════════════════════════
-//  TABS
-// ═══════════════════════════════════════════════
-function switchMainTab(id,el){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('tp-'+id).classList.add('active');
-}
-
-// ═══════════════════════════════════════════════
-//  DOC LIBRARY
-// ═══════════════════════════════════════════════
-let _dlFilter='',_dlSearch='';
-function filterDocs(r){_dlFilter=r;renderContractDocs();}
-function searchDocs(q){_dlSearch=q;renderContractDocs();}
-
-function renderContractDocs(){
-  let docs=CONTRACT_DOCS;
-  if(_dlFilter) docs=docs.filter(d=>d.role===_dlFilter);
-  if(_dlSearch) docs=docs.filter(d=>d.name.toLowerCase().includes(_dlSearch.toLowerCase()));
-  document.getElementById('contractDocsBody').innerHTML=docs.map((d,i)=>`
-    <tr>
-      <td><input type="checkbox" class="dchk-c"></td>
-      <td style="color:#5f6368;">${i+1}</td>
-      <td style="font-weight:500;">${d.name}</td>
-      <td><span class="badge ${d.role==='Primary'?'bd-primary':'bd-other'}">${d.role}</span></td>
-      <td class="text-muted">${d.ver} — ${d.date}</td>
-      <td><div class="act-row">
-        <span class="lnk" onclick="alert('Viewing: ${d.name}')">View</span>
-        <span class="lnk" onclick="alert('Downloading: ${d.name}')">Download</span>
-        <span class="lnk" onclick="openHistory('${d.name}','${d.ver}','${d.date}',false)">History</span>
-      </div></td>
-    </tr>`).join('');
-}
-
-function renderSigningDocs(){
-  const badge=document.getElementById('dlSigningBadge');
-  const content=document.getElementById('dlSigningContent');
-  // If mode not yet confirmed, show placeholder
-  if(!S.modeConfirmed){
-    badge.style.display='none';
-    document.getElementById('dlSigningSub').textContent='Select a signing mode in the Acceptance tab to generate documents';
-    content.innerHTML='<div style="background:#f8f9fa;border:1px dashed #dadce0;border-radius:6px;padding:20px 16px;font-size:12px;color:#9aa0a6;text-align:center;line-height:1.8;">Signing documents will appear here once a signing mode is confirmed in the Acceptance tab.</div>';
-    return;
-  }
-  const docs=S.mode==='ea'?SIGNING_DOCS_EA:SIGNING_DOCS_MANUAL;
-  badge.style.display='inline-flex';
-  badge.textContent=S.mode==='ea'?'E-Acceptance':'Manual';
-  badge.className='badge '+(S.mode==='ea'?'bd-blue':'bd-purple');
-  const rows=docs.map((d,i)=>{
-    const amd=S.amendmentRequired?AMD_DOCS.find(a=>a.name.replace('.pdf','')===d.name):null;
-    const ver=amd?amd.ver:d.ver;
-    const dt=amd&&S.smsSent?fmtNow():d.date;
-    const multiVer=!!amd;
-    const amendBadge=amd&&amd.changed?'<span class="badge bd-orange" style="margin-left:6px;font-size:10px;">Amended</span>':'';
-    return `<tr>
-      <td><input type="checkbox" class="dchk-s"></td>
-      <td style="color:#5f6368;">${i+1}</td>
-      <td style="font-weight:500;">${d.name}${amendBadge}</td>
-      <td><span class="badge ${d.role==='Primary'?'bd-primary':'bd-other'}">${d.role}</span></td>
-      <td class="text-muted">${ver} — ${dt}</td>
-      <td><div class="act-row">
-        <span class="lnk" onclick="alert('Viewing: ${d.name}')">View</span>
-        <span class="lnk" onclick="alert('Downloading: ${d.name}')">Download</span>
-        <span class="lnk" onclick="openHistory('${d.name}','${ver}','${dt}',${multiVer})">History</span>
-      </div></td>
-    </tr>`;
-  }).join('');
-  document.getElementById('dlSigningContent').innerHTML=`<table>
-    <thead><tr>
-      <th style="width:32px;"><input type="checkbox" onclick="document.querySelectorAll('.dchk-s').forEach(c=>c.checked=this.checked)"></th>
-      <th style="width:36px;">No.</th><th>Document</th>
-      <th style="width:90px;">Role</th>
-      <th style="width:195px;">Latest Version</th>
-      <th style="width:210px;">Action</th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
-}
 
 // History modal — 4th param: whether this doc has amendment versions
 function openHistory(name,ver,date,multiVer){
@@ -920,7 +845,6 @@ function applyMode(mode){
   if(mode==='ea')renderEAPanel();
   if(mode==='manual')renderManualPanel();
   updateFooter();
-  renderSigningDocs();
 }
 
 // Show the mode gate (before any mode is confirmed)
@@ -1311,9 +1235,18 @@ function goStep2(){S.eaStep=2;renderEAPanel();}
 function goStep3(){S.eaStep=3;S.s3Dev='disconnected';renderEAPanel();}
 function completeEA(viaOTP){
   S.eaComplete=true;S.eaViaOTP=!!viaOTP;
-  document.getElementById('eaStatusHeader').textContent='Completed';
-  document.getElementById('eaStatusHeader').style.color='#137333';
+  updateHeaderStatus();
   renderEAPanel();updateFooter();
+}
+// Header acceptance-status label — reflects amendment states when active
+function updateHeaderStatus(){
+  const el=document.getElementById('eaStatusHeader');
+  if(S.amendmentRequired&&S.amendmentStep!=='none'){
+    if(S.amendmentStep==='confirmed'){el.textContent='Amendment Confirmed';el.style.color='#137333';}
+    else{el.textContent='Amendment Pending';el.style.color='#b45309';}
+  } else if(S.eaComplete){el.textContent='Completed';el.style.color='#137333';}
+  else{el.textContent='—';el.style.color='';}
+  document.getElementById('amendmentVal').textContent=(S.amendmentRequired&&S.amendmentStep!=='none')?'Yes':'--';
 }
 
 // ═══════════════════════════════════════════════
@@ -1330,6 +1263,7 @@ function renderAmendmentSectionHTML(){
   let bodyHtml='',ico=ICO_AMD;
   if(step==='cilt-approved'){
     bodyHtml=`<p style="font-size:12px;color:#5f6368;margin:0 0 4px;">CILT ref: CILT-2026-001 &nbsp;·&nbsp; Approved 20-05-2026</p>
+      <div style="background:#f8f9fa;border-radius:5px;padding:7px 12px;font-size:11px;color:#5f6368;margin:0 0 8px;line-height:1.6;">Fields modified in CrediOS → system auto-tracked changes → contract v2 generated with changed fields highlighted</div>
       <p style="font-size:12px;color:#3c4043;margin:0 0 6px;">A new contract version (v2) has been generated with the following changes. Customer must review and re-confirm remotely — no in-person visit required.</p>
       ${changesHtml}
       <div class="amd-step-row">
@@ -1352,15 +1286,22 @@ function renderAmendmentSectionHTML(){
         <span>2. Clicks <strong>"Review Now"</strong> — changed fields highlighted in yellow</span>
         <span>3. Ticks agreement checkbox → clicks <strong>"Confirm"</strong></span>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px;flex-wrap:wrap;">
         <span style="font-size:12px;color:#5f6368;">Status updates automatically when customer confirms.</span>
-        <button class="btn btn-secondary btn-sm">Resend SMS</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary btn-sm">Resend SMS</button>
+          <button class="btn btn-primary btn-sm" onclick="openETracker()">Preview Customer View (e-Tracker) →</button>
+        </div>
       </div>`;
   } else if(step==='confirmed'){
     ico=ICO_DONE;
     bodyHtml=`<p style="font-size:13px;color:#137333;font-weight:600;margin:0 0 4px;">Customer confirmed via e-Tracker</p>
-      <p style="font-size:12px;color:#5f6368;margin:0 0 12px;">GGBOUND &nbsp;·&nbsp; 20-05-2026 17:02:41 &nbsp;·&nbsp; CILT-2026-001</p>
-      <p style="font-size:12px;color:#3c4043;margin:0;">Document Library updated — v2 contract now active. You may confirm and proceed.</p>`;
+      <p style="font-size:12px;color:#5f6368;margin:0 0 10px;">GGBOUND &nbsp;·&nbsp; 20-05-2026 17:02:41 &nbsp;·&nbsp; CILT-2026-001</p>
+      <p style="font-size:12px;color:#3c4043;margin:0 0 10px;">Amendment contract (v2) is now active. Original signed contract (v1) is permanently retained — no overwrite. You may confirm and proceed.</p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-secondary btn-sm" onclick="openAmdHistory()">View Version History</button>
+        <button class="btn btn-secondary btn-sm" onclick="openEALog()">View E-Acceptance Log</button>
+      </div>`;
   }
   return `<div class="amendment-wrap"><div class="amendment-hdr"><div class="amendment-hdr-title">${ico} Amendment (CILT)</div><span class="badge ${badgeClass}">${badgeLabel}</span></div><div class="amendment-body">${bodyHtml}</div></div>`;
 }
@@ -1373,12 +1314,108 @@ function sendAmendmentSMS(){S.amendmentStep='sent';S.smsSent=true;refreshAmendme
 function refreshAmendmentPanel(){
   if(S.mode==='ea')renderEAPanel(); else renderManualPanel();
   updateFooter();
+  updateHeaderStatus();
 }
 function triggerSMS(){sendAmendmentSMS();}
+// Version history for the amended contract (v1 retained + v2 active)
+function openAmdHistory(){
+  openHistory('HP Agreement with T&C','v2','20-05-2026 17:02:41',true);
+}
+
+// ── e-Tracker customer preview (3-screen phone simulation) ──
+let etScreen=1, etAgreed=false;
+function openETracker(){etScreen=1;etAgreed=false;renderETracker();openModal('modalETracker');}
+function etGo(n){etScreen=n;renderETracker();}
+function etAgreeToggle(cb){
+  etAgreed=cb.checked;
+  const b=document.getElementById('etConfirmBtn');
+  if(b)b.disabled=!etAgreed;
+}
+function etConfirm(){
+  S.amendmentStep='confirmed';
+  etScreen=4;renderETracker();
+  refreshAmendmentPanel();
+}
+function renderETracker(){
+  const body=document.getElementById('etPhoneBody');
+  const ind=document.getElementById('etStepInd');
+  const steps=['SMS','e-Tracker','Review','Done'];
+  ind.innerHTML=steps.map((s,i)=>i+1===etScreen?`<b>${i+1} ${s}</b>`:`<span>${i+1} ${s}</span>`).join('<span style="color:#dadce0;">›</span>');
+  let html='';
+  if(etScreen===1){
+    html=`
+      <div class="et-appbar">Messages</div>
+      <div class="et-sms-wrap">
+        <div class="et-sms-from">HLB Bank · SMS</div>
+        <div class="et-sms-bubble">
+          HLB: Dear GGBOUND, your HP loan amendment (Ref: 375/HP/2026/Y0010922) requires your review and confirmation.
+          Please login to e-Tracker to review the updated terms:
+          <span class="et-sms-link" onclick="etGo(2)">hlb.com.my/etracker</span>
+          <div class="et-sms-time">16:55</div>
+        </div>
+        <div style="text-align:center;margin-top:14px;">
+          <button class="btn btn-primary btn-sm" onclick="etGo(2)">Open e-Tracker Link →</button>
+        </div>
+      </div>`;
+  } else if(etScreen===2){
+    const stages=[
+      ['done','Application Submission'],
+      ['done','Loan Decision'],
+      ['done','Letter of Offer'],
+      ['cur','Legal Agreement'],
+      ['todo','Disbursement'],
+    ];
+    html=`
+      <div class="et-appbar">e-Tracker <span style="font-weight:400;font-size:11px;opacity:.8;">· Hong Leong Bank</span></div>
+      <div style="padding:14px 16px;">
+        <div style="font-size:12px;color:#5f6368;">Welcome back, <strong style="color:#202124;">GGBOUND</strong></div>
+        <div style="font-size:11px;color:#9aa0a6;margin-bottom:10px;">HP Application · 375/HP/2026/Y0010922</div>
+        <div class="et-amd-banner">
+          <div style="font-size:12px;font-weight:700;color:#b45309;margin-bottom:3px;">⚠ Amendment Pending</div>
+          <div style="font-size:11px;color:#92400e;line-height:1.6;margin-bottom:8px;">Your loan terms have been updated. Please review and confirm the changes.</div>
+          <button class="btn btn-primary btn-sm" style="width:100%;" onclick="etGo(3)">Review Now</button>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 4px;">Application Progress</div>
+        ${stages.map(([st,name])=>`<div class="et-stage et-stage-${st}">
+          <div class="et-stage-dot">${st==='done'?'✓':st==='cur'?'●':''}</div>
+          <div class="et-stage-name">${name}${st==='cur'?' — Amendment in progress':''}</div>
+        </div>`).join('')}
+      </div>`;
+  } else if(etScreen===3){
+    html=`
+      <div class="et-appbar"><span style="cursor:pointer;" onclick="etGo(2)">‹</span> Amendment Review</div>
+      <div style="padding:14px 16px;">
+        <div style="font-size:11px;color:#5f6368;line-height:1.6;margin-bottom:10px;">The following terms in your <strong>HP Agreement</strong> have been updated. Changed fields are highlighted below.</div>
+        ${AMD_CHANGES.map(c=>`<div class="et-hl-field">
+          <div class="et-hl-label">${c.field}</div>
+          <div class="et-hl-old">${c.old}</div>
+          <div class="et-hl-new">${c.new}</div>
+        </div>`).join('')}
+        <div style="font-size:11px;color:#9aa0a6;line-height:1.5;margin:10px 0;">All other terms and conditions remain unchanged. No branch visit is required.</div>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#3c4043;line-height:1.5;margin-bottom:12px;cursor:pointer;">
+          <input type="checkbox" style="margin-top:2px;" onchange="etAgreeToggle(this)" ${etAgreed?'checked':''}>
+          <span>I have reviewed and agree to the amended terms of the HP Agreement.</span>
+        </label>
+        <button class="btn btn-primary btn-sm" id="etConfirmBtn" style="width:100%;" ${etAgreed?'':'disabled'} onclick="etConfirm()">Confirm</button>
+      </div>`;
+  } else if(etScreen===4){
+    html=`
+      <div class="et-appbar">e-Tracker <span style="font-weight:400;font-size:11px;opacity:.8;">· Hong Leong Bank</span></div>
+      <div style="padding:40px 24px;text-align:center;">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#137333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:14px;"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+        <div style="font-size:15px;font-weight:700;color:#137333;margin-bottom:6px;">Amendment Confirmed</div>
+        <div style="font-size:12px;color:#5f6368;line-height:1.7;">Thank you. Your confirmation has been recorded.<br>Your loan will proceed with the updated terms.<br><br><span style="font-size:11px;color:#9aa0a6;">Confirmed at 17:02, 20 May 2026</span></div>
+      </div>`;
+  }
+  body.innerHTML=html;
+}
 
 // ── EA Log ──
 function openEALog(){
-  const keys=S.amendmentRequired?['initial']:['initial','bank'];
+  let keys;
+  if(S.amendmentRequired&&S.amendmentStep==='confirmed')keys=['initial','amendment'];
+  else if(S.amendmentRequired)keys=['initial'];
+  else keys=['initial','bank'];
   document.getElementById('eaLogBody').innerHTML=keys.map(k=>{
     const r=EA_LOG[k];
     return `<tr>${[r.type,r.pds,r.ss,r.hpa,r.app4].map((v,i)=>`<td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;${i>0?'text-align:center;':''}" class="${v==='Y'?'flag-y':v==='—'&&i>0?'flag-n':''}">${v}</td>`).join('')}<td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;text-align:center;"><span class="badge bd-green" style="font-size:10px;">${r.status}</span></td><td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;white-space:nowrap;">${r.dt}</td><td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;">${r.remark}</td></tr>`;
@@ -1607,9 +1644,41 @@ function verifyOTP(){
 // ═══════════════════════════════════════════════
 //  SCENARIOS
 // ═══════════════════════════════════════════════
-function applyScenario(key,btn){
+// Dev Tool: accordion group toggle
+function devToggleAcc(id){document.getElementById('devAcc-'+id).classList.toggle('open');}
+
+// Dev Tool: walkthrough stepper — happy-path demo sequence
+const DEV_WALK=[
+  ['gate',              'Mode Gate'],
+  ['ea-s1-ready',       'S1 · Device ready'],
+  ['ea-s1-matched',     'S1 · Matched'],
+  ['ea-s2-wait',        'S2 · RIB waiting'],
+  ['ea-s2-done',        'S2 · RIB accepted'],
+  ['ea-s3-ready',       'S3 · Device ready'],
+  ['ea-complete',       'EA Completed'],
+  ['ea-amendment',      'CILT approved'],
+  ['ea-amendment-ready','Amendment ready'],
+  ['ea-amendment-sent', 'SMS sent'],
+  ['ea-amendment-done', 'Amendment confirmed'],
+];
+let devWalkIdx=-1;
+function devWalk(dir){
+  devWalkIdx=Math.min(Math.max(devWalkIdx+dir,0),DEV_WALK.length-1);
+  const step=DEV_WALK[devWalkIdx];
+  applyScenario(step[0],null,true);
+  document.getElementById('devWalkLabel').textContent=(devWalkIdx+1)+'/'+DEV_WALK.length+' · '+step[1];
+  document.getElementById('devWalkPrev').disabled=devWalkIdx<=0;
+  document.getElementById('devWalkNext').disabled=devWalkIdx>=DEV_WALK.length-1;
+}
+
+function applyScenario(key,btn,keepOpen){
   document.querySelectorAll('.dev-btn').forEach(b=>b.classList.remove('active'));
-  if(btn)btn.classList.add('active');
+  if(!btn)btn=document.querySelector('.dev-btn[data-sc="'+key+'"]');
+  if(btn){
+    btn.classList.add('active');
+    const acc=btn.closest('.dev-acc');
+    if(acc)document.querySelectorAll('.dev-acc').forEach(a=>a.classList.toggle('open',a===acc));
+  }
 
   const fresh={
     mode:'ea', modeConfirmed:true, hasGuarantor:false,
@@ -1683,22 +1752,15 @@ function applyScenario(key,btn){
 
   // Update header
   document.getElementById('guarantorCount').textContent=S.hasGuarantor?'1':'0';
-  document.getElementById('eaStatusHeader').textContent=S.eaComplete?'Completed':'—';
-  document.getElementById('eaStatusHeader').style.color=S.eaComplete?'#137333':'';
-  document.getElementById('amendmentVal').textContent=S.amendmentRequired?'Yes':'--';
+  updateHeaderStatus();
 
   // Show gate or flow depending on whether mode has been confirmed
   if(S.modeConfirmed){
     applyMode(S.mode);
   } else {
     renderGate();
-    renderSigningDocs();
   }
-  // Switch to Acceptance tab
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===1));
-  document.getElementById('tp-doclib').classList.remove('active');
-  document.getElementById('tp-acceptance').classList.add('active');
-  document.getElementById('devPanel').classList.remove('open');
+  if(!keepOpen)document.getElementById('devPanel').classList.remove('open');
 }
 
 // ═══════════════════════════════════════════════
@@ -1707,12 +1769,6 @@ function applyScenario(key,btn){
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
-function viewDocLib(){
-  // Switch main tab to Document Library
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===0));
-  document.getElementById('tp-acceptance').classList.remove('active');
-  document.getElementById('tp-doclib').classList.add('active');
-}
 function fmtNow(offset=0){const d=new Date(Date.now()+offset*1000);return d.toISOString().replace('T',' ').substring(0,19);}
 </script>
 </body>
