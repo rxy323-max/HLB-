@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Rule Validation - HLBB (Passed & Failed Only)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1a237e;
+            --primary-light: #534bae;
+            --success-color: #2e7d32;
+            --warning-color: #f57c00;
+            --error-color: #c62828;
+            --info-color: #0277bd;
+            --border-color: #e0e0e0;
+            --text-dark: #333;
+            --text-light: #666;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        
+        body { background-color: #f8f9fa; height: 100vh; overflow: hidden; }
+        
+        .app-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 3fr; 
+            height: 100vh;
+        }
+
+        /* 1. Rule Sidebar (Left) */
+        .rule-sidebar {
+            background-color: white;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border-color); }
+        .sidebar-header h2 { color: var(--primary-color); font-size: 1.2rem; margin-bottom: 10px; }
+        
+        .stats-summary { display: flex; gap: 5px; }
+        .stat-item { flex: 1; text-align: center; padding: 5px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .stat-pass { background: rgba(46, 125, 50, 0.1); color: var(--success-color); }
+        .stat-fail { background: rgba(198, 40, 40, 0.1); color: var(--error-color); }
+        
+        /* 筛选器区域 - 仅保留状态筛选 (All, Passed, Failed) */
+        .rule-filters {
+            display: flex;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 4px 12px;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover {
+            background-color: #f0f0f0;
+        }
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .rules-list { flex: 1; overflow-y: auto; }
+        .rule-item { padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; }
+        .rule-item:hover { background-color: #f9f9f9; }
+        .rule-item.active { background-color: #f0f7ff; border-left: 4px solid var(--primary-color); }
+        .rule-id { font-weight: 600; color: var(--primary-color); font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .status-badge { padding: 2px 6px; border-radius: 10px; font-size: 10px; text-transform: uppercase; font-weight: bold;}
+        .badge-pass { background-color: rgba(46, 125, 50, 0.1); color: var(--success-color); }
+        .badge-fail { background-color: rgba(198, 40, 40, 0.1); color: var(--error-color); }
+
+        /* 2. Rule Detail Panel (Middle) */
+        .rule-detail-panel {
+            background-color: white;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        
+        .detail-header { padding: 20px; background: #f8f9fa; border-bottom: 1px solid var(--border-color); }
+        .detail-content { padding: 20px; }
+        
+        /* 移除了 .validation-result 相关样式，因为验证状态卡片已被删除 */
+        
+        .value-box { border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+        .formula-section { background: #f1f8ff; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; margin-bottom: 20px; white-space: pre-line; border-left: 4px solid var(--info-color); }
+
+        .action-options { display: flex; gap: 10px; }
+        .action-option { flex: 1; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; cursor: pointer; text-align: center; transition: all 0.2s; }
+        .action-option:hover { border-color: var(--primary-color); background: #f0f7ff; }
+
+        /* 3. Document Preview (Right - 60%) */
+        .doc-preview {
+            background-color: #525659;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .mock-doc {
+            width: 100%;
+            max-width: 850px;
+            height: 1150px;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ccc;
+            position: relative;
+        }
+        .mock-doc::after { content: "DOCUMENT PREVIEW AREA (60% WIDTH)"; font-weight: bold; font-size: 1.5rem; letter-spacing: 2px; }
+        
+        .edit-form { display: none; margin-top: 15px; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background: #fafafa; }
+        .edit-form.active { display: block; }
+        .btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-primary:hover { background: var(--primary-light); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="rule-sidebar">
+            <div class="sidebar-header">
+                <h2>Rule Validation</h2>
+                <div class="stats-summary">
+                    <div class="stat-item stat-pass" id="statPass">0 Passed</div>
+                    <div class="stat-item stat-fail" id="statFail">0 Failed</div>
+                </div>
+            </div>
+            
+            <!-- 筛选器区域：仅保留状态筛选 (All, Passed, Failed) -->
+            <div class="rule-filters">
+                <button class="filter-btn active" data-filter="all">All Rules</button>
+                <button class="filter-btn" data-filter="pass">Passed</button>
+                <button class="filter-btn" data-filter="fail">Failed</button>
+            </div>
+            <div class="rules-list" id="rulesList"></div>
+        </div>
+
+        <div class="rule-detail-panel">
+            <div class="detail-content" id="detailContent">
+                <div style="text-align: center; color: var(--text-light); margin-top: 50px;">
+                    <i class="fas fa-clipboard-check" style="font-size: 3rem; margin-bottom: 10px; opacity: 0.3;"></i>
+                    <p>Select a rule from the list to view its validation details and mathematical formula.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="doc-preview">
+            <div class="mock-doc"></div>
+        </div>
+    </div>
+
+    <template id="ruleTemplate">
+        <!-- 验证状态卡片区域 (Validation Passed / Failed 带消息的卡片) 已完全删除 -->
+        
+        <div style="margin-bottom: 15px; font-weight: bold; font-size: 14px; color: var(--primary-color);">Rule Details</div>
+        
+        <div class="value-box">
+            <div style="font-size: 11px; color: var(--text-light); font-weight: 600;">Value to Verify</div>
+            <div id="valVerify" style="font-size: 15px; font-weight: 600; margin-top: 3px;"></div>
+        </div>
+        <div class="value-box">
+            <div style="font-size: 11px; color: var(--text-light); font-weight: 600;">Base Value</div>
+            <div id="valExpect" style="font-size: 15px; font-weight: 600; margin-top: 3px;"></div>
+        </div>
+
+        <div class="formula-section">
+            <div style="color: var(--info-color); font-weight: bold; margin-bottom: 5px; font-size: 11px; text-transform: uppercase;">Validation Formula</div>
+            <div id="valFormula"></div>
+        </div>
+
+        <div style="margin-bottom: 15px; font-weight: bold; font-size: 14px; color: var(--primary-color);">Action Required</div>
+        <div class="action-options">
+            <div class="action-option" onclick="handleAction('confirm')">
+                <i class="fas fa-check-circle" style="color: var(--success-color); font-size: 1.2rem; margin-bottom: 5px;"></i>
+                <div style="font-size: 12px; font-weight: bold;">Confirm Result</div>
+            </div>
+            <div class="action-option" onclick="handleAction('error')">
+                <i class="fas fa-times-circle" style="color: var(--error-color); font-size: 1.2rem; margin-bottom: 5px;"></i>
+                <div style="font-size: 12px; font-weight: bold;">Error Result</div>
+            </div>
+        </div>
+        <div style="margin-top: 10px;">
+            <div class="action-option" style="width: 100%;" onclick="handleAction('edit')">
+                <i class="fas fa-edit" style="color: var(--primary-color); font-size: 1.2rem; margin-bottom: 5px;"></i>
+                <div style="font-size: 12px; font-weight: bold;">Edit</div>
+            </div>
+        </div>
+
+        <div id="editForm" class="edit-form">
+            <div style="font-size: 12px; font-weight: 600; margin-bottom: 5px;">Corrected Value</div>
+            <input type="text" id="editVal" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ddd; border-radius: 4px;" placeholder="Enter corrected value...">
+            <div style="font-size: 12px; font-weight: 600; margin-bottom: 5px;">Reason</div>
+            <textarea style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ddd; border-radius: 4px; font-size: 12px;" rows="2" placeholder="Provide reason for change..."></textarea>
+            <button class="btn btn-primary" onclick="saveEditValue()">Save Changes</button>
+        </div>
+    </template>
+
+    <script>
+        // 原始24条业务规则，移除了所有 status 为 'warning' 的条目 (DATE-005 和 REGION-002 被移除)
+        // 同时保留所有 pass 和 fail 规则，共计22条
+        const rules = [
+            // DATE RULES (移除了 warning 的 DATE-005)
+            { id: "DATE-001", document: "HP Agreement", type: "Date ≥ Specified Date", description: "Hirer's date ≥ approval date", valueToVerify: "15/10/2023", expectedValue: "10/10/2023", formula: "Hirer's date ≥ approval date\n15/10/2023 ≥ 10/10/2023", status: "pass", message: "Hirer's date is correctly after the approval date.", category: "date" },
+            { id: "DATE-002", document: "HP Agreement", type: "Date ≤ Specified Date", description: "Current date ≤ Hirer's date + 5 days", valueToVerify: "18/10/2023", expectedValue: "20/10/2023", formula: "Current date ≤ Hirer's date + 5 days\n18/10/2023 ≤ 20/10/2023", status: "pass", message: "Current date is within the allowed range.", category: "date" },
+            { id: "DATE-003", document: "HP Agreement", type: "Date Consistency", description: "EHP witness Date = Hirer's date", valueToVerify: "16/10/2023", expectedValue: "15/10/2023", formula: "EHP witness Date = Hirer's date\n16/10/2023 = 15/10/2023", status: "fail", message: "Witness date does not match the hirer's signing date.", category: "date" },
+            { id: "DATE-004", document: "Second Schedule Part 1", type: "Date ≤ Specified Date", description: "Second schedule date ≤ Application date", valueToVerify: "18/10/2023", expectedValue: "17/10/2023", formula: "Second schedule date ≤ Application date\n18/10/2023 ≤ 17/10/2023", status: "fail", message: "Second schedule date is after the application date.", category: "date" },
+            // DATE-005 (warning) 已移除
+            { id: "DATE-006", document: "Vehicle Invoice", type: "Date falls within range", description: "Invoice date within application & delivery date", valueToVerify: "14/10/2023", expectedValue: "12/10/2023 - 16/10/2023", formula: "Application date ≤ Invoice date ≤ Delivery date\n12/10/2023 ≤ 14/10/2023 ≤ 16/10/2023", status: "pass", message: "Invoice date is correctly within range.", category: "date" },
+            
+            // CALCULATION RULES (全部为 pass/fail，无 warning)
+            { id: "CALC-001", document: "Second Schedule Part 1", type: "Arithmetic Calculation", description: "Cash price less deposit = Cash price - Deposit", valueToVerify: "85,000.00", expectedValue: "85,000.00", formula: "Cash price less deposit = Cash price - Amount paid after agreement\n90,000 - 5,000 = 85,000", status: "pass", message: "Calculation is correct.", category: "calculation" },
+            { id: "CALC-002", document: "Second Schedule Part 1", type: "Arithmetic Calculation", description: "Balance originally payable calculation", valueToVerify: "92,100.00", expectedValue: "92,150.00", formula: "Sum of parts (85k + 1k + 500 + 2k + 3.65k)\n85,000 + 1,000 + 500 + 2,000 + 3,650 = 92,150", status: "fail", message: "Discrepancy of 50.00 detected in balance payable.", category: "calculation" },
+            { id: "CALC-003", document: "Second Schedule Part 1", type: "Arithmetic Calculation", description: "Total amount of term charges", valueToVerify: "3,650.00", expectedValue: "3,650.00", formula: "Term = (60/12) * 85,000 * 0.03\n5 * 85,000 * 0.03 = 3,650", status: "pass", message: "Total amount of term charges is correct.", category: "calculation" },
+            { id: "CALC-004", document: "Second Schedule Part 1", type: "Arithmetic Calculation", description: "Difference between cash price and total payable", valueToVerify: "2,150.00", expectedValue: "2,150.00", formula: "Total Payable - Cash price of goods\n92,150 - 90,000 = 2,150", status: "pass", message: "Difference calculation is correct.", category: "calculation" },
+            { id: "CALC-005", document: "Insurance Cover Note", type: "Arithmetic Calculation", description: "Sum insured amount ≥ max requirement", valueToVerify: "88,000.00", expectedValue: "86,400.00", formula: "max(OTR*0.8, Loan+Interest) = max(86.4k, 86.5k)\n88,000 ≥ 86,500", status: "pass", message: "Sum insured amount meets minimum requirement.", category: "calculation" },
+            { id: "CALC-006", document: "Vehicle Invoice", type: "Arithmetic Calculation", description: "Booking fee ≤ 1% of OTR Price", valueToVerify: "500.00", expectedValue: "1,000.00", formula: "Booking fee ≤ 0.01 * 100,000\n500 ≤ 1,000", status: "pass", message: "Booking fee is within allowed limit.", category: "calculation" },
+            
+            // FIXED VALUE RULES
+            { id: "FIXED-001", document: "Credit Note", type: "Fixed Value Comparison", description: "Admin fee amount = RM 270", valueToVerify: "270.00", expectedValue: "270.00", formula: "Admin fee amount = RM 270\n270.00 = 270.00", status: "pass", message: "Admin fee matches expected value.", category: "fixed" },
+            { id: "FIXED-002", document: "Insurance Cover Note", type: "Fixed Value Comparison", description: "Registration number matches VOC", valueToVerify: "ABC1234", expectedValue: "ABC1234", formula: "Cover Note Reg = VOC Reg\nABC1234 = ABC1234", status: "pass", message: "Registration number matches document.", category: "fixed" },
+            { id: "FIXED-003", document: "FIS/JPJ Result", type: "Fixed Value Comparison", description: "FIS/JPJ Result status check", valueToVerify: "Verified", expectedValue: "Verified", formula: "FIS/JPJ Result status = 'Verified'\nVerified = Verified", status: "pass", message: "Status is correctly 'Verified'.", category: "fixed" },
+            { id: "FIXED-004", document: "FIS/JPJ Result", type: "Fixed Value Comparison", description: "FBR/FBT FIS/JPJ result verification", valueToVerify: "Processed", expectedValue: "Verified", formula: "Result = 'Verified'\nProcessed = Verified", status: "fail", message: "Status should be 'Verified' for FBR/FBT cases.", category: "fixed" },
+            
+            // REGION RULES (移除了 warning 的 REGION-002)
+            { id: "REGION-001", document: "Roadtax/JPJ Receipt", type: "Region/Area Check", description: "Roadtax region based on address", valueToVerify: "Selangor", expectedValue: "Peninsular Malaysia", formula: "Collateral state in Peninsular Malaysia region\nSelangor in [List]", status: "pass", message: "Region is correctly identified.", category: "region" },
+            // REGION-002 (warning) 已移除
+            
+            // CONSISTENCY RULES (全部为 pass/fail)
+            { id: "CONSIST-001", document: "Guarantee Agreement", type: "Date Consistency", description: "HPGA date = HP Agreement date", valueToVerify: "15/10/2023", expectedValue: "15/10/2023", formula: "HPGA date = HP Agreement date\n15/10/2023 = 15/10/2023", status: "pass", message: "Dates are consistent across documents.", category: "consistency" },
+            { id: "CONSIST-002", document: "Loan Suspense Receipt", type: "Date Consistency", description: "Deposit date in receipt = Invoice date", valueToVerify: "12/10/2023", expectedValue: "12/10/2023", formula: "Receipt Date = Invoice Date\n12/10/2023 = 12/10/2023", status: "pass", message: "Deposit dates match.", category: "consistency" },
+            { id: "CONSIST-003", document: "Loan Suspense Receipt", type: "Amount Consistency", description: "Deposit amount in receipt = Invoice amount", valueToVerify: "5,000.00", expectedValue: "5,000.00", formula: "Receipt Amount = Invoice Amount\n5,000 = 5,000", status: "pass", message: "Deposit amounts match.", category: "consistency" },
+            { id: "CONSIST-004", document: "FD Pledge Receipt", type: "Amount Consistency", description: "FD amount = Approval Amount", valueToVerify: "50,000.00", expectedValue: "50,000.00", formula: "Receipt Amount = CED Approval FD Amount\n50,000 = 50,000", status: "pass", message: "FD pledge amount matches approval.", category: "consistency" },
+            { id: "CONSIST-005", document: "Letter of Setoff (LOSO)", type: "Term Consistency", description: "FD pledge term = Approval Tenor", valueToVerify: "3 years", expectedValue: "3 years", formula: "LOSO Term = Approval Tenor\n3 years = 3 years", status: "pass", message: "Pledge term matches approval.", category: "consistency" },
+            { id: "CONSIST-006", document: "Loan Suspense Receipt", type: "Account Consistency", description: "Loan Suspense account name check", valueToVerify: "LOAN SUSPENSE A/C", expectedValue: "LOAN SUSPENSE LOAN", formula: "Account = 'LOAN SUSPENSE LOAN'\n'A/C' = 'LOAN'", status: "fail", message: "Account name does not match expected value.", category: "consistency" }
+        ];
+
+        let currentFilteredRules = [...rules];
+        let currentSelectedRule = null;
+
+        function init() {
+            updateStats();
+            renderRules(currentFilteredRules);
+            setupFilterListeners();
+        }
+
+        function updateStats() {
+            const passCount = rules.filter(r => r.status === 'pass').length;
+            const failCount = rules.filter(r => r.status === 'fail').length;
+            document.getElementById('statPass').innerText = `${passCount} Passed`;
+            document.getElementById('statFail').innerText = `${failCount} Failed`;
+        }
+
+        function renderRules(data) {
+            const list = document.getElementById('rulesList');
+            list.innerHTML = '';
+            if(data.length === 0) {
+                list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-light);">No rules match this filter.</div>';
+                return;
+            }
+            data.forEach(r => {
+                const el = document.createElement('div');
+                el.className = 'rule-item';
+                el.innerHTML = `
+                    <div style="font-weight: bold; font-size: 14px; color: var(--primary-color);">${r.document}</div>
+                    <div style="font-size: 12px; margin: 5px 0; font-weight: 500; color: var(--text-dark);">${r.description}</div>
+                    <div style="font-size: 10px; color: var(--text-light); display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fas fa-tag"></i> ${r.type}</span>
+                        <span class="status-badge badge-${r.status}">${r.status}</span>
+                    </div>
+                `;
+                el.onclick = () => showDetail(r, el);
+                list.appendChild(el);
+            });
+        }
+
+        function showDetail(r, el) {
+            document.querySelectorAll('.rule-item').forEach(i => i.classList.remove('active'));
+            if(el) el.classList.add('active');
+            
+            currentSelectedRule = r;
+            
+            const content = document.getElementById('detailContent');
+            const temp = document.getElementById('ruleTemplate').content.cloneNode(true);
+            
+            // 注意：验证状态卡片部分已从模板中删除，因此无需设置相关字段
+            temp.getElementById('valVerify').innerText = r.valueToVerify;
+            temp.getElementById('valExpect').innerText = r.expectedValue;
+            temp.getElementById('valFormula').innerText = r.formula;
+            
+            const editInput = temp.getElementById('editVal');
+            if(editInput) editInput.value = r.valueToVerify;
+            
+            const editFormDiv = temp.getElementById('editForm');
+            if(editFormDiv) editFormDiv.classList.remove('active');
+            
+            content.innerHTML = '';
+            content.appendChild(temp);
+        }
+
+        function setupFilterListeners() {
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            filterBtns.forEach(btn => {
+                btn.onclick = (e) => {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const filter = btn.getAttribute('data-filter');
+                    
+                    if(filter === 'all') {
+                        currentFilteredRules = [...rules];
+                    } else if(filter === 'pass') {
+                        currentFilteredRules = rules.filter(r => r.status === 'pass');
+                    } else if(filter === 'fail') {
+                        currentFilteredRules = rules.filter(r => r.status === 'fail');
+                    }
+                    renderRules(currentFilteredRules);
+                    
+                    if(currentFilteredRules.length === 0) {
+                        document.getElementById('detailContent').innerHTML = `
+                            <div style="text-align: center; color: var(--text-light); margin-top: 50px;">
+                                <i class="fas fa-clipboard-check" style="font-size: 3rem; margin-bottom: 10px; opacity: 0.3;"></i>
+                                <p>Select a rule from the list to view its validation details and mathematical formula.</p>
+                            </div>
+                        `;
+                        currentSelectedRule = null;
+                    } else {
+                        const firstRuleItem = document.querySelector('.rules-list .rule-item');
+                        if(firstRuleItem && currentFilteredRules[0]) {
+                            firstRuleItem.click();
+                        }
+                    }
+                };
+            });
+        }
+
+        function handleAction(type) {
+            if(type === 'edit') {
+                const editFormDiv = document.getElementById('editForm');
+                if(editFormDiv) {
+                    editFormDiv.classList.toggle('active');
+                } else {
+                    const activeEditForm = document.querySelector('#detailContent #editForm');
+                    if(activeEditForm) activeEditForm.classList.toggle('active');
+                }
+            } else if(type === 'confirm') {
+                const clickedElement = event.currentTarget;
+                if(clickedElement.dataset.state === 'confirmed') {
+                    clickedElement.dataset.state = '';
+                    clickedElement.querySelector('i').className = 'fas fa-check-circle';
+                    clickedElement.querySelector('i').style.color = 'var(--success-color)';
+                    clickedElement.querySelector('div').textContent = 'Confirm Result';
+                    alert('Result Unconfirmed');
+                } else {
+                    clickedElement.dataset.state = 'confirmed';
+                    clickedElement.querySelector('i').className = 'fas fa-undo';
+                    clickedElement.querySelector('i').style.color = 'var(--primary-color)';
+                    clickedElement.querySelector('div').textContent = 'Undo';
+                    alert('Result Confirmed Successfully');
+                }
+            } else if(type === 'error') {
+                const clickedElement = event.currentTarget;
+                if(clickedElement.dataset.state === 'error') {
+                    clickedElement.dataset.state = '';
+                    clickedElement.querySelector('i').className = 'fas fa-times-circle';
+                    clickedElement.querySelector('i').style.color = 'var(--error-color)';
+                    clickedElement.querySelector('div').textContent = 'Error Result';
+                    alert('Error Result Undone');
+                } else {
+                    clickedElement.dataset.state = 'error';
+                    clickedElement.querySelector('i').className = 'fas fa-undo';
+                    clickedElement.querySelector('i').style.color = 'var(--primary-color)';
+                    clickedElement.querySelector('div').textContent = 'Undo';
+                    alert('Error Result Recorded');
+                }
+            }
+        }
+        
+        function saveEditValue() {
+            if(!currentSelectedRule) {
+                alert('No rule selected.');
+                return;
+            }
+            const editInput = document.getElementById('editVal');
+            const reasonTextarea = document.querySelector('#editForm textarea');
+            const newValue = editInput ? editInput.value.trim() : '';
+            const reason = reasonTextarea ? reasonTextarea.value.trim() : 'No reason provided';
+            
+            if(newValue === '') {
+                alert('Please enter a corrected value.');
+                return;
+            }
+            
+            currentSelectedRule.valueToVerify = newValue;
+            
+            const currentActiveElement = document.querySelector('.rule-item.active');
+            if(currentActiveElement && currentSelectedRule) {
+                showDetail(currentSelectedRule, currentActiveElement);
+            } else if(currentSelectedRule) {
+                showDetail(currentSelectedRule, null);
+            }
+            
+            alert(`Value saved successfully!\nNew Value: ${newValue}\nReason: ${reason}`);
+            
+            const editFormDiv = document.getElementById('editForm');
+            if(editFormDiv) editFormDiv.classList.remove('active');
+            else {
+                const activeForm = document.querySelector('#detailContent #editForm');
+                if(activeForm) activeForm.classList.remove('active');
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
