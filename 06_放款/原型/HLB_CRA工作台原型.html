@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<style>
+/* standalone compat reset —— 单文件版本，双击即可用浏览器打开 */
+html{-webkit-text-size-adjust:100%}
+button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit}
+</style>
+<title>CRA 工作台原型</title>
+</head>
+<body>
+
+<style>
+:root{
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --primary:#1677ff;--primary-hover:#4096ff;--primary-active:#0958d9;--primary-bg:#e6f4ff;--primary-border:#91caff;
+  --text:rgba(0,0,0,.88);--text-2:rgba(0,0,0,.65);--text-3:rgba(0,0,0,.45);--text-4:rgba(0,0,0,.25);
+  --border:#d9d9d9;--border-2:#f0f0f0;--bg:#fff;--bg-layout:#f5f5f5;--fill-alter:#fafafa;
+  --success:#52c41a;--success-bg:#f6ffed;--success-border:#b7eb8f;--success-text:#389e0d;
+  --warning:#faad14;--warning-bg:#fffbe6;--warning-border:#ffe58f;--warning-text:#d48806;
+  --error:#ff4d4f;--error-bg:#fff2f0;--error-border:#ffccc7;--error-text:#cf1322;
+  --purple:#722ed1;--purple-bg:#f9f0ff;--purple-border:#d3adf7;
+  --gold:#ad6800;--gold-bg:#fff7e6;--gold-border:#ffd591;
+  --r:6px;--r-sm:4px;--shadow:0 6px 16px 0 rgba(0,0,0,.08),0 3px 6px -4px rgba(0,0,0,.12),0 9px 28px 8px rgba(0,0,0,.05);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-layout);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5714;-webkit-font-smoothing:antialiased}
+button,select,input,textarea{font-family:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed}
+:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+
+.ant-btn{height:32px;padding:4px 15px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);font-size:14px;transition:all .2s;white-space:nowrap}
+.ant-btn:hover:not(:disabled){border-color:var(--primary-hover);color:var(--primary-hover)}
+.ant-btn:disabled{color:var(--text-4);background:rgba(0,0,0,.02)}
+.ant-btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.ant-btn-primary:hover:not(:disabled){background:var(--primary-hover);border-color:var(--primary-hover);color:#fff}
+.ant-btn-primary:disabled{background:rgba(0,0,0,.04);border-color:var(--border);color:var(--text-4)}
+.ant-btn-sm{height:24px;padding:0 8px;font-size:12px;border-radius:var(--r-sm)}
+.ant-btn-dangerous{color:var(--error)}.ant-btn-dangerous:hover:not(:disabled){border-color:var(--error);color:var(--error)}
+.ant-tag{display:inline-block;height:22px;padding:0 7px;font-size:12px;line-height:20px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--fill-alter);color:var(--text-2);white-space:nowrap}
+.tg-g{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
+.tg-r{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text)}
+.tg-y{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
+.tg-b{background:var(--primary-bg);border-color:var(--primary-border);color:var(--primary-active)}
+
+.demo{position:fixed;top:0;left:0;right:0;height:36px;z-index:200;background:#001529;color:rgba(255,255,255,.85);padding:7px 16px;display:flex;gap:12px;align-items:center;font-size:12px}
+.demo .lb{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.45);text-transform:uppercase}
+.seg{display:inline-flex;border:1px solid rgba(255,255,255,.2);border-radius:var(--r-sm);overflow:hidden}
+.seg button{background:transparent;border:0;color:rgba(255,255,255,.7);padding:3px 12px;font-size:12px}
+.seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+.demo .why{margin-left:auto;color:rgba(255,255,255,.32);font-size:11px}
+
+.shell{position:fixed;top:36px;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:var(--bg)}
+.topbar{height:40px;border-bottom:1px solid var(--border-2);display:flex;align-items:stretch;background:var(--bg);flex:none}
+.topbar .tb{display:flex;align-items:center;padding:0 16px;font-size:13px;color:var(--text-2);border-right:1px solid var(--border-2)}
+.topbar .tb.on{color:var(--primary);background:var(--primary-bg);font-weight:500}
+.topbar .who{margin-left:auto;padding:0 16px;display:flex;align-items:center;font-size:12px;color:var(--text-3)}
+
+.main{flex:1;min-height:0;display:grid;grid-template-columns:216px minmax(0,1fr) 250px}
+@media(max-width:1200px){.main{grid-template-columns:196px minmax(0,1fr)}.rightp{display:none}}
+
+.nav{border-right:1px solid var(--border-2);overflow-y:auto;padding:10px 0;background:var(--bg)}
+.nav h5{margin:14px 16px 6px;font-size:12px;color:var(--text-3);font-weight:600}
+.nav h5:first-child{margin-top:2px}
+.nav button{display:flex;width:100%;text-align:left;background:transparent;border:0;border-left:3px solid transparent;padding:7px 16px 7px 24px;font-size:13px;color:var(--text-2);align-items:center;gap:7px}
+.nav button:hover{background:var(--fill-alter);color:var(--text)}
+.nav button[aria-pressed="true"]{background:var(--primary-bg);border-left-color:var(--primary);color:var(--primary-active);font-weight:500}
+.nav .cnt{margin-left:auto;font-family:var(--mono);font-size:10.5px;padding:0 5px;border-radius:8px;background:var(--border-2);color:var(--text-2);flex:none}
+.nav .cnt.err{background:var(--error);color:#fff}
+.nav .cnt.ok{background:var(--success-bg);color:var(--success-text)}
+.nav .links{margin:16px 16px 6px;padding-top:12px;border-top:1px solid var(--border-2);display:flex;flex-direction:column;gap:6px}
+.nav .links a{font-size:12px;color:var(--primary);cursor:pointer;text-decoration:none}
+.nav .links a.hi{font-weight:600;background:var(--primary-bg);padding:5px 7px;border-radius:var(--r-sm);border:1px solid var(--primary-border)}
+
+.content{overflow-y:auto;padding:16px 20px;min-width:0}
+
+/* 摘要卡 */
+.sumcard{border:1px solid;border-radius:var(--r);background:var(--bg);overflow:hidden;margin-bottom:14px}
+.sumcard.ok{border-color:var(--success-border)}
+.sumcard.bad{border-color:var(--warning-border)}
+.sumcard.wait{border-color:var(--primary-border)}
+.sumcard .sh{display:flex;gap:13px;align-items:flex-start;padding:16px 18px}
+.sumcard.ok .sh{background:var(--success-bg)}
+.sumcard.bad .sh{background:var(--warning-bg)}
+.sumcard.wait .sh{background:var(--primary-bg)}
+.sumcard .ic{font-size:19px;line-height:1.3;flex:none}
+.sumcard .w{flex:1;min-width:0}
+.sumcard .t{font-size:16px;font-weight:600;margin-bottom:2px}
+.sumcard.ok .t{color:var(--success-text)}
+.sumcard.bad .t{color:var(--warning-text)}
+.sumcard.wait .t{color:var(--primary-active)}
+.sumcard .d{font-size:12.5px;color:var(--text-2)}
+.sumcard .sh .rt{flex:none;display:flex;gap:10px;align-items:center}
+.sumcard .pv{font-family:var(--mono);font-size:17px;font-weight:600}
+.sumcard .pv.err{color:var(--warning-text)}.sumcard .pv.ok{color:var(--success-text)}
+.bar{height:5px;border-radius:3px;background:var(--border-2);overflow:hidden;width:110px;flex:none}
+.bar i{display:block;height:100%;background:var(--success);border-radius:3px}
+.bar i.part{background:var(--warning)}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border-2);border-top:1px solid var(--border-2)}
+@media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}}
+.kp{background:var(--bg);padding:12px 14px}
+.kp .v{font-family:var(--mono);font-size:23px;font-weight:600;line-height:1.15}
+.kp .v.ok{color:var(--success-text)}.kp .v.err{color:var(--error-text)}
+.kp .k{font-size:12px;color:var(--text-3);margin-top:3px}
+.kp .ks{display:block;font-size:10.5px;color:var(--warning-text);font-family:var(--mono);margin-top:1px}
+.sumcard .sx{display:flex;align-items:center;gap:8px;width:100%;border:0;border-top:1px solid var(--border-2);
+  background:var(--bg);padding:9px 18px;font-size:13px;color:var(--text-2);text-align:left}
+.sumcard .sx:hover{background:var(--fill-alter)}
+.sumcard .sx .car{color:var(--text-3);font-size:10px}
+.sumcard .sx .sxr{margin-left:auto;font-size:12px;color:var(--warning-text)}
+.sumcard .sb{border-top:1px solid var(--border-2);padding:12px 18px}
+
+.frow{display:flex;align-items:center;gap:10px;padding:8px 11px;border:1px solid var(--border-2);
+  border-radius:var(--r-sm);font-size:13px;margin-bottom:6px;background:var(--bg)}
+.frow:last-child{margin-bottom:0}
+.frow .fn{flex:1;min-width:0}
+.frow .fs{font-size:11px;color:var(--text-3);display:block}
+.frow .rt{flex:none;display:flex;gap:7px;align-items:center}
+.batch{display:flex;align-items:center;gap:10px;padding:8px 11px;margin-bottom:8px;
+  background:var(--warning-bg);border:1px solid var(--warning-border);border-radius:var(--r-sm);
+  font-size:12.5px;color:var(--warning-text)}
+.batch button{margin-left:auto}
+
+table{border-collapse:collapse;width:100%}
+th{background:var(--fill-alter);text-align:left;font-size:12px;font-weight:600;color:var(--text);padding:9px 12px;border-bottom:1px solid var(--border-2);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--border-2);font-size:13px;vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+.tw{overflow-x:auto}
+.mono{font-family:var(--mono);font-size:12px}
+.muted{color:var(--text-3);font-size:12px}
+
+.card{border:1px solid var(--border-2);border-radius:var(--r);margin-bottom:14px;background:var(--bg)}
+.card>.hd{padding:11px 16px;border-bottom:1px solid var(--border-2);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card>.hd .t{font-size:14px;font-weight:600}
+.card>.hd .sub{font-size:12px;color:var(--text-3);font-weight:400}
+.card>.hd .r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.card>.bd{padding:14px 16px}
+.card>.bd.p0{padding:0}
+
+/* 字段 */
+.fv{font-family:var(--mono);font-size:12px}
+.fv.empty{color:var(--text-4);font-style:italic;font-family:var(--font)}
+.grp td{background:var(--fill-alter);font-weight:600;font-size:12px;color:var(--text-2)}
+.reqd{color:var(--error);margin-left:3px}
+.fin{width:100%;height:28px;border:1px solid var(--border);border-radius:var(--r-sm);padding:0 8px;
+  font-family:var(--mono);font-size:12px;background:var(--bg);color:var(--text)}
+.fin:focus{border-color:var(--primary);outline:none;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+.fin.bad{border-color:var(--error);background:var(--error-bg)}
+.fin::placeholder{font-family:var(--font);color:var(--text-4)}
+.fin.bad::placeholder{color:var(--error-text)}
+
+/* Sync 弹窗 */
+.syn{width:100%;min-width:600px}
+.syn td{padding:7px 12px;font-size:12.5px}
+.syn tr.diff td{background:var(--warning-bg)}
+.syn tr.na td{opacity:.45}
+.bx{width:16px;height:16px;border:1px solid var(--border);border-radius:3px;display:inline-flex;align-items:center;
+  justify-content:center;font-size:11px;background:var(--bg);cursor:pointer;vertical-align:middle}
+.bx.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.bx.dis{background:var(--fill-alter);cursor:not-allowed;border-style:dashed}
+
+/* 文件中心处置弹窗 */
+.fcx .h{background:#f0f5ff;border-bottom-color:var(--primary-border)}
+.fcx .h .fcb{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:var(--primary);color:#fff;
+  padding:2px 7px;border-radius:2px;margin-right:9px;vertical-align:middle}
+.dopt{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--border);border-radius:var(--r);
+  padding:12px 14px;cursor:pointer;background:var(--bg);margin-bottom:9px}
+.dopt:hover{border-color:var(--primary-hover);background:var(--primary-bg)}
+.dopt.on{border-color:var(--primary);background:var(--primary-bg);box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+.dopt .rb{width:15px;height:15px;border:1px solid var(--border);border-radius:50%;flex:none;margin-top:2px;
+  display:flex;align-items:center;justify-content:center}
+.dopt.on .rb{border-color:var(--primary)}
+.dopt.on .rb::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--primary)}
+.dopt .dn{font-size:13.5px;font-weight:500}
+.sub2{display:flex;flex-direction:column;gap:7px;margin:8px 0 0 26px;padding-left:12px;border-left:2px solid var(--border-2)}
+.sub2 label{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--text-2);cursor:pointer}
+.mtb{width:100%;min-height:60px;border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;font-size:13px;resize:vertical;margin-top:7px}
+.mtb.bad{border-color:var(--error)}
+.mlabel{font-size:12px;color:var(--text-2);margin-top:12px;display:block}
+.pre{background:var(--fill-alter);border:1px solid var(--border-2);border-radius:var(--r-sm);padding:10px 12px;font-size:12.5px;line-height:1.6;margin-bottom:8px}
+.pre .lb{font-size:10.5px;font-family:var(--mono);color:var(--text-3);letter-spacing:.06em;display:block}
+
+/* Next */
+.chk-run{display:flex;gap:14px;align-items:center;padding:10px 4px}
+.spin{width:26px;height:26px;border:3px solid var(--border-2);border-top-color:var(--primary);
+  border-radius:50%;animation:sp .8s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spin{animation-duration:2.4s}}
+.cr-t{font-size:15px;font-weight:600}
+.cr-d{font-size:12.5px;color:var(--text-3);margin-top:2px}
+.route{display:flex;gap:13px;align-items:flex-start;border:1px solid;border-radius:var(--r);padding:16px 18px}
+.route.stp{border-color:var(--success-border);background:var(--success-bg)}
+.route.auth{border-color:var(--gold-border);background:var(--gold-bg)}
+.route .ic{font-size:24px;line-height:1.05;flex:none}
+.route .rt2{font-size:16.5px;font-weight:600}
+.route.stp .rt2{color:var(--success-text)}
+.route.auth .rt2{color:var(--gold)}
+.route .rd{font-size:13px;color:var(--text-2);margin-top:4px;line-height:1.65}
+.rsn{margin-top:12px;background:var(--fill-alter);border:1px solid var(--border-2);border-radius:var(--r-sm);padding:11px 13px}
+.rsn .rl{font-size:11px;font-family:var(--mono);color:var(--text-3);letter-spacing:.06em;margin-bottom:6px}
+.rsn .ri{font-size:12.5px;color:var(--text-2);line-height:1.75}
+.nxt{display:flex;gap:9px;align-items:center;font-size:12.5px;color:var(--text-2);
+  margin-top:12px;padding:10px 12px;background:var(--fill-alter);border-radius:var(--r-sm)}
+.nxt .ar{color:var(--text-3);font-family:var(--mono)}
+
+.rightp{border-left:1px solid var(--border-2);overflow-y:auto;padding:14px;background:var(--fill-alter)}
+.rightp h5{margin:0 0 8px;font-size:12px;color:var(--text-2);font-weight:600}
+.flag{display:flex;gap:8px;align-items:center;padding:4px 6px;font-size:12.5px;border-radius:var(--r-sm)}
+.flag.on{background:var(--warning-bg);color:var(--warning-text);font-weight:500}
+.rp-div{height:1px;background:var(--border-2);margin:12px 0}
+.rp-kv{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:3px 0}
+.rp-kv .k{color:var(--text-3)}.rp-kv .v{text-align:right;font-weight:500}
+
+.footer{height:52px;border-top:1px solid var(--border-2);display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--bg);flex:none}
+.footer .fnote{font-size:12px;color:var(--text-3)}
+.footer .r{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+.mask{position:fixed;top:36px;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px}
+.mask.hidden{display:none}
+.modal{background:var(--bg);border-radius:8px;width:min(660px,100%);max-height:88vh;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.modal.wide{width:min(820px,100%)}
+.modal .h{padding:15px 22px;border-bottom:1px solid var(--border-2);font-size:16px;font-weight:600}
+.modal .b{padding:18px 22px;overflow:auto}
+.modal .f{padding:12px 22px;border-top:1px solid var(--border-2);display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.modal .f .lf{margin-right:auto;font-size:12px;color:var(--text-3)}
+
+.msg{position:fixed;top:48px;left:50%;transform:translateX(-50%);z-index:400;opacity:0;transition:opacity .2s;pointer-events:none}
+.msg.on{opacity:1}
+.msg span{display:inline-block;background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:9px 16px;font-size:14px}
+</style>
+
+<div class="demo">
+  <span class="lb">演示用</span><span>场景</span>
+  <span class="seg" id="scnSeg"><button data-scn="manual">人工</button><button data-scn="stp">STP</button></span>
+  <span class="why">CRA 工作台原型</span>
+</div>
+
+<div class="shell">
+  <div class="topbar">
+    <span class="tb">User Management</span><span class="tb">CRA To Do List</span>
+    <span class="tb on">Disbursement:TTI/HP/2026/Y0273410</span>
+    <span class="who">v_kangyi · Pending Checking and Maintenance</span>
+  </div>
+  <div class="main">
+    <div class="nav" id="nav"></div>
+    <div class="content" id="content"></div>
+    <div class="rightp" id="rightp"></div>
+  </div>
+  <div class="footer" id="footer"></div>
+</div>
+
+<div class="mask hidden" id="mask"><div class="modal" id="modal">
+  <div class="h" id="mT"></div><div class="b" id="mB"></div><div class="f" id="mF"></div>
+</div></div>
+<div class="msg" id="msg"><span></span></div>
+
+<script>
+(function(){
+"use strict";
+
+const R0=[
+ {id:'I33', nm:'保额充足性',        file:'Insurance Cover Note.pdf', via:'ocr', pass:0,
+  issue:'保额 98,000.00 < 要求 102,400.00'},
+ {id:'A155',nm:'承租人签署日期时效',  file:'HP Agreement.pdf',        via:'ocr', pass:0,
+  issue:'签署日 12-08-2026，距今 14 天，超出上限 5 天'},
+ {id:'EB-SIG-1',nm:'承租人签名与见证完整性',file:'HP Agreement 已签署.pdf',via:'eye',pass:0,
+  issue:'需人眼核对第 6 页签名与见证是否齐全'},
+ {id:'S52', nm:'Loan Amount 勾稽',   file:'2nd Schedule Part I.pdf', via:'ocr', pass:1},
+ {id:'X-NRIC-1',nm:'NRIC 跨文件一致', file:'NRIC.png',                via:'ocr', pass:1},
+ {id:'A153',nm:'担保合同日期对齐',    file:'HP Guarantee Agreement.pdf',via:'ocr',pass:1},
+ {id:'I67', nm:'发票日期时序',        file:'Vehicle Invoice.pdf',     via:'ocr', pass:1},
+ {id:'V11', nm:'车架号跨文件一致',    file:'VOC.pdf',                 via:'ocr', pass:1},
+ {id:'V12', nm:'引擎号一致',          file:'VOC.pdf',                 via:'ocr', pass:1},
+ {id:'V13', nm:'路税有效期',          file:'Road Tax Disc.jpg',       via:'ocr', pass:1},
+ {id:'F21', nm:'首付比例',            file:'Vehicle Invoice.pdf',     via:'ocr', pass:1},
+ {id:'F22', nm:'月供勾稽',            file:'2nd Schedule Part I.pdf', via:'ocr', pass:1},
+ {id:'G31', nm:'担保人 NRIC 一致',    file:'Guarantor NRIC.jpg',      via:'ocr', pass:1},
+ {id:'B41', nm:'生物识别结果',        file:'Biometric Result.pdf',    via:'ocr', pass:1},
+ {id:'S51', nm:'第二附表签署齐全',    file:'2nd Schedule Part I.pdf', via:'eye', pass:1},
+ {id:'EB-STMP-1',nm:'印花税票据完整性',file:'2nd Schedule Part I.pdf',via:'eye', pass:1},
+ {id:'P71', nm:'Puspakom 检验有效',   file:'Puspakom B7.pdf',         via:'ocr', pass:1},
+ {id:'D61', nm:'卖家 IC 与发票一致',  file:'Seller IC.jpg',           via:'ocr', pass:1},
+ {id:'M81', nm:'合伙授权书签署人',    file:'Partnership Mandate.docx',via:'eye', pass:1},
+ {id:'N01', nm:'MyKad 有效期',        file:'NRIC.png',                via:'ocr', pass:1},
+ {id:'V14', nm:'车辆型号一致',        file:'Vehicle Invoice.pdf',     via:'ocr', pass:1},
+ {id:'F23', nm:'管理费未超上限',      file:'2nd Schedule Part I.pdf', via:'ocr', pass:1},
+ {id:'I34', nm:'承保期覆盖贷款期',    file:'Insurance Cover Note.pdf',via:'ocr', pass:1},
+ {id:'G32', nm:'担保人非主借人',      file:'Guarantor NRIC.jpg',      via:'ocr', pass:1},
+ {id:'D62', nm:'卖家账户信息齐全',    file:'Seller Invoice.pdf',      via:'eye', pass:1}
+];
+
+const F0=[
+ {g:'Facility Information', k:'Agreement Date',      sys:'',                  ocr:'12-08-2026',        req:1},
+ {g:'Facility Information', k:'Total Price',         sys:'128,000.00',        ocr:'128,000.00',        req:1},
+ {g:'Facility Information', k:'Down Payment',        sys:'40,000.00',         ocr:'40,000.00',         req:1},
+ {g:'Facility Information', k:'Principal Amount',    sys:'88,000.00',         ocr:'88,000.00',         req:1},
+ {g:'Facility Information', k:'Terms Charges',       sys:'10,000.00',         ocr:'10,000.00',         req:0},
+ {g:'Facility Information', k:'Tenure (months)',     sys:'84',                ocr:'84',                req:1},
+ {g:'Facility Information', k:'Monthly Instalment',  sys:'1,166.67',          ocr:'1,166.67',          req:1},
+ {g:'Collateral',           k:'Chassis No.',         sys:'PM2KA6852NJ012345', ocr:'PM2KA6852NJ012345', req:1},
+ {g:'Collateral',           k:'Engine No.',          sys:'4A91-AB12346',      ocr:'4A91-AB12345',      req:1},
+ {g:'Collateral',           k:'Registration No.',    sys:'',                  ocr:'WXY 1234',          req:0},
+ {g:'Collateral',           k:'Vehicle Model',       sys:'PERODUA ALZA 1.5 AV',ocr:'PERODUA ALZA 1.5 AV',req:1},
+ {g:'Insurance',            k:'Insurer',             sys:'',                  ocr:'ALLIANZ GENERAL',   req:1},
+ {g:'Insurance',            k:'Sum Insured',         sys:'102,400.00',        ocr:'98,000.00',         req:1},
+ {g:'Insurance',            k:'Cover Note No.',      sys:'',                  ocr:'CN-2026-0088123',   req:0},
+ {g:'Insurance',            k:'Policy Expiry',       sys:'',                  ocr:'18-08-2027',        req:1},
+ {g:'Hirer / Guarantor',    k:'NRIC No.',            sys:'900101-10-1234',    ocr:'900101-10-1284',    req:1},
+ {g:'Hirer / Guarantor',    k:'Hirer Name',          sys:'TAN WEI MING',      ocr:'TAN WEI MING',      req:1},
+ {g:'Hirer / Guarantor',    k:'Disbursement Account',sys:'',                  ocr:'',                  req:1},
+ {g:'Dealer / Seller',      k:'Dealer Code',         sys:'CC-KL-001',         ocr:'',                  req:1},
+ {g:'Dealer / Seller',      k:'Seller Name',         sys:'CYCLE & CARRIAGE',  ocr:'CYCLE & CARRIAGE',  req:1}
+];
+
+const FLAGS=[
+ {k:'LOU Reassignment',on:0},{k:'Promotion Package',on:0},
+ {k:'Hold Handling Fee',on:0,stp:1},{k:'Used Car With Settlement',on:0,stp:1},
+ {k:'Standing Instruction',on:0,stp:1},{k:'FBT',on:0,stp:1},
+ {k:'FBR',on:1,stp:1},{k:'FD Pledge',on:0,stp:1},
+ {k:'CRA Completed',on:0},{k:'Refund Deposit',on:0,stp:1},{k:'AP Indicator',on:0,stp:1}
+];
+
+const FILE_TOTAL=17, MAND=12, MAND_UP=12;
+
+let RULES=[],FIELDS=[],DEFECTS=[];
+const S={scn:'manual',page:'vsum',noGtee:0,expand:{r:0},dlg:null,
+  sync:{sel:{}},archAt:'14:02',pullAt:'',dseq:0,
+  busy:0,route:null,nextPhase:'',blocks:[]};
+const $=i=>document.getElementById(i);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function reset(scn){
+  RULES=R0.map(r=>Object.assign({},r,{st:'',defNo:''}));
+  FIELDS=F0.map(f=>Object.assign({},f));
+  DEFECTS=[];S.sync={sel:{}};S.expand={r:0};
+  S.route=null;S.busy=0;S.pullAt='';S.dseq=0;
+  S.noGtee = scn==='stp' ? 1 : 0;
+  FLAGS.forEach(f=>{ f.on = (scn==='manual' && f.k==='FBR') ? 1 : 0; });
+}
+
+const rTotal=()=>RULES.length;
+const rPass=()=>RULES.filter(r=>r.pass).length;
+const rPend=()=>RULES.filter(r=>!r.pass&&r.st==='pending');
+const rFail=()=>RULES.filter(r=>!r.pass&&r.st!=='pending');
+const rSettled=()=>rTotal()-rPend().length;
+const usedJust=()=>RULES.filter(r=>r.act==='just').length;
+const line1OK=()=>rFail().length===0 && rPend().length===0;
+const noDefect=()=>rFail().filter(r=>!r.defNo);
+
+function fState(f){
+  const s=(f.sys||'').trim(), o=(f.ocr||'').trim();
+  if(!o) return 'noocr';
+  if(!s) return 'fill';
+  return s===o ? 'same' : 'diff';
+}
+const fMissing=()=>FIELDS.filter(f=>f.req&&!(f.sys||'').trim());
+const fFilled=()=>FIELDS.filter(f=>(f.sys||'').trim()).length;
+
+function pullRules(){
+  const done=rPend().map(r=>r.id);
+  rPend().forEach(r=>{ r.pass=1; r.st=''; });
+  S.pullAt=new Date().toTimeString().slice(0,5);
+  return done.length ? `${done.length} 条重新抽取完成` : '规则结论无变化';
+}
+function mkDefect(r){
+  if(r.defNo) return null;
+  S.dseq++; r.defNo='D-'+String(S.dseq).padStart(3,'0');
+  DEFECTS.push({no:r.defNo,rule:r.id,file:r.file,remark:r.issue||r.nm,rect:0,ver:0});
+  return r.defNo;
+}
+
+/* STP 资格：9 项固定条件，只在 Next 时评估 */
+function eligibility(){
+  const flagOn=FLAGS.filter(f=>f.on&&f.stp);
+  const items=[
+    {ok:!flagOn.length, nm:'无非标分支标记', d:flagOn.map(f=>f.k).join('、')},
+    {ok:!!S.noGtee, nm:'无担保人', d:'本单有担保人 LIM AH KOW'},
+    {ok:1, nm:'客户类型 Individual', d:''},
+    {ok:1, nm:'Product Code 在白名单', d:''},
+    {ok:1, nm:'Panel Dealer', d:''},
+    {ok:1, nm:'贷款金额未超上限', d:''},
+    {ok:line1OK(), nm:'规则全部通过', d:rFail().length+' 条不通过'},
+    {ok:DEFECTS.length===0, nm:'无缺陷记录', d:DEFECTS.length+' 条缺陷'},
+    {ok:usedJust()===0, nm:'未使用 Justification', d:usedJust()+' 条经豁免放行'}
+  ];
+  return {items, ok:items.every(i=>i.ok), blockers:items.filter(i=>!i.ok)};
+}
+
+function render(){
+  document.querySelectorAll('#scnSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===S.scn));
+  renderNav();renderPage();renderRight();renderFooter();
+}
+
+function renderNav(){
+  const N=[
+    ['Checking & Modification',[['vsum','Verification Summary','p'],['def','Defect List','d']]],
+    ['Data Maintenance',[['dm','Facility / Collateral / Insurance','f'],['appsum','Application Summary'],
+      ['hirer','Hirer/Guarantor Info'],['appr','Approval Information']]],
+    ['Disbursement Maintenance',[['dsum','Summary'],['tmaint','Transaction Maintenance'],
+      ['treview','Transaction Review'],['tlog','Transaction Log']]]
+  ];
+  let h='';
+  N.forEach(([g,items])=>{
+    h+=`<h5>${g}</h5>`;
+    items.forEach(([k,nm,kind])=>{
+      let c='';
+      if(kind==='p') c=`<span class="cnt ${line1OK()?'ok':'err'}">${line1OK()?'✓':rFail().length}</span>`;
+      if(kind==='d') c=`<span class="cnt ${DEFECTS.length?'err':''}">${DEFECTS.length}</span>`;
+      if(kind==='f') c=`<span class="cnt ${fMissing().length?'err':'ok'}">${fFilled()}/${FIELDS.length}</span>`;
+      h+=`<button data-page="${k}" aria-pressed="${S.page===k}"><span>${nm}</span>${c}</button>`;
+    });
+  });
+  h+=`<div class="links"><a class="hi" data-link="fc">📎 Attachment（文件中心）→</a><a>CRA Report</a><a>E-acceptance</a></div>`;
+  $('nav').innerHTML=h;
+}
+
+function pgVsum(){
+  const fl=rFail(), pd=rPend(), l1=line1OK();
+  const pct=Math.round(rPass()/rTotal()*100);
+  const nd=noDefect().length;
+  const kpi=(v,k,cls,sub)=>`<div class="kp"><div class="v ${cls||''}">${v}</div>
+    <div class="k">${k}${sub?`<span class="ks">${sub}</span>`:''}</div></div>`;
+  const headline = l1 ? '文件与规则全部通过'
+    : pd.length&&!fl.length ? `${pd.length} 条重新抽取中`
+    : `${fl.length} 条规则不通过${pd.length?` · ${pd.length} 条处理中`:''}`;
+
+  return `<div class="sumcard ${l1?'ok':(fl.length?'bad':'wait')}">
+    <div class="sh">
+      <span class="ic">${l1?'✅':(fl.length?'⚠️':'⏳')}</span>
+      <span class="w"><div class="t">${headline}</div>
+        <div class="d">规则意见存档于 ${S.archAt}${S.pullAt?` · 上次刷新 ${S.pullAt}`:''}</div></span>
+      <span class="rt">
+        <span class="bar"><i class="${l1?'':'part'}" style="width:${pct}%"></i></span>
+        <span class="pv ${l1?'ok':'err'}">${rPass()}/${rTotal()}</span>
+        <button class="ant-btn ant-btn-sm" data-act="refresh" ${S.busy?'disabled':''}>${S.busy?'刷新中…':'⟳ 刷新规则'}</button>
+        <button class="ant-btn ant-btn-sm ant-btn-primary" data-link="fc">去文件中心 →</button>
+      </span>
+    </div>
+    <div class="kpis">
+      ${kpi(`${MAND_UP}/${MAND}`,'必备文件',MAND_UP>=MAND?'ok':'err')}
+      ${kpi(FILE_TOTAL,'已上传文件')}
+      ${kpi(rTotal(),'规则总数')}
+      ${kpi(rSettled(),'已有结论','',pd.length?`${pd.length} 条处理中`:'')}
+      ${kpi(rPass(),'通过','ok')}
+      ${kpi(fl.length,'不通过',fl.length?'err':'', nd?`${nd} 条未建缺陷`:'')}
+    </div>
+    <button class="sx" data-exp="r"><span class="car">${S.expand.r?'▼':'▶'}</span>
+      ${S.expand.r?'收起明细':'查看明细'}
+      ${!S.expand.r&&nd?`<span class="sxr">${nd} 条不通过尚未创建 Defect</span>`:''}</button>
+    ${S.expand.r?`<div class="sb">
+      ${nd>1?`<div class="batch"><span>${nd} 条不通过尚未创建 Defect</span>
+        <button class="ant-btn ant-btn-sm" data-act="defall">为全部 ${nd} 条创建 Defect</button></div>`:''}
+      ${[...fl,...pd].length?[...fl,...pd].map(r=>{
+        const isP=r.st==='pending';
+        return `<div class="frow"><span class="fn"><b class="mono">${r.id}</b> ${esc(r.nm)}
+          <span class="fs">${esc(r.file)}${r.issue?' · '+esc(r.issue):''}</span></span>
+        <span class="rt"><span class="ant-tag ${isP?'tg-b':'tg-r'}">${isP?'处理中':'不通过'}</span>
+          ${isP?'':(r.defNo
+              ? `<span class="ant-tag tg-y mono">${r.defNo}</span><button class="ant-btn ant-btn-sm" data-page="def">看缺陷 →</button>`
+              : `<button class="ant-btn ant-btn-sm ant-btn-dangerous" data-mkdef="${r.id}">创建 Defect</button>`)}
+          <button class="ant-btn ant-btn-sm" data-fix="${r.id}" ${isP?'disabled':''}>去文件中心 →</button></span>
+      </div>`;}).join(''):`<div class="muted" style="padding:4px 2px">全部 ${rTotal()} 条规则已通过。</div>`}
+    </div>`:''}
+  </div>`;
+}
+
+function pgDm(){
+  const grps=[...new Set(FIELDS.map(f=>f.g))];
+  let rows='';
+  grps.forEach(g=>{
+    rows+=`<tr class="grp"><td colspan="3">${esc(g)}</td></tr>`;
+    FIELDS.filter(f=>f.g===g).forEach(f=>{
+      const miss=f.req&&!(f.sys||'').trim();
+      rows+=`<tr><td>${esc(f.k)}${f.req?'<span class="reqd">*</span>':''}</td>
+        <td><input class="fin ${miss?'bad':''}" data-fld="${esc(f.k)}" value="${esc(f.sys)}"
+             placeholder="${miss?'必填':''}"></td>
+        <td><span class="fv ${(f.ocr||'').trim()?'':'empty'}">${(f.ocr||'').trim()?esc(f.ocr):'—'}</span></td></tr>`;
+    });
+  });
+  return `<div class="card"><div class="hd"><span class="t">Data Maintenance</span>
+    <span class="sub">${fFilled()}/${FIELDS.length} 已填${fMissing().length?` · ${fMissing().length} 项必填未填`:''}</span>
+    <span class="r"><button class="ant-btn ant-btn-primary ant-btn-sm" data-act="sync">Sync from OCR</button></span></div>
+  <div class="bd p0"><div class="tw"><table style="min-width:640px">
+    <thead><tr><th style="width:230px">字段</th><th style="width:240px">系统当前值</th><th>OCR 抽取值</th></tr></thead>
+    <tbody>${rows}</tbody></table></div></div></div>`;
+}
+
+function pgDef(){
+  if(!DEFECTS.length) return `<div class="card"><div class="hd"><span class="t">Defect List</span>
+    <span class="r"><button class="ant-btn ant-btn-sm" data-act="adddef">+ Add Defect</button></span></div>
+    <div class="bd"><div class="muted" style="text-align:center;padding:22px">暂无缺陷记录</div></div></div>`;
+  return `<div class="card"><div class="hd"><span class="t">Defect List</span>
+    <span class="sub">${DEFECTS.filter(d=>!d.rect||!d.ver).length} 条未闭环</span>
+    <span class="r"><button class="ant-btn ant-btn-sm" data-act="adddef">+ Add Defect</button></span></div>
+  <div class="bd p0"><div class="tw">
+    <table style="min-width:760px"><thead><tr><th style="width:76px">NO.</th>
+      <th style="width:80px">RULE</th><th style="width:200px">FILE</th><th>REMARK</th>
+      <th style="width:88px">RECTIFIED</th><th style="width:80px">VERIFIED</th><th style="width:110px">ACTION</th></tr></thead>
+    <tbody>${DEFECTS.map(d=>`<tr><td class="mono">${esc(d.no)}</td>
+      <td class="mono">${esc(d.rule||'—')}</td>
+      <td style="font-size:12px">${esc(d.file)}</td><td style="font-size:12px">${esc(d.remark)}</td>
+      <td>${d.rect?'<span class="ant-tag tg-g">Y</span>':'<span class="ant-tag tg-r">N</span>'}</td>
+      <td>${d.ver?'<span class="ant-tag tg-g">Y</span>':'<span class="ant-tag">N</span>'}</td>
+      <td>${d.rect&&d.ver?'<span class="muted">已闭环</span>'
+        : d.rect?`<button class="ant-btn ant-btn-sm" data-ver="${esc(d.no)}">复验通过</button>`
+        :`<button class="ant-btn ant-btn-sm" data-rect="${esc(d.no)}">标记已整改</button>`}</td></tr>`).join('')}
+    </tbody></table></div></div></div>`;
+}
+
+function pgStub(){return `<div class="card"><div class="hd"><span class="t">${S.page}</span></div>
+  <div class="bd"><div class="muted">原型未实现此页。</div></div></div>`;}
+
+function renderPage(){
+  const P={vsum:pgVsum,dm:pgDm,def:pgDef}[S.page]||pgStub;
+  $('content').innerHTML=P();
+}
+
+function renderRight(){
+  let h='<h5>Case Flags</h5>';
+  FLAGS.forEach((f,i)=>{h+=`<label class="flag ${f.on?'on':''}"><input type="checkbox" ${f.on?'checked':''} data-flag="${i}"><span>${f.k}</span></label>`;});
+  h+='<div class="rp-div"></div>';
+  [['App. Ref. No.','TTI/HP/2026/Y0273410'],['Product Code','F143'],['Loan Amount','88,000.00'],
+   ['Applicant','TAN WEI MING'],['Guarantor',S.noGtee?'—':'LIM AH KOW']].forEach(([k,v])=>{
+    h+=`<div class="rp-kv"><span class="k">${k}</span><span class="v">${v}</span></div>`;});
+  $('rightp').innerHTML=h;
+}
+
+function renderFooter(){
+  const note = S.route
+    ? (S.route.ok ? '已按 STP 触发放款接口' : '已路由至 Authorizer')
+    : (line1OK() ? '' : `文件与规则还有 ${rFail().length} 条不通过`);
+  $('footer').innerHTML=`<span class="fnote">${note}</span><span class="r">
+    <button class="ant-btn">Save</button>
+    <button class="ant-btn" data-act="sync">Sync from OCR</button>
+    <button class="ant-btn ant-btn-dangerous">To Sales Defect</button>
+    <button class="ant-btn ant-btn-primary" data-act="next">Next →</button></span>`;
+}
+
+/* ── Sync from OCR：按字段区域平铺，勾选即采用 OCR 值 ── */
+function syncable(f){return fState(f)!=='noocr';}
+function openSync(){
+  FIELDS.forEach(f=>{ if(S.sync.sel[f.k]===undefined){
+    const st=fState(f); S.sync.sel[f.k] = (st==='same'||st==='fill') ? 1 : 0; } });
+  S.dlg='sync'; $('modal').className='modal wide'; $('mask').classList.remove('hidden'); drawSync();
+}
+function drawSync(){
+  const grps=[...new Set(FIELDS.map(f=>f.g))];
+  let rows='';
+  grps.forEach(g=>{
+    rows+=`<tr class="grp"><td colspan="4">${esc(g)}</td></tr>`;
+    FIELDS.filter(f=>f.g===g).forEach(f=>{
+      const st=fState(f), on=!!S.sync.sel[f.k];
+      if(st==='noocr'){
+        rows+=`<tr class="na"><td><span class="bx dis"></span></td>
+          <td>${esc(f.k)}${f.req?'<span class="reqd">*</span>':''}</td>
+          <td class="fv ${(f.sys||'').trim()?'':'empty'}">${(f.sys||'').trim()?esc(f.sys):'（未填）'}</td>
+          <td class="fv empty">—</td></tr>`;
+      }else{
+        rows+=`<tr class="${st==='diff'?'diff':''}">
+          <td><span class="bx ${on?'on':''}" data-sel="${esc(f.k)}">${on?'✓':''}</span></td>
+          <td>${esc(f.k)}${f.req?'<span class="reqd">*</span>':''}</td>
+          <td class="fv ${(f.sys||'').trim()?'':'empty'}">${(f.sys||'').trim()?esc(f.sys):'（未填）'}</td>
+          <td class="fv">${esc(f.ocr)}</td></tr>`;
+      }
+    });
+  });
+  const n=FIELDS.filter(f=>syncable(f)&&S.sync.sel[f.k]).length;
+  $('mT').textContent='Sync from OCR';
+  $('mB').innerHTML=`<div class="tw"><table class="syn">
+    <thead><tr><th style="width:40px"></th><th style="width:200px">字段</th>
+      <th style="width:220px">系统当前值</th><th>OCR 抽取值</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+  $('mF').innerHTML=`<span class="lf">已选 ${n} 项</span>
+    <button class="ant-btn" data-act="mx">取消</button>
+    <button class="ant-btn ant-btn-primary" data-act="dosync">同步</button>`;
+}
+function doSync(){
+  let n=0;
+  FIELDS.forEach(f=>{ if(syncable(f)&&S.sync.sel[f.k]&&(f.ocr||'').trim()){ f.sys=f.ocr; n++; } });
+  closeModal(); render(); toast(`已同步 ${n} 个字段`);
+}
+
+/* ── 文件中心处置 ── */
+function openFix(id){
+  const r=RULES.find(x=>x.id===id); if(!r) return;
+  S.dlg={id,pick:null,who:'self',note:'',bad:0};
+  $('modal').className='modal fcx'; $('mask').classList.remove('hidden'); drawFix();
+}
+function drawFix(){
+  const d=S.dlg, r=RULES.find(x=>x.id===d.id);
+  $('mT').innerHTML=`<span class="fcb">文件中心</span>规则处置　<span class="mono" style="font-size:13px;color:var(--text-3)">${r.id}</span>`;
+  $('mB').innerHTML=`
+    <div class="pre"><span class="lb">规则</span>${esc(r.nm)}
+      <div class="muted" style="margin-top:3px">${esc(r.file)}</div></div>
+    ${r.issue?`<div class="pre"><span class="lb">不通过原因</span>${esc(r.issue)}</div>`:''}
+    <div class="dopt ${d.pick==='file'?'on':''}" data-pick="file"><span class="rb"></span>
+      <span><span class="dn">换文件</span>
+        ${d.pick==='file'?`<div class="sub2">
+          <label><input type="radio" name="who" ${d.who==='self'?'checked':''} data-who="self"><span>CRA 现场直接换</span></label>
+          <label><input type="radio" name="who" ${d.who==='sales'?'checked':''} data-who="sales"><span>退回 Sales 换</span></label>
+        </div>`:''}</span></div>
+    <div class="dopt ${d.pick==='just'?'on':''}" data-pick="just"><span class="rb"></span>
+      <span><span class="dn">Justification 豁免</span></span></div>
+    ${d.pick==='just'?`<span class="mlabel">豁免理由 <span class="reqd">*</span></span>
+      <textarea class="mtb ${d.bad?'bad':''}" id="mNote">${esc(d.note)}</textarea>`:''}
+    ${d.pick==='file'&&d.who==='sales'?`<span class="mlabel">给 Sales 的说明 <span class="reqd">*</span></span>
+      <textarea class="mtb ${d.bad?'bad':''}" id="mNote">${esc(d.note)}</textarea>`:''}`;
+  $('mF').innerHTML=`<button class="ant-btn" data-act="mx">取消</button>
+    <button class="ant-btn ant-btn-primary" ${d.pick?'':'disabled'} data-act="dofix">确认</button>`;
+}
+function doFix(){
+  const d=S.dlg, r=RULES.find(x=>x.id===d.id);
+  const ta=$('mNote'); if(ta) d.note=ta.value.trim();
+  const needNote = d.pick==='just' || (d.pick==='file'&&d.who==='sales');
+  if(needNote && !d.note){ d.bad=1; drawFix(); toast('请填写说明'); return; }
+  if(d.pick==='just'){ r.pass=1; r.act='just'; toast('已豁免'); }
+  else { r.st='pending'; r.act='file';
+    toast(d.who==='self'?'已换文件，重新抽取中':'已退回 Sales 换文件'); }
+  closeModal(); render();
+}
+
+/* ── Next：提交时评估路由 ── */
+function openNext(){
+  S.dlg='next'; S.nextPhase='check'; S.route=null;
+  $('modal').className='modal'; $('mask').classList.remove('hidden'); drawNext();
+  setTimeout(()=>{ if(S.dlg!=='next') return;
+    const blocks=[];
+    if(!line1OK()) blocks.push({t:'文件与规则',d:rFail().length+' 条不通过'+(rPend().length?`，${rPend().length} 条处理中`:''),go:'fc'});
+    if(fMissing().length) blocks.push({t:'必填字段',d:fMissing().length+' 项未填：'+fMissing().slice(0,3).map(f=>f.k).join('、')+(fMissing().length>3?' 等':''),go:'dm'});
+    if(blocks.length){ S.nextPhase='block'; S.blocks=blocks; drawNext(); return; }
+    const e=eligibility();
+    S.route={ok:e.ok, reasons:e.blockers.map(i=>i.nm+(i.d?'（'+i.d+'）':''))};
+    S.nextPhase='done'; drawNext();
+  },900);
+}
+function drawNext(){
+  if(S.nextPhase==='check'){
+    $('mT').textContent='提交校验';
+    $('mB').innerHTML=`<div class="chk-run"><div class="spin"></div>
+      <div><div class="cr-t">正在评估 STP 资格…</div>
+      <div class="cr-d">校验规则结论与录入内容，运行资格规则决定路由</div></div></div>`;
+    $('mF').innerHTML=''; return;
+  }
+  if(S.nextPhase==='block'){
+    $('mT').textContent='暂不能提交';
+    $('mB').innerHTML=S.blocks.map(b=>`<div class="frow"><span class="fn"><b>${esc(b.t)}</b>
+      <span class="fs">${esc(b.d)}</span></span>
+      <span class="rt"><button class="ant-btn ant-btn-sm" data-goto="${b.go}">去处理 →</button></span></div>`).join('');
+    $('mF').innerHTML=`<button class="ant-btn ant-btn-primary" data-act="mx">知道了</button>`;
+    return;
+  }
+  const r=S.route;
+  $('mT').textContent='提交确认';
+  $('mB').innerHTML = r.ok
+    ? `<div class="route stp"><span class="ic">⚡</span>
+        <span><div class="rt2">符合 STP 条件</div>
+        <div class="rd">本单跳过 Authorizer，提交后直接触发放款接口。</div></span></div>
+       <div class="nxt"><span class="ar">流向</span>CRA　→　<b>放款接口</b></div>`
+    : `<div class="route auth"><span class="ic">🔀</span>
+        <span><div class="rt2">路由至 Authorizer</div>
+        <div class="rd">本单不符合 STP 条件，需人工复核后放款。</div></span></div>
+       <div class="rsn"><div class="rl">不符合的条件</div>
+         ${r.reasons.map(x=>`<div class="ri">· ${esc(x)}</div>`).join('')}</div>
+       <div class="nxt"><span class="ar">流向</span>CRA　→　<b>Authorizer 复核</b>　→　放款接口</div>`;
+  $('mF').innerHTML=`<button class="ant-btn" data-act="mx">返回修改</button>
+    <button class="ant-btn ant-btn-primary" data-act="confirm">${r.ok?'确认放款':'确认提交 Authorizer'}</button>`;
+}
+
+function closeModal(){$('mask').classList.add('hidden');$('modal').className='modal';S.dlg=null;}
+function toast(t){const m=$('msg');m.querySelector('span').textContent=t;m.classList.add('on');
+  clearTimeout(m._t);m._t=setTimeout(()=>m.classList.remove('on'),2200);}
+
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.flag!==undefined){FLAGS[+t.dataset.flag].on=t.checked?1:0;renderRight();return;}
+  if(t.dataset.fld){
+    const f=FIELDS.find(x=>x.k===t.dataset.fld); if(!f) return;
+    f.sys=t.value.trim(); renderNav(); renderFooter();
+    t.classList.toggle('bad', !!(f.req&&!f.sys));
+    const sub=document.querySelector('.card>.hd .sub');
+    if(sub) sub.textContent=`${fFilled()}/${FIELDS.length} 已填`+(fMissing().length?` · ${fMissing().length} 项必填未填`:'');
+    return;
+  }
+});
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,a,[data-sel],[data-who],[data-pick]');
+  if(!t) return;
+  if(t.dataset.who){S.dlg.who=t.dataset.who;S.dlg.bad=0;drawFix();return;}
+  if(t.dataset.scn){S.scn=t.dataset.scn;reset(t.dataset.scn);S.page='vsum';render();return;}
+  if(t.dataset.page){S.page=t.dataset.page;render();return;}
+  if(t.dataset.link==='fc'){toast('打开文件中心');return;}
+  if(t.dataset.exp){S.expand[t.dataset.exp]=!S.expand[t.dataset.exp];renderPage();return;}
+
+  if(t.dataset.act==='refresh'){
+    if(S.busy) return;
+    S.busy=1; renderPage();
+    setTimeout(()=>{ S.busy=0; const m=pullRules(); render(); toast(m); },800);
+    return;
+  }
+  if(t.dataset.mkdef){const r=RULES.find(x=>x.id===t.dataset.mkdef);const no=mkDefect(r);
+    render(); if(no) toast('已创建缺陷 '+no); return;}
+  if(t.dataset.act==='defall'){const made=noDefect().map(r=>mkDefect(r)).filter(Boolean);
+    render(); toast('已创建 '+made.length+' 条缺陷'); return;}
+  if(t.dataset.act==='adddef'){toast('手工登记缺陷');return;}
+  if(t.dataset.rect){const d=DEFECTS.find(x=>x.no===t.dataset.rect);d.rect=1;render();toast('已标记整改');return;}
+  if(t.dataset.ver){const d=DEFECTS.find(x=>x.no===t.dataset.ver);d.ver=1;render();toast('已复验通过');return;}
+
+  if(t.dataset.fix){openFix(t.dataset.fix);return;}
+  if(t.dataset.pick){S.dlg.pick=t.dataset.pick;S.dlg.bad=0;
+    const ta=$('mNote'); if(ta) S.dlg.note=ta.value; drawFix();return;}
+  if(t.dataset.act==='dofix'){doFix();return;}
+
+  if(t.dataset.act==='sync'){openSync();return;}
+  if(t.dataset.sel){S.sync.sel[t.dataset.sel]=!S.sync.sel[t.dataset.sel];drawSync();return;}
+  if(t.dataset.act==='dosync'){doSync();return;}
+
+  if(t.dataset.act==='next'){openNext();return;}
+  if(t.dataset.goto){closeModal();
+    if(t.dataset.goto==='fc'){toast('打开文件中心');}
+    else if(t.dataset.goto==='dm'){S.page='dm';render();}
+    return;}
+  if(t.dataset.act==='confirm'){const ok=S.route.ok;closeModal();render();
+    toast(ok?'已触发放款接口':'已提交 Authorizer');return;}
+  if(t.dataset.act==='mx'){closeModal();renderFooter();return;}
+});
+
+reset('manual'); render();
+})();
+</script>
+
+</body>
+</html>
