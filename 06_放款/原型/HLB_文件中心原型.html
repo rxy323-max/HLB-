@@ -1,15 +1,19 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
 <style>
-/* standalone compat reset —— 单文件版本，双击即可用浏览器打开 */
+/* standalone compat reset - single file, open directly in a browser */
 html{-webkit-text-size-adjust:100%}
+*{box-sizing:border-box}
+body{margin:0;background:#fafafa;font:14px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
 button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit}
 </style>
-<title>文件中心原型</title>
+<title>Document Center</title>
 </head>
 <body>
 
@@ -51,7 +55,7 @@ button:disabled{cursor:not-allowed}
 .ant-btn-text:hover:not(:disabled){background:rgba(0,0,0,.06);color:var(--text)}
 .ant-select,.ant-input{height:32px;padding:4px 11px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);font-size:14px}
 .ant-select:hover,.ant-input:hover{border-color:var(--primary-hover)}
-.ant-tag{display:inline-block;height:22px;padding:0 7px;font-size:12px;line-height:20px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--fill-alter);color:var(--text-2);white-space:nowrap}
+.ant-tag{display:inline-block;height:22px;padding:0 7px;font-size:12px;line-height:20px;border:1px solid var(--border-2);border-radius:var(--r-sm);background:var(--fill-alter);color:var(--text-2);white-space:nowrap}
 .ant-tag-blue{background:var(--primary-bg);border-color:var(--primary-border);color:var(--primary-active)}
 .ant-tag-green{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
 .ant-tag-gold{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
@@ -103,7 +107,7 @@ button:disabled{cursor:not-allowed}
 .rail-toggle:hover{background:rgba(0,0,0,.06);color:var(--primary)}
 .layout-top .rail-toggle{display:none}
 .ocr-modal-content.layout-top{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
-/* 上下结构：Subject 收成一条横向 chip 带 */
+/* top layout: Subject collapses into a horizontal chip strip */
 .layout-top .subject-rail{border-right:0;border-bottom:1px solid var(--border-2);padding:8px 16px;overflow-x:auto;overflow-y:hidden;display:flex;align-items:center;gap:8px;white-space:nowrap}
 .layout-top .rail-h{margin:0 4px 0 0;flex:none}
 .layout-top .rail-div,.layout-top .rail-note{display:none}
@@ -126,17 +130,18 @@ button:disabled{cursor:not-allowed}
 .subj-item .ct.ok{color:var(--success-text)} .subj-item .ct.bad{color:var(--error-text)}
 .subj-item .sub{font-size:12px;color:var(--text-3);margin-top:2px}
 .subj-item.gone .nm{color:var(--text-3)}
-.subj-item.unassigned{border:1px dashed var(--warning-border);background:var(--warning-bg)}
-.subj-item.unassigned .nm{color:var(--warning-text)}
+.subj-item.unassigned{border:1px dashed var(--border)}
+.subj-item.unassigned .nm{color:var(--text-2)}
 .rail-div{height:1px;background:var(--border-2);margin:12px 4px}
 .rail-note{font-size:12px;color:var(--text-3);padding:0 6px;line-height:1.6}
 
-/* 唯一的纵向滚动容器；内部一律自然高度，禁止再嵌 flex:1 + min-height:0 */
+/* the only vertical scroll container; children keep natural height */
 .ocr-main{min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;scroll-padding-top:56px}
 .file-list-table tbody tr{scroll-margin-top:56px}
 
 /* ═══ upload section ═══ */
 .upload-section{padding:12px 16px;border-bottom:1px solid var(--border-2)}
+.upload-ctx b{font-weight:600}
 .section-header{display:flex;align-items:baseline;gap:12px;margin-bottom:9px;flex-wrap:wrap}
 .section-title{font-size:14px;font-weight:600;color:var(--text)}
 .section-subtitle{font-size:12px;color:var(--text-3)}
@@ -155,7 +160,7 @@ button:disabled{cursor:not-allowed}
 .info-icon{color:var(--text-4);font-size:12px}
 .uploader-box{border:1px dashed var(--border);border-radius:var(--r);background:var(--fill-alter);padding:14px 10px;text-align:center;transition:border-color .2s;min-height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .uploader-box:hover{border-color:var(--primary)}
-.uploader-box.non-ai{border-color:var(--warning-border);background:var(--warning-bg)}
+.uploader-box.non-ai{border-color:var(--border);background:var(--fill-q)}
 .upload-icon{font-size:18px;color:var(--text-3);display:block;margin-bottom:4px}
 .upload-prompt{font-size:13px;color:var(--text-2)}
 .browse-link{color:var(--primary)}
@@ -174,15 +179,19 @@ button:disabled{cursor:not-allowed}
 .filter-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
 .filter-actions .sel-n{font-size:12px;color:var(--text-3)}
 .table-container{overflow-x:auto;border:1px solid var(--border-2);border-radius:var(--r)}
-.file-list-table{border-collapse:collapse;width:100%;min-width:1180px}
-.file-list-table th{background:var(--fill-alter);text-align:left;font-size:13px;font-weight:600;color:var(--text);padding:10px 12px;border-bottom:1px solid var(--border-2);white-space:nowrap}
-.file-list-table td{padding:9px 12px;border-bottom:1px solid var(--border-2);vertical-align:middle;font-size:13px}
+.file-list-table{border-collapse:collapse;width:100%;min-width:1300px;table-layout:fixed}
+.subject-cell,.category-cell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.filename-text{overflow-wrap:anywhere}
+.file-list-table td,.file-list-table th{overflow:hidden}
+.filename-cell{min-width:190px}
+.file-list-table th{background:var(--fill-alter);text-align:left;font-size:12px;font-weight:600;color:var(--text-2);padding:9px 12px;border-bottom:1px solid var(--border-2);white-space:nowrap}
+.file-list-table td{padding:7px 12px;border-bottom:1px solid var(--border-2);vertical-align:middle;font-size:13px}
 .file-list-table tbody tr:last-child td{border-bottom:0}
 .file-list-table tbody tr:hover{background:var(--fill-alter)}
-.file-list-table tbody tr.selected{background:var(--primary-bg)}
+.file-list-table tbody tr.selected{background:#f0f7ff}
 .filename-text{color:var(--text)}
 .description-text{font-size:12px;color:var(--text-3)}
-.file-type-tag{display:inline-block}
+.file-type-tag{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
 .is-ai-cell{font-family:var(--mono);font-size:12px;color:var(--text-2)}
 .time-cell{font-family:var(--mono);font-size:12px;color:var(--text-3);white-space:nowrap}
 .actions-cell{white-space:nowrap}
@@ -207,14 +216,34 @@ button:disabled{cursor:not-allowed}
 @media(max-width:900px){.detail-body{grid-template-columns:1fr;overflow-y:auto}}
 .detail-panel{border-right:1px solid var(--border-2);background:var(--bg);overflow-y:auto;padding:16px}
 .detail-viewer{background:#eceef1;overflow:auto;padding:24px;display:flex;flex-direction:column;align-items:center}
+
+/* A.11 Manual Check */
+.mc-grp{font-size:12px;font-weight:600;color:var(--text-2);background:var(--fill-alter);
+  border:1px solid var(--border-2);border-radius:var(--r-sm);padding:6px 10px;margin:14px 0 8px;
+  display:flex;align-items:center;gap:8px}
+.mc-grp.cur{border-color:var(--primary-border);color:var(--primary-active)}
+.mc-cur{margin-left:auto;font-size:10.5px;font-family:var(--mono);background:var(--primary);color:#fff;
+  padding:1px 6px;border-radius:2px;font-weight:400}
+.routed{font-size:10px;font-family:var(--mono);color:var(--text-3);
+  border:1px solid var(--border);border-radius:2px;padding:0 4px;margin-left:6px}
+.mc-seg{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-3);margin-left:12px}
+.mc-seg button{border:1px solid var(--border);background:var(--bg);font-size:11px;padding:1px 8px;
+  border-radius:var(--r-sm);color:var(--text-2);cursor:pointer}
+.mc-seg button[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:#fff}
+.mc-doc{width:100%;max-width:720px;margin:0 auto 22px}
+.mc-doc-h{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--text-2);
+  background:rgba(255,255,255,.75);border:1px solid var(--border-2);border-radius:var(--r-sm);
+  padding:7px 12px;margin-bottom:8px;position:sticky;top:0;z-index:2;backdrop-filter:blur(4px)}
+.mc-doc-h span{margin-left:auto;font-weight:400;color:var(--text-3);font-family:var(--mono);font-size:11px}
 .panel-sect{font-size:12px;font-weight:600;color:var(--text-2);margin:0 0 10px;display:flex;align-items:center;gap:8px;letter-spacing:.02em}
 .panel-sect::after{content:"";flex:1;height:1px;background:var(--border-2)}
 .panel-sect.err{color:var(--error-text)}
-.alert-item{border:1px solid;border-radius:var(--r);padding:12px;margin-bottom:10px}
-.alert-item.machine{border-color:var(--error-border);background:var(--error-bg)}
-.alert-item.eyeball{border-color:var(--warning-border);background:var(--warning-bg)}
-.alert-item.resolved{border-color:var(--success-border);background:var(--success-bg)}
-.alert-item .ah{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-bottom:4px}
+.alert-item{border:1px solid var(--border-2);border-left:3px solid var(--border);border-radius:0 var(--r) var(--r) 0;padding:11px 12px;margin-bottom:8px;background:var(--bg)}
+.alert-item.machine{border-left-color:var(--error)}
+.alert-item.eyeball{border-left-color:var(--warning)}
+.alert-item.resolved{border-left-color:var(--success);background:var(--fill-q)}
+.alert-item .ah{display:flex;gap:8px;align-items:baseline;margin-bottom:4px}
+.alert-item .rid{flex:none}
 .alert-item .rid{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:var(--r-sm);background:rgba(0,0,0,.06);color:var(--text-2)}
 .alert-item .rn{font-weight:600;font-size:13px}
 .alert-item .rd{font-size:12px;color:var(--text-2);margin-bottom:10px;line-height:1.6}
@@ -231,9 +260,9 @@ button:disabled{cursor:not-allowed}
 .classify-box label{display:block;font-size:12px;color:var(--text-2);margin:10px 0 4px}
 .classify-box select{width:100%}
 .pnote{font-size:12px;color:var(--text-2);background:var(--fill-alter);border-left:3px solid var(--border);padding:10px 12px;border-radius:0 var(--r-sm) var(--r-sm) 0;margin-bottom:12px;line-height:1.6}
-.pnote.warn{background:var(--warning-bg);border-left-color:var(--warning);color:#874d00}
-.pnote.info{background:var(--primary-bg);border-left-color:var(--primary);color:#003eb3}
-.pnote.ok{background:var(--success-bg);border-left-color:var(--success);color:#237804}
+.pnote.warn{border-left-color:var(--warning)}
+.pnote.info{border-left-color:var(--primary)}
+.pnote.ok{border-left-color:var(--success)}
 
 /* ═══ document facsimile ═══ */
 .doc-page{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);width:min(900px,100%);min-height:600px;padding:48px 52px;font-size:13px;color:#262626}
@@ -242,7 +271,7 @@ button:disabled{cursor:not-allowed}
 .doc-s{text-align:center;color:#8c8c8c;font-size:12px;margin-bottom:24px}
 .doc-r{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;gap:24px}
 .doc-r .k{color:#595959} .doc-r .v{font-weight:600;text-align:right}
-.doc-r.hl{background:#fffbe6;margin:0 -10px;padding:8px 10px;border-bottom-color:#ffe58f}
+.doc-r.hl{background:var(--fill-alter);margin:0 -10px;padding:8px 10px}
 .doc-l{height:9px;background:#f0f0f0;border-radius:2px;margin:10px 0}
 .doc-sig{margin-top:34px;display:flex;justify-content:space-between;gap:32px}
 .doc-sig div{flex:1;border-top:1px solid #bfbfbf;padding-top:6px;font-size:11px;color:#8c8c8c;text-align:center}
@@ -273,17 +302,17 @@ button:disabled{cursor:not-allowed}
 </style>
 
 <div class="demo">
-  <span class="lb">演示用</span>
+  <span class="lb">Demo</span>
   <span class="seg" id="roleSeg">
     <button data-role="sales">Sales</button><button data-role="ced">CED</button>
     <button data-role="cra">CRA</button><button data-role="auth">Authorizer</button>
   </span>
   <span class="hint" id="permHint"></span>
-  <span class="lb" style="margin-left:8px">布局</span>
+  <span class="lb" style="margin-left:8px">Layout</span>
   <span class="seg" id="layoutSeg">
-    <button data-layout="side">左右</button><button data-layout="top">上下</button>
+    <button data-layout="side">Side</button><button data-layout="top">Top</button>
   </span>
-  <span class="why">演示工具条 · 非产品功能</span>
+  <span class="why">Demo toolbar · not part of the product</span>
 </div>
 
 <div class="behind"><div class="b1"></div><div class="b2"></div><div class="b3"></div></div>
@@ -311,7 +340,7 @@ button:disabled{cursor:not-allowed}
           <div class="filter-bar" id="filterBar"></div>
           <div class="table-container">
             <table class="file-list-table"><thead id="thead"></thead><tbody id="tbody"></tbody></table>
-            <div class="empty-state" id="emptyState" style="display:none">此筛选下没有文件。</div>
+            <div class="empty-state" id="emptyState" style="display:none">No files match the current filters.</div>
           </div>
         </div>
       </div>
@@ -351,16 +380,16 @@ button:disabled{cursor:not-allowed}
 
 /* ═══════ DATA ═══════ */
 const SUBJ={
- app:[{id:'primary',nm:'主借人',sub:'Tan Wei Ming'},
-      {id:'g1',nm:'担保人 1',sub:'Lim Ah Kow'},
-      {id:'seller',nm:'卖家',sub:'Cycle & Carriage'},
-      {id:'unassigned',nm:'未归属',sub:'历史/异常数据兜底',un:1}],
- dis:[{id:'case',nm:'案件级',sub:'合同与法定文书',need:3},
-      {id:'primary',nm:'主借人',sub:'Tan Wei Ming · 含车辆材料',need:11},
-      {id:'g1',nm:'担保人 1',sub:'Lim Ah Kow',need:3},
-      {id:'g2',nm:'担保人 2',sub:'Wong Mei Ling · 已从申请单移除',gone:1},
-      {id:'seller',nm:'卖家',sub:'Cycle & Carriage',need:2},
-      {id:'unassigned',nm:'未归属',sub:'历史/异常数据兜底',un:1}]
+ app:[{id:'primary',nm:'Main Applicant',sub:'Tan Wei Ming'},
+      {id:'g1',nm:'Guarantor 1',sub:'Lim Ah Kow'},
+      {id:'seller',nm:'Seller',sub:'Cycle & Carriage'},
+      {id:'unassigned',nm:'Unassigned',sub:'Historical-exception fallback',un:1}],
+ dis:[{id:'case',nm:'Case Level',sub:'Contracts & statutory documents',need:3},
+      {id:'primary',nm:'Main Applicant',sub:'Tan Wei Ming · incl. vehicle documents',need:11},
+      {id:'g1',nm:'Guarantor 1',sub:'Lim Ah Kow',need:3},
+      {id:'g2',nm:'Guarantor 2',sub:'Wong Mei Ling · removed from application',gone:1},
+      {id:'seller',nm:'Seller',sub:'Cycle & Carriage',need:2},
+      {id:'unassigned',nm:'Unassigned',sub:'Historical-exception fallback',un:1}]
 };
 function F(o){return Object.assign({ch:'ocr',src:'sales',cls:1,alerts:[],checks:[],fields:[],pages:1,del:null,doc:'form',
   sz:'1.2 MB',up:'19/08/26 14:32'},o);}
@@ -369,57 +398,57 @@ const DATA={
 app:[
  F({id:'a1',sj:'primary',nm:'Form BE.pdf',cat:'Applicant Income',ty:'Form BE',tyc:'(1-12)',pages:12,doc:'statement',sz:'0.69 MB',up:'19/08/26 14:33',
    desc:'Pending manual action',
-   alerts:[{id:'Form BE - annual_records.bill_number Exist',k:'m',nm:'年度记录缺 bill_number',d:'annual_records 分组中 bill_number 未提取到值'},
-           {id:'Form BE - id_no Consistency',k:'m',nm:'身份证号与申请表不一致',d:'文件 780819015623 ≠ 申请表 750126145233'}],
+   alerts:[{id:'Form BE - annual_records.bill_number Exist',k:'m',nm:'bill_number missing in annual records',d:'No value extracted for bill_number in the annual_records group'},
+           {id:'Form BE - id_no Consistency',k:'m',nm:'ID number differs from application form',d:'Document 780819015623 \u2260 Application form 750126145233'}],
    fields:[{g:'basic'},{n:'serial_number',v:'BE 1139715',c:99},{n:'name',v:'LAI HOO WENG',c:97},{n:'id_no',v:'780819015623',c:96},
            {g:'annual_records'},{n:'total_income',v:'RM 237,152',c:99},{n:'bill_number',v:'—',c:0}]}),
  F({id:'a2',sj:'primary',nm:'EPF Statement (1).pdf',cat:'Applicant Income',ty:'EPF Statement',tyc:'(1-1)',doc:'statement',sz:'0.07 MB',up:'19/08/26 14:33',
-   alerts:[{id:'General Document Rules',k:'m',nm:'文书时效超期',d:'YA2026 FAIL: Statement Date 2026-06-22 is outdated (D-14 rule)'}],
+   alerts:[{id:'General Document Rules',k:'m',nm:'Document out of validity period',d:'YA2026 FAIL: Statement Date 2026-06-22 is outdated (D-14 rule)'}],
    fields:[{g:'customer_info'},{n:'customer_name',v:'IP CHOR YEOW',c:99},{n:'id_no',v:'750126145233',c:99},
            {g:'annual_records'},{n:'statement_date',v:'22-06-2026',c:99},{n:'total_savings',v:'812,690.02',c:99}]}),
  F({id:'a3',sj:'primary',nm:'ps (16) (2).pdf',cat:'Applicant Income',ty:'Payslip',tyc:'(1-6)',pages:6,doc:'statement',sz:'1.16 MB',up:'19/08/26 14:29',
-   alerts:[{id:'Eyeball Check',k:'e',nm:'雇主签章与发薪日期',d:'需人眼确认薪资单加盖雇主公章，发薪日期在近三个月内'}],
+   alerts:[{id:'Eyeball Check',k:'e',nm:'Employer chop and pay date',d:'Confirm visually that the payslip carries the employer chop and the pay date falls within the last three months'}],
    fields:[{n:'employer',v:'Petronas Sdn Bhd',c:98},{n:'gross_pay',v:'RM 8,420.00',c:99}]}),
  F({id:'a4',sj:'primary',nm:'mykad.png',cat:'Personal Identity',ty:'Other Documents',tyc:'(1-1)',cls:0,doc:'card',low:1,sz:'0.60 MB',up:'19/08/26 14:29',
-   desc:'DocType classification failed',fields:[{n:'—',v:'待分类确认后提取',c:0}]}),
+   desc:'DocType classification failed',fields:[{n:'—',v:'Pending classification',c:0}]}),
  F({id:'a5',sj:'primary',nm:'047 HP Application Form.pdf',cat:'Personal Identity',ty:'HP Application Form',tyc:'(1-4)',pages:4,sz:'0.03 MB',up:'19/08/26 14:28',
    desc:'All succeeded',fields:[{n:'application_date',v:'19-08-2026',c:99},{n:'applicant_name',v:'Tan Wei Ming',c:99}]}),
  F({id:'a6',sj:'g1',nm:'Guarantor MyKad.jpg',cat:'Personal Identity',ty:'MyKad',doc:'card',sz:'0.44 MB',
    fields:[{n:'id_no',v:'820304105566',c:99},{n:'name',v:'Lim Ah Kow',c:98}]}),
  F({id:'a7',sj:'g1',nm:'Guarantor Payslip.pdf',cat:'Applicant Income',ty:'Payslip',tyc:'(1-3)',pages:3,doc:'statement',sz:'0.82 MB',
-   alerts:[{id:'Eyeball Check',k:'e',nm:'雇主签章与发薪日期',d:'需人眼确认薪资单加盖雇主公章'}],
+   alerts:[{id:'Eyeball Check',k:'e',nm:'Employer chop and pay date',d:'Confirm visually that the payslip carries the employer chop'}],
    fields:[{n:'employer',v:'Maybank Bhd',c:96},{n:'gross_pay',v:'RM 5,100.00',c:98}]}),
  F({id:'a8',sj:'vehicle',nm:'CRA Form.pdf',cat:'Other Application & Vehicle',ty:'CRA Form',sz:'0.31 MB',fields:[{n:'vehicle_model',v:'Toyota Vios 1.5E',c:99}]}),
  F({id:'a9',sj:'vehicle',nm:'VSO.pdf',cat:'Other Application & Vehicle',ty:'VSO',sz:'0.28 MB',fields:[{n:'otr_price',v:'RM 128,000',c:99}]}),
  F({id:'a10',sj:'seller',nm:'Seller Invoice.pdf',cat:'Seller Documents',ty:'Seller Invoice',doc:'invoice',sz:'0.51 MB',fields:[{n:'invoice_no',v:'INV-2026-0812',c:99}]}),
- F({id:'a11',sj:'unassigned',nm:'收入证明补充.docx',cat:'Other Documents',ty:'—',ch:'manual',cls:0,sz:'0.09 MB',desc:'历史数据，无归属'}),
- F({id:'a12',sj:'primary',nm:'旧版 Payslip.pdf',cat:'Applicant Income',ty:'Payslip',doc:'statement',sz:'0.95 MB',
-   del:{by:'SalesOfficer1',at:'18/08/26 09:12',rs:'客户重新提供了最新月份'}})
+ F({id:'a11',sj:'unassigned',nm:'Income Proof Supplement.docx',cat:'Other Documents',ty:'—',ch:'manual',cls:0,sz:'0.09 MB',desc:'Historical data, no subject'}),
+ F({id:'a12',sj:'primary',nm:'Payslip (old).pdf',cat:'Applicant Income',ty:'Payslip',doc:'statement',sz:'0.95 MB',
+   del:{by:'SalesOfficer1',at:'18/08/26 09:12',rs:'Customer resubmitted the latest month'}})
 ],
 dis:[
  F({id:'d1',sj:'case',nm:'2nd Schedule Part I.pdf',cat:'CRA HP Agreement',ty:'2nd Schedule Part I',tyc:'(1-2)',pages:2,doc:'invoice',sz:'5.39 MB',
-   alerts:[{id:'S52',k:'m',nm:'算术勾稽失败 · 原始应付余额',d:'Cash price less deposit + 运费 + 注册费 + 保险费 + 期费总额 = 98,000.00，文件填写 96,500.00'}],
+   alerts:[{id:'S52',k:'m',nm:'Arithmetic check failed \u00b7 Balance originally payable',d:'Cash price less deposit + freight + registration + insurance + total term charges = 98,000.00; document states 96,500.00'}],
    fields:[{g:'loan_terms'},{n:'cash_price_less_deposit',v:'88,000.00',c:99},{n:'freight',v:'1,200.00',c:98},
            {n:'balance_originally_payable',v:'96,500.00',c:99},{n:'total_term_charges',v:'8,800.00',c:97}]}),
- F({id:'d2',sj:'case',nm:'HP Agreement 已签署.pdf',cat:'CRA HP Agreement',ty:'HP Agreement (E-Acceptance)',tyc:'(1-8)',pages:8,src:'system',ao:'external',sz:'1.47 MB',
-   alerts:[{id:'Eyeball Check',k:'e',nm:'承租人签名与见证完整性',d:'需人眼确认每页均有承租人缩写签名，末页有见证人签名与日期'}],
+ F({id:'d2',sj:'case',nm:'HP Agreement (Signed).pdf',cat:'CRA HP Agreement',ty:'HP Agreement (E-Acceptance)',tyc:'(1-8)',pages:8,src:'system',ao:'external',sz:'1.47 MB',
+   alerts:[{id:'Eyeball Check',k:'e',nm:'Hirer signature and witness completeness',d:'Confirm visually that every page carries the hirer initials and the last page carries the witness signature and date'}],
    fields:[{n:'template_version',v:'HP17NEWREV052025E',c:99},{n:'hirer_date',v:'12-08-2026',c:98}]}),
- F({id:'d3',sj:'case',nm:'申请表单.pdf',cat:'CRA HP Agreement',ty:'Application Form',src:'system',ao:'internal',sz:'0.22 MB',
-   desc:'系统内生，免校验',fields:[{n:'application_date',v:'19-08-2026',c:100}]}),
+ F({id:'d3',sj:'case',nm:'Application Form.pdf',cat:'CRA HP Agreement',ty:'Application Form',src:'system',ao:'internal',sz:'0.22 MB',
+   desc:'System-generated, no validation',fields:[{n:'application_date',v:'19-08-2026',c:100}]}),
  F({id:'d4',sj:'primary',nm:'NRIC.png',cat:'CRA Applicant Identity',ty:'Other Documents',tyc:'(1-1)',cls:0,doc:'card',low:1,sz:'2.03 MB',
-   desc:'DocType classification failed',fields:[{n:'—',v:'待分类确认后提取',c:0}]}),
+   desc:'DocType classification failed',fields:[{n:'—',v:'Pending classification',c:0}]}),
  F({id:'d5',sj:'primary',nm:'HP Agreement.pdf',cat:'CRA HP Agreement',ty:'HP Agreement',tyc:'(1-8)',pages:8,sz:'1.47 MB',
-   alerts:[{id:'A155',k:'m',nm:'当前日期距签署日超过 5 天',d:'Hirer date 12-08-2026，当前 19-08-2026，超出参数上限 5 天'}],
+   alerts:[{id:'A155',k:'m',nm:'More than 5 days since the signing date',d:'Hirer date 12-08-2026, today 19-08-2026, exceeds the 5-day parameter'}],
    fields:[{n:'hirer_date',v:'12-08-2026',c:99},{n:'witness_date',v:'12-08-2026',c:98},{n:'moa_date',v:'12-08-2026',c:97}]}),
  F({id:'d6',sj:'primary',nm:'Biometric Result.pdf',cat:'CRA Applicant Identity',ty:'Biometric Result',src:'system',ao:'external',sz:'9.47 MB',
    fields:[{n:'match_result',v:'MATCHED',c:100},{n:'verified_at',v:'12-08-2026 14:22',c:100}]}),
  F({id:'d7',sj:'primary',nm:'Letter of Setoff.docx',cat:'Other Documents',ty:'LOSO',ch:'manual',sz:'0.18 MB',
-   checks:[{id:'M-11',nm:'LOSO 金额与 CED 批复一致',d:'对照 CED 有条件批准：FD 质押 RM 100,000 · 3 年',pg:3},
-           {id:'M-12',nm:'见证人签名齐全',d:'第 10 页须有 HLBB 员工见证签名与日期',pg:10}]}),
+   checks:[{id:'M-11',nm:'LOSO amount matches the CED approval',d:'Against the CED conditional approval: FD pledge RM 100,000 \u00b7 3 years',pg:3},
+           {id:'M-12',nm:'Witness signature complete',d:'Page 10 must carry an HLBB staff witness signature and date',pg:10}]}),
  F({id:'d8',sj:'primary',nm:'Partnership Mandate.docx',cat:'Other Documents',ty:'Partnership Mandate',ch:'manual',sz:'0.14 MB',
-   checks:[{id:'M-21',nm:'授权书日期落在申请日与放款日之间',d:'申请日 19-08-2026 ~ 今日',pg:1}]}),
+   checks:[{id:'M-21',nm:'Mandate date falls between application and disbursement',d:'Application date 19-08-2026 to today',pg:1}]}),
  F({id:'d9',sj:'g1',nm:'HP Guarantee Agreement.pdf',cat:'CRA HP Agreement',ty:'Guarantee Agreement',tyc:'(1-4)',pages:4,sz:'1.02 MB',
-   alerts:[{id:'A153',k:'m',nm:'HPGA 日期与主合同 MOA 日期不一致',d:'HPGA 14-08-2026 ≠ HP Agreement MOA 12-08-2026'}],
+   alerts:[{id:'A153',k:'m',nm:'HPGA date differs from the MOA date',d:'HPGA 14-08-2026 ≠ HP Agreement MOA 12-08-2026'}],
    fields:[{n:'hpga_date',v:'14-08-2026',c:99},{n:'template_version',v:'HP26 REV052020',c:98}]}),
  F({id:'d10',sj:'g1',nm:'Guarantor NRIC.jpg',cat:'CRA Applicant Identity',ty:'MyKad',doc:'card',sz:'0.44 MB',fields:[{n:'id_no',v:'820304105566',c:99}]}),
  F({id:'d11',sj:'g2',nm:'G2 MyKad.jpg',cat:'CRA Applicant Identity',ty:'MyKad',doc:'card',sz:'0.39 MB',fields:[{n:'id_no',v:'880912065544',c:98}]}),
@@ -427,20 +456,42 @@ dis:[
  F({id:'d13',sj:'g2',nm:'G2 Guarantee Agreement.pdf',cat:'CRA HP Agreement',ty:'Guarantee Agreement',pages:4,sz:'1.01 MB',fields:[{n:'hpga_date',v:'14-08-2026',c:98}]}),
  F({id:'d14',sj:'g2',nm:'G2 Waiver Appendix III.pdf',cat:'CRA HP Agreement',ty:'Guarantor Waiver',sz:'0.33 MB',fields:[{n:'appendix',v:'III',c:99}]}),
  F({id:'d15',sj:'vehicle',nm:'Vehicle Invoice.pdf',cat:'CRA Vehicle Related',ty:'Vehicle Invoice',doc:'invoice',sz:'0.53 MB',
-   alerts:[{id:'I67',k:'m',nm:'发票日期不在申请日与交车日之间',d:'Invoice date 02-07-2026 早于 Application date 19-08-2026'}],
+   alerts:[{id:'I67',k:'m',nm:'Invoice date outside application-to-delivery window',d:'Invoice date 02-07-2026 is earlier than Application date 19-08-2026'}],
    fields:[{n:'invoice_date',v:'02-07-2026',c:94},{n:'deposit_date',v:'15-08-2026',c:97},{n:'otr_price',v:'128,000.00',c:99}]}),
  F({id:'d16',sj:'vehicle',nm:'VOC.pdf',cat:'CRA Vehicle Related',ty:'VOC',sz:'0.61 MB',fields:[{n:'registration_no',v:'WXY 4471',c:99}]}),
  F({id:'d17',sj:'vehicle',nm:'Road Tax Disc.jpg',cat:'CRA Vehicle Related',ty:'Road Tax Disc',doc:'card',sz:'0.29 MB',fields:[{n:'roadtax_start',v:'20-08-2026',c:97}]}),
  F({id:'d18',sj:'vehicle',nm:'Insurance Cover Note.pdf',cat:'CRA Vehicle Related',ty:'Insurance Cover Note',sz:'1.37 MB',
-   alerts:[{id:'I33',k:'m',nm:'保额不足',d:'保额 98,000.00 < max(OTR×0.8 = 102,400.00, 贷款额+利息)'}],
+   alerts:[{id:'I33',k:'m',nm:'Sum insured insufficient',d:'Sum insured 98,000.00 < max(OTR \u00d7 0.8 = 102,400.00, loan + interest)'}],
    fields:[{n:'sum_insured',v:'98,000.00',c:99},{n:'insurer',v:'Ace Jerneh Insurance Bhd',c:96}]}),
  F({id:'d19',sj:'vehicle',nm:'Puspakom B7.pdf',cat:'CRA Vehicle Related',ty:'Puspakom B7',sz:'0.88 MB',fields:[{n:'inspection_date',v:'05-08-2026',c:98}]}),
  F({id:'d20',sj:'seller',nm:'Seller Invoice.pdf',cat:'CRA Other Funding',ty:'HP216 Seller Invoice',doc:'invoice',sz:'0.47 MB',fields:[{n:'invoice_no',v:'HP216-8841',c:99}]}),
  F({id:'d21',sj:'seller',nm:'Seller IC.jpg',cat:'CRA Applicant Identity',ty:'Seller IC',doc:'card',sz:'0.36 MB',fields:[{n:'id_no',v:'690712086611',c:98}]}),
- F({id:'d22',sj:'unassigned',nm:'scan_001.pdf',cat:'CRA Other Funding',ty:'—',cls:0,sz:'1.11 MB',desc:'历史数据，无归属'}),
- F({id:'d24',sj:'vehicle',nm:'Road Tax 旧件.jpg',cat:'CRA Vehicle Related',ty:'Road Tax Disc',doc:'card',sz:'0.27 MB',
-   del:{by:'CRA · v_kangyi',at:'19/08/26 15:02',rs:'Sales 重新上传了续期后的路税'}})
+ F({id:'d22',sj:'unassigned',nm:'scan_001.pdf',cat:'CRA Other Funding',ty:'—',cls:0,sz:'1.11 MB',desc:'Historical data, no subject'}),
+ F({id:'d24',sj:'vehicle',nm:'Road Tax (Superseded).jpg',cat:'CRA Vehicle Related',ty:'Road Tax Disc',doc:'card',sz:'0.27 MB',
+   del:{by:'CRA · v_kangyi',at:'19/08/26 15:02',rs:'Sales re-uploaded the renewed road tax'}}),
+ F({id:'d25',sj:'primary',nm:'Company Resolution.docx',cat:'Other Documents',ty:'Company Resolution',ch:'manual',sz:'0.21 MB'}),
+ F({id:'d26',sj:'vehicle',nm:'Road Tax (Manual).jpg',cat:'CRA Vehicle Related',ty:'Road Tax Disc',ch:'manual',doc:'card',sz:'0.31 MB',
+   desc:'Uploaded via the non-AI entry'})
 ]};
+
+/* A.11 Manual Check - case-level manual rule set.
+   The left panel always shows this whole set, regardless of which file is previewed.
+   Count is derived: case total minus rules handled by OCR. routed=1 marks a rule that
+   OCR would normally handle, routed to manual because the file came in via the non-AI entry. */
+const MC={
+  caseTotal:24, ocrHandled:18,
+  rules:[
+    {id:'M-11',nm:'LOSO amount matches the CED approval',d:'Against the CED conditional approval: FD pledge RM 100,000 \u00b7 3 years',file:'Letter of Setoff.docx',pg:3},
+    {id:'M-12',nm:'Witness signature complete',d:'Page 10 must carry an HLBB staff witness signature and date',file:'Letter of Setoff.docx',pg:10},
+    {id:'M-21',nm:'Mandate date falls between application and disbursement',d:'Application date 19-08-2026 to today',file:'Partnership Mandate.docx',pg:1},
+    {id:'M-31',nm:'Resolution signatories appear in the SSM director list',d:'Against the SSM Search director list',file:'Company Resolution.docx',pg:2},
+    {id:'M-32',nm:'Resolution bears the company seal',d:'The last page must carry the company seal and two director signatures',file:'Company Resolution.docx',pg:2},
+    {id:'V13',nm:'Road tax validity covers the disbursement date',d:'The road tax expiry must be later than the disbursement date',file:'Road Tax (Manual).jpg',pg:1,routed:1}
+  ],
+  res:{}
+};
+const MC_FILES=()=>[...new Set(MC.rules.map(r=>r.file))];
+const mcOpen=()=>MC.rules.filter(r=>!MC.res[r.id]).length;
 
 const TYPES=['MyKad','Passport','Driving License','Payslip','EPF Statement','Form BE','HP Application Form',
  'HP Agreement','Guarantee Agreement','2nd Schedule Part I','Vehicle Invoice','VOC','Road Tax Disc',
@@ -458,18 +509,18 @@ const ZONES={
 const CATS=s=>ZONES[s].map(z=>z[0]).concat(['Other Documents']);
 
 /* ═══════ STATE ═══════ */
-const S={role:'sales',stage:'dis',tab:'fl',subj:'all',sel:new Set(),dt:null,fType:'',fStatus:'',layout:'side',railCollapsed:false};
-// 车辆类目并入主借人
+const S={role:'sales',stage:'dis',tab:'fl',subj:'all',sel:new Set(),dt:null,fType:'',fStatus:'',layout:'side',railCollapsed:false,mcMode:'mixed'};
+// vehicle category is folded into the main applicant
 Object.values(DATA).forEach(a=>a.forEach(f=>{if(f.sj==='vehicle')f.sj='primary';}));
 const PERM={
- 'sales|app':{up:1,cls:1,rule:1,del:1,l:'Sales · 申请阶段：上传、确认分类、处理规则'},
- 'ced|app':  {up:0,cls:0,rule:0,del:0,l:'CED · 申请阶段：只读复核，可看全部 Justification'},
- 'cra|app':  {up:0,cls:0,rule:0,del:0,l:'CRA · 申请阶段只读，可回看做跨阶段比对'},
- 'auth|app': {up:0,cls:0,rule:0,del:0,l:'Authorizer · 申请阶段只读'},
- 'sales|dis':{up:1,cls:0,rule:0,del:1,l:'Sales · 放款阶段：只负责上传'},
- 'ced|dis':  {up:0,cls:0,rule:0,del:0,l:'CED · 放款阶段只读'},
- 'cra|dis':  {up:0,cls:1,rule:1,del:1,l:'CRA · 放款阶段：确认分类、处理规则'},
- 'auth|dis': {up:0,cls:0,rule:0,del:0,l:'Authorizer · 放款阶段只读复核'}
+ 'sales|app':{up:1,cls:1,rule:1,del:1,l:'Sales \u00b7 Application: upload, confirm classification, handle rules'},
+ 'ced|app':  {up:0,cls:0,rule:0,del:0,l:'CED \u00b7 Application: read-only review, all justifications visible'},
+ 'cra|app':  {up:0,cls:0,rule:0,del:0,l:'CRA \u00b7 Application: read-only, available for cross-stage comparison'},
+ 'auth|app': {up:0,cls:0,rule:0,del:0,l:'Authorizer \u00b7 Application: read-only'},
+ 'sales|dis':{up:1,cls:0,rule:0,del:1,l:'Sales \u00b7 Disbursement: upload only'},
+ 'ced|dis':  {up:0,cls:0,rule:0,del:0,l:'CED \u00b7 Disbursement: read-only'},
+ 'cra|dis':  {up:0,cls:1,rule:1,del:1,l:'CRA \u00b7 Disbursement: confirm classification, handle rules'},
+ 'auth|dis': {up:0,cls:0,rule:0,del:0,l:'Authorizer \u00b7 Disbursement: read-only review'}
 };
 const P=()=>PERM[S.role+'|'+S.stage];
 const all=()=>DATA[S.stage];
@@ -483,10 +534,10 @@ function inTab(f,t){
   if(t==='fl') return true;
   if(!f.cls) return false;
   if(t==='cv') return f.ch==='ocr';
-  if(t==='mc') return f.ch==='manual';
+  if(t==='mc') return f.ch==='manual' && MC_FILES().includes(f.nm);
   return false;
 }
-function openCount(f){ return f.ch==='manual'?f.checks.filter(c=>!c.res).length:f.alerts.filter(a=>!a.res).length; }
+function openCount(f){ return f.ch==='manual'?MC.rules.filter(r=>r.file===f.nm&&!MC.res[r.id]).length:f.alerts.filter(a=>!a.res).length; }
 function statusKey(f){
   if(!f.cls) return 'pending';
   if(f.src==='system'&&f.ao==='internal') return 'skip';
@@ -517,16 +568,17 @@ function renderRail(){
   const dis=S.stage==='dis';
   const col=S.railCollapsed&&S.layout==='side';
   let h=`<div class="rail-h"><b>${col?'S':'Subject'}</b>
-      <span>${dis?'已传 / 必备':'已传'}</span>
-      <button class="rail-toggle" data-railtoggle="1" title="${col?'展开':'收起侧栏，把宽度让给表格'}">${col?'»':'«'}</button></div>`;
+      <span>${dis?'Uploaded / Required':'Uploaded'}</span>
+      <button class="rail-toggle" data-railtoggle="1" title="${col?'Expand':'Collapse'}">${col?'\u00bb':'\u00ab'}</button></div>`;
   h+=`<button class="subj-item" data-subj="all" aria-pressed="${S.subj==='all'}">
-        <span class="r1"><span class="nm">全部文件</span><span class="ct">${live().filter(f=>inTab(f,S.tab)).length}</span></span>
-        <span class="sub">仅浏览</span></button><div class="rail-div"></div>`;
+        <span class="r1"><span class="nm">All Files</span><span class="ct">${live().filter(f=>inTab(f,S.tab)).length}</span></span>
+        <span class="sub">View only</span></button><div class="rail-div"></div>`;
   SUBJ[S.stage].forEach(s=>{
     const n=live().filter(f=>f.sj===s.id&&inTab(f,S.tab)).length;
     let ct=String(n),cls='';
     if(dis&&s.need){ ct=n+'/'+s.need; cls=n>=s.need?'ok':'bad'; }
-    const short=s.nm.replace('担保人 ','G').replace('主借人','主').replace('案件级','案').replace('卖家','卖').replace('未归属','未').replace('已删除','删');
+    const short=s.nm.replace('Guarantor ','G').replace('Main Applicant','MA').replace('Case Level','CL')
+      .replace('Seller','SL').replace('Unassigned','UA');
     h+=`<button class="subj-item ${s.gone?'gone':''} ${s.un?'unassigned':''}" data-subj="${s.id}"
           aria-pressed="${S.subj===s.id}" title="${s.nm} · ${s.sub}">
           <span class="r1"><span class="nm">${col?short:s.nm}</span><span class="ct ${cls}">${ct}</span></span>
@@ -534,11 +586,11 @@ function renderRail(){
   });
   h+=`<div class="rail-div"></div>
       <button class="subj-item" data-subj="deleted" aria-pressed="${S.subj==='deleted'}">
-        <span class="r1"><span class="nm" style="color:var(--text-3)">已删除</span><span class="ct">${all().filter(f=>f.del).length}</span></span>
-        <span class="sub">删除记录，可恢复</span></button>`;
+        <span class="r1"><span class="nm" style="color:var(--text-3)">Deleted</span><span class="ct">${all().filter(f=>f.del).length}</span></span>
+        <span class="sub">Deleted records</span></button>`;
   h+=`<div class="rail-div"></div><div class="rail-note">${S.stage==='app'
-      ? '申请阶段案件属性未定，必备清单算不出来，只显示已传数。缺件在 <b>Submit</b> 时返回。'
-      : '必备清单已知，比例与 CRA 工作台的 File Check List 同源。'}</div>`;
+      ? 'Required list is not available in the Application stage. Missing documents will be prompted upon Submit.'
+      : 'Required list shares its source with the File Check List in the CRA Workbench.'}</div>`;
   $('rail').innerHTML=h;
   document.querySelector('.ocr-modal-content').className='ocr-modal-content'
     +(S.layout==='top'?' layout-top':'')+(col?' rail-collapsed':'');
@@ -547,18 +599,17 @@ function renderRail(){
 function renderUpload(){
   const ok=canUpload(), sj=curSubj(), sec=$('uploadSection');
   if(!ok){
-    // 结构上就不可能上传（未选具体 Subject）或角色本就不上传 —— 隐藏而不是禁用
     sec.className='upload-section browse-only';
     sec.innerHTML=`<div class="browse-hint">${P().up
-      ? '<b>浏览模式</b>　选择左侧任一 Subject 即可上传文件'
-      : '<b>浏览模式</b>　'+roleNm()+' 在'+(S.stage==='app'?'申请':'放款')+'阶段不负责上传'}</div>`;
+      ? '<b>Browse mode</b>\u2003Select a Subject on the left to upload files'
+      : '<b>Browse mode</b>\u2003'+roleNm()+' does not upload in the '+(S.stage==='app'?'Application':'Disbursement')+' stage'}</div>`;
     return;
   }
   sec.className='upload-section';
   sec.innerHTML=`<div class="section-header">
       <span class="section-title">Categorized Upload Area</span>
       <span class="section-subtitle">5KB–20MB per file</span>
-      <span class="upload-ctx">上传归属 <b>${sj.nm}${sj.sub&&!sj.gone?' · '+sj.sub.split(' · ')[0]:''}</b></span>
+      <span class="upload-ctx">Upload Subject <b>${sj.nm}${sj.sub&&!sj.gone?' \u00b7 '+sj.sub.split(' \u00b7 ')[0]:''}</b></span>
     </div>
     <div class="upload-grid upload-grid--two">
       <div class="upload-card">
@@ -587,10 +638,10 @@ function renderTabs(){
 }
 
 function renderFilter(){
-  if(S.subj==='deleted'){ $('filterBar').innerHTML=`<span class="foot-note">已删除的文件保留删除人、时间与原因，可随时恢复。</span>`; return; }
+  if(S.subj==='deleted'){ $('filterBar').innerHTML=`<span class="foot-note">Deleted files keep the deleter, timestamp and reason, and can be restored at any time.</span>`; return; }
   const p=P(),n=S.sel.size;
   const types=[...new Set(live().filter(f=>inTab(f,S.tab)).map(f=>f.ty))].filter(t=>t!=='—');
-  const sts=[['pending','待确认分类'],['issue','待处理'],['done','已通过'],['skip','免校验']];
+  const sts=[['pending','Pending Classification'],['issue','Pending Action'],['done','Passed'],['skip','No Validation']];
   $('filterBar').innerHTML=
    `<div class="filter-inputs">
       <input class="ant-input" placeholder="Search values" style="width:180px">
@@ -601,8 +652,8 @@ function renderFilter(){
       <button class="ant-btn" data-act="reset">Reset Filters</button>
     </div>
     <div class="filter-actions">
-      <span class="sel-n">已选 ${n}</span>
-      <button class="ant-btn" data-act="reassign" ${n&&(p.cls||p.up)?'':'disabled'}>变更 Subject</button>
+      <span class="sel-n">Selected ${n}</span>
+      <button class="ant-btn" data-act="reassign" ${n&&(p.cls||p.up)?'':'disabled'}>Change Subject</button>
       <button class="ant-btn ant-btn-dangerous" data-act="del" ${n&&p.del?'':'disabled'}>Delete</button>
       <button class="ant-btn" data-act="dl" ${n?'':'disabled'}>Download</button>
       <button class="ant-btn" data-act="refresh">Refresh</button>
@@ -610,44 +661,49 @@ function renderFilter(){
 }
 
 function statusCell(f){
-  if(!f.cls) return f.low?'<span class="ant-tag ant-tag-red">类型未识别 ⚠</span>':'<span class="ant-tag ant-tag-gold">待确认分类</span>';
-  if(f.src==='system'&&f.ao==='internal') return '<span class="ant-tag">系统内生 · 免校验</span>';
+  if(!f.cls) return f.low?'<span class="ant-tag ant-tag-red">Type Not Recognised</span>':'<span class="ant-tag ant-tag-gold">Pending Classification</span>';
+  if(f.src==='system'&&f.ao==='internal') return '<span class="ant-tag">No Validation</span>';
   const o=openCount(f);
-  if(!o) return '<span class="ant-tag ant-tag-green">已通过</span>';
-  if(f.ch==='manual') return `<span class="ant-tag ant-tag-gold">待人工核 ${o}</span>`;
+  if(!o) return '<span class="ant-tag ant-tag-green">Passed</span>';
+  if(f.ch==='manual') return `<span class="ant-tag ant-tag-gold">Manual Check ${o}</span>`;
   const e=f.alerts.filter(a=>!a.res).every(a=>a.k==='e');
-  return `<span class="ant-tag ${e?'ant-tag-gold':'ant-tag-red'}">${e?'待人工核 ':'Alert '}${o}</span>`;
+  return `<span class="ant-tag ${e?'ant-tag-gold':'ant-tag-red'}">${e?'Manual Check ':'Alert '}${o}</span>`;
 }
 
 function renderTable(){
   const r=rows();
   $('emptyState').style.display=r.length?'none':'block';
   if(S.subj==='deleted'){
-    $('thead').innerHTML=`<tr><th>File Name</th><th>Subject</th><th>File Type</th><th>删除人</th><th>删除时间</th><th>原因</th><th>Action</th></tr>`;
+    $('thead').innerHTML=`<tr><th>File Name</th><th>Subject</th><th>File Type</th><th>Deleted By</th><th>Deleted At</th><th>Reason</th><th>Action</th></tr>`;
     $('tbody').innerHTML=r.map(f=>{const s=SUBJ[S.stage].find(x=>x.id===f.sj);
       return `<tr><td class="filename-text">${f.nm}</td><td class="subject-cell">${s?s.nm:'—'}</td>
         <td><span class="ant-tag">${f.ty}</span></td><td>${f.del.by}</td><td class="time-cell">${f.del.at}</td>
         <td class="description-text">${f.del.rs}</td>
-        <td><button class="ant-btn ant-btn-sm" data-restore="${f.id}" ${P().del?'':'disabled'}>恢复</button></td></tr>`;}).join('');
+        <td><button class="ant-btn ant-btn-sm" data-restore="${f.id}" ${P().del?'':'disabled'}>Restore</button></td></tr>`;}).join('');
     return;
   }
   const mc=S.tab==='mc', cv=S.tab==='cv', rule=cv||mc;
-  $('thead').innerHTML=`<tr><th style="width:44px"></th><th>File Name</th><th>Subject</th><th>Category</th><th>File Type</th>
-    ${rule?`<th style="width:260px">${mc?'待核规则':'Alert Rules'}</th>`:'<th>OCR Flag</th><th>Description</th>'}
-    <th>File Status</th><th>Upload Time</th><th>File Size</th><th>Source</th><th style="width:110px">Action</th></tr>`;
+  $('thead').innerHTML=`<tr><th style="width:44px"></th><th style="width:200px">File Name</th><th style="width:112px">Subject</th><th style="width:150px">Category</th><th style="width:180px">File Type</th>
+    ${rule?`<th style="width:250px">${mc?'Pending Rules':'Alert Rules'}</th>`
+          :'<th style="width:72px">OCR Flag</th><th style="width:118px">Description</th>'}
+    <th style="width:146px">File Status</th><th style="width:118px">Upload Time</th>
+    <th style="width:84px">File Size</th><th style="width:106px">Source</th>
+    <th style="width:96px">Action</th></tr>`;
   $('tbody').innerHTML=r.map(f=>{
     const s=SUBJ[S.stage].find(x=>x.id===f.sj), sys=f.src==='system';
-    const items=mc?f.checks:f.alerts;
+    const items=mc
+      ? MC.rules.filter(r2=>r2.file===f.nm).map(r2=>({id:r2.id,nm:r2.nm,res:MC.res[r2.id]}))
+      : f.alerts;
     const mid=rule
       ? `<td>${items.length?items.map(a=>`<div class="rule-line ${a.res?'done':'open'}">${a.res?'✓ ':''}${a.id||a.nm}</div>`).join(''):'<span class="description-text">—</span>'}</td>`
       : `<td class="is-ai-cell">${f.ch==='ocr'?'Y':'N'}</td><td class="description-cell"><span class="description-text">${f.desc||'—'}</span></td>`;
     return `<tr class="${S.sel.has(f.id)?'selected':''}" data-id="${f.id}">
-      <td>${sys?'<span class="description-text" title="系统归档，不可删除">🔒</span>':`<input type="checkbox" data-chk="${f.id}" ${S.sel.has(f.id)?'checked':''}>`}</td>
-      <td class="filename-cell"><div class="filename-text">${f.nm}</div><div class="description-text">${f.pages} pages</div></td>
+      <td>${sys?'<span class="description-text" title="System archived \u00b7 cannot be deleted">\ud83d\udd12</span>':`<input type="checkbox" data-chk="${f.id}" ${S.sel.has(f.id)?'checked':''}>`}</td>
+      <td class="filename-cell"><div class="filename-text">${f.nm}</div><div class="description-text">${f.pages} page${f.pages>1?'s':''}</div></td>
       <td class="subject-cell">${s?s.nm:'—'}</td>
       <td class="category-cell">${f.cat}</td>
-      <td class="file-type-cell">${f.ty==='—'?'<span class="description-text">未分类</span>'
-        :`<span class="ant-tag file-type-tag ${f.low?'ant-tag-red':'ant-tag-blue'}">${f.ty}${f.tyc?' '+f.tyc:''}</span>`}</td>
+      <td class="file-type-cell">${f.ty==='\u2014'?'<span class="description-text">Unclassified</span>'
+        :`<span class="ant-tag file-type-tag ${f.low?'ant-tag-red':''}">${f.ty}${f.tyc?' '+f.tyc:''}</span>`}</td>
       ${mid}
       <td class="ocr-status-cell">${statusCell(f)}</td>
       <td class="time-cell">${f.up}</td>
@@ -666,9 +722,9 @@ function renderFooter(){
   const lbl={fl:`Submit for Verification (${S.stage==='app'?'Application':'Disbursement'})`,
              cv:'Revalidation & Submit Results', mc:'Submit Manual Check Results'}[S.tab];
   $('footer').innerHTML=`<span class="foot-note">${
-    S.tab==='fl'?'File List · 全部文件的台账与分类确认'
-    :S.tab==='cv'?'Cross-Validation Results · OCR Flag = Y，AI 抽取 + 规则校验'
-    :'Manual Check Results · OCR Flag = N，人眼对影像逐条核'}</span>
+    S.tab==='fl'?'File List \u00b7 Full ledger and classification confirmation'
+    :S.tab==='cv'?'Cross-Validation Results \u00b7 OCR Flag = Y \u00b7 AI extraction and rule validation'
+    :'Manual Check Results \u00b7 OCR Flag = N \u00b7 manual review against the image'}</span>
     <span class="file-list-footer-actions"><button class="ant-btn back-btn">Back To List</button>
     <button class="ant-btn ant-btn-primary submit-btn" id="btnSubmit" ${p.cls||p.rule||p.up?'':'disabled'}>${lbl}</button></span>`;
 }
@@ -682,7 +738,7 @@ function renderDt(){
   const f=byId(S.dt); if(!f) return closeDt();
   const s=SUBJ[S.stage].find(x=>x.id===f.sj), L=dtList(), i=L.findIndex(x=>x.id===f.id), p=P();
   $('dtTitle').textContent=f.nm;
-  $('dtCrumb').textContent=`${s?s.nm:''} › ${f.cat} › ${f.ty==='—'?'未分类':f.ty}`;
+  $('dtCrumb').textContent=`${s?s.nm:''} \u203a ${f.cat} \u203a ${f.ty==='\u2014'?'Unclassified':f.ty}`;
   $('dtPos').textContent=(i+1)+' / '+L.length;
   $('dtPrev').disabled=i<=0; $('dtNext').disabled=i>=L.length-1;
   $('dtSave').disabled=!(p.cls||p.rule);
@@ -695,49 +751,59 @@ function panel(f,p){
   let h='';
   if(f.src==='system')
     h+=f.ao==='external'
-      ? `<div class="pnote info"><b>系统归档 · 外部回传</b><br>经电子签约 / 生物识别设备后回传，签署完整性与版本需要校验。不可删除。</div>`
-      : `<div class="pnote ok"><b>系统归档 · 系统内生</b><br>由系统按模板生成，字段与版本一定正确，<b>跳过规则校验</b>。不可删除。</div>`;
+      ? `<div class="pnote info"><b>System archived \u00b7 External return</b><br>Returned from e-acceptance / biometric devices. Signature completeness and version are validated. Cannot be deleted.</div>`
+      : `<div class="pnote ok"><b>System archived \u00b7 System-generated</b><br>Generated from a template. Rule validation is skipped. Cannot be deleted.</div>`;
   if(!f.cls){
-    if(f.low) h+=`<div class="pnote warn"><b>整份置信度偏低，类型可能不匹配</b><br>先确认分类——分类决定用哪套字段模板，分类错了提取一定全错。</div>`;
+    if(f.low) h+=`<div class="pnote warn"><b>Low overall confidence \u00b7 file type may not match</b><br>Confirm the classification first \u2014 it determines which field template is applied.</div>`;
     h+=`<div class="classify-box">
       <label>Category</label><select class="ant-select">${CATS(S.stage).map(c=>`<option ${c===f.cat?'selected':''}>${c}</option>`).join('')}</select>
       <label>File Type</label><select class="ant-select" id="clsTy">${TYPES.map(t=>`<option ${t===f.ty?'selected':''}>${t}</option>`).join('')}</select>
-      <div style="margin-top:12px"><button class="ant-btn ant-btn-primary ant-btn-sm" id="btnCls" ${p.cls?'':'disabled'}>Confirm 分类</button></div>
-      <div class="description-text" style="margin-top:8px">确认后进入 ${f.ch==='ocr'?'Cross-Validation Results':'Manual Check Results'}</div>
-      ${p.cls?'':'<div class="description-text" style="margin-top:6px">当前角色无分类确认权限。</div>'}</div>`;
+      <div style="margin-top:12px"><button class="ant-btn ant-btn-primary ant-btn-sm" id="btnCls" ${p.cls?'':'disabled'}>Confirm Classification</button></div>
+      <div class="description-text" style="margin-top:8px">On confirmation the file moves to ${f.ch==='ocr'?'Cross-Validation Results':'Manual Check Results'}</div>
+      ${p.cls?'':'<div class="description-text" style="margin-top:6px">This role cannot confirm classification.</div>'}</div>`;
   }
-  if(f.cls&&f.ch==='manual'&&f.checks.length){
-    const o=f.checks.filter(c=>!c.res).length;
-    h+=`<div class="pnote warn">本文件走非 AI 通道，<b>没有抽取字段</b>。规则以人眼对照右侧影像逐条判定。</div>
-        <p class="panel-sect ${o?'err':''}">MANUAL CHECK · ${o?o+' 待核':'全部已核'}</p>`;
-    f.checks.forEach((c,i)=>{
-      h+=`<div class="alert-item ${c.res?'resolved':'eyeball'}"><div class="ah"><span class="rid">${c.id}</span><span class="rn">${c.nm}</span></div><div class="rd">${c.d}</div>`;
-      h+=c.res?`<div class="res">✓ ${c.res}</div>`
-        :`<div class="acts"><button class="ant-btn ant-btn-sm" data-mc="pass" data-i="${i}" ${p.rule?'':'disabled'}>合格</button>
-          <button class="ant-btn ant-btn-sm ant-btn-dangerous" data-mc="fail" data-i="${i}" ${p.rule?'':'disabled'}>不合格 · 记缺陷</button>
-          <button class="ant-btn ant-btn-link ant-btn-sm" data-mc="loc" data-i="${i}">定位第 ${c.pg} 页 →</button></div>`;
-      h+=`</div>`;
+  // A.11 left panel always shows the whole case rule set, independent of the previewed file
+  if(f.cls&&f.ch==='manual'){
+    const o=mcOpen();
+    h+=`<div class="pnote"><b>${MC.rules.length} manual rule(s) for this case</b><br>
+      ${MC.caseTotal} total \u2212 ${MC.ocrHandled} handled by OCR = ${MC.rules.length}
+      (${MC.rules.filter(r=>r.routed).length} routed here from the non-AI upload entry)</div>
+      <p class="panel-sect ${o?'err':''}">MANUAL CHECK \u00b7 ${o?o+' pending':'all reviewed'}</p>`;
+    MC_FILES().forEach(fn=>{
+      const cur=fn===f.nm;
+      h+=`<div class="mc-grp ${cur?'cur':''}">${fn}${cur?'<span class="mc-cur">Previewing</span>':''}</div>`;
+      MC.rules.filter(r=>r.file===fn).forEach(r=>{
+        const res=MC.res[r.id];
+        h+=`<div class="alert-item ${res?'resolved':'eyeball'}">
+          <div class="ah"><span class="rid">${r.id}</span><span class="rn">${r.nm}</span>
+            ${r.routed?'<span class="routed">ROUTED</span>':''}</div><div class="rd">${r.d}</div>`;
+        h+=res?`<div class="res">\u2713 ${res==='pass'?'Passed':'Failed \u00b7 defect logged'}
+              <button class="ant-btn ant-btn-link ant-btn-sm" data-mcu="${r.id}">Undo</button></div>`
+          :`<div class="acts"><button class="ant-btn ant-btn-sm" data-mc="pass" data-r="${r.id}" ${p.rule?'':'disabled'}>Pass</button>
+            <button class="ant-btn ant-btn-sm ant-btn-dangerous" data-mc="fail" data-r="${r.id}" ${p.rule?'':'disabled'}>Fail \u00b7 Log Defect</button>
+            <button class="ant-btn ant-btn-link ant-btn-sm" data-mc="loc" data-r="${r.id}">Go to page ${r.pg} \u2192</button></div>`;
+        h+=`</div>`;
+      });
     });
   }
   if(f.cls&&f.ch==='ocr'&&f.alerts.length){
     const o=f.alerts.filter(a=>!a.res).length;
-    h+=`<p class="panel-sect ${o?'err':''}">VALIDATION ALERTS · ${o?o+' 待处理':'全部已处理'}</p>`;
+    h+=`<p class="panel-sect ${o?'err':''}">VALIDATION ALERTS \u00b7 ${o?o+' pending':'all handled'}</p>`;
     f.alerts.forEach((a,i)=>{
       h+=`<div class="alert-item ${a.res?'resolved':(a.k==='e'?'eyeball':'machine')}"><div class="ah"><span class="rid">${a.id}</span><span class="rn">${a.nm}</span></div><div class="rd">${a.d}</div>`;
       h+=a.res?`<div class="res">✓ ${a.res}</div>`
         :a.k==='e'
-          ?`<div class="acts"><button class="ant-btn ant-btn-sm" data-al="pass" data-i="${i}" ${p.rule?'':'disabled'}>合格</button>
-            <button class="ant-btn ant-btn-sm ant-btn-dangerous" data-al="fail" data-i="${i}" ${p.rule?'':'disabled'}>不合格</button>
-            <button class="ant-btn ant-btn-link ant-btn-sm" data-al="loc" data-i="${i}">核对原图 →</button></div>`
+          ?`<div class="acts"><button class="ant-btn ant-btn-sm" data-al="pass" data-i="${i}" ${p.rule?'':'disabled'}>Pass</button>
+            <button class="ant-btn ant-btn-sm ant-btn-dangerous" data-al="fail" data-i="${i}" ${p.rule?'':'disabled'}>Fail</button>
+            <button class="ant-btn ant-btn-link ant-btn-sm" data-al="loc" data-i="${i}">Check image \u2192</button></div>`
           :`<div class="acts"><button class="ant-btn ant-btn-sm" data-al="just" data-i="${i}" ${p.rule?'':'disabled'}>Justification</button>
             <button class="ant-btn ant-btn-sm" data-al="repl" data-i="${i}" ${p.rule?'':'disabled'}>Replace Document</button>
-            <button class="ant-btn ant-btn-link ant-btn-sm" data-al="loc" data-i="${i}">核对原图 →</button></div>`;
+            <button class="ant-btn ant-btn-link ant-btn-sm" data-al="loc" data-i="${i}">Check image \u2192</button></div>`;
       h+=`</div>`;
     });
-    if(!p.rule&&S.role==='ced') h+=`<div class="pnote">CED 只读，但可看到 Sales 写下的全部 Justification —— 申请阶段 Sales 既是提交人又是校验人，这是唯一的制衡。</div>`;
   }
   if(f.cls&&f.ch==='ocr'&&!f.alerts.length&&f.src!=='system')
-    h+=`<div class="pnote ok"><b>全部规则一次通过</b><br>建议纳入随机抽查——抽查是唯一能发现 OCR 抽错的手段。</div>`;
+    h+=`<div class="pnote ok"><b>All rules passed</b></div>`;
   if(f.fields.length){
     h+=`<p class="panel-sect">FIELDS</p>`;
     f.fields.forEach(x=>{h+=x.g?`<div class="field-group">${x.g}</div>`
@@ -747,9 +813,27 @@ function panel(f,p){
   return h;
 }
 
+/* A.11 right pane: mixed upload -> one window stacking all files; per-file upload -> one window each */
+function viewerMC(f){
+  const names=MC_FILES();
+  const bar=`<div class="viewer-bar"><span class="time-cell">${S.mcMode==='mixed'?names.length+' files':'1 / '+f.pages}</span>
+    <span>\u2212</span><span>+</span><span>\u21ba</span>
+    <span class="mc-seg">Upload mode
+      <button data-mcm="mixed" aria-pressed="${S.mcMode==='mixed'}">Mixed</button><button data-mcm="single" aria-pressed="${S.mcMode==='single'}">Per file</button></span></div>`;
+  if(S.mcMode==='single') return bar+docBody(f);
+  return bar+names.map(fn=>{
+    const t=live().find(x=>x.nm===fn)||f;
+    return `<div class="mc-doc" id="mcdoc-${fn.replace(/[^\w]/g,'_')}">
+      <div class="mc-doc-h">${fn}<span>${MC.rules.filter(r=>r.file===fn).length} rule(s)</span></div>
+      ${docBody(t)}</div>`;
+  }).join('');
+}
 function viewer(f){
-  const bar=`<div class="viewer-bar"><span class="time-cell">1 / ${f.pages}</span><span>−</span><span>+</span><span>↺</span><span>自动缩放</span>
-    <span style="margin-left:auto;color:var(--text-3)">影像区占据剩余全部宽度</span></div>`;
+  if(f.ch==='manual'&&f.cls) return viewerMC(f);
+  const bar=`<div class="viewer-bar"><span class="time-cell">1 / ${f.pages}</span><span>\u2212</span><span>+</span><span>\u21ba</span><span>Auto zoom</span></div>`;
+  return bar+docBody(f);
+}
+function docBody(f){
   const rs=()=>(f.fields||[]).filter(x=>!x.g).map(x=>
     `<div class="doc-r ${x.c<95?'hl':''}"><span class="k">${x.n}</span><span class="v">${x.v}</span></div>`).join('');
   let b;
@@ -767,38 +851,37 @@ function viewer(f){
     b=`<div class="doc-page"><div class="doc-h">${f.ty}</div><div class="doc-s">PENYATA / STATEMENT · 2026</div>
       ${rs()}<div class="doc-l"></div><div class="doc-l" style="width:84%"></div><div class="doc-l" style="width:62%"></div></div>`;
   } else {
-    b=`<div class="doc-page"><div class="doc-h">${f.ty==='—'?'UNCLASSIFIED DOCUMENT':f.ty.toUpperCase()}</div>
+    b=`<div class="doc-page"><div class="doc-h">${f.ty==='\u2014'?'UNCLASSIFIED DOCUMENT':f.ty.toUpperCase()}</div>
       <div class="doc-s">Hong Leong Bank Berhad · Hire Purchase</div>${rs()}
       <div class="doc-l"></div><div class="doc-l" style="width:88%"></div><div class="doc-l" style="width:74%"></div>
       <div class="doc-sig"><div>Hirer Signature &amp; Date</div><div>Witness (EHP)</div></div></div>`;
   }
-  return bar+b;
+  return b;
 }
 
 /* ═══════ SUB-MODAL / MESSAGE ═══════ */
 function sm(t,b,f){$('smTitle').textContent=t;$('smBody').innerHTML=b;
-  $('smFoot').innerHTML=f||'<button class="ant-btn" data-cl="1">关闭</button>';$('subMask').classList.remove('hidden');}
+  $('smFoot').innerHTML=f||'<button class="ant-btn" data-cl="1">Close</button>';$('subMask').classList.remove('hidden');}
 function smClose(){$('subMask').classList.add('hidden');}
 let mt;function msg(m){const e=$('msg');e.firstElementChild.textContent=m;e.classList.add('on');clearTimeout(mt);mt=setTimeout(()=>e.classList.remove('on'),2000);}
 const roleNm=()=>({sales:'Sales',ced:'CED',cra:'CRA',auth:'Authorizer'})[S.role];
 
 function askDelete(ids){
   sm('Delete Files',
-    `<div class="pnote info">将删除 <b>${ids.length}</b> 份文件。<br><br>删除后进入左栏「<b>已删除</b>」，保留<b>删除人、删除时间、原因</b>，随时可恢复，不会从案件记录里消失。</div>
-     <label style="font-size:12px;color:var(--text-2)">删除原因（可选）</label>
-     <input class="ant-input" id="delRs" style="width:100%;margin-top:4px" placeholder="例：客户重新提供了最新月份 / 担保人已从申请单移除">`,
+    `<div class="pnote info"><b>${ids.length}</b> file(s) will be deleted.<br><br>Deleted files move to <b>Deleted</b> in the left rail, keeping the deleter, timestamp and reason, and can be restored at any time.</div>
+     <label style="font-size:12px;color:var(--text-2)">Reason (optional)</label>
+     <input class="ant-input" id="delRs" style="width:100%;margin-top:4px" placeholder="e.g. Customer resubmitted the latest month">`,
     `<button class="ant-btn" data-cl="1">Cancel</button>
-     <button class="ant-btn ant-btn-primary" data-dodel='${JSON.stringify(ids)}'>确认删除</button>`);
+     <button class="ant-btn ant-btn-primary" data-dodel='${JSON.stringify(ids)}'>Confirm Delete</button>`);
 }
 function missing(){
-  sm('Submit 前的完备性检查',
-    `<div class="pnote info">申请阶段的必备清单只有提交时才算得出来——车辆类型、有无担保人、身份类型此刻才定。
-      <b>缺件是 Submit 的返回值，不是页面上的常驻指标。</b></div>
-     <div class="miss-group"><div class="gh"><span>主借人 · Tan Wei Ming</span><span style="color:var(--error-text)">缺 2 项</span></div>
-       <ul><li>Driving License —— 未上传</li><li>MyKad —— 已上传但<b>类型未确认</b>（mykad.png 仍在 File List 待确认）</li></ul></div>
-     <div class="miss-group"><div class="gh"><span>担保人 1 · Lim Ah Kow</span><span style="color:var(--error-text)">缺 1 项</span></div>
-       <ul><li>Guarantor EPF Statement —— 未上传</li></ul></div>`,
-    `<button class="ant-btn" data-cl="1">稍后处理</button><button class="ant-btn ant-btn-primary" data-gomiss="1">去处理</button>`);
+  sm('Completeness Check',
+    `<div class="pnote info">The required list is computed at submission, once the vehicle type, guarantor arrangement and identity type are known.</div>
+     <div class="miss-group"><div class="gh"><span>Main Applicant \u00b7 Tan Wei Ming</span><span style="color:var(--error-text)">2 missing</span></div>
+       <ul><li>Driving License \u2014 not uploaded</li><li>MyKad \u2014 uploaded but <b>type not confirmed</b> (mykad.png still pending in File List)</li></ul></div>
+     <div class="miss-group"><div class="gh"><span>Guarantor 1 \u00b7 Lim Ah Kow</span><span style="color:var(--error-text)">1 missing</span></div>
+       <ul><li>Guarantor EPF Statement \u2014 not uploaded</li></ul></div>`,
+    `<button class="ant-btn" data-cl="1">Later</button><button class="ant-btn ant-btn-primary" data-gomiss="1">Handle Now</button>`);
 }
 
 /* ═══════ EVENTS ═══════ */
@@ -823,32 +906,32 @@ document.addEventListener('click',e=>{
   if(t.dataset.act){
     const a=t.dataset.act,n=S.sel.size;
     if(a==='reset'){S.fType=S.fStatus='';render();return;}
-    if(a==='refresh'){msg('已刷新');return;}
+    if(a==='refresh'){msg('Refreshed');return;}
     if(a==='del'){askDelete([...S.sel]);return;}
-    if(a==='dl'){msg(`已下载 ${n} 份文件`);return;}
+    if(a==='dl'){msg(`${n} file(s) downloaded`);return;}
     if(a==='reassign'){
-      sm('变更 Subject',
-        `<div class="pnote info">把选中的 <b>${n}</b> 份文件整批挪到另一个 Subject 名下——传错人时不用删了重传，已做的分类确认与抽取结果都保留。</div>
-         <label style="font-size:12px;color:var(--text-2)">目标 Subject</label>
+      sm('Change Subject',
+        `<div class="pnote info">Move the selected <b>${n}</b> file(s) to another Subject. Classification confirmations and extraction results are kept.</div>
+         <label style="font-size:12px;color:var(--text-2)">Target Subject</label>
          <select class="ant-select" id="tgtSubj" style="width:100%;margin-top:4px">
-         ${SUBJ[S.stage].map(s=>`<option value="${s.id}">${s.nm}${s.sub?' · '+s.sub:''}</option>`).join('')}</select>`,
-        `<button class="ant-btn" data-cl="1">Cancel</button><button class="ant-btn ant-btn-primary" data-doreassign="1">确认变更</button>`);
+         ${SUBJ[S.stage].map(s=>`<option value="${s.id}">${s.nm}${s.sub?' \u00b7 '+s.sub:''}</option>`).join('')}</select>`,
+        `<button class="ant-btn" data-cl="1">Cancel</button><button class="ant-btn ant-btn-primary" data-doreassign="1">Confirm Change</button>`);
       return;
     }
   }
 
   if(t.dataset.dodel){
     const ids=JSON.parse(t.dataset.dodel);
-    const rs=($('delRs')&&$('delRs').value.trim())||'未填写原因';
+    const rs=($('delRs')&&$('delRs').value.trim())||'No reason given';
     const at=new Date().toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(',','');
     ids.forEach(i=>{const f=byId(i);if(f)f.del={by:roleNm()+' · '+(S.role==='sales'?'SalesOfficer1':'v_kangyi'),at,rs};});
-    S.sel.clear();smClose();render();msg(`已删除 ${ids.length} 份，可在「已删除」中恢复`);return;
+    S.sel.clear();smClose();render();msg(`${ids.length} file(s) deleted \u00b7 restorable under Deleted`);return;
   }
-  if(t.dataset.restore){const f=byId(t.dataset.restore);if(f)f.del=null;render();msg('已恢复');return;}
+  if(t.dataset.restore){const f=byId(t.dataset.restore);if(f)f.del=null;render();msg('Restored');return;}
   if(t.dataset.doreassign){
     const v=$('tgtSubj').value;let n=0;
     S.sel.forEach(i=>{const f=byId(i);if(f){f.sj=v;n++;}});
-    S.sel.clear();smClose();render();msg(`已变更 ${n} 份文件的 Subject`);return;
+    S.sel.clear();smClose();render();msg(`Subject changed for ${n} file(s)`);return;
   }
 
   if(t.id==='dtBack'){closeDt();return;}
@@ -856,16 +939,15 @@ document.addEventListener('click',e=>{
     const L=dtList(),i=L.findIndex(x=>x.id===S.dt),j=t.id==='dtPrev'?i-1:i+1;
     if(L[j]){S.dt=L[j].id;renderDt();}return;
   }
-  if(t.id==='dtSave'){msg('已保存');return;}
+  if(t.id==='dtSave'){msg('Saved');return;}
   if(t.id==='dtSync'){
     sm('OCR Data Sync',
-      `<div class="pnote warn"><b>建议：SYNC OK 默认勾选，CONFLICT 默认不勾。</b><br>
-        前者多是从空值填充，后者是覆盖已有人工判断，风险不对称，默认值不该一样。</div>
+      `<div class="pnote warn">Selecting a checkbox means applying the OCR value to replace the current value.</div>
        <table><tr><th>Field</th><th>Current Value</th><th>OCR Value</th><th>Status</th></tr>
         <tr><td><input type="checkbox"> Customer Name</td><td>FX</td><td>QQQ</td><td style="color:var(--warning-text)">CONFLICT</td></tr>
         <tr><td><input type="checkbox" checked> Address Line 1</td><td>(Empty)</td><td>16 ES TAMAN UDA MURNI</td><td style="color:var(--text-3)">SYNC OK</td></tr>
         <tr><td><input type="checkbox" checked> Postcode</td><td>(Empty)</td><td>16400</td><td style="color:var(--text-3)">SYNC OK</td></tr></table>`,
-      `<button class="ant-btn" data-cl="1">Cancel</button><button class="ant-btn ant-btn-primary" data-cl="1" data-tst="已合并选中字段">Merge Selected Fields</button>`);
+      `<button class="ant-btn" data-cl="1">Cancel</button><button class="ant-btn ant-btn-primary" data-cl="1" data-tst="Selected fields merged">Merge Selected Fields</button>`);
     return;
   }
   if(t.id==='btnCls'){
@@ -874,26 +956,40 @@ document.addEventListener('click',e=>{
     if(f.fields.length===1&&f.fields[0].c===0)
       f.fields=f.ty==='MyKad'?[{n:'id_no',v:'900101105123',c:99},{n:'name',v:'TAN WEI MING',c:98},{n:'address',v:'29 JALAN DURIAN, KL',c:95}]
         :[{n:'document_no',v:'—',c:0}];
-    msg(`分类已确认，进入 ${f.ch==='ocr'?'Cross-Validation':'Manual Check'} Results`);
+    msg(`Classification confirmed \u00b7 moved to ${f.ch==='ocr'?'Cross-Validation':'Manual Check'} Results`);
     renderDt();render();return;
   }
   if(t.dataset.al){
     const f=byId(S.dt),a=f.alerts[+t.dataset.i],k=t.dataset.al;
-    if(k==='loc'){msg('影像已跳至该规则约定的位置');return;}
-    a.res={pass:'判定合格',fail:'记缺陷 · 退回 Sales',just:'Justification 已记录',repl:'已要求 Replace Document'}[k]+' · '+roleNm();
+    if(k==='loc'){msg('Image scrolled to the location defined by this rule');return;}
+    a.res={pass:'Passed',fail:'Failed \u00b7 returned to Sales',just:'Justification recorded',repl:'Replace Document requested'}[k]+' \u00b7 '+roleNm();
     renderDt();render();return;
   }
   if(t.dataset.mc){
-    const f=byId(S.dt),c=f.checks[+t.dataset.i],k=t.dataset.mc;
-    if(k==='loc'){msg(`影像已跳至第 ${c.pg} 页`);return;}
-    c.res=(k==='pass'?'判定合格':'记缺陷 · 退回 Sales')+' · '+roleNm();
-    renderDt();render();return;
+    const r=MC.rules.find(x=>x.id===t.dataset.r), k=t.dataset.mc;
+    if(k==='loc'){
+      if(S.mcMode==='mixed'){
+        const el=$('mcdoc-'+r.file.replace(/[^\w]/g,'_'));
+        if(el){el.scrollIntoView({behavior:'smooth',block:'start'});msg(`Scrolled to ${r.file} page ${r.pg}`);}
+      }else{
+        const tgt=live().find(x=>x.nm===r.file);
+        if(tgt){S.dt=tgt.id;renderDt();msg(`Switched to ${r.file} page ${r.pg}`);}
+        else msg('That file is not in the current list');
+      }
+      return;
+    }
+    MC.res[r.id]=k;
+    renderDt();render();
+    msg(k==='pass'?`${r.id} passed`:`${r.id} failed \u00b7 defect logged`);
+    return;
   }
+  if(t.dataset.mcu){ delete MC.res[t.dataset.mcu]; renderDt(); render(); return; }
+  if(t.dataset.mcm){ S.mcMode=t.dataset.mcm; renderDt(); return; }
   if(t.id==='btnSubmit'){
     if(S.stage==='app'&&S.tab==='fl'&&P().up){missing();return;}
-    msg({fl:'分类已提交，进入提取与规则校验',cv:'校验结果已提交',mc:'人工核结果已提交'}[S.tab]);return;
+    msg({fl:'Classification submitted \u00b7 extraction and rule validation started',cv:'Validation results submitted',mc:'Manual check results submitted'}[S.tab]);return;
   }
-  if(t.dataset.gomiss){smClose();S.tab='fl';S.subj='primary';S.fStatus='pending';render();msg('已筛出待确认分类的文件');return;}
+  if(t.dataset.gomiss){smClose();S.tab='fl';S.subj='primary';S.fStatus='pending';render();msg('Filtered to files pending classification');return;}
   if(t.dataset.cl){if(t.dataset.tst)msg(t.dataset.tst);smClose();return;}
 });
 
@@ -905,6 +1001,7 @@ document.addEventListener('keydown',e=>{
 render();
 })();
 </script>
+
 
 </body>
 </html>

@@ -1,259 +1,317 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
 <style>
-/* standalone compat reset —— 单文件版本，双击即可用浏览器打开 */
+/* standalone compat reset - single file, open directly in a browser */
 html{-webkit-text-size-adjust:100%}
+*{box-sizing:border-box}
+body{margin:0;background:#fafafa;font:14px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
 button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit}
 </style>
-<title>CRA 工作台原型</title>
+<title>CRA Workbench</title>
 </head>
 <body>
 
 <style>
 :root{
-  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'PingFang SC','Microsoft YaHei',sans-serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  --primary:#1677ff;--primary-hover:#4096ff;--primary-active:#0958d9;--primary-bg:#e6f4ff;--primary-border:#91caff;
-  --text:rgba(0,0,0,.88);--text-2:rgba(0,0,0,.65);--text-3:rgba(0,0,0,.45);--text-4:rgba(0,0,0,.25);
-  --border:#d9d9d9;--border-2:#f0f0f0;--bg:#fff;--bg-layout:#f5f5f5;--fill-alter:#fafafa;
-  --success:#52c41a;--success-bg:#f6ffed;--success-border:#b7eb8f;--success-text:#389e0d;
-  --warning:#faad14;--warning-bg:#fffbe6;--warning-border:#ffe58f;--warning-text:#d48806;
-  --error:#ff4d4f;--error-bg:#fff2f0;--error-border:#ffccc7;--error-text:#cf1322;
-  --purple:#722ed1;--purple-bg:#f9f0ff;--purple-border:#d3adf7;
-  --gold:#ad6800;--gold-bg:#fff7e6;--gold-border:#ffd591;
-  --r:6px;--r-sm:4px;--shadow:0 6px 16px 0 rgba(0,0,0,.08),0 3px 6px -4px rgba(0,0,0,.12),0 9px 28px 8px rgba(0,0,0,.05);
+  --primary:#1677ff;--primary-hover:#4096ff;--primary-bg:#e8f1ff;--primary-border:#a3c9ff;--primary-deep:#0958d9;
+  --ink:#1f2430;--ink-2:#5a6473;--ink-3:#8c93a0;--ink-4:#b6bcc7;
+  --line:#e8eaee;--line-2:#f2f3f5;--bg:#fff;--page:#f4f5f7;--alt:#fafbfc;
+  --ok:#389e0d;--ok-bg:#eaf7e6;--ok-line:#b7e0a4;
+  --warn:#d48806;--warn-bg:#fff8e6;--warn-line:#ffdf9b;
+  --err:#d4380d;--err-bg:#fff1ee;--err-line:#ffbfae;
+  --r:8px;--r-sm:4px;--r-md:6px;
+  --sh:0 1px 2px rgba(16,24,40,.05);
+  --sh-lg:0 8px 24px rgba(16,24,40,.12),0 2px 6px rgba(16,24,40,.06);
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg-layout);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5714;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--page);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
 button,select,input,textarea{font-family:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed}
 :focus-visible{outline:2px solid var(--primary);outline-offset:1px}
 
-.ant-btn{height:32px;padding:4px 15px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);font-size:14px;transition:all .2s;white-space:nowrap}
-.ant-btn:hover:not(:disabled){border-color:var(--primary-hover);color:var(--primary-hover)}
-.ant-btn:disabled{color:var(--text-4);background:rgba(0,0,0,.02)}
-.ant-btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
-.ant-btn-primary:hover:not(:disabled){background:var(--primary-hover);border-color:var(--primary-hover);color:#fff}
-.ant-btn-primary:disabled{background:rgba(0,0,0,.04);border-color:var(--border);color:var(--text-4)}
-.ant-btn-sm{height:24px;padding:0 8px;font-size:12px;border-radius:var(--r-sm)}
-.ant-btn-dangerous{color:var(--error)}.ant-btn-dangerous:hover:not(:disabled){border-color:var(--error);color:var(--error)}
-.ant-tag{display:inline-block;height:22px;padding:0 7px;font-size:12px;line-height:20px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--fill-alter);color:var(--text-2);white-space:nowrap}
-.tg-g{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
-.tg-r{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text)}
-.tg-y{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
-.tg-b{background:var(--primary-bg);border-color:var(--primary-border);color:var(--primary-active)}
+.btn{height:32px;padding:0 15px;border:1px solid #d6d9de;border-radius:var(--r-md);background:#fff;color:var(--ink);font-size:13.5px;white-space:nowrap;transition:.15s}
+.btn:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
+.btn:disabled{color:var(--ink-4);background:#f7f8f9;border-color:var(--line)}
+.btn-pri{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn-pri:hover:not(:disabled){background:var(--primary-hover);border-color:var(--primary-hover);color:#fff}
+.btn-pri:disabled{background:#f0f1f3;border-color:var(--line);color:var(--ink-4)}
+.btn-sm{height:26px;padding:0 10px;font-size:12.5px}
+.btn-txt{border-color:transparent;background:transparent;color:var(--primary);padding:0 6px;height:auto}
+.tag{display:inline-block;height:22px;padding:0 8px;font-size:12px;line-height:20px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--alt);color:var(--ink-2);white-space:nowrap}
+.tag-ok{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok)}
+.tag-warn{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn)}
+.tag-err{background:var(--err-bg);border-color:var(--err-line);color:var(--err)}
+.tag-blue{background:var(--primary-bg);border-color:var(--primary-border);color:var(--primary-deep)}
 
-.demo{position:fixed;top:0;left:0;right:0;height:36px;z-index:200;background:#001529;color:rgba(255,255,255,.85);padding:7px 16px;display:flex;gap:12px;align-items:center;font-size:12px}
-.demo .lb{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.45);text-transform:uppercase}
-.seg{display:inline-flex;border:1px solid rgba(255,255,255,.2);border-radius:var(--r-sm);overflow:hidden}
-.seg button{background:transparent;border:0;color:rgba(255,255,255,.7);padding:3px 12px;font-size:12px}
+.demo{position:fixed;top:0;left:0;right:0;height:34px;z-index:300;background:#0d1424;color:rgba(255,255,255,.8);padding:6px 16px;display:flex;gap:11px;align-items:center;font-size:11.5px}
+.demo .lb{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:rgba(255,255,255,.4);text-transform:uppercase}
+.seg{display:inline-flex;border:1px solid rgba(255,255,255,.18);border-radius:var(--r-sm);overflow:hidden}
+.seg button{background:transparent;border:0;color:rgba(255,255,255,.65);padding:2px 12px;font-size:11.5px}
 .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
-.demo .why{margin-left:auto;color:rgba(255,255,255,.32);font-size:11px}
+.demo .why{margin-left:auto;color:rgba(255,255,255,.3);font-size:10.5px}
 
-.shell{position:fixed;top:36px;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:var(--bg)}
-.topbar{height:40px;border-bottom:1px solid var(--border-2);display:flex;align-items:stretch;background:var(--bg);flex:none}
-.topbar .tb{display:flex;align-items:center;padding:0 16px;font-size:13px;color:var(--text-2);border-right:1px solid var(--border-2)}
-.topbar .tb.on{color:var(--primary);background:var(--primary-bg);font-weight:500}
-.topbar .who{margin-left:auto;padding:0 16px;display:flex;align-items:center;font-size:12px;color:var(--text-3)}
+.app{position:fixed;top:34px;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:var(--page)}
+.topbar{height:52px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:0;padding:0 20px 0 0;flex:none}
+.brand{width:76px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#c8102e}
+.tbtn{height:34px;display:flex;align-items:center;padding:0 16px;font-size:13.5px;color:var(--ink-2);border-radius:var(--r-md);margin-right:6px}
+.tbtn.on{background:var(--primary-bg);color:var(--primary-deep);font-weight:500}
+.topbar .who{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:13px;color:var(--ink-2)}
+.topbar .who .clk{font-variant-numeric:tabular-nums;color:var(--ink)}
+.topbar .rf{width:34px;height:34px;border:1px solid var(--line);border-radius:var(--r-md);background:#fff;color:var(--ink-3);font-size:15px}
 
-.main{flex:1;min-height:0;display:grid;grid-template-columns:216px minmax(0,1fr) 250px}
-@media(max-width:1200px){.main{grid-template-columns:196px minmax(0,1fr)}.rightp{display:none}}
+.body{flex:1;min-height:0;display:grid;grid-template-columns:76px 268px minmax(0,1fr) 300px}
+@media(max-width:1400px){.body{grid-template-columns:76px 240px minmax(0,1fr) 268px}}
+@media(max-width:1100px){.body{grid-template-columns:76px minmax(0,1fr)}.rail,.side{display:none}}
 
-.nav{border-right:1px solid var(--border-2);overflow-y:auto;padding:10px 0;background:var(--bg)}
-.nav h5{margin:14px 16px 6px;font-size:12px;color:var(--text-3);font-weight:600}
-.nav h5:first-child{margin-top:2px}
-.nav button{display:flex;width:100%;text-align:left;background:transparent;border:0;border-left:3px solid transparent;padding:7px 16px 7px 24px;font-size:13px;color:var(--text-2);align-items:center;gap:7px}
-.nav button:hover{background:var(--fill-alter);color:var(--text)}
-.nav button[aria-pressed="true"]{background:var(--primary-bg);border-left-color:var(--primary);color:var(--primary-active);font-weight:500}
-.nav .cnt{margin-left:auto;font-family:var(--mono);font-size:10.5px;padding:0 5px;border-radius:8px;background:var(--border-2);color:var(--text-2);flex:none}
-.nav .cnt.err{background:var(--error);color:#fff}
-.nav .cnt.ok{background:var(--success-bg);color:var(--success-text)}
-.nav .links{margin:16px 16px 6px;padding-top:12px;border-top:1px solid var(--border-2);display:flex;flex-direction:column;gap:6px}
-.nav .links a{font-size:12px;color:var(--primary);cursor:pointer;text-decoration:none}
-.nav .links a.hi{font-weight:600;background:var(--primary-bg);padding:5px 7px;border-radius:var(--r-sm);border:1px solid var(--primary-border)}
+.icons{background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:6px}
+.icons i{width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--ink-4);font-style:normal;font-size:17px;border-radius:var(--r-md)}
+.icons i:hover{background:var(--alt);color:var(--ink-2)}
+.icons i.on{color:var(--primary);background:var(--primary-bg)}
+.icons .sp{flex:1}
 
-.content{overflow-y:auto;padding:16px 20px;min-width:0}
+.rail{padding:14px 12px;overflow-y:auto}
+.navcard{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:14px 0 10px;margin-bottom:12px}
+.navcard .nh{display:flex;align-items:center;gap:10px;padding:0 16px 12px;font-size:15px;font-weight:600;color:var(--ink)}
+.navcard h6{margin:12px 16px 4px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.navcard button{display:flex;width:100%;text-align:left;background:transparent;border:0;border-left:3px solid transparent;padding:6px 16px 6px 20px;font-size:13px;color:var(--ink-2);align-items:center;gap:8px}
+.navcard button:hover{background:var(--alt);color:var(--ink)}
+.navcard button.on{background:var(--primary-bg);border-left-color:var(--primary);color:var(--primary-deep);font-weight:500}
+.navcard .n{margin-left:auto;font-family:var(--mono);font-size:10.5px;padding:0 6px;border-radius:9px;background:var(--line-2);color:var(--ink-2);flex:none}
+.navcard .n.err{background:var(--err);color:#fff}
+.navcard .n.ok{background:var(--ok-bg);color:var(--ok)}
+.linkcard{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:16px;display:flex;flex-direction:column;gap:10px;align-items:center}
+.linkcard a{font-size:13.5px;color:var(--primary);cursor:pointer}
+.linkcard a.off{color:var(--ink-4);cursor:default}
 
-/* 摘要卡 */
-.sumcard{border:1px solid;border-radius:var(--r);background:var(--bg);overflow:hidden;margin-bottom:14px}
-.sumcard.ok{border-color:var(--success-border)}
-.sumcard.bad{border-color:var(--warning-border)}
-.sumcard.wait{border-color:var(--primary-border)}
-.sumcard .sh{display:flex;gap:13px;align-items:flex-start;padding:16px 18px}
-.sumcard.ok .sh{background:var(--success-bg)}
-.sumcard.bad .sh{background:var(--warning-bg)}
-.sumcard.wait .sh{background:var(--primary-bg)}
-.sumcard .ic{font-size:19px;line-height:1.3;flex:none}
-.sumcard .w{flex:1;min-width:0}
-.sumcard .t{font-size:16px;font-weight:600;margin-bottom:2px}
-.sumcard.ok .t{color:var(--success-text)}
-.sumcard.bad .t{color:var(--warning-text)}
-.sumcard.wait .t{color:var(--primary-active)}
-.sumcard .d{font-size:12.5px;color:var(--text-2)}
-.sumcard .sh .rt{flex:none;display:flex;gap:10px;align-items:center}
-.sumcard .pv{font-family:var(--mono);font-size:17px;font-weight:600}
-.sumcard .pv.err{color:var(--warning-text)}.sumcard .pv.ok{color:var(--success-text)}
-.bar{height:5px;border-radius:3px;background:var(--border-2);overflow:hidden;width:110px;flex:none}
-.bar i{display:block;height:100%;background:var(--success);border-radius:3px}
-.bar i.part{background:var(--warning)}
-.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border-2);border-top:1px solid var(--border-2)}
-@media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}}
-.kp{background:var(--bg);padding:12px 14px}
-.kp .v{font-family:var(--mono);font-size:23px;font-weight:600;line-height:1.15}
-.kp .v.ok{color:var(--success-text)}.kp .v.err{color:var(--error-text)}
-.kp .k{font-size:12px;color:var(--text-3);margin-top:3px}
-.kp .ks{display:block;font-size:10.5px;color:var(--warning-text);font-family:var(--mono);margin-top:1px}
-.sumcard .sx{display:flex;align-items:center;gap:8px;width:100%;border:0;border-top:1px solid var(--border-2);
-  background:var(--bg);padding:9px 18px;font-size:13px;color:var(--text-2);text-align:left}
-.sumcard .sx:hover{background:var(--fill-alter)}
-.sumcard .sx .car{color:var(--text-3);font-size:10px}
-.sumcard .sx .sxr{margin-left:auto;font-size:12px;color:var(--warning-text)}
-.sumcard .sb{border-top:1px solid var(--border-2);padding:12px 18px}
+.main{overflow-y:auto;padding:16px 18px 24px;scroll-behavior:smooth}
+.seclabel{font-size:12px;font-weight:600;color:var(--ink-3);letter-spacing:.09em;text-transform:uppercase;margin:20px 0 10px 6px}
+.seclabel:first-child{margin-top:2px}
 
-.frow{display:flex;align-items:center;gap:10px;padding:8px 11px;border:1px solid var(--border-2);
-  border-radius:var(--r-sm);font-size:13px;margin-bottom:6px;background:var(--bg)}
-.frow:last-child{margin-bottom:0}
-.frow .fn{flex:1;min-width:0}
-.frow .fs{font-size:11px;color:var(--text-3);display:block}
-.frow .rt{flex:none;display:flex;gap:7px;align-items:center}
-.batch{display:flex;align-items:center;gap:10px;padding:8px 11px;margin-bottom:8px;
-  background:var(--warning-bg);border:1px solid var(--warning-border);border-radius:var(--r-sm);
-  font-size:12.5px;color:var(--warning-text)}
-.batch button{margin-left:auto}
+.mod{background:#fff;border-radius:var(--r);box-shadow:var(--sh);margin-bottom:12px;overflow:hidden;scroll-margin-top:12px}
+.mod-h{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;border:0;background:#fff;padding:14px 18px;text-align:left;cursor:pointer;user-select:none}
+.mod-h:hover{background:var(--alt)}
+.mod-h .car{color:var(--ink-3);font-size:12px;width:12px;flex:none;transition:transform .15s}
+.mod-h .mi{font-size:15px;color:var(--ink-3);flex:none;line-height:1}
+.mod-h .mt{font-size:15.5px;font-weight:600;color:var(--ink)}
+.mod-h .mr{margin-left:auto;display:flex;gap:10px;align-items:center;flex:none}
+.mod-h .badge{font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:9px}
+.mod-h .badge.err{background:var(--err-bg);color:var(--err);border:1px solid var(--err-line)}
+.mod-h .badge.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line)}
+.mod-h .new{font-size:9.5px;font-family:var(--mono);background:#722ed1;color:#fff;padding:1px 5px;border-radius:3px;letter-spacing:.04em}
+.mod-b{border-top:1px solid var(--line-2);padding:16px 18px 18px}
+.mod.stub .mod-h{color:var(--ink-2)}
+
+.tot{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.tot .t{font-size:14px;color:var(--ink-2)}
+.tot .t b{color:var(--primary);font-weight:600}
+.tot .r{margin-left:auto;display:flex;gap:8px}
 
 table{border-collapse:collapse;width:100%}
-th{background:var(--fill-alter);text-align:left;font-size:12px;font-weight:600;color:var(--text);padding:9px 12px;border-bottom:1px solid var(--border-2);white-space:nowrap}
-td{padding:9px 12px;border-bottom:1px solid var(--border-2);font-size:13px;vertical-align:middle}
+th{background:var(--alt);text-align:left;font-size:12.5px;font-weight:600;color:var(--ink-2);padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--line-2);font-size:13px;vertical-align:middle;color:var(--ink-2)}
 tbody tr:last-child td{border-bottom:0}
-.tw{overflow-x:auto}
+tbody tr:hover td{background:var(--alt)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-md)}
 .mono{font-family:var(--mono);font-size:12px}
-.muted{color:var(--text-3);font-size:12px}
+.muted{color:var(--ink-3);font-size:12.5px}
+.sub-row{color:var(--ink-3);font-size:11px}
+.nodata{padding:44px;text-align:center;color:var(--ink-4)}
+.nodata .ic{font-size:34px;opacity:.35;display:block;margin-bottom:6px}
 
-.card{border:1px solid var(--border-2);border-radius:var(--r);margin-bottom:14px;background:var(--bg)}
-.card>.hd{padding:11px 16px;border-bottom:1px solid var(--border-2);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.card>.hd .t{font-size:14px;font-weight:600}
-.card>.hd .sub{font-size:12px;color:var(--text-3);font-weight:400}
-.card>.hd .r{margin-left:auto;display:flex;gap:8px;align-items:center}
-.card>.bd{padding:14px 16px}
-.card>.bd.p0{padding:0}
+/* Verification Summary */
+.vs-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+.vs-top .st{font-size:15px;font-weight:600}
+.vs-top .st.ok{color:var(--ok)}.vs-top .st.warn{color:var(--warn)}.vs-top .st.wait{color:var(--primary-deep)}
+.vs-top .sd{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.vs-top .r{margin-left:auto;display:flex;gap:8px;align-items:center;flex:none}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:1250px){.kpis{grid-template-columns:repeat(3,1fr)}}
+.kp{border:1px solid var(--line);border-radius:var(--r-md);padding:11px 13px;background:var(--alt)}
+.kp .v{font-family:var(--mono);font-size:21px;font-weight:600;line-height:1.1;color:var(--ink)}
+.kp .v.ok{color:var(--ok)}.kp .v.err{color:var(--err)}
+.kp .k{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+.kp .ks{display:block;font-size:10.5px;color:var(--warn);font-family:var(--mono);margin-top:2px}
+.rrow{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:8px}
+.rrow:last-child{margin-bottom:0}
+.rrow .n{flex:1;min-width:0;font-size:13px}
+.rrow .s{display:block;font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.rrow .r{flex:none;display:flex;gap:8px;align-items:center}
+.batchbar{display:flex;align-items:center;gap:12px;padding:9px 12px;margin-bottom:10px;background:var(--warn-bg);
+  border:1px solid var(--warn-line);border-radius:var(--r-md);font-size:12.5px;color:var(--warn)}
+.batchbar button{margin-left:auto}
 
-/* 字段 */
-.fv{font-family:var(--mono);font-size:12px}
-.fv.empty{color:var(--text-4);font-style:italic;font-family:var(--font)}
-.grp td{background:var(--fill-alter);font-weight:600;font-size:12px;color:var(--text-2)}
-.reqd{color:var(--error);margin-left:3px}
-.fin{width:100%;height:28px;border:1px solid var(--border);border-radius:var(--r-sm);padding:0 8px;
-  font-family:var(--mono);font-size:12px;background:var(--bg);color:var(--text)}
-.fin:focus{border-color:var(--primary);outline:none;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
-.fin.bad{border-color:var(--error);background:var(--error-bg)}
-.fin::placeholder{font-family:var(--font);color:var(--text-4)}
-.fin.bad::placeholder{color:var(--error-text)}
+/* File Check List */
+.chk-h{font-size:14px;color:var(--ink-2);margin-bottom:14px}
+.chk-h b{color:var(--ink);font-weight:600}
+.chk-grp{font-size:13.5px;font-weight:600;color:var(--ink);margin:16px 0 10px}
+.chk-grp:first-of-type{margin-top:0}
+.chk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 18px}
+@media(max-width:1250px){.chk-grid{grid-template-columns:repeat(2,1fr)}}
+.ck{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;color:var(--ink-2);cursor:pointer}
+.ck .bx{width:16px;height:16px;border:1px solid #c9ced6;border-radius:3px;flex:none;margin-top:2px;
+  display:flex;align-items:center;justify-content:center;font-size:11px;background:#fff}
+.ck.on .bx{background:var(--primary);border-color:var(--primary);color:#fff}
+.ck.on{color:var(--ink)}
+.ck.auto .bx{background:var(--ok);border-color:var(--ok);color:#fff}
+.ck.dis{opacity:.55;cursor:not-allowed}
 
-/* Sync 弹窗 */
-.syn{width:100%;min-width:600px}
-.syn td{padding:7px 12px;font-size:12.5px}
-.syn tr.diff td{background:var(--warning-bg)}
-.syn tr.na td{opacity:.45}
-.bx{width:16px;height:16px;border:1px solid var(--border);border-radius:3px;display:inline-flex;align-items:center;
-  justify-content:center;font-size:11px;background:var(--bg);cursor:pointer;vertical-align:middle}
+/* Data Maintenance fields */
+.fgrp{font-size:12px;font-weight:600;color:var(--ink-2);letter-spacing:.04em;text-transform:uppercase;margin:4px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.fgrp+.fgrid{margin-bottom:18px}
+.fgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 22px}
+@media(max-width:1250px){.fgrid{grid-template-columns:1fr}}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld label{font-size:12.5px;color:var(--ink-2)}
+.fld .req{color:var(--err);margin-left:3px}
+.fin{height:32px;border:1px solid #d6d9de;border-radius:var(--r-md);padding:0 11px;font-size:13px;background:#fff;color:var(--ink);width:100%}
+.fin:focus{border-color:var(--primary);outline:none;box-shadow:0 0 0 2px rgba(22,119,255,.08)}
+.fin.bad{border-color:var(--err);background:var(--err-bg)}
+.fin::placeholder{color:var(--ink-4)}
+.fhint{font-size:11px;color:var(--ink-3);font-family:var(--mono)}
+.fhint.diff{color:var(--warn)}
+
+/* side panel */
+.side{padding:14px 12px 14px 0;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+.sc{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:16px}
+.sc .sh{display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:600;margin-bottom:12px}
+.sc .cnt{font-family:var(--mono);font-size:12px;padding:1px 8px;border-radius:9px;background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line)}
+.fl{display:flex;gap:9px;align-items:center;padding:5px 0;font-size:13.5px;color:var(--ink-2);cursor:pointer}
+.fl .bx{width:16px;height:16px;border:1px solid #c9ced6;border-radius:3px;flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;background:#fff}
+.fl.on .bx{background:var(--primary);border-color:var(--primary);color:#fff}
+.fl.on{color:var(--ink);font-weight:500}
+.yn{display:flex;align-items:center;justify-content:space-between;padding:8px 0;font-size:13.5px;color:var(--ink-2)}
+.ynseg{display:inline-flex;background:#f0f1f3;border-radius:var(--r-md);padding:2px}
+.ynseg button{border:0;background:transparent;font-size:12.5px;padding:3px 14px;border-radius:var(--r-sm);color:var(--ink-3)}
+.ynseg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:var(--sh);font-weight:500}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:5px 0}
+.kv .k{color:var(--ink-3);flex:none}
+.kv .v{text-align:right;color:var(--ink);font-weight:500}
+.sdiv{height:1px;background:var(--line-2);margin:10px 0}
+
+.foot{height:58px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:0 20px;flex:none}
+.foot select{height:32px;border:1px solid #d6d9de;border-radius:var(--r-md);padding:0 8px;font-size:13px;color:var(--ink-2);background:#fff}
+.foot .r{margin-left:auto;display:flex;gap:10px}
+.foot .fn{font-size:12.5px;color:var(--ink-3)}
+
+.mask{position:fixed;top:34px;left:0;right:0;bottom:0;background:rgba(15,20,30,.45);z-index:400;display:flex;align-items:center;justify-content:center;padding:24px}
+.mask.hidden{display:none}
+.modal{background:#fff;border-radius:10px;width:min(880px,100%);max-height:88vh;display:flex;flex-direction:column;box-shadow:var(--sh-lg)}
+.modal.sm{width:min(560px,100%)}
+.modal .mh{padding:18px 26px 14px;font-size:19px;font-weight:600;display:flex;align-items:flex-start}
+.modal .mh .x{margin-left:auto;border:0;background:transparent;font-size:18px;color:var(--ink-3);line-height:1;padding:2px 4px}
+.modal .msub{padding:0 26px;font-size:13px;color:var(--ink-2);margin-top:-8px}
+.modal .mwarn{padding:6px 26px 0;font-size:12.5px;color:#c0392b}
+.modal .mb{padding:16px 26px;overflow:auto}
+.modal .mf{padding:14px 26px 18px;display:flex;gap:10px;justify-content:flex-end;align-items:center}
+.modal .mf .lf{margin-right:auto;font-size:12.5px;color:var(--ink-3)}
+
+/* OCR Data Sync */
+.sync-g{font-size:15px;font-weight:600;margin:18px 0 8px}
+.sync-g:first-child{margin-top:0}
+.syn{width:100%;min-width:600px;border-collapse:separate;border-spacing:0}
+.syn th{background:#eef4ff;font-size:12.5px;color:var(--ink-2);padding:11px 14px;border:0;font-weight:500}
+.syn td{padding:10px 14px;border:0;border-top:1px solid var(--line-2);font-size:13px}
+.syn tr.sel td{background:#eaf2ff}
+.syn tr.na td{opacity:.5}
+.syn .st{font-size:11.5px;font-family:var(--mono);color:var(--ink-3);letter-spacing:.03em}
+.syn .st.cf{color:var(--warn)}
+.bx{width:17px;height:17px;border:1px solid #c9ced6;border-radius:3px;display:inline-flex;align-items:center;
+  justify-content:center;font-size:11px;background:#fff;cursor:pointer;vertical-align:middle}
 .bx.on{background:var(--primary);border-color:var(--primary);color:#fff}
-.bx.dis{background:var(--fill-alter);cursor:not-allowed;border-style:dashed}
+.bx.dis{background:#f2f3f5;cursor:not-allowed;border-style:dashed}
+.emptyv{color:var(--ink-4);font-style:italic}
 
-/* 文件中心处置弹窗 */
-.fcx .h{background:#f0f5ff;border-bottom-color:var(--primary-border)}
-.fcx .h .fcb{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:var(--primary);color:#fff;
-  padding:2px 7px;border-radius:2px;margin-right:9px;vertical-align:middle}
-.dopt{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--border);border-radius:var(--r);
-  padding:12px 14px;cursor:pointer;background:var(--bg);margin-bottom:9px}
-.dopt:hover{border-color:var(--primary-hover);background:var(--primary-bg)}
-.dopt.on{border-color:var(--primary);background:var(--primary-bg);box-shadow:0 0 0 2px rgba(22,119,255,.1)}
-.dopt .rb{width:15px;height:15px;border:1px solid var(--border);border-radius:50%;flex:none;margin-top:2px;
-  display:flex;align-items:center;justify-content:center}
-.dopt.on .rb{border-color:var(--primary)}
-.dopt.on .rb::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--primary)}
-.dopt .dn{font-size:13.5px;font-weight:500}
-.sub2{display:flex;flex-direction:column;gap:7px;margin:8px 0 0 26px;padding-left:12px;border-left:2px solid var(--border-2)}
-.sub2 label{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--text-2);cursor:pointer}
-.mtb{width:100%;min-height:60px;border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;font-size:13px;resize:vertical;margin-top:7px}
-.mtb.bad{border-color:var(--error)}
-.mlabel{font-size:12px;color:var(--text-2);margin-top:12px;display:block}
-.pre{background:var(--fill-alter);border:1px solid var(--border-2);border-radius:var(--r-sm);padding:10px 12px;font-size:12.5px;line-height:1.6;margin-bottom:8px}
-.pre .lb{font-size:10.5px;font-family:var(--mono);color:var(--text-3);letter-spacing:.06em;display:block}
+/* Add Defect */
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px 26px}
+@media(max-width:640px){.dgrid{grid-template-columns:1fr}}
+.dfield label{display:block;font-size:13px;color:var(--ink-2);margin-bottom:6px}
+.dfield .req{color:var(--err)}
+.dsel,.ddate{width:100%;height:36px;border:1px solid #d6d9de;border-radius:var(--r-md);padding:0 11px;font-size:13.5px;background:#fff;color:var(--ink)}
+.ddate:disabled{background:#f4f5f7;color:var(--ink-3)}
+.dchk{display:flex;gap:9px;align-items:center;font-size:13.5px;color:var(--ink-2);cursor:pointer;height:36px}
+.dta{width:100%;min-height:110px;border:1px solid #d6d9de;border-radius:var(--r-md);padding:10px 12px;font-size:13.5px;resize:vertical}
+.dcount{text-align:right;font-size:12px;color:var(--ink-3);margin-top:4px}
+.dfull{grid-column:1/-1}
+
+/* File Center rule modal */
+.fcx .mh{background:#f2f7ff;border-radius:10px 10px 0 0}
+.fcb{font-family:var(--mono);font-size:10px;letter-spacing:.06em;background:var(--primary);color:#fff;
+  padding:2px 7px;border-radius:3px;margin-right:10px;vertical-align:middle;font-weight:400}
+.opt{display:flex;gap:11px;align-items:flex-start;border:1px solid #d6d9de;border-radius:var(--r-md);
+  padding:13px 15px;cursor:pointer;background:#fff;margin-bottom:10px}
+.opt:hover{border-color:var(--primary)}
+.opt.on{border-color:var(--primary);background:var(--primary-bg)}
+.opt .rb{width:16px;height:16px;border:1px solid #c9ced6;border-radius:50%;flex:none;margin-top:2px;display:flex;align-items:center;justify-content:center}
+.opt.on .rb{border-color:var(--primary)}
+.opt.on .rb::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--primary)}
+.opt .on2{font-size:14px;font-weight:500;color:var(--ink)}
+.sub2{display:flex;flex-direction:column;gap:8px;margin:10px 0 0 27px;padding-left:13px;border-left:2px solid var(--line)}
+.sub2 label{display:flex;gap:9px;align-items:center;font-size:13px;color:var(--ink-2);cursor:pointer}
+.pre{background:var(--alt);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;font-size:13px;margin-bottom:10px}
+.pre .lb{font-size:10.5px;font-family:var(--mono);color:var(--ink-3);letter-spacing:.06em;display:block;margin-bottom:3px}
 
 /* Next */
-.chk-run{display:flex;gap:14px;align-items:center;padding:10px 4px}
-.spin{width:26px;height:26px;border:3px solid var(--border-2);border-top-color:var(--primary);
-  border-radius:50%;animation:sp .8s linear infinite;flex:none}
+.spin{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--primary);border-radius:50%;animation:sp .8s linear infinite;flex:none}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.spin{animation-duration:2.4s}}
-.cr-t{font-size:15px;font-weight:600}
-.cr-d{font-size:12.5px;color:var(--text-3);margin-top:2px}
-.route{display:flex;gap:13px;align-items:flex-start;border:1px solid;border-radius:var(--r);padding:16px 18px}
-.route.stp{border-color:var(--success-border);background:var(--success-bg)}
-.route.auth{border-color:var(--gold-border);background:var(--gold-bg)}
-.route .ic{font-size:24px;line-height:1.05;flex:none}
-.route .rt2{font-size:16.5px;font-weight:600}
-.route.stp .rt2{color:var(--success-text)}
-.route.auth .rt2{color:var(--gold)}
-.route .rd{font-size:13px;color:var(--text-2);margin-top:4px;line-height:1.65}
-.rsn{margin-top:12px;background:var(--fill-alter);border:1px solid var(--border-2);border-radius:var(--r-sm);padding:11px 13px}
-.rsn .rl{font-size:11px;font-family:var(--mono);color:var(--text-3);letter-spacing:.06em;margin-bottom:6px}
-.rsn .ri{font-size:12.5px;color:var(--text-2);line-height:1.75}
-.nxt{display:flex;gap:9px;align-items:center;font-size:12.5px;color:var(--text-2);
-  margin-top:12px;padding:10px 12px;background:var(--fill-alter);border-radius:var(--r-sm)}
-.nxt .ar{color:var(--text-3);font-family:var(--mono)}
+.run{display:flex;gap:15px;align-items:center;padding:8px 2px}
+.run .t{font-size:15px;font-weight:600}
+.run .d{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.route{display:flex;gap:14px;align-items:flex-start;border:1px solid;border-radius:var(--r-md);padding:17px 19px}
+.route.stp{border-color:var(--ok-line);background:var(--ok-bg)}
+.route.auth{border-color:var(--warn-line);background:var(--warn-bg)}
+.route.warn{border-color:var(--warn-line);background:var(--warn-bg)}
+.route .ic{font-size:24px;line-height:1;flex:none}
+.route .t{font-size:17px;font-weight:600}
+.route.stp .t{color:var(--ok)}.route.auth .t,.route.warn .t{color:var(--warn)}
+.route .d{font-size:13.5px;color:var(--ink-2);margin-top:5px}
+.rsn{margin-top:14px;background:var(--alt);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px}
+.rsn .l{font-size:11px;font-family:var(--mono);color:var(--ink-3);letter-spacing:.06em;margin-bottom:7px}
+.rsn .i{font-size:13px;color:var(--ink-2);line-height:1.8}
+.flow{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink-2);margin-top:14px;padding:11px 14px;background:var(--alt);border-radius:var(--r-md)}
+.flow .a{color:var(--ink-3);font-family:var(--mono);font-size:11px}
+.steps{display:flex;gap:8px;align-items:center;margin-top:14px;font-size:11.5px;color:var(--ink-4);font-family:var(--mono)}
+.steps b{color:var(--primary-deep);font-weight:600}
 
-.rightp{border-left:1px solid var(--border-2);overflow-y:auto;padding:14px;background:var(--fill-alter)}
-.rightp h5{margin:0 0 8px;font-size:12px;color:var(--text-2);font-weight:600}
-.flag{display:flex;gap:8px;align-items:center;padding:4px 6px;font-size:12.5px;border-radius:var(--r-sm)}
-.flag.on{background:var(--warning-bg);color:var(--warning-text);font-weight:500}
-.rp-div{height:1px;background:var(--border-2);margin:12px 0}
-.rp-kv{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:3px 0}
-.rp-kv .k{color:var(--text-3)}.rp-kv .v{text-align:right;font-weight:500}
-
-.footer{height:52px;border-top:1px solid var(--border-2);display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--bg);flex:none}
-.footer .fnote{font-size:12px;color:var(--text-3)}
-.footer .r{margin-left:auto;display:flex;gap:8px;align-items:center}
-
-.mask{position:fixed;top:36px;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px}
-.mask.hidden{display:none}
-.modal{background:var(--bg);border-radius:8px;width:min(660px,100%);max-height:88vh;display:flex;flex-direction:column;box-shadow:var(--shadow)}
-.modal.wide{width:min(820px,100%)}
-.modal .h{padding:15px 22px;border-bottom:1px solid var(--border-2);font-size:16px;font-weight:600}
-.modal .b{padding:18px 22px;overflow:auto}
-.modal .f{padding:12px 22px;border-top:1px solid var(--border-2);display:flex;gap:8px;justify-content:flex-end;align-items:center}
-.modal .f .lf{margin-right:auto;font-size:12px;color:var(--text-3)}
-
-.msg{position:fixed;top:48px;left:50%;transform:translateX(-50%);z-index:400;opacity:0;transition:opacity .2s;pointer-events:none}
+.msg{position:fixed;top:52px;left:50%;transform:translateX(-50%);z-index:500;opacity:0;transition:.2s;pointer-events:none}
 .msg.on{opacity:1}
-.msg span{display:inline-block;background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:9px 16px;font-size:14px}
+.msg span{display:inline-block;background:#fff;border-radius:var(--r-md);box-shadow:var(--sh-lg);padding:10px 18px;font-size:13.5px}
 </style>
 
 <div class="demo">
-  <span class="lb">演示用</span><span>场景</span>
-  <span class="seg" id="scnSeg"><button data-scn="manual">人工</button><button data-scn="stp">STP</button></span>
-  <span class="why">CRA 工作台原型</span>
+  <span class="lb">Demo</span><span>Scenario</span>
+  <span class="seg" id="scnSeg"><button data-scn="manual">Manual</button><button data-scn="stp">STP</button></span>
+  <span class="why">CRA Workbench Prototype</span>
 </div>
 
-<div class="shell">
+<div class="app">
   <div class="topbar">
-    <span class="tb">User Management</span><span class="tb">CRA To Do List</span>
-    <span class="tb on">Disbursement:TTI/HP/2026/Y0273410</span>
-    <span class="who">v_kangyi · Pending Checking and Maintenance</span>
+    <span class="brand">◈</span>
+    <span class="tbtn">CRA To Do List</span>
+    <span class="tbtn on">Disbursement:BKI/HP/2026/Y0063327</span>
+    <span class="who"><span>crediosadmin</span><span>|</span><span class="clk" id="clk">59:29</span>
+      <button class="rf">⟳</button></span>
   </div>
-  <div class="main">
-    <div class="nav" id="nav"></div>
-    <div class="content" id="content"></div>
-    <div class="rightp" id="rightp"></div>
+  <div class="body">
+    <div class="icons">
+      <i class="on">▤</i><i>▣</i><i>▥</i><i>▤</i><i>◍</i><i>⚙</i><i>◫</i><i>▦</i><i>▧</i><span class="sp"></span><i>☰</i>
+    </div>
+    <div class="rail" id="rail"></div>
+    <div class="main" id="main"></div>
+    <div class="side" id="side"></div>
   </div>
-  <div class="footer" id="footer"></div>
+  <div class="foot" id="foot"></div>
 </div>
 
 <div class="mask hidden" id="mask"><div class="modal" id="modal">
-  <div class="h" id="mT"></div><div class="b" id="mB"></div><div class="f" id="mF"></div>
+  <div class="mh" id="mT"></div><div id="mSub"></div><div class="mb" id="mB"></div><div class="mf" id="mF"></div>
 </div></div>
 <div class="msg" id="msg"><span></span></div>
 
@@ -262,83 +320,107 @@ tbody tr:last-child td{border-bottom:0}
 "use strict";
 
 const R0=[
- {id:'I33', nm:'保额充足性',        file:'Insurance Cover Note.pdf', via:'ocr', pass:0,
-  issue:'保额 98,000.00 < 要求 102,400.00'},
- {id:'A155',nm:'承租人签署日期时效',  file:'HP Agreement.pdf',        via:'ocr', pass:0,
-  issue:'签署日 12-08-2026，距今 14 天，超出上限 5 天'},
- {id:'EB-SIG-1',nm:'承租人签名与见证完整性',file:'HP Agreement 已签署.pdf',via:'eye',pass:0,
-  issue:'需人眼核对第 6 页签名与见证是否齐全'},
- {id:'S52', nm:'Loan Amount 勾稽',   file:'2nd Schedule Part I.pdf', via:'ocr', pass:1},
- {id:'X-NRIC-1',nm:'NRIC 跨文件一致', file:'NRIC.png',                via:'ocr', pass:1},
- {id:'A153',nm:'担保合同日期对齐',    file:'HP Guarantee Agreement.pdf',via:'ocr',pass:1},
- {id:'I67', nm:'发票日期时序',        file:'Vehicle Invoice.pdf',     via:'ocr', pass:1},
- {id:'V11', nm:'车架号跨文件一致',    file:'VOC.pdf',                 via:'ocr', pass:1},
- {id:'V12', nm:'引擎号一致',          file:'VOC.pdf',                 via:'ocr', pass:1},
- {id:'V13', nm:'路税有效期',          file:'Road Tax Disc.jpg',       via:'ocr', pass:1},
- {id:'F21', nm:'首付比例',            file:'Vehicle Invoice.pdf',     via:'ocr', pass:1},
- {id:'F22', nm:'月供勾稽',            file:'2nd Schedule Part I.pdf', via:'ocr', pass:1},
- {id:'G31', nm:'担保人 NRIC 一致',    file:'Guarantor NRIC.jpg',      via:'ocr', pass:1},
- {id:'B41', nm:'生物识别结果',        file:'Biometric Result.pdf',    via:'ocr', pass:1},
- {id:'S51', nm:'第二附表签署齐全',    file:'2nd Schedule Part I.pdf', via:'eye', pass:1},
- {id:'EB-STMP-1',nm:'印花税票据完整性',file:'2nd Schedule Part I.pdf',via:'eye', pass:1},
- {id:'P71', nm:'Puspakom 检验有效',   file:'Puspakom B7.pdf',         via:'ocr', pass:1},
- {id:'D61', nm:'卖家 IC 与发票一致',  file:'Seller IC.jpg',           via:'ocr', pass:1},
- {id:'M81', nm:'合伙授权书签署人',    file:'Partnership Mandate.docx',via:'eye', pass:1},
- {id:'N01', nm:'MyKad 有效期',        file:'NRIC.png',                via:'ocr', pass:1},
- {id:'V14', nm:'车辆型号一致',        file:'Vehicle Invoice.pdf',     via:'ocr', pass:1},
- {id:'F23', nm:'管理费未超上限',      file:'2nd Schedule Part I.pdf', via:'ocr', pass:1},
- {id:'I34', nm:'承保期覆盖贷款期',    file:'Insurance Cover Note.pdf',via:'ocr', pass:1},
- {id:'G32', nm:'担保人非主借人',      file:'Guarantor NRIC.jpg',      via:'ocr', pass:1},
- {id:'D62', nm:'卖家账户信息齐全',    file:'Seller Invoice.pdf',      via:'eye', pass:1}
+ {id:'I33',nm:'Insurance sum insured sufficiency',file:'Insurance Cover Note.pdf',pass:0,
+  issue:'Sum insured 98,000.00 < required 102,400.00',dc:'INS-002',dcat:'INSURANCE',dty:'Insurance sum insured insufficient'},
+ {id:'A155',nm:'Hirer signature date validity',file:'HP Agreement.pdf',pass:0,
+  issue:'Signed 12-08-2026, 14 days ago, exceeds 5-day limit',dc:'AGR-011',dcat:'AGREEMENT - MASTER',dty:'Hirer and/or Witnessed Wrongly Dated'},
+ {id:'EB-SIG-1',nm:'Hirer signature & witness completeness',file:'HP Agreement Signed.pdf',pass:0,
+  issue:'Eyeball check required on page 6',dc:'AGR-023',dcat:'AGREEMENT - MASTER',dty:'Signature incomplete / not witnessed'},
+ {id:'S52',nm:'Loan amount reconciliation',file:'2nd Schedule Part I.pdf',pass:1,dc:'SCH-004',dcat:'SECOND SCHEDULE PART I',dty:'Loan Amount is wrong'},
+ {id:'X-NRIC-1',nm:'NRIC cross-document match',file:'NRIC.png',pass:1,dc:'CUS-001',dcat:'CUSTOMER INFO',dty:'NRIC mismatch'},
+ {id:'A153',nm:'Guarantee agreement date alignment',file:'HP Guarantee Agreement.pdf',pass:1,dc:'AGR-031',dcat:'AGREEMENT - GUARANTOR',dty:'Gtee Agrt wrongly dated'},
+ {id:'I67',nm:'Vehicle invoice date sequence',file:'Vehicle Invoice.pdf',pass:1,dc:'INV-007',dcat:'INVOICE - VEHICLE',dty:'Vehicle Invoice not dated'},
+ {id:'V11',nm:'Chassis no. cross-document match',file:'VOC.pdf',pass:1,dc:'COL-002',dcat:'COLLATERAL',dty:'Chassis no. mismatch'},
+ {id:'V12',nm:'Engine no. match',file:'VOC.pdf',pass:1,dc:'COL-003',dcat:'COLLATERAL',dty:'Engine no. mismatch'},
+ {id:'V13',nm:'Road tax validity',file:'Road Tax Disc.jpg',pass:1,dc:'COL-009',dcat:'COLLATERAL',dty:'Road tax expired'},
+ {id:'F21',nm:'Down payment ratio',file:'Vehicle Invoice.pdf',pass:1,dc:'FAC-005',dcat:'FACILITY',dty:'Down payment insufficient'},
+ {id:'F22',nm:'Monthly instalment reconciliation',file:'2nd Schedule Part I.pdf',pass:1,dc:'FAC-006',dcat:'FACILITY',dty:'Instalment mismatch'},
+ {id:'G31',nm:'Guarantor NRIC match',file:'Guarantor NRIC.jpg',pass:1,dc:'GTE-002',dcat:'GUARANTOR',dty:'Guarantor NRIC mismatch'},
+ {id:'B41',nm:'Biometric result matched',file:'Biometric Result.pdf',pass:1,dc:'EAC-001',dcat:'E-ACCEPTANCE',dty:'Biometric not matched'},
+ {id:'S51',nm:'2nd Schedule fully signed',file:'2nd Schedule Part I.pdf',pass:1,dc:'SCH-011',dcat:'SECOND SCHEDULE PART I',dty:'Not fully signed'},
+ {id:'EB-STMP-1',nm:'Stamp duty receipt completeness',file:'2nd Schedule Part I.pdf',pass:1,dc:'SCH-014',dcat:'SECOND SCHEDULE PART I',dty:'Stamping incomplete'},
+ {id:'P71',nm:'Puspakom inspection validity',file:'Puspakom B7.pdf',pass:1,dc:'USD-003',dcat:'USED CAR DOCS',dty:'Inspection expired'},
+ {id:'D61',nm:'Seller IC vs invoice payee',file:'Seller IC.jpg',pass:1,dc:'DIR-002',dcat:'DIRECT CASE',dty:'Seller mismatch'},
+ {id:'M81',nm:'Partnership mandate signatory',file:'Partnership Mandate.docx',pass:1,dc:'COM-005',dcat:'COMPANY DOCS',dty:'Signatory not authorised'},
+ {id:'N01',nm:'MyKad expiry',file:'NRIC.png',pass:1,dc:'CUS-004',dcat:'CUSTOMER INFO',dty:'MyKad expired'},
+ {id:'V14',nm:'Vehicle model match',file:'Vehicle Invoice.pdf',pass:1,dc:'COL-011',dcat:'COLLATERAL',dty:'Model mismatch'},
+ {id:'F23',nm:'Handling fee within cap',file:'2nd Schedule Part I.pdf',pass:1,dc:'FAC-012',dcat:'FACILITY',dty:'Handling fee exceeds cap'},
+ {id:'I34',nm:'Policy period covers tenure',file:'Insurance Cover Note.pdf',pass:1,dc:'INS-005',dcat:'INSURANCE',dty:'Policy period insufficient'},
+ {id:'G32',nm:'Guarantor is not the hirer',file:'Guarantor NRIC.jpg',pass:1,dc:'GTE-004',dcat:'GUARANTOR',dty:'Guarantor same as hirer'},
+ {id:'D62',nm:'Seller account details complete',file:'Seller Invoice.pdf',pass:1,dc:'DIR-006',dcat:'DIRECT CASE',dty:'Seller account incomplete'}
 ];
 
 const F0=[
- {g:'Facility Information', k:'Agreement Date',      sys:'',                  ocr:'12-08-2026',        req:1},
- {g:'Facility Information', k:'Total Price',         sys:'128,000.00',        ocr:'128,000.00',        req:1},
- {g:'Facility Information', k:'Down Payment',        sys:'40,000.00',         ocr:'40,000.00',         req:1},
- {g:'Facility Information', k:'Principal Amount',    sys:'88,000.00',         ocr:'88,000.00',         req:1},
- {g:'Facility Information', k:'Terms Charges',       sys:'10,000.00',         ocr:'10,000.00',         req:0},
- {g:'Facility Information', k:'Tenure (months)',     sys:'84',                ocr:'84',                req:1},
- {g:'Facility Information', k:'Monthly Instalment',  sys:'1,166.67',          ocr:'1,166.67',          req:1},
- {g:'Collateral',           k:'Chassis No.',         sys:'PM2KA6852NJ012345', ocr:'PM2KA6852NJ012345', req:1},
- {g:'Collateral',           k:'Engine No.',          sys:'4A91-AB12346',      ocr:'4A91-AB12345',      req:1},
- {g:'Collateral',           k:'Registration No.',    sys:'',                  ocr:'WXY 1234',          req:0},
- {g:'Collateral',           k:'Vehicle Model',       sys:'PERODUA ALZA 1.5 AV',ocr:'PERODUA ALZA 1.5 AV',req:1},
- {g:'Insurance',            k:'Insurer',             sys:'',                  ocr:'ALLIANZ GENERAL',   req:1},
- {g:'Insurance',            k:'Sum Insured',         sys:'102,400.00',        ocr:'98,000.00',         req:1},
- {g:'Insurance',            k:'Cover Note No.',      sys:'',                  ocr:'CN-2026-0088123',   req:0},
- {g:'Insurance',            k:'Policy Expiry',       sys:'',                  ocr:'18-08-2027',        req:1},
- {g:'Hirer / Guarantor',    k:'NRIC No.',            sys:'900101-10-1234',    ocr:'900101-10-1284',    req:1},
- {g:'Hirer / Guarantor',    k:'Hirer Name',          sys:'TAN WEI MING',      ocr:'TAN WEI MING',      req:1},
- {g:'Hirer / Guarantor',    k:'Disbursement Account',sys:'',                  ocr:'',                  req:1},
- {g:'Dealer / Seller',      k:'Dealer Code',         sys:'CC-KL-001',         ocr:'',                  req:1},
- {g:'Dealer / Seller',      k:'Seller Name',         sys:'CYCLE & CARRIAGE',  ocr:'CYCLE & CARRIAGE',  req:1}
+ {g:'Collateral Info', k:'Chassis No.',        sys:'',                  ocr:'WDF9073122A123456',  req:1},
+ {g:'Collateral Info', k:'Engine No.',         sys:'',                  ocr:'OM642920C123456',    req:1},
+ {g:'Collateral Info', k:'Registration No.',   sys:'',                  ocr:'ABC 1234',           req:0},
+ {g:'Collateral Info', k:'Manufacture Year',   sys:'',                  ocr:'2023',               req:1},
+ {g:'Collateral Info', k:'Vehicle Model',      sys:'PERODUA ALZA 1.5 AV',ocr:'PERODUA ALZA 1.5 AV',req:1},
+ {g:'Facility Info',   k:'Agreement Date',     sys:'',                  ocr:'12-08-2026',         req:1},
+ {g:'Facility Info',   k:'Total Price',        sys:'128,000.00',        ocr:'128,000.00',         req:1},
+ {g:'Facility Info',   k:'Down Payment',       sys:'40,000.00',         ocr:'40,000.00',          req:1},
+ {g:'Facility Info',   k:'Principal Amount',   sys:'88,000.00',         ocr:'88,000.00',          req:1},
+ {g:'Facility Info',   k:'Tenure (months)',    sys:'84',                ocr:'84',                 req:1},
+ {g:'Facility Info',   k:'Monthly Instalment', sys:'1,166.67',          ocr:'1,166.67',           req:1},
+ {g:'Insurance Info',  k:'Insurer',            sys:'',                  ocr:'ALLIANZ GENERAL',    req:1},
+ {g:'Insurance Info',  k:'Sum Insured',        sys:'102,400.00',        ocr:'98,000.00',          req:1},
+ {g:'Insurance Info',  k:'Cover Note No.',     sys:'',                  ocr:'CN-2026-0088123',    req:0},
+ {g:'Insurance Info',  k:'Policy Expiry',      sys:'',                  ocr:'18-08-2027',         req:1},
+ {g:'Seller Info',     k:'Customer Name',      sys:'',                  ocr:'ABC MOTOR SDN BHD',  req:1},
+ {g:'Seller Info',     k:'Address Line 1',     sys:'',                  ocr:'123 Jalan Ampang',   req:1},
+ {g:'Seller Info',     k:'Address Line 2',     sys:'',                  ocr:'Pusat Bandar',       req:0},
+ {g:'Seller Info',     k:'Postcode',           sys:'',                  ocr:'50450',              req:1},
+ {g:'Seller Info',     k:'Dealer Code',        sys:'CC-KL-001',         ocr:'',                   req:1},
+ {g:'Hirer Info',      k:'NRIC No.',           sys:'900101-10-1234',    ocr:'900101-10-1284',     req:1},
+ {g:'Hirer Info',      k:'Hirer Name',         sys:'TAN WEI MING',      ocr:'TAN WEI MING',       req:1},
+ {g:'Hirer Info',      k:'Disbursement Account',sys:'',                 ocr:'',                   req:1}
+];
+
+const CK0=[
+ {g:'Mandatory',k:'Biometric Result',ocr:1},{g:'Mandatory',k:'HP Agreements',ocr:1},
+ {g:'Mandatory',k:'FIS/JPJ Result',ocr:0},{g:'Mandatory',k:'Application Form',ocr:1},
+ {g:'Mandatory',k:'2nd Schedule Part I',ocr:1},{g:'Mandatory',k:'Insurance',ocr:1},
+ {g:'Mandatory',k:'NRIC/SSM/Passport',ocr:1},{g:'Mandatory',k:'Vehicle Invoice',ocr:1},
+ {g:'Conditional',k:'Delivery Receipt',ocr:0},{g:'Conditional',k:'Standing Instruction',ocr:0},
+ {g:'Conditional',k:'VOC',ocr:1},{g:'Conditional',k:'FD Pledge',ocr:0},
+ {g:'Conditional',k:'Roadtax/JPJ Receipt',ocr:1},
+ {g:'Optional',k:'Guarantee Agreement / Guarantor Right & Liabilities',ocr:1},
+ {g:'Optional',k:'Settlement Cases: Redemption Statement, HP546',ocr:0},
+ {g:'Optional',k:'Conditional Approval',ocr:0},{g:'Optional',k:'Driving License',ocr:0},
+ {g:'Optional',k:'FBR Docs: HP566, E-Hakmilik',ocr:0},
+ {g:'Optional',k:"Direct Cases: Seller's NRIC, RAMCI Search",ocr:1},
+ {g:'Optional',k:'Others: IBG Letter, Deviation Approval',ocr:0},
+ {g:'Optional',k:'Used Car Docs: Appx 3, Appx 4, Puspakom',ocr:1},
+ {g:'Optional',k:'Company Docs: Company Reso, M&A, SSM Search',ocr:1},
+ {g:'Optional',k:'Photo of Chattel (IHP)',ocr:0}
 ];
 
 const FLAGS=[
- {k:'LOU Reassignment',on:0},{k:'Promotion Package',on:0},
- {k:'Hold Handling Fee',on:0,stp:1},{k:'Used Car With Settlement',on:0,stp:1},
- {k:'Standing Instruction',on:0,stp:1},{k:'FBT',on:0,stp:1},
- {k:'FBR',on:1,stp:1},{k:'FD Pledge',on:0,stp:1},
- {k:'CRA Completed',on:0},{k:'Refund Deposit',on:0,stp:1},{k:'AP Indicator',on:0,stp:1}
+ {k:'LOU Reassignment',on:0},{k:'Promotion Package',on:0},{k:'Hold Handling Fee',on:0,stp:1},
+ {k:'Used Car With Settlement',on:0,stp:1},{k:'Standing Instruction',on:0,stp:1},
+ {k:'FBT',on:0,stp:1},{k:'FBR',on:1,stp:1},{k:'FD Pledge',on:0,stp:1},{k:'CRA Completed',on:0}
 ];
 
-const FILE_TOTAL=17, MAND=12, MAND_UP=12;
+const DCATS=['AGREEMENT - MASTER','AGREEMENT - GUARANTOR','INSURANCE','INVOICE - VEHICLE',
+ 'SECOND SCHEDULE PART I','COLLATERAL','CUSTOMER INFO','FACILITY','GUARANTOR','OTHERS'];
 
-let RULES=[],FIELDS=[],DEFECTS=[];
-const S={scn:'manual',page:'vsum',noGtee:0,expand:{r:0},dlg:null,
-  sync:{sel:{}},archAt:'14:02',pullAt:'',dseq:0,
-  busy:0,route:null,nextPhase:'',blocks:[]};
+const UPLOADED=17, AGE_DAYS=12, AGE_CAP=90;
+
+let RULES=[],FIELDS=[],CHECK=[],DEFECTS=[];
+const S={scn:'manual',noGtee:0,open:{vsum:1,def:1,chk:0},expand:0,dlg:null,
+  sync:{sel:{}},archAt:'14:02',pullAt:'',dseq:0,busy:0,route:null,phase:'',blocks:[],
+  addDef:{cat:'',ty:'',rect:0,ver:0,sr:'',cr:''},
+  custDel:'No',fullMt:'Yes',nav:'vsum'};
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 function reset(scn){
-  RULES=R0.map(r=>Object.assign({},r,{st:'',defNo:''}));
+  RULES=R0.map(r=>Object.assign({},r,{st:''}));
   FIELDS=F0.map(f=>Object.assign({},f));
-  DEFECTS=[];S.sync={sel:{}};S.expand={r:0};
-  S.route=null;S.busy=0;S.pullAt='';S.dseq=0;
-  S.noGtee = scn==='stp' ? 1 : 0;
-  FLAGS.forEach(f=>{ f.on = (scn==='manual' && f.k==='FBR') ? 1 : 0; });
+  CHECK=CK0.map(c=>Object.assign({},c,{on:0}));
+  DEFECTS=[];S.sync={sel:{}};S.route=null;S.busy=0;S.pullAt='';S.dseq=0;S.expand=0;
+  S.noGtee = scn==='stp'?1:0;
+  FLAGS.forEach(f=>{f.on=(scn==='manual'&&f.k==='FBR')?1:0;});
 }
 
 const rTotal=()=>RULES.length;
@@ -347,390 +429,498 @@ const rPend=()=>RULES.filter(r=>!r.pass&&r.st==='pending');
 const rFail=()=>RULES.filter(r=>!r.pass&&r.st!=='pending');
 const rSettled=()=>rTotal()-rPend().length;
 const usedJust=()=>RULES.filter(r=>r.act==='just').length;
-const line1OK=()=>rFail().length===0 && rPend().length===0;
-const noDefect=()=>rFail().filter(r=>!r.defNo);
+const rulesOK=()=>rFail().length===0&&rPend().length===0;
+const hasDefect=r=>DEFECTS.some(d=>d.rule===r.id);
+const unlinked=()=>rFail().filter(r=>!hasDefect(r));
 
-function fState(f){
-  const s=(f.sys||'').trim(), o=(f.ocr||'').trim();
-  if(!o) return 'noocr';
-  if(!s) return 'fill';
-  return s===o ? 'same' : 'diff';
-}
+function fState(f){const s=(f.sys||'').trim(),o=(f.ocr||'').trim();
+  if(!o)return 'noocr'; if(!s)return 'fill'; return s===o?'same':'diff';}
 const fMissing=()=>FIELDS.filter(f=>f.req&&!(f.sys||'').trim());
 const fFilled=()=>FIELDS.filter(f=>(f.sys||'').trim()).length;
+const ckOn=()=>CHECK.filter(c=>c.on).length;
+const ckMand=()=>CHECK.filter(c=>c.g==='Mandatory');
+const ckMandOn=()=>ckMand().filter(c=>c.on).length;
+const canNext=()=>fMissing().length===0 && ckMandOn()===ckMand().length;
 
 function pullRules(){
-  const done=rPend().map(r=>r.id);
-  rPend().forEach(r=>{ r.pass=1; r.st=''; });
+  const n=rPend().length; rPend().forEach(r=>{r.pass=1;r.st='';});
   S.pullAt=new Date().toTimeString().slice(0,5);
-  return done.length ? `${done.length} 条重新抽取完成` : '规则结论无变化';
+  return n?`${n} rule(s) re-extracted, conclusion updated`:'No change in rule conclusions';
 }
-function mkDefect(r){
-  if(r.defNo) return null;
-  S.dseq++; r.defNo='D-'+String(S.dseq).padStart(3,'0');
-  DEFECTS.push({no:r.defNo,rule:r.id,file:r.file,remark:r.issue||r.nm,rect:0,ver:0});
-  return r.defNo;
+function mkDefect(r,src){
+  if(hasDefect(r))return null;
+  S.dseq++;
+  DEFECTS.push({no:String(S.dseq),rule:r.id,code:r.dc,cat:r.dcat,type:r.dty,file:r.file,
+    sr:'',cr:r.issue||r.nm,src:src||'System',rect:0,ver:0,cd:'30-08-2026 09:02:31'});
+  return S.dseq;
 }
-
-/* STP 资格：9 项固定条件，只在 Next 时评估 */
 function eligibility(){
-  const flagOn=FLAGS.filter(f=>f.on&&f.stp);
+  const fo=FLAGS.filter(f=>f.on&&f.stp);
   const items=[
-    {ok:!flagOn.length, nm:'无非标分支标记', d:flagOn.map(f=>f.k).join('、')},
-    {ok:!!S.noGtee, nm:'无担保人', d:'本单有担保人 LIM AH KOW'},
-    {ok:1, nm:'客户类型 Individual', d:''},
-    {ok:1, nm:'Product Code 在白名单', d:''},
-    {ok:1, nm:'Panel Dealer', d:''},
-    {ok:1, nm:'贷款金额未超上限', d:''},
-    {ok:line1OK(), nm:'规则全部通过', d:rFail().length+' 条不通过'},
-    {ok:DEFECTS.length===0, nm:'无缺陷记录', d:DEFECTS.length+' 条缺陷'},
-    {ok:usedJust()===0, nm:'未使用 Justification', d:usedJust()+' 条经豁免放行'}
+    {ok:!fo.length,nm:'No non-standard case flags',d:fo.map(f=>f.k).join(', ')},
+    {ok:!!S.noGtee,nm:'No guarantor',d:'Guarantor LIM AH KOW present'},
+    {ok:1,nm:'Customer type is Individual',d:''},
+    {ok:1,nm:'Product code in STP whitelist',d:''},
+    {ok:1,nm:'Panel dealer',d:''},
+    {ok:1,nm:'Loan amount within cap',d:''},
+    {ok:rulesOK(),nm:'All rules passed',d:rFail().length+' not passed'},
+    {ok:DEFECTS.length===0,nm:'No defect record',d:DEFECTS.length+' defect(s)'},
+    {ok:usedJust()===0,nm:'No justification used',d:usedJust()+' justified'},
+    {ok:AGE_DAYS<=AGE_CAP,nm:`Case age within ${AGE_CAP} days`,d:`${AGE_DAYS} days`}
   ];
-  return {items, ok:items.every(i=>i.ok), blockers:items.filter(i=>!i.ok)};
+  return {items,ok:items.every(i=>i.ok),blockers:items.filter(i=>!i.ok)};
 }
 
+/* ═══ RENDER ═══ */
 function render(){
   document.querySelectorAll('#scnSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===S.scn));
-  renderNav();renderPage();renderRight();renderFooter();
+  renderRail();renderMain();renderSide();renderFoot();
 }
 
-function renderNav(){
-  const N=[
-    ['Checking & Modification',[['vsum','Verification Summary','p'],['def','Defect List','d']]],
-    ['Data Maintenance',[['dm','Facility / Collateral / Insurance','f'],['appsum','Application Summary'],
-      ['hirer','Hirer/Guarantor Info'],['appr','Approval Information']]],
-    ['Disbursement Maintenance',[['dsum','Summary'],['tmaint','Transaction Maintenance'],
-      ['treview','Transaction Review'],['tlog','Transaction Log']]]
-  ];
-  let h='';
-  N.forEach(([g,items])=>{
-    h+=`<h5>${g}</h5>`;
+const NAV=[
+  ['Checking & Modification',[['vsum','Verification Summary','v'],['def','Defect List','d'],['chk','File Check List','c']]],
+  ['Data Maintenance',[['appsum','Application Summary'],['hirer','Hirer/Guarantor Info'],['fac','Facility Information'],
+    ['dealer','Dealer/Seller Info'],['fis','FIS & Collateral & Purchase Info'],['appr','Approval Information']]],
+  ['Disbursement Maintenance',[['dsum','Summary'],['tmaint','Transaction Maintenance'],['treview','Transaction Review'],
+    ['mdlog','Maintenance & Disbursement Interface Log'],['tlog','Transaction Log'],['tools','Action Tools']]]
+];
+
+function renderRail(){
+  let h=`<div class="navcard"><div class="nh">☰ Navigation</div>`;
+  NAV.forEach(([g,items])=>{
+    h+=`<h6>${g}</h6>`;
     items.forEach(([k,nm,kind])=>{
       let c='';
-      if(kind==='p') c=`<span class="cnt ${line1OK()?'ok':'err'}">${line1OK()?'✓':rFail().length}</span>`;
-      if(kind==='d') c=`<span class="cnt ${DEFECTS.length?'err':''}">${DEFECTS.length}</span>`;
-      if(kind==='f') c=`<span class="cnt ${fMissing().length?'err':'ok'}">${fFilled()}/${FIELDS.length}</span>`;
-      h+=`<button data-page="${k}" aria-pressed="${S.page===k}"><span>${nm}</span>${c}</button>`;
+      if(kind==='v') c=`<span class="n ${rulesOK()?'ok':'err'}">${rulesOK()?'✓':rFail().length}</span>`;
+      if(kind==='d') c=`<span class="n ${DEFECTS.length?'err':''}">${DEFECTS.length}</span>`;
+      if(kind==='c') c=`<span class="n ${ckMandOn()===ckMand().length?'ok':''}">${ckOn()}/${CHECK.length}</span>`;
+      h+=`<button data-go="${k}" class="${S.nav===k?'on':''}"><span>${nm}</span>${c}</button>`;
     });
   });
-  h+=`<div class="links"><a class="hi" data-link="fc">📎 Attachment（文件中心）→</a><a>CRA Report</a><a>E-acceptance</a></div>`;
-  $('nav').innerHTML=h;
+  h+=`</div><div class="linkcard"><a data-link="fc">Attachment</a><a>CRA Report</a><a class="off">E-acceptance</a></div>`;
+  $('rail').innerHTML=h;
 }
 
-function pgVsum(){
-  const fl=rFail(), pd=rPend(), l1=line1OK();
-  const pct=Math.round(rPass()/rTotal()*100);
-  const nd=noDefect().length;
+function mod(k,icon,title,body,right,badge,isnew){
+  const o=!!S.open[k];
+  return `<div class="mod ${body?'':'stub'}" id="m-${k}">
+    <div class="mod-h" role="button" tabindex="0" data-tog="${k}">
+      <span class="car">${o?'⌄':'›'}</span><span class="mi">${icon}</span><span class="mt">${title}</span>
+      ${isnew?'<span class="new">NEW</span>':''}${badge||''}
+      <span class="mr">${right||''}</span></div>
+    ${o&&body?`<div class="mod-b">${body}</div>`:''}</div>`;
+}
+
+function vsumBody(){
+  const fl=rFail(),pd=rPend(),ok=rulesOK(),ul=unlinked().length;
   const kpi=(v,k,cls,sub)=>`<div class="kp"><div class="v ${cls||''}">${v}</div>
     <div class="k">${k}${sub?`<span class="ks">${sub}</span>`:''}</div></div>`;
-  const headline = l1 ? '文件与规则全部通过'
-    : pd.length&&!fl.length ? `${pd.length} 条重新抽取中`
-    : `${fl.length} 条规则不通过${pd.length?` · ${pd.length} 条处理中`:''}`;
-
-  return `<div class="sumcard ${l1?'ok':(fl.length?'bad':'wait')}">
-    <div class="sh">
-      <span class="ic">${l1?'✅':(fl.length?'⚠️':'⏳')}</span>
-      <span class="w"><div class="t">${headline}</div>
-        <div class="d">规则意见存档于 ${S.archAt}${S.pullAt?` · 上次刷新 ${S.pullAt}`:''}</div></span>
-      <span class="rt">
-        <span class="bar"><i class="${l1?'':'part'}" style="width:${pct}%"></i></span>
-        <span class="pv ${l1?'ok':'err'}">${rPass()}/${rTotal()}</span>
-        <button class="ant-btn ant-btn-sm" data-act="refresh" ${S.busy?'disabled':''}>${S.busy?'刷新中…':'⟳ 刷新规则'}</button>
-        <button class="ant-btn ant-btn-sm ant-btn-primary" data-link="fc">去文件中心 →</button>
-      </span>
+  const st=ok?'All rules passed':(fl.length?`${fl.length} rule(s) not passed`:`${pd.length} re-extracting`);
+  return `<div class="vs-top">
+      <span><div class="st ${ok?'ok':(fl.length?'warn':'wait')}">${st}</div>
+        <div class="sd">Rule opinions archived at ${S.archAt} in File Center${S.pullAt?` · Last refresh ${S.pullAt}`:''}</div></span>
+      <span class="r">
+        <button class="btn btn-sm" data-act="refresh" ${S.busy?'disabled':''}>${S.busy?'Refreshing…':'⟳ Refresh Rules'}</button>
+        <button class="btn btn-sm btn-pri" data-link="fc">Open File Center</button></span>
     </div>
     <div class="kpis">
-      ${kpi(`${MAND_UP}/${MAND}`,'必备文件',MAND_UP>=MAND?'ok':'err')}
-      ${kpi(FILE_TOTAL,'已上传文件')}
-      ${kpi(rTotal(),'规则总数')}
-      ${kpi(rSettled(),'已有结论','',pd.length?`${pd.length} 条处理中`:'')}
-      ${kpi(rPass(),'通过','ok')}
-      ${kpi(fl.length,'不通过',fl.length?'err':'', nd?`${nd} 条未建缺陷`:'')}
+      ${kpi(`${ckMandOn()}/${ckMand().length}`,'Mandatory Docs',ckMandOn()>=ckMand().length?'ok':'err')}
+      ${kpi(UPLOADED,'Uploaded Files')}
+      ${kpi(rTotal(),'Total Rules')}
+      ${kpi(rSettled(),'Concluded','',pd.length?`${pd.length} in progress`:'')}
+      ${kpi(rPass(),'Passed','ok')}
+      ${kpi(fl.length,'Not Passed',fl.length?'err':'',ul?`${ul} without defect`:'')}
     </div>
-    <button class="sx" data-exp="r"><span class="car">${S.expand.r?'▼':'▶'}</span>
-      ${S.expand.r?'收起明细':'查看明细'}
-      ${!S.expand.r&&nd?`<span class="sxr">${nd} 条不通过尚未创建 Defect</span>`:''}</button>
-    ${S.expand.r?`<div class="sb">
-      ${nd>1?`<div class="batch"><span>${nd} 条不通过尚未创建 Defect</span>
-        <button class="ant-btn ant-btn-sm" data-act="defall">为全部 ${nd} 条创建 Defect</button></div>`:''}
+    <button class="btn btn-sm" data-act="expand">${S.expand?'Collapse detail':'View detail'}</button>
+    ${S.expand?`<div style="margin-top:14px">
+      ${ul>1?`<div class="batchbar"><span>${ul} rule(s) not passed without a defect record</span>
+        <button class="btn btn-sm" data-act="defall">Create All (${ul})</button></div>`:''}
       ${[...fl,...pd].length?[...fl,...pd].map(r=>{
-        const isP=r.st==='pending';
-        return `<div class="frow"><span class="fn"><b class="mono">${r.id}</b> ${esc(r.nm)}
-          <span class="fs">${esc(r.file)}${r.issue?' · '+esc(r.issue):''}</span></span>
-        <span class="rt"><span class="ant-tag ${isP?'tg-b':'tg-r'}">${isP?'处理中':'不通过'}</span>
-          ${isP?'':(r.defNo
-              ? `<span class="ant-tag tg-y mono">${r.defNo}</span><button class="ant-btn ant-btn-sm" data-page="def">看缺陷 →</button>`
-              : `<button class="ant-btn ant-btn-sm ant-btn-dangerous" data-mkdef="${r.id}">创建 Defect</button>`)}
-          <button class="ant-btn ant-btn-sm" data-fix="${r.id}" ${isP?'disabled':''}>去文件中心 →</button></span>
-      </div>`;}).join(''):`<div class="muted" style="padding:4px 2px">全部 ${rTotal()} 条规则已通过。</div>`}
-    </div>`:''}
-  </div>`;
+        const p=r.st==='pending',d=DEFECTS.find(x=>x.rule===r.id);
+        return `<div class="rrow"><span class="n"><b class="mono">${r.id}</b> ${esc(r.nm)}
+          <span class="s">${esc(r.file)}${r.issue?' · '+esc(r.issue):''}</span></span>
+          <span class="r"><span class="tag ${p?'tag-blue':'tag-err'}">${p?'In progress':'Not passed'}</span>
+          ${p?'':(d?`<span class="tag tag-warn mono">Defect #${d.no}</span><button class="btn btn-sm" data-go="def">View</button>`
+                  :`<button class="btn btn-sm" data-mkdef="${r.id}">Create Defect</button>`)}
+          <button class="btn btn-sm" data-fix="${r.id}" ${p?'disabled':''}>Open in File Center</button></span></div>`;
+      }).join(''):`<div class="muted">All ${rTotal()} rules passed.</div>`}
+    </div>`:''}`;
 }
 
-function pgDm(){
-  const grps=[...new Set(FIELDS.map(f=>f.g))];
-  let rows='';
-  grps.forEach(g=>{
-    rows+=`<tr class="grp"><td colspan="3">${esc(g)}</td></tr>`;
-    FIELDS.filter(f=>f.g===g).forEach(f=>{
-      const miss=f.req&&!(f.sys||'').trim();
-      rows+=`<tr><td>${esc(f.k)}${f.req?'<span class="reqd">*</span>':''}</td>
-        <td><input class="fin ${miss?'bad':''}" data-fld="${esc(f.k)}" value="${esc(f.sys)}"
-             placeholder="${miss?'必填':''}"></td>
-        <td><span class="fv ${(f.ocr||'').trim()?'':'empty'}">${(f.ocr||'').trim()?esc(f.ocr):'—'}</span></td></tr>`;
-    });
-  });
-  return `<div class="card"><div class="hd"><span class="t">Data Maintenance</span>
-    <span class="sub">${fFilled()}/${FIELDS.length} 已填${fMissing().length?` · ${fMissing().length} 项必填未填`:''}</span>
-    <span class="r"><button class="ant-btn ant-btn-primary ant-btn-sm" data-act="sync">Sync from OCR</button></span></div>
-  <div class="bd p0"><div class="tw"><table style="min-width:640px">
-    <thead><tr><th style="width:230px">字段</th><th style="width:240px">系统当前值</th><th>OCR 抽取值</th></tr></thead>
-    <tbody>${rows}</tbody></table></div></div></div>`;
+function defBody(){
+  if(!DEFECTS.length) return `<div class="tot"><span class="t">Total: <b>0</b> defect(s)</span>
+    <span class="r"><button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button></span></div>
+    <div class="tw"><table><thead><tr><th style="width:60px">NO.</th><th style="width:80px">SOURCE</th>
+      <th style="width:180px">CATEGORY</th><th style="width:200px">TYPE</th><th style="width:90px">RECTIFIED</th>
+      <th style="width:80px">VERIFIED</th><th>SALES REMARK</th><th style="width:110px">ACTION</th></tr></thead>
+      <tbody><tr><td colspan="8"><div class="nodata"><span class="ic">🗒</span>No data</div></td></tr></tbody></table></div>`;
+  return `<div class="tot"><span class="t">Total: <b>${DEFECTS.length}</b> defect(s)${unlinked().length?` · ${unlinked().length} rule(s) still unlinked`:''}</span>
+    <span class="r"><button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button></span></div>
+  <div class="tw"><table style="min-width:1080px"><thead><tr><th style="width:56px">NO.</th><th style="width:80px">SOURCE</th>
+    <th style="width:76px">RULE</th><th style="width:110px">DEFECT CODE</th><th style="width:180px">CATEGORY</th>
+    <th style="width:190px">TYPE</th><th style="width:90px">RECTIFIED</th><th style="width:80px">VERIFIED</th>
+    <th style="width:150px">CRA REMARK</th><th style="width:120px">ACTION</th></tr></thead>
+  <tbody>${DEFECTS.map(d=>`<tr><td class="mono">${d.no}</td>
+    <td><span class="tag ${d.src==='System'?'tag-blue':''}" style="font-size:11px">${d.src}</span></td>
+    <td class="mono">${esc(d.rule||'—')}</td><td class="mono">${esc(d.code||'—')}</td>
+    <td style="font-size:12px">${esc(d.cat)}</td><td style="font-size:12px">${esc(d.type)}</td>
+    <td>${d.rect?'<span class="tag tag-ok">Y</span>':'<span class="tag tag-err">N</span>'}</td>
+    <td>${d.ver?'<span class="tag tag-ok">Y</span>':'<span class="tag">N</span>'}</td>
+    <td style="font-size:12px">${esc(d.cr)}</td>
+    <td>${d.rect&&d.ver?'<span class="muted">Closed</span>'
+      :d.rect?`<button class="btn btn-sm" data-ver="${d.no}">Verify</button>`
+      :`<button class="btn btn-sm" data-rect="${d.no}">Rectify</button>`}</td></tr>`).join('')}
+  </tbody></table></div>`;
 }
 
-function pgDef(){
-  if(!DEFECTS.length) return `<div class="card"><div class="hd"><span class="t">Defect List</span>
-    <span class="r"><button class="ant-btn ant-btn-sm" data-act="adddef">+ Add Defect</button></span></div>
-    <div class="bd"><div class="muted" style="text-align:center;padding:22px">暂无缺陷记录</div></div></div>`;
-  return `<div class="card"><div class="hd"><span class="t">Defect List</span>
-    <span class="sub">${DEFECTS.filter(d=>!d.rect||!d.ver).length} 条未闭环</span>
-    <span class="r"><button class="ant-btn ant-btn-sm" data-act="adddef">+ Add Defect</button></span></div>
-  <div class="bd p0"><div class="tw">
-    <table style="min-width:760px"><thead><tr><th style="width:76px">NO.</th>
-      <th style="width:80px">RULE</th><th style="width:200px">FILE</th><th>REMARK</th>
-      <th style="width:88px">RECTIFIED</th><th style="width:80px">VERIFIED</th><th style="width:110px">ACTION</th></tr></thead>
-    <tbody>${DEFECTS.map(d=>`<tr><td class="mono">${esc(d.no)}</td>
-      <td class="mono">${esc(d.rule||'—')}</td>
-      <td style="font-size:12px">${esc(d.file)}</td><td style="font-size:12px">${esc(d.remark)}</td>
-      <td>${d.rect?'<span class="ant-tag tg-g">Y</span>':'<span class="ant-tag tg-r">N</span>'}</td>
-      <td>${d.ver?'<span class="ant-tag tg-g">Y</span>':'<span class="ant-tag">N</span>'}</td>
-      <td>${d.rect&&d.ver?'<span class="muted">已闭环</span>'
-        : d.rect?`<button class="ant-btn ant-btn-sm" data-ver="${esc(d.no)}">复验通过</button>`
-        :`<button class="ant-btn ant-btn-sm" data-rect="${esc(d.no)}">标记已整改</button>`}</td></tr>`).join('')}
-    </tbody></table></div></div></div>`;
+function chkBody(){
+  const grps=['Mandatory','Conditional','Optional'];
+  return `<div class="chk-h">Checked: <b>${ckOn()} / ${CHECK.length}</b>
+    ${ckMandOn()<ckMand().length?` · <span style="color:var(--err)">${ckMand().length-ckMandOn()} mandatory outstanding</span>`:''}</div>
+    ${grps.map(g=>`<div class="chk-grp">${g}</div><div class="chk-grid">
+      ${CHECK.filter(c=>c.g===g).map(c=>`<label class="ck ${c.on?'on':''}" data-ck="${esc(c.k)}">
+        <span class="bx">${c.on?'✓':''}</span><span>${esc(c.k)}</span></label>`).join('')}
+    </div>`).join('')}`;
 }
 
-function pgStub(){return `<div class="card"><div class="hd"><span class="t">${S.page}</span></div>
-  <div class="bd"><div class="muted">原型未实现此页。</div></div></div>`;}
-
-function renderPage(){
-  const P={vsum:pgVsum,dm:pgDm,def:pgDef}[S.page]||pgStub;
-  $('content').innerHTML=P();
+function dmBody(grp){
+  const gs=[].concat(grp);
+  const fs=FIELDS.filter(f=>gs.includes(f.g));
+  if(!fs.length) return `<div class="muted">Not implemented in this prototype.</div>`;
+  const sub=gs.length>1;
+  const block=g=>`${sub?`<div class="fgrp">${esc(g)}</div>`:''}<div class="fgrid">${FIELDS.filter(f=>f.g===g).map(f=>{
+    const miss=f.req&&!(f.sys||'').trim(), st=fState(f);
+    return `<div class="fld"><label>${esc(f.k)}${f.req?'<span class="req"> *</span>':''}</label>
+      <input class="fin ${miss?'bad':''}" data-fld="${esc(f.k)}" value="${esc(f.sys)}" placeholder="${miss?'Required':''}">
+      <span class="fhint ${st==='diff'?'diff':''}">${(f.ocr||'').trim()
+        ? 'OCR: '+esc(f.ocr)+(st==='diff'?'  (differs)':'') : 'OCR: —'}</span></div>`;
+  }).join('')}</div>`;
+  return gs.map(block).join('')+
+  `<div style="margin-top:14px"><button class="btn btn-sm btn-pri" data-act="sync">Sync from OCR</button></div>`;
 }
 
-function renderRight(){
-  let h='<h5>Case Flags</h5>';
-  FLAGS.forEach((f,i)=>{h+=`<label class="flag ${f.on?'on':''}"><input type="checkbox" ${f.on?'checked':''} data-flag="${i}"><span>${f.k}</span></label>`;});
-  h+='<div class="rp-div"></div>';
-  [['App. Ref. No.','TTI/HP/2026/Y0273410'],['Product Code','F143'],['Loan Amount','88,000.00'],
-   ['Applicant','TAN WEI MING'],['Guarantor',S.noGtee?'—':'LIM AH KOW']].forEach(([k,v])=>{
-    h+=`<div class="rp-kv"><span class="k">${k}</span><span class="v">${v}</span></div>`;});
-  $('rightp').innerHTML=h;
-}
-
-function renderFooter(){
-  const note = S.route
-    ? (S.route.ok ? '已按 STP 触发放款接口' : '已路由至 Authorizer')
-    : (line1OK() ? '' : `文件与规则还有 ${rFail().length} 条不通过`);
-  $('footer').innerHTML=`<span class="fnote">${note}</span><span class="r">
-    <button class="ant-btn">Save</button>
-    <button class="ant-btn" data-act="sync">Sync from OCR</button>
-    <button class="ant-btn ant-btn-dangerous">To Sales Defect</button>
-    <button class="ant-btn ant-btn-primary" data-act="next">Next →</button></span>`;
-}
-
-/* ── Sync from OCR：按字段区域平铺，勾选即采用 OCR 值 ── */
-function syncable(f){return fState(f)!=='noocr';}
-function openSync(){
-  FIELDS.forEach(f=>{ if(S.sync.sel[f.k]===undefined){
-    const st=fState(f); S.sync.sel[f.k] = (st==='same'||st==='fill') ? 1 : 0; } });
-  S.dlg='sync'; $('modal').className='modal wide'; $('mask').classList.remove('hidden'); drawSync();
-}
-function drawSync(){
-  const grps=[...new Set(FIELDS.map(f=>f.g))];
-  let rows='';
-  grps.forEach(g=>{
-    rows+=`<tr class="grp"><td colspan="4">${esc(g)}</td></tr>`;
-    FIELDS.filter(f=>f.g===g).forEach(f=>{
-      const st=fState(f), on=!!S.sync.sel[f.k];
-      if(st==='noocr'){
-        rows+=`<tr class="na"><td><span class="bx dis"></span></td>
-          <td>${esc(f.k)}${f.req?'<span class="reqd">*</span>':''}</td>
-          <td class="fv ${(f.sys||'').trim()?'':'empty'}">${(f.sys||'').trim()?esc(f.sys):'（未填）'}</td>
-          <td class="fv empty">—</td></tr>`;
+function renderMain(){
+  let h='';
+  NAV.forEach(([g,items])=>{
+    h+=`<div class="seclabel">${g}</div>`;
+    items.forEach(([k,nm])=>{
+      if(k==='vsum'){
+        const b=rulesOK()?`<span class="badge ok">✓</span>`:`<span class="badge err">${rFail().length}</span>`;
+        h+=mod(k,'◈','Verification Summary',vsumBody(),
+          `<button class="btn btn-sm" data-tog="vsum">${S.open.vsum?'Collapse':'Expand'}</button>`,b,1);
+      }else if(k==='def'){
+        h+=mod(k,'⚠','Defect List',defBody(),
+          `<button class="btn btn-sm" data-tog="def">${S.open.def?'Collapse':'Expand'}</button>`,
+          DEFECTS.length?`<span class="badge err">${DEFECTS.length}</span>`:'');
+      }else if(k==='chk'){
+        h+=mod(k,'☑','File Check List',chkBody(),
+          `<button class="btn btn-sm" data-tog="chk">${S.open.chk?'Collapse':'Expand'}</button>`,
+          ckMandOn()<ckMand().length?`<span class="badge err">${ckMand().length-ckMandOn()}</span>`:`<span class="badge ok">✓</span>`);
       }else{
-        rows+=`<tr class="${st==='diff'?'diff':''}">
-          <td><span class="bx ${on?'on':''}" data-sel="${esc(f.k)}">${on?'✓':''}</span></td>
-          <td>${esc(f.k)}${f.req?'<span class="reqd">*</span>':''}</td>
-          <td class="fv ${(f.sys||'').trim()?'':'empty'}">${(f.sys||'').trim()?esc(f.sys):'（未填）'}</td>
-          <td class="fv">${esc(f.ocr)}</td></tr>`;
+        const map={fis:'Collateral Info',fac:'Facility Information',dealer:'Seller Info',hirer:'Hirer Info'};
+        const grp={fis:['Collateral Info','Insurance Info'],fac:'Facility Info',dealer:'Seller Info',hirer:'Hirer Info'}[k];
+        const icons={appsum:'▤',hirer:'⚇',fac:'▥',dealer:'▣',fis:'◈',appr:'✓',
+          dsum:'▤',tmaint:'✎',treview:'▦',mdlog:'☰',tlog:'▧',tools:'⚙'};
+        const right = k==='dealer'?'<span class="btn btn-txt" style="font-size:13px">⟳ Re-query</span>':'';
+        h+=mod(k,icons[k]||'▤',nm,grp?dmBody(grp):'',right);
       }
     });
   });
-  const n=FIELDS.filter(f=>syncable(f)&&S.sync.sel[f.k]).length;
-  $('mT').textContent='Sync from OCR';
-  $('mB').innerHTML=`<div class="tw"><table class="syn">
-    <thead><tr><th style="width:40px"></th><th style="width:200px">字段</th>
-      <th style="width:220px">系统当前值</th><th>OCR 抽取值</th></tr></thead>
-    <tbody>${rows}</tbody></table></div>`;
-  $('mF').innerHTML=`<span class="lf">已选 ${n} 项</span>
-    <button class="ant-btn" data-act="mx">取消</button>
-    <button class="ant-btn ant-btn-primary" data-act="dosync">同步</button>`;
-}
-function doSync(){
-  let n=0;
-  FIELDS.forEach(f=>{ if(syncable(f)&&S.sync.sel[f.k]&&(f.ocr||'').trim()){ f.sys=f.ocr; n++; } });
-  closeModal(); render(); toast(`已同步 ${n} 个字段`);
+  $('main').innerHTML=h;
 }
 
-/* ── 文件中心处置 ── */
+function renderSide(){
+  let h=`<div class="sc"><div class="sh"><span>LOU Renewal</span><span class="cnt">16</span></div>`;
+  FLAGS.forEach((f,i)=>{h+=`<label class="fl ${f.on?'on':''}" data-flag="${i}"><span class="bx">${f.on?'✓':''}</span><span>${f.k}</span></label>`;});
+  h+=`<div class="sdiv"></div>
+    <div class="yn"><span>Customer Deleted</span><span class="ynseg">
+      <button data-yn="custDel|Yes" aria-pressed="${S.custDel==='Yes'}">Yes</button>
+      <button data-yn="custDel|No" aria-pressed="${S.custDel==='No'}">No</button></span></div>
+    <div class="yn"><span>Full Maintenance</span><span class="ynseg">
+      <button data-yn="fullMt|Yes" aria-pressed="${S.fullMt==='Yes'}">Yes</button>
+      <button data-yn="fullMt|No" aria-pressed="${S.fullMt==='No'}">No</button></span></div>
+    <div class="yn"><span>CRA Remark</span><span class="btn btn-txt">Edit</span></div>
+    <div class="muted">—</div></div>`;
+  h+=`<div class="sc">
+    ${[['App. Ref. No.','BKI/HP/2026/Y0063327'],['Product Code','FINP'],
+       ['Status','Pending Checking and Maintenance'],['Applicant Name','TAN WEI MING'],
+       ['Guarantor',S.noGtee?'—':'LIM AH KOW'],['Case Age',AGE_DAYS+' days']]
+      .map(([k,v])=>`<div class="kv"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('')}
+    <div style="text-align:center;color:var(--ink-4);margin-top:8px">⌄</div></div>`;
+  $('side').innerHTML=h;
+}
+
+function renderFoot(){
+  const ok=canNext(),left=[];
+  if(fMissing().length) left.push(`${fMissing().length} required field(s) empty`);
+  if(ckMandOn()<ckMand().length) left.push(`${ckMand().length-ckMandOn()} mandatory doc(s) unchecked`);
+  const note=S.route?(S.route.ok?'Disbursement triggered via STP':'Routed to Authorizer'):(ok?'':left.join(' · '));
+  $('foot').innerHTML=`<select><option>-Select-</option><option>Reassign</option><option>Hold</option></select>
+    <span class="fn">${note}</span>
+    <span class="r"><button class="btn">Save</button><button class="btn">Exit Application</button>
+      <button class="btn">To CRA Defect</button><button class="btn">To Sales Defect</button>
+      <button class="btn btn-pri" data-act="next" ${ok?'':'disabled'}
+        title="${ok?'Submit':'Complete required content first'}">Next</button></span>`;
+}
+
+/* ═══ MODALS ═══ */
+function openM(cls,title,sub,warn){
+  $('modal').className='modal'+(cls?' '+cls:'');
+  $('mT').innerHTML=title+'<button class="x" data-act="mx">✕</button>';
+  $('mSub').innerHTML=(sub?`<div class="msub">${sub}</div>`:'')+(warn?`<div class="mwarn">${warn}</div>`:'');
+  $('mask').classList.remove('hidden');
+}
+function closeM(){$('mask').classList.add('hidden');S.dlg=null;}
+
+/* OCR Data Sync */
+const syncable=f=>fState(f)!=='noocr';
+function openSync(){
+  FIELDS.forEach(f=>{if(S.sync.sel[f.k]===undefined){const st=fState(f);S.sync.sel[f.k]=(st==='same'||st==='fill')?1:0;}});
+  S.dlg='sync'; openM('','OCR Data Sync','Comparing manual entry with detected document data.',
+    'Selecting a checkbox means applying the OCR value to replace the current manual value.');
+  drawSync();
+}
+function drawSync(){
+  const grps=[...new Set(FIELDS.map(f=>f.g))];
+  let h='';
+  grps.forEach(g=>{
+    const gf=FIELDS.filter(f=>f.g===g&&syncable(f));
+    const all=gf.length&&gf.every(f=>S.sync.sel[f.k]);
+    h+=`<div class="sync-g">${g}</div><div class="tw" style="border:0"><table class="syn">
+      <thead><tr><th style="width:44px"><span class="bx ${all?'on':''}" data-gsel="${esc(g)}">${all?'✓':''}</span></th>
+        <th style="width:210px">Field Name</th><th style="width:200px">Current (Manual)</th>
+        <th>OCR Value</th><th style="width:100px;text-align:right">Status</th></tr></thead><tbody>`;
+    FIELDS.filter(f=>f.g===g).forEach(f=>{
+      const st=fState(f),on=!!S.sync.sel[f.k];
+      if(st==='noocr'){
+        h+=`<tr class="na"><td><span class="bx dis"></span></td><td>${esc(f.k)}</td>
+          <td>${(f.sys||'').trim()?esc(f.sys):'<span class="emptyv">(Empty)</span>'}</td>
+          <td><span class="emptyv">—</span></td><td style="text-align:right"><span class="st">NO OCR</span></td></tr>`;
+      }else{
+        h+=`<tr class="${on?'sel':''}"><td><span class="bx ${on?'on':''}" data-sel="${esc(f.k)}">${on?'✓':''}</span></td>
+          <td>${esc(f.k)}</td>
+          <td>${(f.sys||'').trim()?esc(f.sys):'<span class="emptyv">(Empty)</span>'}</td>
+          <td>${esc(f.ocr)}</td>
+          <td style="text-align:right"><span class="st ${st==='diff'?'cf':''}">${st==='diff'?'CONFLICT':'SYNC OK'}</span></td></tr>`;
+      }
+    });
+    h+='</tbody></table></div>';
+  });
+  const n=FIELDS.filter(f=>syncable(f)&&S.sync.sel[f.k]).length;
+  $('mB').innerHTML=h;
+  $('mF').innerHTML=`<span class="lf">${n} field(s) selected</span>
+    <button class="btn" data-act="mx">Cancel</button>
+    <button class="btn btn-pri" data-act="dosync">Apply</button>`;
+}
+function doSync(){
+  let n=0; FIELDS.forEach(f=>{if(syncable(f)&&S.sync.sel[f.k]&&(f.ocr||'').trim()){f.sys=f.ocr;n++;}});
+  closeM();render();toast(`${n} field(s) updated from OCR`);
+}
+
+/* Add Defect */
+function openAdd(){
+  S.dlg='add'; S.addDef={cat:'',ty:'',rect:0,ver:0,sr:'',cr:''};
+  openM('sm','Add Defect'); drawAdd();
+}
+function drawAdd(){
+  const a=S.addDef;
+  $('modal').className='modal';
+  $('mB').innerHTML=`<div class="dgrid">
+    <div class="dfield"><label>Defect Category <span class="req">*</span></label>
+      <select class="dsel" id="aCat"><option value=""></option>
+        ${DCATS.map(c=>`<option ${a.cat===c?'selected':''}>${c}</option>`).join('')}</select></div>
+    <div class="dfield"><label>Defect Type <span class="req">*</span></label>
+      <select class="dsel" id="aTy"><option value=""></option>
+        ${[...new Set(R0.map(r=>r.dty))].map(t=>`<option ${a.ty===t?'selected':''}>${esc(t)}</option>`).join('')}</select></div>
+    <div class="dfield"><label>Rectified</label>
+      <label class="dchk" data-atg="rect"><span class="bx ${a.rect?'on':''}">${a.rect?'✓':''}</span>Mark as Rectified</label></div>
+    <div class="dfield"><label>Verified</label>
+      <label class="dchk" data-atg="ver"><span class="bx ${a.ver?'on':''}">${a.ver?'✓':''}</span>Mark as Verified</label></div>
+    <div class="dfield"><label>Rectified Date</label>
+      <input class="ddate" placeholder="Select date" ${a.rect?'':'disabled'} value="${a.rect?'30-08-2026':''}"></div>
+    <div class="dfield"><label>Verified Date</label>
+      <input class="ddate" placeholder="Select date" ${a.ver?'':'disabled'} value="${a.ver?'30-08-2026':''}"></div>
+    <div class="dfield dfull" style="max-width:50%"><label>Create Date <span class="req">*</span></label>
+      <input class="ddate" value="30-08-2026 09:02:31" disabled></div>
+    <div class="dfield dfull"><label>Sales Remark</label>
+      <textarea class="dta" id="aSr" maxlength="500" placeholder="Enter Sales Remark">${esc(a.sr)}</textarea>
+      <div class="dcount"><span id="aSrN">${a.sr.length}</span> / 500</div></div>
+    <div class="dfield dfull"><label>CRA Remark</label>
+      <textarea class="dta" id="aCr" maxlength="500" placeholder="Enter CRA Remark">${esc(a.cr)}</textarea>
+      <div class="dcount"><span id="aCrN">${a.cr.length}</span> / 500</div></div>
+  </div>`;
+  $('mF').innerHTML=`<button class="btn" data-act="mx">Cancel</button>
+    <button class="btn btn-pri" data-act="doadd">OK</button>`;
+}
+function doAdd(){
+  const cat=$('aCat').value, ty=$('aTy').value;
+  if(!cat||!ty){toast('Defect Category and Type are required');return;}
+  S.dseq++;
+  DEFECTS.push({no:String(S.dseq),rule:'',code:'—',cat,type:ty,file:'—',
+    sr:$('aSr').value.trim(),cr:$('aCr').value.trim(),src:'User',
+    rect:S.addDef.rect?1:0,ver:S.addDef.ver?1:0,cd:'30-08-2026 09:02:31'});
+  closeM();S.open.def=1;render();toast('Defect #'+S.dseq+' created (Source: User)');
+}
+
+/* File Center rule handling */
 function openFix(id){
   const r=RULES.find(x=>x.id===id); if(!r) return;
   S.dlg={id,pick:null,who:'self',note:'',bad:0};
-  $('modal').className='modal fcx'; $('mask').classList.remove('hidden'); drawFix();
+  openM('fcx','<span class="fcb">FILE CENTER</span>Rule Handling'); drawFix();
 }
 function drawFix(){
-  const d=S.dlg, r=RULES.find(x=>x.id===d.id);
-  $('mT').innerHTML=`<span class="fcb">文件中心</span>规则处置　<span class="mono" style="font-size:13px;color:var(--text-3)">${r.id}</span>`;
-  $('mB').innerHTML=`
-    <div class="pre"><span class="lb">规则</span>${esc(r.nm)}
+  const d=S.dlg,r=RULES.find(x=>x.id===d.id);
+  $('modal').className='modal fcx';
+  $('mB').innerHTML=`<div class="pre"><span class="lb">RULE</span><b class="mono">${r.id}</b> ${esc(r.nm)}
       <div class="muted" style="margin-top:3px">${esc(r.file)}</div></div>
-    ${r.issue?`<div class="pre"><span class="lb">不通过原因</span>${esc(r.issue)}</div>`:''}
-    <div class="dopt ${d.pick==='file'?'on':''}" data-pick="file"><span class="rb"></span>
-      <span><span class="dn">换文件</span>
+    ${r.issue?`<div class="pre"><span class="lb">REASON</span>${esc(r.issue)}</div>`:''}
+    <div class="opt ${d.pick==='file'?'on':''}" data-pick="file"><span class="rb"></span>
+      <span><span class="on2">Replace document</span>
         ${d.pick==='file'?`<div class="sub2">
-          <label><input type="radio" name="who" ${d.who==='self'?'checked':''} data-who="self"><span>CRA 现场直接换</span></label>
-          <label><input type="radio" name="who" ${d.who==='sales'?'checked':''} data-who="sales"><span>退回 Sales 换</span></label>
+          <label><input type="radio" name="who" ${d.who==='self'?'checked':''} data-who="self"><span>CRA replaces it now</span></label>
+          <label><input type="radio" name="who" ${d.who==='sales'?'checked':''} data-who="sales"><span>Return to Sales to replace</span></label>
         </div>`:''}</span></div>
-    <div class="dopt ${d.pick==='just'?'on':''}" data-pick="just"><span class="rb"></span>
-      <span><span class="dn">Justification 豁免</span></span></div>
-    ${d.pick==='just'?`<span class="mlabel">豁免理由 <span class="reqd">*</span></span>
-      <textarea class="mtb ${d.bad?'bad':''}" id="mNote">${esc(d.note)}</textarea>`:''}
-    ${d.pick==='file'&&d.who==='sales'?`<span class="mlabel">给 Sales 的说明 <span class="reqd">*</span></span>
-      <textarea class="mtb ${d.bad?'bad':''}" id="mNote">${esc(d.note)}</textarea>`:''}`;
-  $('mF').innerHTML=`<button class="ant-btn" data-act="mx">取消</button>
-    <button class="ant-btn ant-btn-primary" ${d.pick?'':'disabled'} data-act="dofix">确认</button>`;
+    <div class="opt ${d.pick==='just'?'on':''}" data-pick="just"><span class="rb"></span>
+      <span><span class="on2">Justification</span></span></div>
+    ${(d.pick==='just'||(d.pick==='file'&&d.who==='sales'))
+      ? `<div class="dfield" style="margin-top:12px"><label>${d.pick==='just'?'Justification reason':'Note to Sales'} <span class="req">*</span></label>
+         <textarea class="dta" id="mNote" style="min-height:80px;border-color:${d.bad?'var(--err)':'#d6d9de'}">${esc(d.note)}</textarea></div>`:''}`;
+  $('mF').innerHTML=`<button class="btn" data-act="mx">Cancel</button>
+    <button class="btn btn-pri" ${d.pick?'':'disabled'} data-act="dofix">Confirm</button>`;
 }
 function doFix(){
-  const d=S.dlg, r=RULES.find(x=>x.id===d.id);
-  const ta=$('mNote'); if(ta) d.note=ta.value.trim();
-  const needNote = d.pick==='just' || (d.pick==='file'&&d.who==='sales');
-  if(needNote && !d.note){ d.bad=1; drawFix(); toast('请填写说明'); return; }
-  if(d.pick==='just'){ r.pass=1; r.act='just'; toast('已豁免'); }
-  else { r.st='pending'; r.act='file';
-    toast(d.who==='self'?'已换文件，重新抽取中':'已退回 Sales 换文件'); }
-  closeModal(); render();
+  const d=S.dlg,r=RULES.find(x=>x.id===d.id);
+  const ta=$('mNote'); if(ta)d.note=ta.value.trim();
+  if((d.pick==='just'||(d.pick==='file'&&d.who==='sales'))&&!d.note){d.bad=1;drawFix();toast('A note is required');return;}
+  if(d.pick==='just'){r.pass=1;r.act='just';toast('Justified — rule marked as passed');}
+  else{r.st='pending';r.act='file';
+    toast(d.who==='self'?'Document replaced — re-extraction in progress':'Returned to Sales for replacement');}
+  closeM();render();
 }
 
-/* ── Next：提交时评估路由 ── */
+/* Next */
 function openNext(){
-  S.dlg='next'; S.nextPhase='check'; S.route=null;
-  $('modal').className='modal'; $('mask').classList.remove('hidden'); drawNext();
-  setTimeout(()=>{ if(S.dlg!=='next') return;
-    const blocks=[];
-    if(!line1OK()) blocks.push({t:'文件与规则',d:rFail().length+' 条不通过'+(rPend().length?`，${rPend().length} 条处理中`:''),go:'fc'});
-    if(fMissing().length) blocks.push({t:'必填字段',d:fMissing().length+' 项未填：'+fMissing().slice(0,3).map(f=>f.k).join('、')+(fMissing().length>3?' 等':''),go:'dm'});
-    if(blocks.length){ S.nextPhase='block'; S.blocks=blocks; drawNext(); return; }
+  S.dlg='next';S.phase='check';S.route=null;
+  openM('sm','Submit'); drawNext();
+  setTimeout(()=>{ if(S.dlg!=='next')return;
+    const ul=unlinked();
+    if(ul.length){S.phase='warn';S.blocks=ul;drawNext();return;}
+    goSave();},700);
+}
+function goSave(){
+  S.phase='save';drawNext();
+  setTimeout(()=>{ if(S.dlg!=='next')return;
     const e=eligibility();
-    S.route={ok:e.ok, reasons:e.blockers.map(i=>i.nm+(i.d?'（'+i.d+'）':''))};
-    S.nextPhase='done'; drawNext();
-  },900);
+    S.route={ok:e.ok,reasons:e.blockers.map(i=>i.nm+(i.d?' ('+i.d+')':''))};
+    S.phase='done';drawNext();},700);
 }
 function drawNext(){
-  if(S.nextPhase==='check'){
-    $('mT').textContent='提交校验';
-    $('mB').innerHTML=`<div class="chk-run"><div class="spin"></div>
-      <div><div class="cr-t">正在评估 STP 资格…</div>
-      <div class="cr-d">校验规则结论与录入内容，运行资格规则决定路由</div></div></div>`;
+  $('modal').className='modal';
+  const step=n=>`<div class="steps">${['① Pre-submit check','② Save','③ STP eligibility','④ Route']
+    .map((s,i)=>i+1<=n?`<b>${s}</b>`:s).join('  ·  ')}</div>`;
+  if(S.phase==='check'||S.phase==='save'){
+    const sv=S.phase==='save';
+    $('mB').innerHTML=`<div class="run"><div class="spin"></div>
+      <div><div class="t">${sv?'Saving and evaluating STP eligibility…':'Checking rules against defect records…'}</div>
+      <div class="d">${sv?'Maintenance content saved, then eligibility rules run':'Comparing via the rule–defect mapping'}</div></div></div>${step(sv?2:1)}`;
     $('mF').innerHTML=''; return;
   }
-  if(S.nextPhase==='block'){
-    $('mT').textContent='暂不能提交';
-    $('mB').innerHTML=S.blocks.map(b=>`<div class="frow"><span class="fn"><b>${esc(b.t)}</b>
-      <span class="fs">${esc(b.d)}</span></span>
-      <span class="rt"><button class="ant-btn ant-btn-sm" data-goto="${b.go}">去处理 →</button></span></div>`).join('');
-    $('mF').innerHTML=`<button class="ant-btn ant-btn-primary" data-act="mx">知道了</button>`;
+  if(S.phase==='warn'){
+    $('mB').innerHTML=`<div class="route warn"><span class="ic">⚠</span>
+      <span><div class="t">${S.blocks.length} rule(s) not passed without a defect record</div>
+      <div class="d">Registering them as defects is your call — this check does not block submission.</div></span></div>
+      <div class="rsn"><div class="l">UNLINKED RULES</div>
+        ${S.blocks.map(r=>`<div class="i">· <b class="mono">${r.id}</b> ${esc(r.nm)} — ${esc(r.dc)}</div>`).join('')}</div>${step(1)}`;
+    $('mF').innerHTML=`<button class="btn" data-act="backfix">Go back</button>
+      <button class="btn" data-act="warndef">Create all and continue</button>
+      <button class="btn btn-pri" data-act="anyway">Submit anyway</button>`;
     return;
   }
   const r=S.route;
-  $('mT').textContent='提交确认';
-  $('mB').innerHTML = r.ok
-    ? `<div class="route stp"><span class="ic">⚡</span>
-        <span><div class="rt2">符合 STP 条件</div>
-        <div class="rd">本单跳过 Authorizer，提交后直接触发放款接口。</div></span></div>
-       <div class="nxt"><span class="ar">流向</span>CRA　→　<b>放款接口</b></div>`
-    : `<div class="route auth"><span class="ic">🔀</span>
-        <span><div class="rt2">路由至 Authorizer</div>
-        <div class="rd">本单不符合 STP 条件，需人工复核后放款。</div></span></div>
-       <div class="rsn"><div class="rl">不符合的条件</div>
-         ${r.reasons.map(x=>`<div class="ri">· ${esc(x)}</div>`).join('')}</div>
-       <div class="nxt"><span class="ar">流向</span>CRA　→　<b>Authorizer 复核</b>　→　放款接口</div>`;
-  $('mF').innerHTML=`<button class="ant-btn" data-act="mx">返回修改</button>
-    <button class="ant-btn ant-btn-primary" data-act="confirm">${r.ok?'确认放款':'确认提交 Authorizer'}</button>`;
+  $('mB').innerHTML=(r.ok
+    ? `<div class="route stp"><span class="ic">⚡</span><span><div class="t">Eligible for STP</div>
+       <div class="d">Authorizer is skipped. Submitting triggers the disbursement interface directly.</div></span></div>
+       <div class="flow"><span class="a">ROUTE</span>CRA　→　<b>Disbursement Interface</b></div>`
+    : `<div class="route auth"><span class="ic">⇄</span><span><div class="t">Routed to Authorizer</div>
+       <div class="d">This case is not eligible for STP and needs manual authorisation.</div></span></div>
+       <div class="rsn"><div class="l">NOT ELIGIBLE BECAUSE</div>
+         ${r.reasons.map(x=>`<div class="i">· ${esc(x)}</div>`).join('')}</div>
+       <div class="flow"><span class="a">ROUTE</span>CRA　→　<b>Authorizer</b>　→　Disbursement Interface</div>`)+step(4);
+  $('mF').innerHTML=`<button class="btn" data-act="mx">Back</button>
+    <button class="btn btn-pri" data-act="confirm">${r.ok?'Confirm Disbursement':'Confirm Submit'}</button>`;
 }
 
-function closeModal(){$('mask').classList.add('hidden');$('modal').className='modal';S.dlg=null;}
 function toast(t){const m=$('msg');m.querySelector('span').textContent=t;m.classList.add('on');
-  clearTimeout(m._t);m._t=setTimeout(()=>m.classList.remove('on'),2200);}
+  clearTimeout(m._t);m._t=setTimeout(()=>m.classList.remove('on'),2300);}
 
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='aSr'){S.addDef.sr=t.value;$('aSrN').textContent=t.value.length;}
+  if(t.id==='aCr'){S.addDef.cr=t.value;$('aCrN').textContent=t.value.length;}
+});
 document.addEventListener('change',e=>{
   const t=e.target;
-  if(t.dataset.flag!==undefined){FLAGS[+t.dataset.flag].on=t.checked?1:0;renderRight();return;}
   if(t.dataset.fld){
-    const f=FIELDS.find(x=>x.k===t.dataset.fld); if(!f) return;
-    f.sys=t.value.trim(); renderNav(); renderFooter();
-    t.classList.toggle('bad', !!(f.req&&!f.sys));
-    const sub=document.querySelector('.card>.hd .sub');
-    if(sub) sub.textContent=`${fFilled()}/${FIELDS.length} 已填`+(fMissing().length?` · ${fMissing().length} 项必填未填`:'');
-    return;
+    const f=FIELDS.find(x=>x.k===t.dataset.fld); if(!f)return;
+    f.sys=t.value.trim(); renderRail(); renderFoot();
+    t.classList.toggle('bad',!!(f.req&&!f.sys)); return;
   }
 });
-
 document.addEventListener('click',e=>{
-  const t=e.target.closest('button,a,[data-sel],[data-who],[data-pick]');
+  const t=e.target.closest('button,a,label,[data-sel],[data-gsel],[data-who],[data-pick],[data-tog]');
   if(!t) return;
   if(t.dataset.who){S.dlg.who=t.dataset.who;S.dlg.bad=0;drawFix();return;}
-  if(t.dataset.scn){S.scn=t.dataset.scn;reset(t.dataset.scn);S.page='vsum';render();return;}
-  if(t.dataset.page){S.page=t.dataset.page;render();return;}
-  if(t.dataset.link==='fc'){toast('打开文件中心');return;}
-  if(t.dataset.exp){S.expand[t.dataset.exp]=!S.expand[t.dataset.exp];renderPage();return;}
+  if(t.dataset.scn){S.scn=t.dataset.scn;reset(t.dataset.scn);render();return;}
+  if(t.dataset.go){const k=t.dataset.go;S.nav=k;S.open[k]=1;render();
+    const el=$('m-'+k); if(el)el.scrollIntoView({block:'start'}); return;}
+  if(t.dataset.tog){const k=t.dataset.tog;S.open[k]=!S.open[k];S.nav=k;render();return;}
+  if(t.dataset.link==='fc'){toast('Opening File Center');return;}
+  if(t.dataset.act==='expand'){S.expand=!S.expand;render();return;}
+  if(t.dataset.flag!==undefined){FLAGS[+t.dataset.flag].on=FLAGS[+t.dataset.flag].on?0:1;renderSide();return;}
+  if(t.dataset.yn){const[k,v]=t.dataset.yn.split('|');S[k]=v;renderSide();return;}
+  if(t.dataset.ck){const c=CHECK.find(x=>x.k===t.dataset.ck);c.on=c.on?0:1;render();return;}
 
   if(t.dataset.act==='refresh'){
-    if(S.busy) return;
-    S.busy=1; renderPage();
-    setTimeout(()=>{ S.busy=0; const m=pullRules(); render(); toast(m); },800);
-    return;
+    if(S.busy)return; S.busy=1;renderMain();
+    setTimeout(()=>{S.busy=0;const m=pullRules();render();toast(m);},800); return;
   }
-  if(t.dataset.mkdef){const r=RULES.find(x=>x.id===t.dataset.mkdef);const no=mkDefect(r);
-    render(); if(no) toast('已创建缺陷 '+no); return;}
-  if(t.dataset.act==='defall'){const made=noDefect().map(r=>mkDefect(r)).filter(Boolean);
-    render(); toast('已创建 '+made.length+' 条缺陷'); return;}
-  if(t.dataset.act==='adddef'){toast('手工登记缺陷');return;}
-  if(t.dataset.rect){const d=DEFECTS.find(x=>x.no===t.dataset.rect);d.rect=1;render();toast('已标记整改');return;}
-  if(t.dataset.ver){const d=DEFECTS.find(x=>x.no===t.dataset.ver);d.ver=1;render();toast('已复验通过');return;}
+  if(t.dataset.mkdef){const r=RULES.find(x=>x.id===t.dataset.mkdef);const n=mkDefect(r,'System');
+    render();toast(n?'Defect #'+n+' created':'This rule already has a defect');return;}
+  if(t.dataset.act==='defall'){const m=unlinked().map(r=>mkDefect(r,'System')).filter(Boolean);
+    render();toast(m.length+' defect(s) created');return;}
+  if(t.dataset.act==='adddef'){openAdd();return;}
+  if(t.dataset.atg){S.addDef[t.dataset.atg]=S.addDef[t.dataset.atg]?0:1;
+    S.addDef.sr=$('aSr').value;S.addDef.cr=$('aCr').value;
+    S.addDef.cat=$('aCat').value;S.addDef.ty=$('aTy').value;drawAdd();return;}
+  if(t.dataset.act==='doadd'){doAdd();return;}
+  if(t.dataset.rect){DEFECTS.find(x=>x.no===t.dataset.rect).rect=1;render();toast('Marked as rectified');return;}
+  if(t.dataset.ver){DEFECTS.find(x=>x.no===t.dataset.ver).ver=1;render();toast('Verified');return;}
 
   if(t.dataset.fix){openFix(t.dataset.fix);return;}
   if(t.dataset.pick){S.dlg.pick=t.dataset.pick;S.dlg.bad=0;
-    const ta=$('mNote'); if(ta) S.dlg.note=ta.value; drawFix();return;}
+    const ta=$('mNote'); if(ta)S.dlg.note=ta.value; drawFix();return;}
   if(t.dataset.act==='dofix'){doFix();return;}
 
   if(t.dataset.act==='sync'){openSync();return;}
   if(t.dataset.sel){S.sync.sel[t.dataset.sel]=!S.sync.sel[t.dataset.sel];drawSync();return;}
+  if(t.dataset.gsel){const g=t.dataset.gsel,gf=FIELDS.filter(f=>f.g===g&&syncable(f));
+    const all=gf.every(f=>S.sync.sel[f.k]); gf.forEach(f=>S.sync.sel[f.k]=all?0:1); drawSync();return;}
   if(t.dataset.act==='dosync'){doSync();return;}
 
   if(t.dataset.act==='next'){openNext();return;}
-  if(t.dataset.goto){closeModal();
-    if(t.dataset.goto==='fc'){toast('打开文件中心');}
-    else if(t.dataset.goto==='dm'){S.page='dm';render();}
-    return;}
-  if(t.dataset.act==='confirm'){const ok=S.route.ok;closeModal();render();
-    toast(ok?'已触发放款接口':'已提交 Authorizer');return;}
-  if(t.dataset.act==='mx'){closeModal();renderFooter();return;}
+  if(t.dataset.act==='backfix'){closeM();S.open.vsum=1;S.expand=1;render();
+    const el=$('m-vsum'); if(el)el.scrollIntoView({block:'start'}); return;}
+  if(t.dataset.act==='warndef'){S.blocks.forEach(r=>mkDefect(r,'System'));renderRail();goSave();return;}
+  if(t.dataset.act==='anyway'){goSave();return;}
+  if(t.dataset.act==='confirm'){const ok=S.route.ok;closeM();render();
+    toast(ok?'Disbursement interface triggered':'Submitted to Authorizer');return;}
+  if(t.dataset.act==='mx'){closeM();renderFoot();return;}
 });
 
 reset('manual'); render();
 })();
 </script>
+
 
 </body>
 </html>
