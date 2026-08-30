@@ -139,12 +139,38 @@ button:disabled{cursor:not-allowed}
 .upload-ctx.none{color:var(--warning-text)}
 .upload-grid{display:grid;gap:12px}
 .upload-grid--two{grid-template-columns:1fr 1fr;align-items:stretch}
-.upload-card{display:flex;flex-direction:column}
-.upload-card .uploader-box{flex:1}
+.upload-card{display:flex;flex-direction:column;border:1px solid var(--border-2);border-radius:var(--r);
+  padding:11px 12px 10px;background:var(--bg)}
+.upload-card.ai{border-color:var(--primary-border);background:linear-gradient(180deg,#f5faff,#fff 62px)}
+.upload-card.manual{background:var(--fill-q)}
+.ent-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;padding:1px 5px;border-radius:3px;
+  border:1px solid;flex:none}
+.ent-tag.ai{color:var(--primary-active);background:var(--primary-bg);border-color:var(--primary-border)}
+.ent-tag.manual{color:var(--text-3);background:var(--fill-alter);border-color:var(--border)}
+.ent-note{font-size:11.5px;color:var(--text-3);margin-left:auto;text-align:right}
+.type-hint{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:9px}
+.tchip{font-size:11px;color:var(--text-2);background:var(--fill-alter);border:1px solid var(--border-2);
+  border-radius:10px;padding:1px 8px;white-space:nowrap}
+.upload-card.ai .tchip{background:#fff;border-color:var(--primary-border);color:var(--primary-active)}
+.tmore{font-size:11px;color:var(--primary);background:transparent;border:0;padding:1px 4px;cursor:pointer}
+.tmore:hover{text-decoration:underline}
+.whichbtn{display:inline-flex;align-items:center;gap:7px;margin-top:11px;font-size:12.5px;
+  color:var(--text-2);background:var(--bg);border:1px solid var(--border);border-radius:var(--r);
+  padding:5px 12px;cursor:pointer}
+.whichbtn:hover{border-color:var(--primary);color:var(--primary)}
+.whichbtn .i{width:14px;height:14px}
+.dl-grp{font-size:11px;font-family:var(--mono);letter-spacing:.07em;color:var(--text-3);
+  margin:15px 0 7px;text-transform:uppercase}
+.dl-grp:first-child{margin-top:0}
+.dl-row{display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--border-2);font-size:13px}
+.dl-row:last-child{border-bottom:0}
+.dl-row .nm{flex:1;min-width:0}
+.dl-none{padding:22px;text-align:center;color:var(--text-3);font-size:13px}
+.upload-card .uploader-box{flex:1;min-height:92px}
 .browse-hint{padding:9px 14px;background:var(--fill-alter);border:1px solid var(--border-2);border-radius:var(--r);font-size:12px;color:var(--text-3);display:flex;align-items:center;gap:8px}
 .browse-hint b{color:var(--text-2);font-weight:600}
 @media(max-width:820px){.upload-grid--two{grid-template-columns:1fr}}
-.upload-card-header{margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.upload-card-header{margin-bottom:8px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .upload-card-title{font-size:13px;color:var(--text-2)}
 .info-icon{color:var(--text-4);font-size:12px}
 .uploader-box{border:1px dashed var(--border);border-radius:var(--r);background:var(--fill-alter);padding:14px 10px;text-align:center;transition:border-color .2s;min-height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
@@ -561,6 +587,28 @@ const mcOpen=()=>MC.rules.filter(r=>!MC.res[r.id]).length;
 const TYPES=['MyKad','Passport','Driving License','Payslip','EPF Statement','Form BE','HP Application Form',
  'HP Agreement','Guarantee Agreement','2nd Schedule Part I','Vehicle Invoice','VOC','Road Tax Disc',
  'Insurance Cover Note','Puspakom B7','LOSO','Partnership Mandate','Seller IC','Other Documents'];
+const DOCLIST=[
+  ['Identity',            ['MyKad','MyPR','Passport','Driving License','Work Permit','Military ID']],
+  ['Income',              ['Payslip','EPF Statement','Form B','Form BE','EA Form','EC Form',
+                           'Notice of Assessment','Bank Statement','Commission Statement']],
+  ['Application & Vehicle',['HP Application Form','CRA Form','VSO','VOC','Form 8','JK69',
+                           'Vehicle Invoice','Road Tax Disc','Puspakom B7','Insurance Cover Note',
+                           'Delivery Order']],
+  ['Agreement',           ['HP Agreement','HP Agreement (Islamic)','Guarantee Agreement',
+                           '2nd Schedule Part I','2nd Schedule Part II','Guarantor Waiver',
+                           'Appendix I–V','Letter of Undertaking']],
+  ['Seller',              ['Seller Invoice','Seller IC','HP216 Seller Invoice','Information on Seller']],
+  ['System-generated',    ['Application Form','Biometric Result']]
+];
+const MANUAL_DOCS=[
+  ['Statutory & corporate',['Letter of Setoff (LOSO)','Partnership Mandate','Company Resolution',
+                            'SSM Search','Board Resolution','Trust Deed','Power of Attorney',
+                            'Statutory Declaration']],
+  ['Anything else',       ['Any document outside the OCR File List',
+                            'Any scan OCR cannot read reliably']]
+];
+const OCR_COUNT=DOCLIST.reduce((n,g)=>n+g[1].length,0);
+
 const ZONES={
  app:[['Personal Identity','Mykad, MyPR, Passport, DL, Work Permit...'],
       ['Applicant Income','Payslip, EPF, Form B/BE, EA/EC Form, NOA...'],
@@ -627,6 +675,8 @@ const tabIssues=t=>live().filter(f=>inTab(f,t)&&(S.subj==='all'||S.subj==='delet
 
 /* ═══════ RENDER ═══════ */
 const $=i=>document.getElementById(i);
+const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function render(){
   [...$('roleSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.role===S.role));
   $('permHint').textContent=P().l;
@@ -682,19 +732,36 @@ function renderUpload(){
       <span class="upload-ctx">Upload Subject <b>${sj.nm}</b></span>
     </div>
     <div class="upload-grid upload-grid--two">
-      <div class="upload-card">
-        <div class="upload-card-header"><span class="upload-card-title">AI Scanning</span><span class="info-icon">${I('info')}</span></div>
+      <div class="upload-card ai">
+        <div class="upload-card-header">
+          <span class="ent-tag ai">AI</span>
+          <span class="upload-card-title">AI Scanning</span>
+          <span class="ent-note">Classified and extracted automatically</span></div>
         <div class="uploader-box"><span class="upload-icon">${I('upload')}</span>
           <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
           <div class="upload-examples">PDF, JPG, JPEG, PNG</div></div>
+        <div class="type-hint">
+          ${['MyKad','Payslip','HP Agreement','Vehicle Invoice','Insurance Cover Note']
+            .map(t=>`<span class="tchip">${t}</span>`).join('')}
+          <button class="tmore" data-act="doclist">+${OCR_COUNT-5} more</button>
+        </div>
       </div>
-      <div class="upload-card">
-        <div class="upload-card-header"><span class="upload-card-title">Non AI Scanning · Requires manual check</span><span class="info-icon">${I('info')}</span></div>
+      <div class="upload-card manual">
+        <div class="upload-card-header">
+          <span class="ent-tag manual">MANUAL</span>
+          <span class="upload-card-title">Non AI Scanning</span>
+          <span class="ent-note">Stored as-is · you set the type · rules checked by eye</span></div>
         <div class="uploader-box non-ai"><span class="upload-icon">${I('fileText')}</span>
           <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
           <div class="upload-examples">PDF, JPG, JPEG, PNG, DOCX, XLSX</div></div>
+        <div class="type-hint">
+          ${['LOSO','Partnership Mandate','Company Resolution']
+            .map(t=>`<span class="tchip">${t}</span>`).join('')}
+          <button class="tmore" data-act="doclist">See the rule</button>
+        </div>
       </div>
-    </div>`;
+    </div>
+    <button class="whichbtn" data-act="doclist">${I('search')} Not sure which entry? Look up a document type</button>`;
 }
 
 function renderTabs(){
@@ -973,6 +1040,33 @@ function submitRules(){
     `<button class="ant-btn" data-cl="1">Keep working</button>
      <button class="ant-btn ant-btn-primary" data-cl="1" data-tst="Rule results submitted \u00b7 open rules left for later">Submit anyway</button>`);
 }
+/* Which entry a document belongs to is a lookup question, not something to
+   memorise. Search answers it directly; the grouped list is there to browse. */
+function docListBody(q){
+  const k=(q||'').trim().toLowerCase();
+  const hit=n=>!k||n.toLowerCase().includes(k);
+  const row=(n,ocr)=>`<div class="dl-row"><span class="nm">${esc(n)}</span>
+    <span class="ant-tag ${ocr?'ant-tag-blue':''}">${ocr?'AI Scanning':'Non AI Scanning'}</span></div>`;
+  let h='',n=0;
+  DOCLIST.forEach(([g,items])=>{
+    const f=items.filter(hit); if(!f.length)return; n+=f.length;
+    h+=`<div class="dl-grp">${esc(g)}</div>`+f.map(x=>row(x,1)).join('');
+  });
+  MANUAL_DOCS.forEach(([g,items])=>{
+    const f=items.filter(hit); if(!f.length)return; n+=f.length;
+    h+=`<div class="dl-grp">${esc(g)}</div>`+f.map(x=>row(x,0)).join('');
+  });
+  return n?h:`<div class="dl-none">No document type matches “${esc(q)}”.<br>
+    Anything outside the OCR File List goes to <b>Non AI Scanning</b>.</div>`;
+}
+function openDocList(){
+  sm('Where does this document go?',
+    `<input class="ant-input" id="dlq" style="width:100%" placeholder="Search a document type, e.g. payslip">
+     <div class="description-text" style="margin:8px 0 4px">${OCR_COUNT} types are read automatically by AI Scanning. Everything else goes to Non AI Scanning.</div>
+     <div id="dlBody">${docListBody('')}</div>`,
+    `<button class="ant-btn ant-btn-primary" data-cl="1">Close</button>`);
+  const q=$('dlq'); if(q){q.focus();}
+}
 function missing(){
   sm('Completeness Check',
     `<div class="pnote info">The required list is computed at submission, once the vehicle type, guarantor arrangement and identity type are known.</div>
@@ -984,6 +1078,9 @@ function missing(){
 }
 
 /* ═══════ EVENTS ═══════ */
+document.addEventListener('input',e=>{
+  if(e.target.id==='dlq'){ $('dlBody').innerHTML=docListBody(e.target.value); }
+});
 document.addEventListener('change',e=>{
   if(e.target.id==='fType'){S.fType=e.target.value;renderTable();}
   if(e.target.id==='fStatus'){S.fStatus=e.target.value;renderTable();}
@@ -1005,6 +1102,7 @@ document.addEventListener('click',e=>{
 
   if(t.dataset.act){
     const a=t.dataset.act,n=S.sel.size;
+    if(a==='doclist'){openDocList();return;}
     if(a==='reset'){S.fType=S.fStatus='';render();return;}
     if(a==='refresh'){msg('Refreshed');return;}
     if(a==='del'){askDelete([...S.sel]);return;}
