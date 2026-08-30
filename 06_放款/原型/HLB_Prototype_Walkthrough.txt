@@ -1,0 +1,139 @@
+HLB LOAD$  ·  Disbursement (Batch 3)
+
+PROTOTYPE WALKTHROUGH
+=====================
+
+A short guide to what the prototype covers and how to move through it. It
+describes the paths, not the rules — the functional specification remains the
+reference for detail.
+
+
+BEFORE YOU START
+----------------
+
+  File      HLB_放款原型_合并版.html — one file, nothing to install
+  To open   Double-click it. Chrome or Edge is recommended.
+  Network   Not required. It runs entirely in the browser.
+  Build     Shown at the top right of the screen,
+            e.g. "Prototype build 2026-08-30"
+
+  - Everything you see is sample data. Nothing is saved and nothing is sent
+    anywhere.
+  - Refreshing the page resets it to the starting state, so you can explore
+    freely.
+  - The dark strip along the top is a demo toolbar. It lets you switch role
+    and scenario so one file can show several situations. It is not part of
+    the product.
+
+
+WHAT IS IN IT
+-------------
+
+Two screens, connected the way they will be in the product:
+
+  CRA Workbench     where CRA reviews the case summary, works the defect
+                    list, maintains disbursement information, and submits
+                    the case.
+
+  Document Center   where documents are uploaded and classified, and where
+                    expert rules are checked against them.
+
+Moving between the two
+
+The workbench opens the Document Center from three places, all of which lead
+to the same screen:
+
+  - Attachment — in the top bar
+  - Attachment — in the Navigation card on the left
+  - Open File Center — in the Verification Summary module
+
+To come back, use the ✕ at the top right or Back To List at the bottom. The
+switch in the demo toolbar also jumps between the two at any time.
+
+
+THE MAIN PATHS
+--------------
+
+Four walkthroughs. Each takes a couple of minutes and they follow the order
+of the real process.
+
+
+Path 1 · Sales uploads the documents
+Document Center, with the role set to Sales.
+
+  1. Choose who the documents belong to on the left — Main Applicant,
+     Guarantor 1 or Seller.
+  2. Two upload entries appear. AI Scanning reads and classifies the
+     document automatically — it covers around 40 document types.
+     Non AI Scanning stores anything else as-is.
+  3. Not sure which entry a document belongs to? Click "+35 more" and
+     search for it. The list says which entry each type goes to.
+  4. The File List below shows everything uploaded, with its classification
+     and status.
+  5. When the documents are complete, click Submit for Verification at the
+     bottom right to trigger rule validation.
+
+
+Path 2 · CRA checks the expert rules
+Document Center, with the role set to CRA. Pick a subject on the left to
+reveal the two rule tabs.
+
+  1. Cross-Validation Results holds the rules the engine concluded on its
+     own. Open a document to review an alert and settle it.
+  2. Manual Check Results holds documents OCR cannot read. The rules for the
+     whole case sit on the left, the document image on the right; mark each
+     rule Pass or Fail against what you see.
+  3. The bar at the bottom always shows both tracks — for example
+     "OCR 13/19" and "Manual 0/6" — no matter which tab you are on. The two
+     together decide whether the case is complete.
+  4. Revalidate reruns the engine across every document in the case. Manual
+     marking stays available while it runs.
+  5. Submit Rule Results submits both tracks at once. If rules are still
+     open it says how many and lets you continue anyway — your work so far
+     is kept.
+
+
+Path 3 · CRA works the case
+CRA Workbench.
+
+  1. Verification Summary shows how many rules the case has, how many are
+     concluded, and how many did not pass.
+  2. View detail lists the rules that did not pass. For each one you can
+     Create Defect, or Handle rule to settle it — amend the extracted value,
+     apply a justification, or replace the document.
+  3. Defect List is where defects are closed: Rectify, then Verify. Once a
+     rule has been settled, Sync System Defects clears the defect it raised.
+     Defects you added by hand are never touched.
+  4. Sync from OCR in the top bar pulls the latest extracted values in for
+     comparison, so you can choose which to apply.
+
+
+Path 4 · Submit and route
+CRA Workbench. This is where the case is decided.
+
+  1. Tick CRA Completed in the panel on the right. This is the only thing
+     that enables the Next button — outstanding rules and defects do not
+     block submission.
+  2. Click Next. The system runs a pre-submit check, saves, assesses STP
+     eligibility, then routes the case.
+  3. There are three outcomes. Straight-through to disbursement; routed to
+     the Authorizer; or, if the case was never an STP scenario, sent to
+     Disbursement Information Maintenance for manual handling.
+  4. Use Scenario and the STP switch in the demo toolbar to see each outcome
+     without rebuilding the case.
+
+
+WORTH KNOWING
+-------------
+
+  - The demo toolbar, including the role and scenario switches, exists only
+    so one file can show several situations. It will not be in the product.
+  - Figures, names and document lists are illustrative. They are there to
+    make the screens readable, not to be checked for accuracy.
+  - A few areas are shown as headings without content. Those are existing
+    screens that this change does not touch.
+  - When sending feedback, please quote the build date shown at the top
+    right so we know which version you were looking at.
+
+Questions or comments on the prototype are welcome at any point — the paths
+above are the ones we would most like reactions to.
