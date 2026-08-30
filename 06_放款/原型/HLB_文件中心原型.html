@@ -154,11 +154,6 @@ button:disabled{cursor:not-allowed}
 .upload-card.ai .tchip{background:#fff;border-color:var(--primary-border);color:var(--primary-active)}
 .tmore{font-size:11px;color:var(--primary);background:transparent;border:0;padding:1px 4px;cursor:pointer}
 .tmore:hover{text-decoration:underline}
-.whichbtn{display:inline-flex;align-items:center;gap:7px;margin-top:11px;font-size:12.5px;
-  color:var(--text-2);background:var(--bg);border:1px solid var(--border);border-radius:var(--r);
-  padding:5px 12px;cursor:pointer}
-.whichbtn:hover{border-color:var(--primary);color:var(--primary)}
-.whichbtn .i{width:14px;height:14px}
 .dl-grp{font-size:11px;font-family:var(--mono);letter-spacing:.07em;color:var(--text-3);
   margin:15px 0 7px;text-transform:uppercase}
 .dl-grp:first-child{margin-top:0}
@@ -749,19 +744,12 @@ function renderUpload(){
       <div class="upload-card manual">
         <div class="upload-card-header">
           <span class="ent-tag manual">MANUAL</span>
-          <span class="upload-card-title">Non AI Scanning</span>
-          <span class="ent-note">Stored as-is · you set the type · rules checked by eye</span></div>
+          <span class="upload-card-title">Non AI Scanning</span></div>
         <div class="uploader-box non-ai"><span class="upload-icon">${I('fileText')}</span>
           <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
           <div class="upload-examples">PDF, JPG, JPEG, PNG, DOCX, XLSX</div></div>
-        <div class="type-hint">
-          ${['LOSO','Partnership Mandate','Company Resolution']
-            .map(t=>`<span class="tchip">${t}</span>`).join('')}
-          <button class="tmore" data-act="doclist">See the rule</button>
-        </div>
       </div>
-    </div>
-    <button class="whichbtn" data-act="doclist">${I('search')} Not sure which entry? Look up a document type</button>`;
+    </div>`;
 }
 
 function renderTabs(){
