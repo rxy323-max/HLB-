@@ -1,0 +1,2350 @@
+<title>HLB Disbursement Prototype</title>
+<style>
+html,body{height:100%;margin:0;background:#0d1424}
+#stage{position:fixed;inset:0}
+#stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fafafa}
+#stage iframe[hidden]{display:none}
+#boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:#0d1424;color:rgba(255,255,255,.5);font:13px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  letter-spacing:.04em}
+</style>
+
+<div id="stage">
+  <iframe id="fr-wb" title="CRA Workbench"></iframe>
+  <iframe id="fr-fc" title="Document Center" hidden></iframe>
+</div>
+<div id="boot">Loading prototype…</div>
+
+<script type="text/html" id="src-wb"><!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html{-webkit-text-size-adjust:100%}*{box-sizing:border-box}
+body{margin:0;background:#fafafa;font:14px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif}
+img{max-width:100%}[hidden]{display:none!important}
+button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit}
+.xnav{display:inline-flex;border:1px solid rgba(255,255,255,.22);border-radius:4px;overflow:hidden;margin-left:14px}
+.xnav button{background:transparent;border:0;color:rgba(255,255,255,.62);
+  padding:3px 11px;font-size:11.5px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.xnav button:hover{color:#fff}
+.xnav button[aria-current="true"]{background:#1677ff;color:#fff}
+</style></head><body>
+<title>CRA 工作台原型</title>
+
+<style>
+:root{
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'PingFang SC','Microsoft YaHei',sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --primary:#1677ff;--primary-hover:#4096ff;--primary-bg:#e6f4ff;--primary-border:#91caff;--primary-deep:#0958d9;
+  --ink:rgba(0,0,0,.88);--ink-2:rgba(0,0,0,.65);--ink-3:rgba(0,0,0,.45);--ink-4:rgba(0,0,0,.25);
+  --line:#d9d9d9;--line-2:#f0f0f0;--bg:#fff;--page:#f5f5f5;--alt:#fafafa;
+  --ok:#389e0d;--ok-bg:#f6ffed;--ok-line:#b7eb8f;
+  --warn:#d48806;--warn-bg:#fffbe6;--warn-line:#ffe58f;
+  --err:#cf1322;--err-bg:#fff2f0;--err-line:#ffccc7;
+  --r:8px;--r-sm:4px;--r-md:6px;
+  --sh:0 1px 2px rgba(16,24,40,.05);
+  --sh-lg:0 8px 24px rgba(16,24,40,.12),0 2px 6px rgba(16,24,40,.06);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+button,select,input,textarea{font-family:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed}
+:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+
+.btn{height:32px;padding:0 15px;border:1px solid #d6d9de;border-radius:var(--r-md);background:#fff;color:var(--ink);font-size:13.5px;white-space:nowrap;transition:.15s}
+.btn:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
+.btn:disabled{color:var(--ink-4);background:#f7f8f9;border-color:var(--line)}
+.btn-pri{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn-pri:hover:not(:disabled){background:var(--primary-hover);border-color:var(--primary-hover);color:#fff}
+.btn-pri:disabled{background:#f0f1f3;border-color:var(--line);color:var(--ink-4)}
+.btn-sm{height:26px;padding:0 10px;font-size:12.5px}
+.btn-txt{border-color:transparent;background:transparent;color:var(--primary);padding:0 6px;height:auto}
+.i{width:16px;height:16px;flex:none;display:inline-block;vertical-align:-3px}
+.tag{display:inline-block;height:22px;padding:0 8px;font-size:12px;line-height:20px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--alt);color:var(--ink-2);white-space:nowrap}
+.tag-ok{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok)}
+.tag-warn{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn)}
+.tag-err{background:var(--err-bg);border-color:var(--err-line);color:var(--err)}
+.tag-blue{background:var(--primary-bg);border-color:var(--primary-border);color:var(--primary-deep)}
+
+.demo{position:fixed;top:0;left:0;right:0;height:34px;z-index:300;background:#0d1424;color:rgba(255,255,255,.8);padding:6px 16px;display:flex;gap:11px;align-items:center;font-size:11.5px}
+.demo .lb{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:rgba(255,255,255,.4);text-transform:uppercase}
+.seg{display:inline-flex;border:1px solid rgba(255,255,255,.18);border-radius:var(--r-sm);overflow:hidden}
+.seg button{background:transparent;border:0;color:rgba(255,255,255,.65);padding:2px 12px;font-size:11.5px}
+.seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+.demo .why{margin-left:auto;color:rgba(255,255,255,.3);font-size:10.5px}
+
+.app{position:fixed;top:34px;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:var(--page)}
+.topbar{height:52px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:0;padding:0 20px 0 0;flex:none}
+.brand{width:76px;display:flex;align-items:center;justify-content:center;color:var(--primary)}
+.brand .i{width:20px;height:20px}
+.tbtn{height:34px;display:flex;align-items:center;padding:0 16px;font-size:13.5px;color:var(--ink-2);border-radius:var(--r-md);margin-right:6px}
+.tbtn.on{background:var(--primary-bg);color:var(--primary-deep);font-weight:500}
+.topbar .who{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:13px;color:var(--ink-2)}
+.topbar .who .clk{font-variant-numeric:tabular-nums;color:var(--ink)}
+.topbar .rf{width:34px;height:34px;border:1px solid var(--line);border-radius:var(--r-md);background:#fff;color:var(--ink-3);font-size:15px}
+.topbar .tb-sync{height:30px;display:inline-flex;align-items:center;gap:7px}
+.topbar .tb-sync .i{width:14px;height:14px}
+
+.body{flex:1;min-height:0;display:grid;grid-template-columns:76px 268px minmax(0,1fr) 300px}
+@media(max-width:1400px){.body{grid-template-columns:76px 240px minmax(0,1fr) 268px}}
+@media(max-width:1100px){.body{grid-template-columns:76px minmax(0,1fr)}.rail,.side{display:none}}
+
+.icons{background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:6px}
+.icons i{width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--ink-4);border-radius:var(--r-md)}
+.icons i .i{width:18px;height:18px}
+.icons i:hover{background:var(--alt);color:var(--ink-2)}
+.icons i.on{color:var(--primary);background:var(--primary-bg)}
+.icons .sp{flex:1}
+
+.rail{padding:14px 12px;overflow-y:auto}
+.navcard{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:14px 0 10px;margin-bottom:12px}
+.navcard .nh{display:flex;align-items:center;gap:10px;padding:0 16px 12px;font-size:15px;font-weight:600;color:var(--ink)}
+.navcard h6{margin:12px 16px 4px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.navcard button{display:flex;width:100%;text-align:left;background:transparent;border:0;border-left:3px solid transparent;padding:6px 16px 6px 20px;font-size:13px;color:var(--ink-2);align-items:center;gap:8px}
+.navcard button:hover{background:var(--alt);color:var(--ink)}
+.navcard button.on{background:var(--primary-bg);border-left-color:var(--primary);color:var(--primary-deep);font-weight:500}
+.navcard .n{margin-left:auto;font-family:var(--mono);font-size:10.5px;padding:0 6px;border-radius:9px;background:var(--line-2);color:var(--ink-2);flex:none}
+.navcard .n.err{background:var(--err);color:#fff}
+.navcard .n.ok{background:var(--ok-bg);color:var(--ok)}
+.linkcard{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:16px;display:flex;flex-direction:column;gap:10px;align-items:center}
+.linkcard a{font-size:13.5px;color:var(--primary);cursor:pointer}
+.linkcard a.off{color:var(--ink-4);cursor:default}
+
+.main{overflow-y:auto;padding:16px 18px 24px;scroll-behavior:smooth}
+.seclabel{font-size:12px;font-weight:600;color:var(--ink-3);letter-spacing:.09em;text-transform:uppercase;margin:20px 0 10px 6px}
+.seclabel:first-child{margin-top:2px}
+
+.mod{background:#fff;border-radius:var(--r);box-shadow:var(--sh);margin-bottom:12px;overflow:hidden;scroll-margin-top:12px}
+.mod-h{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;border:0;background:#fff;padding:14px 18px;text-align:left;cursor:pointer;user-select:none}
+.mod-h:hover{background:var(--alt)}
+.mod-h .car{color:var(--ink-3);width:14px;flex:none;display:flex}
+.mod-h .car .i{width:14px;height:14px}
+.mod-h .mi{color:var(--primary);flex:none;display:flex}
+.mod-h .mt{font-size:15.5px;font-weight:600;color:var(--ink)}
+.mod-h .mr{margin-left:auto;display:flex;gap:10px;align-items:center;flex:none}
+.mod-h .badge{font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:9px}
+.mod-h .badge.err{background:var(--err-bg);color:var(--err);border:1px solid var(--err-line)}
+.mod-h .badge.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line)}
+.mod-h .new{font-size:9.5px;font-family:var(--mono);background:var(--primary-bg);color:var(--primary-deep);border:1px solid var(--primary-border);padding:0 5px;border-radius:3px;letter-spacing:.04em}
+.mod-b{border-top:1px solid var(--line-2);padding:16px 18px 18px}
+.mod.stub .mod-h{color:var(--ink-2)}
+
+.tot{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.tot .t{font-size:14px;color:var(--ink-2)}
+.tot .t b{color:var(--primary);font-weight:600}
+.tot .r{margin-left:auto;display:flex;gap:8px}
+
+table{border-collapse:collapse;width:100%}
+th{background:var(--alt);text-align:left;font-size:12.5px;font-weight:600;color:var(--ink-2);padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--line-2);font-size:13px;vertical-align:middle;color:var(--ink-2)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--alt)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-md)}
+.mono{font-family:var(--mono);font-size:12px}
+.muted{color:var(--ink-3);font-size:12.5px}
+.sub-row{color:var(--ink-3);font-size:11px}
+.nodata{padding:44px;text-align:center;color:var(--ink-4);font-size:13px;
+  display:flex;flex-direction:column;align-items:center;gap:8px}
+.nodata .i{width:28px;height:28px;opacity:.5;stroke-width:1.1}
+
+/* Verification Summary */
+.vs-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+.vs-top .st{font-size:15px;font-weight:600}
+.vs-top .st.ok{color:var(--ok)}.vs-top .st.warn{color:var(--warn)}.vs-top .st.wait{color:var(--primary-deep)}
+.vs-top .sd{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.vs-top .r{margin-left:auto;display:flex;gap:8px;align-items:center;flex:none}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:1250px){.kpis{grid-template-columns:repeat(3,1fr)}}
+.kp{border:1px solid var(--line);border-radius:var(--r-md);padding:11px 13px;background:var(--alt)}
+.kp .v{font-family:var(--mono);font-size:21px;font-weight:600;line-height:1.1;color:var(--ink)}
+.kp .v.ok{color:var(--ok)}.kp .v.err{color:var(--err)}
+.kp .k{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+.kp .ks{display:block;font-size:10.5px;color:var(--warn);font-family:var(--mono);margin-top:2px}
+.rrow{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:8px}
+.rrow:last-child{margin-bottom:0}
+.rrow .n{flex:1;min-width:0;font-size:13px}
+.rrow .s{display:block;font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.rrow .r{flex:none;display:flex;gap:8px;align-items:center}
+.batchbar{display:flex;align-items:center;gap:12px;padding:9px 12px;margin-top:12px;background:var(--warn-bg);
+  border:1px solid var(--warn-line);border-radius:var(--r-md);font-size:12.5px;color:var(--warn)}
+.batchbar button{margin-left:auto}
+
+/* File Check List */
+.chk-h{font-size:14px;color:var(--ink-2);margin-bottom:14px}
+.chk-h b{color:var(--ink);font-weight:600}
+.chk-grp{font-size:13.5px;font-weight:600;color:var(--ink);margin:16px 0 10px}
+.chk-grp:first-of-type{margin-top:0}
+.chk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 18px}
+@media(max-width:1250px){.chk-grid{grid-template-columns:repeat(2,1fr)}}
+.ck{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;color:var(--ink-2);cursor:pointer}
+.ck .bx{width:16px;height:16px;border:1px solid #c9ced6;border-radius:3px;flex:none;margin-top:2px;
+  display:flex;align-items:center;justify-content:center;font-size:11px;background:#fff}
+.ck.on .bx{background:var(--primary);border-color:var(--primary);color:#fff}
+.ck.on{color:var(--ink)}
+.ck.auto .bx{background:var(--ok);border-color:var(--ok);color:#fff}
+.ck.dis{opacity:.55;cursor:not-allowed}
+
+/* Data Maintenance fields */
+.fgrp{font-size:12px;font-weight:600;color:var(--ink-2);letter-spacing:.04em;text-transform:uppercase;margin:4px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.fgrp+.fgrid{margin-bottom:18px}
+.fgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 22px}
+@media(max-width:1250px){.fgrid{grid-template-columns:1fr}}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld label{font-size:12.5px;color:var(--ink-2)}
+.fld .req{color:var(--err);margin-left:3px}
+.fin{height:32px;border:1px solid #d6d9de;border-radius:var(--r-md);padding:0 11px;font-size:13px;background:#fff;color:var(--ink);width:100%}
+.fin:focus{border-color:var(--primary);outline:none;box-shadow:0 0 0 2px rgba(22,119,255,.08)}
+.fin.bad{border-color:var(--err);background:var(--err-bg)}
+.fin::placeholder{color:var(--ink-4)}
+.fhint{font-size:11px;color:var(--ink-3);font-family:var(--mono)}
+.fhint.diff{color:var(--warn)}
+
+/* side panel */
+.side{padding:14px 12px 14px 0;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+.sc{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:16px}
+.sc .sh{display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:600;margin-bottom:12px}
+.sc .cnt{font-family:var(--mono);font-size:12px;padding:1px 8px;border-radius:9px;background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line)}
+.fl{display:flex;gap:9px;align-items:center;padding:5px 0;font-size:13.5px;color:var(--ink-2);cursor:pointer}
+.fl .bx{width:16px;height:16px;border:1px solid #c9ced6;border-radius:3px;flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;background:#fff}
+.fl.on .bx{background:var(--primary);border-color:var(--primary);color:#fff}
+.fl.on{color:var(--ink);font-weight:500}
+.yn{display:flex;align-items:center;justify-content:space-between;padding:8px 0;font-size:13.5px;color:var(--ink-2)}
+.ynseg{display:inline-flex;background:#f0f1f3;border-radius:var(--r-md);padding:2px}
+.ynseg button{border:0;background:transparent;font-size:12.5px;padding:3px 14px;border-radius:var(--r-sm);color:var(--ink-3)}
+.ynseg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:var(--sh);font-weight:500}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:5px 0}
+.kv .k{color:var(--ink-3);flex:none}
+.kv .v{text-align:right;color:var(--ink);font-weight:500}
+.sdiv{height:1px;background:var(--line-2);margin:10px 0}
+
+.foot{height:58px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:0 20px;flex:none}
+.foot select{height:32px;border:1px solid #d6d9de;border-radius:var(--r-md);padding:0 8px;font-size:13px;color:var(--ink-2);background:#fff}
+.foot .r{margin-left:auto;display:flex;gap:10px}
+.foot .fn{font-size:12.5px;color:var(--ink-3)}
+
+.mask{position:fixed;top:34px;left:0;right:0;bottom:0;background:rgba(15,20,30,.45);z-index:400;display:flex;align-items:center;justify-content:center;padding:24px}
+.mask.hidden{display:none}
+.modal{background:#fff;border-radius:10px;width:min(880px,100%);max-height:88vh;display:flex;flex-direction:column;box-shadow:var(--sh-lg)}
+.modal.sm{width:min(560px,100%)}
+.modal .mh{padding:18px 26px 14px;font-size:19px;font-weight:600;display:flex;align-items:flex-start}
+.modal .mh .x{margin-left:auto;border:0;background:transparent;font-size:18px;color:var(--ink-3);line-height:1;padding:2px 4px}
+.modal .msub{padding:0 26px;font-size:13px;color:var(--ink-2);margin-top:-8px}
+.modal .mwarn{padding:6px 26px 0;font-size:12.5px;color:#c0392b}
+.modal .mb{padding:16px 26px;overflow:auto}
+.modal .mf{padding:14px 26px 18px;display:flex;gap:10px;justify-content:flex-end;align-items:center}
+.modal .mf .lf{margin-right:auto;font-size:12.5px;color:var(--ink-3)}
+
+/* OCR Data Sync */
+.sync-g{font-size:15px;font-weight:600;margin:18px 0 8px}
+.sync-g:first-child{margin-top:0}
+.syn{width:100%;min-width:600px;border-collapse:separate;border-spacing:0}
+.syn th{background:#eef4ff;font-size:12.5px;color:var(--ink-2);padding:11px 14px;border:0;font-weight:500}
+.syn td{padding:10px 14px;border:0;border-top:1px solid var(--line-2);font-size:13px}
+.syn tr.sel td{background:#eaf2ff}
+.syn tr.na td{opacity:.5}
+.syn .st{font-size:11.5px;font-family:var(--mono);color:var(--ink-3);letter-spacing:.03em}
+.syn .st.cf{color:var(--warn)}
+.bx{width:17px;height:17px;border:1px solid #c9ced6;border-radius:3px;display:inline-flex;align-items:center;
+  justify-content:center;font-size:11px;background:#fff;cursor:pointer;vertical-align:middle}
+.bx.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.bx.dis{background:#f2f3f5;cursor:not-allowed;border-style:dashed}
+.emptyv{color:var(--ink-4);font-style:italic}
+
+/* Add Defect */
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px 26px}
+@media(max-width:640px){.dgrid{grid-template-columns:1fr}}
+.dfield label{display:block;font-size:13px;color:var(--ink-2);margin-bottom:6px}
+.dfield .req{color:var(--err)}
+.dsel,.ddate{width:100%;height:36px;border:1px solid #d6d9de;border-radius:var(--r-md);padding:0 11px;font-size:13.5px;background:#fff;color:var(--ink)}
+.ddate:disabled{background:#f4f5f7;color:var(--ink-3)}
+.dchk{display:flex;gap:9px;align-items:center;font-size:13.5px;color:var(--ink-2);cursor:pointer;height:36px}
+.dta{width:100%;min-height:110px;border:1px solid #d6d9de;border-radius:var(--r-md);padding:10px 12px;font-size:13.5px;resize:vertical}
+.dcount{text-align:right;font-size:12px;color:var(--ink-3);margin-top:4px}
+.dfull{grid-column:1/-1}
+
+/* File Center rule modal */
+.fcx .mh{background:#f2f7ff;border-radius:10px 10px 0 0}
+.fcb{font-family:var(--mono);font-size:10px;letter-spacing:.06em;background:var(--primary);color:#fff;
+  padding:2px 7px;border-radius:3px;margin-right:10px;vertical-align:middle;font-weight:400}
+.opt{display:flex;gap:11px;align-items:flex-start;border:1px solid #d6d9de;border-radius:var(--r-md);
+  padding:13px 15px;cursor:pointer;background:#fff;margin-bottom:10px}
+.opt:hover{border-color:var(--primary)}
+.opt.on{border-color:var(--primary);background:var(--primary-bg)}
+.opt .rb{width:16px;height:16px;border:1px solid #c9ced6;border-radius:50%;flex:none;margin-top:2px;display:flex;align-items:center;justify-content:center}
+.opt.on .rb{border-color:var(--primary)}
+.opt.on .rb::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--primary)}
+.opt .on2{font-size:14px;font-weight:500;color:var(--ink)}
+.sub2{display:flex;flex-direction:column;gap:8px;margin:10px 0 0 27px;padding-left:13px;border-left:2px solid var(--line)}
+.sub2 label{display:flex;gap:9px;align-items:center;font-size:13px;color:var(--ink-2);cursor:pointer}
+.pre{background:var(--alt);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;font-size:13px;margin-bottom:10px}
+.pre .lb{font-size:10.5px;font-family:var(--mono);color:var(--ink-3);letter-spacing:.06em;display:block;margin-bottom:3px}
+
+/* Next */
+.spin{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--primary);border-radius:50%;animation:sp .8s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spin{animation-duration:2.4s}}
+.run{display:flex;gap:15px;align-items:center;padding:8px 2px}
+.run .t{font-size:15px;font-weight:600}
+.run .d{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.route{display:flex;gap:14px;align-items:flex-start;border:1px solid;border-radius:var(--r-md);padding:17px 19px}
+.route.stp{border-color:var(--ok-line);background:var(--ok-bg)}
+.route.auth{border-color:var(--warn-line);background:var(--warn-bg)}
+.route.warn{border-color:var(--warn-line);background:var(--warn-bg)}
+.route .ic{font-size:24px;line-height:1;flex:none}
+.route .t{font-size:17px;font-weight:600}
+.route.stp .t{color:var(--ok)}.route.auth .t,.route.warn .t{color:var(--warn)}
+.route .d{font-size:13.5px;color:var(--ink-2);margin-top:5px}
+.rsn{margin-top:14px;background:var(--alt);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px}
+.rsn .l{font-size:11px;font-family:var(--mono);color:var(--ink-3);letter-spacing:.06em;margin-bottom:7px}
+.rsn .ri{display:flex;gap:8px;font-size:13px;color:var(--ink-2);line-height:1.7;padding:3px 0}
+.rsn .ri + .ri{border-top:1px solid var(--line-2)}
+.rsn .ri .mono{flex:none}
+.route .i{width:22px;height:22px;flex:none;margin-top:1px}
+.route.stp .i{color:var(--ok)} .route.auth .i,.route.warn .i{color:var(--warn)}
+.flow{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink-2);margin-top:14px;padding:11px 14px;background:var(--alt);border-radius:var(--r-md)}
+.flow .a{color:var(--ink-3);font-family:var(--mono);font-size:11px}
+.steps{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:18px;padding-top:14px;
+  border-top:1px solid var(--line-2);font-size:11.5px;color:var(--ink-4);font-family:var(--mono)}
+.steps b{color:var(--primary-deep);font-weight:600}
+
+.msg{position:fixed;top:52px;left:50%;transform:translateX(-50%);z-index:500;opacity:0;transition:.2s;pointer-events:none}
+.msg.on{opacity:1}
+.msg span{display:inline-block;background:#fff;border-radius:var(--r-md);box-shadow:var(--sh-lg);padding:10px 18px;font-size:13.5px}
+</style>
+
+<div class="demo">
+  <span class="lb">Demo</span><span>Scenario</span>
+  <span class="seg" id="scnSeg"><button data-scn="manual">Manual</button><button data-scn="stp">STP</button></span>
+  <span>STP switch</span>
+  <span class="seg" id="swSeg"><button data-sw="1">ON</button><button data-sw="0">OFF</button></span>
+  <span class="why">CRA Workbench Prototype</span>
+</div>
+
+<div class="app">
+  <div class="topbar">
+    <span class="brand" id="brand"></span>
+    <span class="tbtn">CRA To Do List</span>
+    <span class="tbtn on">Disbursement:BKI/HP/2026/Y0063327</span>
+    <span class="who">
+      <button class="btn btn-sm btn-pri tb-sync" data-act="sync"><span id="syncIc"></span> Sync from OCR</button>
+      <span>crediosadmin</span><span>|</span><span class="clk" id="clk">59:29</span>
+      <button class="rf" id="rfBtn"></button></span>
+  </div>
+  <div class="body">
+    <div class="icons" id="iconRail"></div>
+    <div class="rail" id="rail"></div>
+    <div class="main" id="main"></div>
+    <div class="side" id="side"></div>
+  </div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<div class="mask hidden" id="mask"><div class="modal" id="modal">
+  <div class="mh" id="mT"></div><div id="mSub"></div><div class="mb" id="mB"></div><div class="mf" id="mF"></div>
+</div></div>
+<div class="msg" id="msg"><span></span></div>
+
+<script>
+(function(){
+"use strict";
+
+const IC={
+  file:'<path d="M9 1.8H4.2A1.2 1.2 0 0 0 3 3v10a1.2 1.2 0 0 0 1.2 1.2h7.6A1.2 1.2 0 0 0 13 13V5.8z"/><path d="M9 1.8V5.8H13"/>',
+  fileText:'<path d="M9 1.8H4.2A1.2 1.2 0 0 0 3 3v10a1.2 1.2 0 0 0 1.2 1.2h7.6A1.2 1.2 0 0 0 13 13V5.8z"/><path d="M9 1.8V5.8H13M5.6 8.6h4.8M5.6 11h3.4"/>',
+  user:'<path d="M13 13.6v-1.3a2.7 2.7 0 0 0-2.7-2.6H5.7A2.7 2.7 0 0 0 3 12.3v1.3"/><circle cx="8" cy="5.2" r="2.6"/>',
+  users:'<path d="M11.2 13.6v-1.3a2.7 2.7 0 0 0-2.7-2.6H4.4a2.7 2.7 0 0 0-2.7 2.6v1.3"/><circle cx="6.45" cy="5" r="2.4"/><path d="M14.3 13.6v-1.3a2.7 2.7 0 0 0-2-2.6M11.1 2.6a2.7 2.7 0 0 1 0 5"/>',
+  check:'<path d="M13.2 4.3 6.4 11.6 2.8 8"/>',
+  checkCircle:'<circle cx="8" cy="8" r="6.2"/><path d="M5.4 8.1 7.2 10l3.5-3.7"/>',
+  alert:'<path d="M7.1 2.4 1.6 11.7a1 1 0 0 0 .9 1.5h11a1 1 0 0 0 .9-1.5L8.9 2.4a1 1 0 0 0-1.8 0z"/><path d="M8 6.2v2.7M8 11.3h.01"/>',
+  checkSquare:'<rect x="2.4" y="2.4" width="11.2" height="11.2" rx="1.6"/><path d="M5.4 8.1 7.2 9.9l3.5-3.6"/>',
+  card:'<rect x="1.8" y="3.4" width="12.4" height="9.2" rx="1.4"/><path d="M1.8 6.6h12.4"/>',
+  car:'<path d="M2.2 9.6 3.4 6a1.6 1.6 0 0 1 1.5-1.1h6.2A1.6 1.6 0 0 1 12.6 6l1.2 3.6"/><rect x="2.2" y="9.6" width="11.6" height="2.6" rx="0.8"/><path d="M4.4 12.2v1.2M11.6 12.2v1.2"/>',
+  store:'<path d="M2.4 6.2h11.2v7.2H2.4z"/><path d="M1.8 6.2 3.2 2.6h9.6l1.4 3.6"/><path d="M6.4 13.4V9.4h3.2v4"/>',
+  shield:'<path d="M8 1.8 3 3.8v3.6c0 3 2.1 5.8 5 6.8 2.9-1 5-3.8 5-6.8V3.8z"/>',
+  list:'<path d="M5.6 4h8.2M5.6 8h8.2M5.6 12h8.2M2.4 4h.01M2.4 8h.01M2.4 12h.01"/>',
+  table:'<rect x="2" y="2.8" width="12" height="10.4" rx="1.3"/><path d="M2 6.4h12M6.6 6.4v6.8"/>',
+  grid:'<rect x="2.2" y="2.2" width="5" height="5" rx="1"/><rect x="8.8" y="2.2" width="5" height="5" rx="1"/><rect x="2.2" y="8.8" width="5" height="5" rx="1"/><rect x="8.8" y="8.8" width="5" height="5" rx="1"/>',
+  clock:'<circle cx="8" cy="8" r="6.2"/><path d="M8 4.4V8l2.4 1.4"/>',
+  gear:'<circle cx="8" cy="8" r="2.3"/><path d="M8 1.6v1.7M8 12.7v1.7M14.4 8h-1.7M3.3 8H1.6M12.5 3.5l-1.2 1.2M4.7 11.3l-1.2 1.2M12.5 12.5l-1.2-1.2M4.7 4.7 3.5 3.5"/>',
+  edit:'<path d="M8 13.4H14"/><path d="M11.1 2.6a1.6 1.6 0 0 1 2.3 2.3L5.2 13 2 13.8l.8-3.2z"/>',
+  trash:'<path d="M2.6 4.4h10.8M5.6 4.4V3.2a1.2 1.2 0 0 1 1.2-1.2h2.4a1.2 1.2 0 0 1 1.2 1.2v1.2m1.8 0v8.4a1.2 1.2 0 0 1-1.2 1.2H5a1.2 1.2 0 0 1-1.2-1.2V4.4"/>',
+  download:'<path d="M13.4 10v2.6a1.2 1.2 0 0 1-1.2 1.2H3.8a1.2 1.2 0 0 1-1.2-1.2V10"/><path d="M5 6.8 8 9.8l3-3M8 9.8V2.4"/>',
+  upload:'<path d="M13.4 10v2.6a1.2 1.2 0 0 1-1.2 1.2H3.8a1.2 1.2 0 0 1-1.2-1.2V10"/><path d="M11 5.4 8 2.4 5 5.4M8 2.4v7.4"/>',
+  lock:'<rect x="3" y="7" width="10" height="7" rx="1.4"/><path d="M5.4 7V4.8a2.6 2.6 0 0 1 5.2 0V7"/>',
+  refresh:'<path d="M13.6 6.6A5.8 5.8 0 0 0 3.4 4.2L1.8 5.8M2.4 9.4a5.8 5.8 0 0 0 10.2 2.4l1.6-1.6"/><path d="M1.8 2.6v3.2h3.2M14.2 13.4v-3.2H11"/>',
+  sync:'<path d="M4.6 2.6 2.2 5l2.4 2.4M2.2 5h9.2a2.4 2.4 0 0 1 2.4 2.4"/><path d="M11.4 13.4 13.8 11l-2.4-2.4M13.8 11H4.6a2.4 2.4 0 0 1-2.4-2.4"/>',
+  right:'<path d="M6 3.2 10.8 8 6 12.8"/>',
+  down:'<path d="M3.2 6 8 10.8 12.8 6"/>',
+  close:'<path d="M12.2 3.8 3.8 12.2M3.8 3.8l8.4 8.4"/>',
+  info:'<circle cx="8" cy="8" r="6.2"/><path d="M8 10.8V7.6M8 5.2h.01"/>',
+  search:'<circle cx="7.2" cy="7.2" r="4.8"/><path d="M13.6 13.6 10.6 10.6"/>',
+  docs:'<rect x="5" y="1.8" width="9" height="10.4" rx="1.3"/><path d="M11 14.2H3.6a1.4 1.4 0 0 1-1.4-1.4V4.6"/>',
+  bolt:'<path d="M9.2 1.6 2.8 9.2h4.4l-.4 5.2 6.4-7.6H8.8z"/>',
+  arrowRight:'<path d="M2.6 8h10.8M9.4 4 13.4 8l-4 4"/>',
+  exchange:'<path d="M2.4 5.4h11.2M10.6 2.4l3 3-3 3M13.6 10.6H2.4M5.4 13.6l-3-3 3-3"/>',
+  inbox:'<path d="M14 9.4h-3.2l-1 2H6.2l-1-2H2"/><path d="M4.3 3.2h7.4l2.3 6.2v3.2a1.2 1.2 0 0 1-1.2 1.2H3.2A1.2 1.2 0 0 1 2 12.6V9.4z"/>',
+  chart:'<path d="M2.4 2.4v11.2h11.2"/><path d="M5 10.6 7.6 8l2 2 3-3.4"/>',
+  book:'<path d="M2.4 3.2A1.4 1.4 0 0 1 3.8 1.8H13v10.4H3.8a1.4 1.4 0 0 0-1.4 1.4z"/><path d="M2.4 13.6a1.4 1.4 0 0 1 1.4-1.4H13"/>',
+  diamond:'<path d="M8 1.6 14.4 8 8 14.4 1.6 8z"/>'
+};
+function I(n,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(IC[n]||'')+'</svg>';}
+
+
+const R0=[
+ {id:'I33',nm:'Insurance sum insured sufficiency',file:'Insurance Cover Note.pdf',pass:0,
+  issue:'Sum insured 98,000.00 < required 102,400.00',dc:'INS-002',dcat:'INSURANCE',dty:'Insurance sum insured insufficient'},
+ {id:'A155',nm:'Hirer signature date validity',file:'HP Agreement.pdf',pass:0,
+  issue:'Signed 12-08-2026, 14 days ago, exceeds 5-day limit',dc:'AGR-011',dcat:'AGREEMENT - MASTER',dty:'Hirer and/or Witnessed Wrongly Dated'},
+ {id:'EB-SIG-1',nm:'Hirer signature & witness completeness',file:'HP Agreement Signed.pdf',pass:0,
+  issue:'Eyeball check required on page 6',dc:'AGR-023',dcat:'AGREEMENT - MASTER',dty:'Signature incomplete / not witnessed'},
+ {id:'S52',nm:'Loan amount reconciliation',file:'2nd Schedule Part I.pdf',pass:1,dc:'SCH-004',dcat:'SECOND SCHEDULE PART I',dty:'Loan Amount is wrong'},
+ {id:'X-NRIC-1',nm:'NRIC cross-document match',file:'NRIC.png',pass:1,dc:'CUS-001',dcat:'CUSTOMER INFO',dty:'NRIC mismatch'},
+ {id:'A153',nm:'Guarantee agreement date alignment',file:'HP Guarantee Agreement.pdf',pass:1,dc:'AGR-031',dcat:'AGREEMENT - GUARANTOR',dty:'Gtee Agrt wrongly dated'},
+ {id:'I67',nm:'Vehicle invoice date sequence',file:'Vehicle Invoice.pdf',pass:1,dc:'INV-007',dcat:'INVOICE - VEHICLE',dty:'Vehicle Invoice not dated'},
+ {id:'V11',nm:'Chassis no. cross-document match',file:'VOC.pdf',pass:1,dc:'COL-002',dcat:'COLLATERAL',dty:'Chassis no. mismatch'},
+ {id:'V12',nm:'Engine no. match',file:'VOC.pdf',pass:1,dc:'COL-003',dcat:'COLLATERAL',dty:'Engine no. mismatch'},
+ {id:'V13',nm:'Road tax validity',file:'Road Tax Disc.jpg',pass:1,dc:'COL-009',dcat:'COLLATERAL',dty:'Road tax expired'},
+ {id:'F21',nm:'Down payment ratio',file:'Vehicle Invoice.pdf',pass:1,dc:'FAC-005',dcat:'FACILITY',dty:'Down payment insufficient'},
+ {id:'F22',nm:'Monthly instalment reconciliation',file:'2nd Schedule Part I.pdf',pass:1,dc:'FAC-006',dcat:'FACILITY',dty:'Instalment mismatch'},
+ {id:'G31',nm:'Guarantor NRIC match',file:'Guarantor NRIC.jpg',pass:1,dc:'GTE-002',dcat:'GUARANTOR',dty:'Guarantor NRIC mismatch'},
+ {id:'B41',nm:'Biometric result matched',file:'Biometric Result.pdf',pass:1,dc:'EAC-001',dcat:'E-ACCEPTANCE',dty:'Biometric not matched'},
+ {id:'S51',nm:'2nd Schedule fully signed',file:'2nd Schedule Part I.pdf',pass:1,dc:'SCH-011',dcat:'SECOND SCHEDULE PART I',dty:'Not fully signed'},
+ {id:'EB-STMP-1',nm:'Stamp duty receipt completeness',file:'2nd Schedule Part I.pdf',pass:1,dc:'SCH-014',dcat:'SECOND SCHEDULE PART I',dty:'Stamping incomplete'},
+ {id:'P71',nm:'Puspakom inspection validity',file:'Puspakom B7.pdf',pass:1,dc:'USD-003',dcat:'USED CAR DOCS',dty:'Inspection expired'},
+ {id:'D61',nm:'Seller IC vs invoice payee',file:'Seller IC.jpg',pass:1,dc:'DIR-002',dcat:'DIRECT CASE',dty:'Seller mismatch'},
+ {id:'M81',nm:'Partnership mandate signatory',file:'Partnership Mandate.docx',pass:1,dc:'COM-005',dcat:'COMPANY DOCS',dty:'Signatory not authorised'},
+ {id:'N01',nm:'MyKad expiry',file:'NRIC.png',pass:1,dc:'CUS-004',dcat:'CUSTOMER INFO',dty:'MyKad expired'},
+ {id:'V14',nm:'Vehicle model match',file:'Vehicle Invoice.pdf',pass:1,dc:'COL-011',dcat:'COLLATERAL',dty:'Model mismatch'},
+ {id:'F23',nm:'Handling fee within cap',file:'2nd Schedule Part I.pdf',pass:1,dc:'FAC-012',dcat:'FACILITY',dty:'Handling fee exceeds cap'},
+ {id:'I34',nm:'Policy period covers tenure',file:'Insurance Cover Note.pdf',pass:1,dc:'INS-005',dcat:'INSURANCE',dty:'Policy period insufficient'},
+ {id:'G32',nm:'Guarantor is not the hirer',file:'Guarantor NRIC.jpg',pass:1,dc:'GTE-004',dcat:'GUARANTOR',dty:'Guarantor same as hirer'},
+ {id:'D62',nm:'Seller account details complete',file:'Seller Invoice.pdf',pass:1,dc:'DIR-006',dcat:'DIRECT CASE',dty:'Seller account incomplete'}
+];
+
+const F0=[
+ {g:'Collateral Info', k:'Chassis No.',        sys:'',                  ocr:'WDF9073122A123456',  req:1},
+ {g:'Collateral Info', k:'Engine No.',         sys:'',                  ocr:'OM642920C123456',    req:1},
+ {g:'Collateral Info', k:'Registration No.',   sys:'',                  ocr:'ABC 1234',           req:0},
+ {g:'Collateral Info', k:'Manufacture Year',   sys:'',                  ocr:'2023',               req:1},
+ {g:'Collateral Info', k:'Vehicle Model',      sys:'PERODUA ALZA 1.5 AV',ocr:'PERODUA ALZA 1.5 AV',req:1},
+ {g:'Facility Info',   k:'Agreement Date',     sys:'',                  ocr:'12-08-2026',         req:1},
+ {g:'Facility Info',   k:'Total Price',        sys:'128,000.00',        ocr:'128,000.00',         req:1},
+ {g:'Facility Info',   k:'Down Payment',       sys:'40,000.00',         ocr:'40,000.00',          req:1},
+ {g:'Facility Info',   k:'Principal Amount',   sys:'88,000.00',         ocr:'88,000.00',          req:1},
+ {g:'Facility Info',   k:'Tenure (months)',    sys:'84',                ocr:'84',                 req:1},
+ {g:'Facility Info',   k:'Monthly Instalment', sys:'1,166.67',          ocr:'1,166.67',           req:1},
+ {g:'Insurance Info',  k:'Insurer',            sys:'',                  ocr:'ALLIANZ GENERAL',    req:1},
+ {g:'Insurance Info',  k:'Sum Insured',        sys:'102,400.00',        ocr:'98,000.00',          req:1},
+ {g:'Insurance Info',  k:'Cover Note No.',     sys:'',                  ocr:'CN-2026-0088123',    req:0},
+ {g:'Insurance Info',  k:'Policy Expiry',      sys:'',                  ocr:'18-08-2027',         req:1},
+ {g:'Seller Info',     k:'Customer Name',      sys:'',                  ocr:'ABC MOTOR SDN BHD',  req:1},
+ {g:'Seller Info',     k:'Address Line 1',     sys:'',                  ocr:'123 Jalan Ampang',   req:1},
+ {g:'Seller Info',     k:'Address Line 2',     sys:'',                  ocr:'Pusat Bandar',       req:0},
+ {g:'Seller Info',     k:'Postcode',           sys:'',                  ocr:'50450',              req:1},
+ {g:'Seller Info',     k:'Dealer Code',        sys:'CC-KL-001',         ocr:'',                   req:1},
+ {g:'Hirer Info',      k:'NRIC No.',           sys:'900101-10-1234',    ocr:'900101-10-1284',     req:1},
+ {g:'Hirer Info',      k:'Hirer Name',         sys:'TAN WEI MING',      ocr:'TAN WEI MING',       req:1},
+ {g:'Hirer Info',      k:'Disbursement Account',sys:'',                 ocr:'',                   req:1}
+];
+
+const CK0=[
+ {g:'Mandatory',k:'Biometric Result',ocr:1},{g:'Mandatory',k:'HP Agreements',ocr:1},
+ {g:'Mandatory',k:'FIS/JPJ Result',ocr:0},{g:'Mandatory',k:'Application Form',ocr:1},
+ {g:'Mandatory',k:'2nd Schedule Part I',ocr:1},{g:'Mandatory',k:'Insurance',ocr:1},
+ {g:'Mandatory',k:'NRIC/SSM/Passport',ocr:1},{g:'Mandatory',k:'Vehicle Invoice',ocr:1},
+ {g:'Conditional',k:'Delivery Receipt',ocr:0},{g:'Conditional',k:'Standing Instruction',ocr:0},
+ {g:'Conditional',k:'VOC',ocr:1},{g:'Conditional',k:'FD Pledge',ocr:0},
+ {g:'Conditional',k:'Roadtax/JPJ Receipt',ocr:1},
+ {g:'Optional',k:'Guarantee Agreement / Guarantor Right & Liabilities',ocr:1},
+ {g:'Optional',k:'Settlement Cases: Redemption Statement, HP546',ocr:0},
+ {g:'Optional',k:'Conditional Approval',ocr:0},{g:'Optional',k:'Driving License',ocr:0},
+ {g:'Optional',k:'FBR Docs: HP566, E-Hakmilik',ocr:0},
+ {g:'Optional',k:"Direct Cases: Seller's NRIC, RAMCI Search",ocr:1},
+ {g:'Optional',k:'Others: IBG Letter, Deviation Approval',ocr:0},
+ {g:'Optional',k:'Used Car Docs: Appx 3, Appx 4, Puspakom',ocr:1},
+ {g:'Optional',k:'Company Docs: Company Reso, M&A, SSM Search',ocr:1},
+ {g:'Optional',k:'Photo of Chattel (IHP)',ocr:0}
+];
+
+const FLAGS=[
+ {k:'LOU Reassignment',on:0},{k:'Promotion Package',on:0},{k:'Hold Handling Fee',on:0,stp:1},
+ {k:'Used Car With Settlement',on:0,stp:1},{k:'Standing Instruction',on:0,stp:1},
+ {k:'FBT',on:0,stp:1},{k:'FBR',on:1,stp:1},{k:'FD Pledge',on:0,stp:1},{k:'CRA Completed',on:0}
+];
+
+const DCATS=['AGREEMENT - MASTER','AGREEMENT - GUARANTOR','INSURANCE','INVOICE - VEHICLE',
+ 'SECOND SCHEDULE PART I','COLLATERAL','CUSTOMER INFO','FACILITY','GUARANTOR','OTHERS'];
+
+const UPLOADED=17, AGE_DAYS=12, AGE_CAP=90;
+
+let RULES=[],FIELDS=[],CHECK=[],DEFECTS=[];
+const S={scn:'manual',stpSwitch:1,noGtee:0,open:{vsum:1,def:1,chk:0},expand:0,dlg:null,
+  sync:{sel:{}},archAt:'14:02',pullAt:'',dseq:0,busy:0,route:null,phase:'',blocks:[],
+  addDef:{cat:'',ty:'',rect:0,ver:0,sr:'',cr:''},
+  custDel:'No',fullMt:'Yes',nav:'vsum'};
+const $=i=>document.getElementById(i);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function reset(scn){
+  RULES=R0.map(r=>Object.assign({},r,{st:''}));
+  FIELDS=F0.map(f=>Object.assign({},f));
+  CHECK=CK0.map(c=>Object.assign({},c,{on:0}));
+  DEFECTS=[];S.sync={sel:{}};S.route=null;S.busy=0;S.pullAt='';S.dseq=0;S.expand=0;
+  S.noGtee = scn==='stp'?1:0;
+  FLAGS.forEach(f=>{f.on=(scn==='manual'&&f.k==='FBR')?1:0;});
+}
+
+const rTotal=()=>RULES.length;
+const rPass=()=>RULES.filter(r=>r.pass).length;
+const rPend=()=>RULES.filter(r=>!r.pass&&r.st==='pending');
+const rFail=()=>RULES.filter(r=>!r.pass&&r.st!=='pending');
+const rSettled=()=>rTotal()-rPend().length;
+const usedJust=()=>RULES.filter(r=>r.act==='just').length;
+const rulesOK=()=>rFail().length===0&&rPend().length===0;
+const hasDefect=r=>DEFECTS.some(d=>d.rule===r.id);
+// FSD 3.11.3 Step 3 - a defect counts as resolved only once rectified and verified
+const openDefects=()=>DEFECTS.filter(d=>!(d.rect&&d.ver)).length;
+const unlinked=()=>rFail().filter(r=>!hasDefect(r));
+
+function fState(f){const s=(f.sys||'').trim(),o=(f.ocr||'').trim();
+  if(!o)return 'noocr'; if(!s)return 'fill'; return s===o?'same':'diff';}
+const fMissing=()=>FIELDS.filter(f=>f.req&&!(f.sys||'').trim());
+const fFilled=()=>FIELDS.filter(f=>(f.sys||'').trim()).length;
+const ckOn=()=>CHECK.filter(c=>c.on).length;
+const ckMand=()=>CHECK.filter(c=>c.g==='Mandatory');
+const ckMandOn=()=>ckMand().filter(c=>c.on).length;
+const craDone=()=>!!(FLAGS.find(f=>f.k==='CRA Completed')||{}).on;
+// FSD 3.11.2 - Next is never hard-blocked by unresolved defects or unconfirmed
+// rules. The only gate is the BAU "CRA Completed" indicator.
+const canNext=()=>craDone();
+
+function pullRules(){
+  const n=rPend().length; rPend().forEach(r=>{r.pass=1;r.st='';});
+  S.pullAt=new Date().toTimeString().slice(0,5);
+  return n?`${n} rule(s) re-extracted, conclusion updated`:'No change in rule conclusions';
+}
+// FSD 3.9.7 method 3: aligns System-source defects with the latest rule results.
+// Creates the missing ones, drops System ones whose rule now passes, never touches User ones.
+function syncSystemDefects(){
+  const gone=DEFECTS.filter(d=>d.src==='System'&&d.rule&&!rFail().some(r=>r.id===d.rule));
+  gone.forEach(d=>DEFECTS.splice(DEFECTS.indexOf(d),1));
+  const made=unlinked().map(r=>mkDefect(r,'System')).filter(Boolean);
+  return {added:made.length,removed:gone.length,changed:made.length>0||gone.length>0};
+}
+function mkDefect(r,src){
+  if(hasDefect(r))return null;
+  S.dseq++;
+  DEFECTS.push({no:String(S.dseq),rule:r.id,code:r.dc,cat:r.dcat,type:r.dty,file:r.file,
+    sr:'',cr:r.issue||r.nm,src:src||'System',rect:0,ver:0,cd:'30-08-2026 09:02:31'});
+  return S.dseq;
+}
+// FSD 4.1.2 - four ordered gates. Gate 1 routes to manual maintenance;
+// gates 2-4 route to the Authorizer. The distinction matters: they are not
+// the same destination, so the prototype must not collapse them into one.
+function eligibility(){
+  const fo=FLAGS.filter(f=>f.on&&f.stp);
+  const g1=[  // FSD 4.1.1 a-h, the scenario restrictions
+    {ok:1,nm:'Individual customer',d:''},
+    {ok:1,nm:'New car',d:''},
+    {ok:1,nm:'Single beneficiary, matching the dealer record',d:''},
+    {ok:1,nm:'No payoff',d:''},
+    {ok:!fo.length,nm:'No non-standard case flag',d:fo.map(f=>f.k).join(', ')},
+    {ok:!!S.noGtee,nm:'No guarantor',d:'Guarantor LIM AH KOW present'},
+    {ok:1,nm:'Not a floor-stock dealer',d:''},
+    {ok:AGE_DAYS<=AGE_CAP,nm:`Within ${AGE_CAP} days of first approval`,d:`${AGE_DAYS} days`}
+  ];
+  const g2=[
+    {ok:ckMandOn()===ckMand().length,nm:'All mandatory documents checked',
+     d:`${ckMand().length-ckMandOn()} unchecked`},
+    {ok:fMissing().length===0,nm:'All required information captured',
+     d:`${fMissing().length} field(s) empty`}
+  ];
+  const g3=[{ok:openDefects()===0,nm:'No unresolved defect',d:`${openDefects()} unresolved`}];
+  const g4=[{ok:!!S.stpSwitch,nm:'STP switch is ON',d:'Switch is OFF'}];
+  const gates=[
+    {n:1,label:'Application scenario suitable for STP',items:g1,route:'maint'},
+    {n:2,label:'Mandatory files and information obtained',items:g2,route:'auth'},
+    {n:3,label:'Unresolved defects at zero',items:g3,route:'auth'},
+    {n:4,label:'STP switch',items:g4,route:'auth'}
+  ];
+  const failed=gates.find(g=>!g.items.every(i=>i.ok));
+  const items=gates.flatMap(g=>g.items);
+  return {gates,items,ok:!failed,failed:failed||null,
+          route:failed?failed.route:'stp',
+          blockers:failed?failed.items.filter(i=>!i.ok):[]};
+}
+
+/* ═══ RENDER ═══ */
+function render(){
+  document.querySelectorAll('#scnSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===S.scn));
+  document.querySelectorAll('#swSeg button').forEach(b=>b.setAttribute('aria-pressed',(b.dataset.sw==='1')===!!S.stpSwitch));
+  renderRail();renderMain();renderSide();renderFoot();
+}
+
+const NAV=[
+  ['Checking & Modification',[['vsum','Verification Summary','v'],['def','Defect List','d'],['chk','File Check List','c']]],
+  ['Data Maintenance',[['appsum','Application Summary'],['hirer','Hirer/Guarantor Info'],['fac','Facility Information'],
+    ['dealer','Dealer/Seller Info'],['fis','FIS & Collateral & Purchase Info'],['appr','Approval Information']]],
+  ['Disbursement Maintenance',[['dsum','Summary'],['tmaint','Transaction Maintenance'],['treview','Transaction Review'],
+    ['mdlog','Maintenance & Disbursement Interface Log'],['tlog','Transaction Log'],['tools','Action Tools']]]
+];
+
+function renderRail(){
+  let h=`<div class="navcard"><div class="nh">${I('list')}Navigation</div>`;
+  NAV.forEach(([g,items])=>{
+    h+=`<h6>${g}</h6>`;
+    items.forEach(([k,nm,kind])=>{
+      let c='';
+      if(kind==='v') c=`<span class="n ${rulesOK()?'ok':'err'}">${rulesOK()?I('check'):rFail().length}</span>`;
+      if(kind==='d') c=`<span class="n ${DEFECTS.length?'err':''}">${DEFECTS.length}</span>`;
+      if(kind==='c') c=`<span class="n ${ckMandOn()===ckMand().length?'ok':''}">${ckOn()}/${CHECK.length}</span>`;
+      h+=`<button data-go="${k}" class="${S.nav===k?'on':''}"><span>${nm}</span>${c}</button>`;
+    });
+  });
+  h+=`</div><div class="linkcard"><a data-link="fc">Attachment</a><a>CRA Report</a><a class="off">E-acceptance</a></div>`;
+  $('rail').innerHTML=h;
+}
+
+function mod(k,icon,title,body,right,badge,isnew){
+  const o=!!S.open[k];
+  return `<div class="mod ${body?'':'stub'}" id="m-${k}">
+    <div class="mod-h" role="button" tabindex="0" data-tog="${k}">
+      <span class="car">${o?I('down'):I('right')}</span><span class="mi">${icon}</span><span class="mt">${title}</span>
+      ${isnew?'<span class="new">NEW</span>':''}${badge||''}
+      <span class="mr">${right||''}</span></div>
+    ${o&&body?`<div class="mod-b">${body}</div>`:''}</div>`;
+}
+
+function vsumBody(){
+  const fl=rFail(),pd=rPend(),ok=rulesOK(),ul=unlinked().length;
+  const kpi=(v,k,cls,sub)=>`<div class="kp"><div class="v ${cls||''}">${v}</div>
+    <div class="k">${k}${sub?`<span class="ks">${sub}</span>`:''}</div></div>`;
+  const st=ok?'All rules passed':(fl.length?`${fl.length} rule(s) not passed`:`${pd.length} re-extracting`);
+  return `<div class="vs-top">
+      <span><div class="st ${ok?'ok':(fl.length?'warn':'wait')}">${st}</div>
+        <div class="sd">Rule opinions archived at ${S.archAt} in File Center${S.pullAt?` · Last refresh ${S.pullAt}`:''}</div></span>
+      <span class="r">
+        <button class="btn btn-sm" data-act="refresh" ${S.busy?'disabled':''}>${S.busy?'Refreshing…':I('refresh')+' Refresh Rules'}</button>
+        <button class="btn btn-sm btn-pri" data-link="fc">Open File Center</button></span>
+    </div>
+    <div class="kpis">
+      ${kpi(`${ckMandOn()}/${ckMand().length}`,'Mandatory Docs',ckMandOn()>=ckMand().length?'ok':'err')}
+      ${kpi(UPLOADED,'Uploaded Files')}
+      ${kpi(rTotal(),'Total Rules')}
+      ${kpi(rSettled(),'Concluded','',pd.length?`${pd.length} in progress`:'')}
+      ${kpi(rPass(),'Passed','ok')}
+      ${kpi(fl.length,'Not Passed',fl.length?'err':'',ul?`${ul} without defect`:'')}
+    </div>
+    <button class="btn btn-sm" data-act="expand">${S.expand?'Collapse detail':'View detail'}</button>
+    ${S.expand?`<div style="margin-top:14px">
+      ${[...fl,...pd].length?[...fl,...pd].map(r=>{
+        const p=r.st==='pending',d=DEFECTS.find(x=>x.rule===r.id);
+        return `<div class="rrow"><span class="n"><b class="mono">${r.id}</b> ${esc(r.nm)}
+          <span class="s">${esc(r.file)}${r.issue?' · '+esc(r.issue):''}</span></span>
+          <span class="r"><span class="tag ${p?'tag-blue':'tag-err'}">${p?'In progress':'Not passed'}</span>
+          ${p?'':(d?`<span class="tag tag-warn mono">Defect #${d.no}</span><button class="btn btn-sm" data-go="def">View</button>`
+                  :`<button class="btn btn-sm" data-mkdef="${r.id}">Create Defect</button>`)}
+          <button class="btn btn-sm" data-fix="${r.id}" ${p?'disabled':''}>Handle rule</button></span></div>`;
+      }).join(''):`<div class="muted">All ${rTotal()} rules passed.</div>`}
+      ${ul>1?`<div class="batchbar"><span>${ul} rule(s) not passed without a defect record</span>
+        <button class="btn btn-sm" data-act="defall">Create All (${ul})</button></div>`:''}
+    </div>`:''}`;
+}
+
+function defBody(){
+  if(!DEFECTS.length) return `<div class="tot"><span class="t">Total: <b>0</b> defect(s)</span>
+    <span class="r"><button class="btn btn-sm" data-act="syncdef">Sync System Defects</button>
+      <button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button></span></div>
+    <div class="tw"><table><thead><tr><th style="width:60px">NO.</th><th style="width:80px">SOURCE</th>
+      <th style="width:180px">CATEGORY</th><th style="width:200px">TYPE</th><th style="width:90px">RECTIFIED</th>
+      <th style="width:80px">VERIFIED</th><th>SALES REMARK</th><th style="width:110px">ACTION</th></tr></thead>
+      <tbody><tr><td colspan="8"><div class="nodata">${I('inbox')}No data</div></td></tr></tbody></table></div>`;
+  return `<div class="tot"><span class="t">Total: <b>${DEFECTS.length}</b> defect(s)${unlinked().length?` · ${unlinked().length} rule(s) still unlinked`:''}${openDefects()?` · ${openDefects()} unresolved`:''}</span>
+    <span class="r"><button class="btn btn-sm" data-act="syncdef">Sync System Defects</button>
+      <button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button></span></div>
+  <div class="tw"><table style="min-width:1080px"><thead><tr><th style="width:56px">NO.</th><th style="width:80px">SOURCE</th>
+    <th style="width:76px">RULE</th><th style="width:110px">DEFECT CODE</th><th style="width:180px">CATEGORY</th>
+    <th style="width:190px">TYPE</th><th style="width:90px">RECTIFIED</th><th style="width:80px">VERIFIED</th>
+    <th style="width:150px">CRA REMARK</th><th style="width:120px">ACTION</th></tr></thead>
+  <tbody>${DEFECTS.map(d=>`<tr><td class="mono">${d.no}</td>
+    <td><span class="tag ${d.src==='System'?'tag-blue':''}" style="font-size:11px">${d.src}</span></td>
+    <td class="mono">${esc(d.rule||'—')}</td><td class="mono">${esc(d.code||'—')}</td>
+    <td style="font-size:12px">${esc(d.cat)}</td><td style="font-size:12px">${esc(d.type)}</td>
+    <td>${d.rect?'<span class="tag tag-ok">Y</span>':'<span class="tag tag-err">N</span>'}</td>
+    <td>${d.ver?'<span class="tag tag-ok">Y</span>':'<span class="tag">N</span>'}</td>
+    <td style="font-size:12px">${esc(d.cr)}</td>
+    <td>${d.rect&&d.ver?'<span class="muted">Closed</span>'
+      :d.rect?`<button class="btn btn-sm" data-ver="${d.no}">Verify</button>`
+      :`<button class="btn btn-sm" data-rect="${d.no}">Rectify</button>`}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+function chkBody(){
+  const grps=['Mandatory','Conditional','Optional'];
+  return `<div class="chk-h">Checked: <b>${ckOn()} / ${CHECK.length}</b>
+    ${ckMandOn()<ckMand().length?` · <span style="color:var(--err)">${ckMand().length-ckMandOn()} mandatory outstanding</span>`:''}</div>
+    ${grps.map(g=>`<div class="chk-grp">${g}</div><div class="chk-grid">
+      ${CHECK.filter(c=>c.g===g).map(c=>`<label class="ck ${c.on?'on':''}" data-ck="${esc(c.k)}">
+        <span class="bx">${c.on?'✓':''}</span><span>${esc(c.k)}</span></label>`).join('')}
+    </div>`).join('')}`;
+}
+
+function dmBody(grp){
+  const gs=[].concat(grp);
+  const fs=FIELDS.filter(f=>gs.includes(f.g));
+  if(!fs.length) return `<div class="muted">Not implemented in this prototype.</div>`;
+  const sub=gs.length>1;
+  const block=g=>`${sub?`<div class="fgrp">${esc(g)}</div>`:''}<div class="fgrid">${FIELDS.filter(f=>f.g===g).map(f=>{
+    const miss=f.req&&!(f.sys||'').trim(), st=fState(f);
+    return `<div class="fld"><label>${esc(f.k)}${f.req?'<span class="req"> *</span>':''}</label>
+      <input class="fin ${miss?'bad':''}" data-fld="${esc(f.k)}" value="${esc(f.sys)}" placeholder="${miss?'Required':''}">
+      <span class="fhint ${st==='diff'?'diff':''}">${(f.ocr||'').trim()
+        ? 'OCR: '+esc(f.ocr)+(st==='diff'?'  (differs)':'') : 'OCR: —'}</span></div>`;
+  }).join('')}</div>`;
+  return gs.map(block).join('');
+}
+
+function renderMain(){
+  let h='';
+  NAV.forEach(([g,items])=>{
+    h+=`<div class="seclabel">${g}</div>`;
+    items.forEach(([k,nm])=>{
+      if(k==='vsum'){
+        const b=rulesOK()?`<span class="badge ok">✓</span>`:`<span class="badge err">${rFail().length}</span>`;
+        h+=mod(k,I('checkCircle'),'Verification Summary',vsumBody(),'',b,1);
+      }else if(k==='def'){
+        h+=mod(k,I('alert'),'Defect List',defBody(),'',
+          DEFECTS.length?`<span class="badge err">${DEFECTS.length}</span>`:'');
+      }else if(k==='chk'){
+        h+=mod(k,I('checkSquare'),'File Check List',chkBody(),'',
+          ckMandOn()<ckMand().length?`<span class="badge err">${ckMand().length-ckMandOn()}</span>`:`<span class="badge ok">✓</span>`);
+      }else{
+        const map={fis:'Collateral Info',fac:'Facility Information',dealer:'Seller Info',hirer:'Hirer Info'};
+        const grp={fis:['Collateral Info','Insurance Info'],fac:'Facility Info',dealer:'Seller Info',hirer:'Hirer Info'}[k];
+        const icons={appsum:'fileText',hirer:'users',fac:'card',dealer:'store',fis:'car',appr:'checkCircle',
+          dsum:'file',tmaint:'edit',treview:'table',mdlog:'list',tlog:'clock',tools:'gear'};
+        const right = k==='dealer'?`<span class="btn btn-txt" style="font-size:13px">${I('refresh')} Re-query</span>`:'';
+        h+=mod(k,I(icons[k]||'file'),nm,grp?dmBody(grp):'',right);
+      }
+    });
+  });
+  $('main').innerHTML=h;
+}
+
+function renderSide(){
+  let h=`<div class="sc"><div class="sh"><span>LOU Renewal</span><span class="cnt">16</span></div>`;
+  FLAGS.forEach((f,i)=>{h+=`<label class="fl ${f.on?'on':''}" data-flag="${i}"><span class="bx">${f.on?'✓':''}</span><span>${f.k}</span></label>`;});
+  h+=`<div class="sdiv"></div>
+    <div class="yn"><span>Customer Deleted</span><span class="ynseg">
+      <button data-yn="custDel|Yes" aria-pressed="${S.custDel==='Yes'}">Yes</button>
+      <button data-yn="custDel|No" aria-pressed="${S.custDel==='No'}">No</button></span></div>
+    <div class="yn"><span>Full Maintenance</span><span class="ynseg">
+      <button data-yn="fullMt|Yes" aria-pressed="${S.fullMt==='Yes'}">Yes</button>
+      <button data-yn="fullMt|No" aria-pressed="${S.fullMt==='No'}">No</button></span></div>
+    <div class="yn"><span>CRA Remark</span><span class="btn btn-txt">Edit</span></div>
+    <div class="muted">—</div></div>`;
+  h+=`<div class="sc">
+    ${[['App. Ref. No.','BKI/HP/2026/Y0063327'],['Product Code','FINP'],
+       ['Status','Pending Checking and Maintenance'],['Applicant Name','TAN WEI MING'],
+       ['Guarantor',S.noGtee?'—':'LIM AH KOW'],['Case Age',AGE_DAYS+' days']]
+      .map(([k,v])=>`<div class="kv"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('')}
+    <div style="text-align:center;color:var(--ink-4);margin-top:8px">⌄</div></div>`;
+  $('side').innerHTML=h;
+}
+
+function renderFoot(){
+  const ok=canNext(),left=[];
+  if(fMissing().length) left.push(`${fMissing().length} required field(s) empty`);
+  if(ckMandOn()<ckMand().length) left.push(`${ckMand().length-ckMandOn()} mandatory doc(s) unchecked`);
+  if(unlinked().length) left.push(`${unlinked().length} failed rule(s) without a defect`);
+  if(!ok) left.push('Select CRA Completed to submit');
+  const note=S.route?(S.route.ok?'Disbursement triggered via STP':'Routed to Authorizer'):left.join(' · ');
+  $('foot').innerHTML=`<select><option>-Select-</option><option>Reassign</option><option>Hold</option></select>
+    <span class="fn">${note}</span>
+    <span class="r"><button class="btn">Save</button><button class="btn">Exit Application</button>
+      <button class="btn">To CRA Defect</button><button class="btn">To Sales Defect</button>
+      <button class="btn btn-pri" data-act="next" ${ok?'':'disabled'}
+        title="${ok?'Submit':'Select the CRA Completed indicator to submit'}">Next</button></span>`;
+}
+
+/* ═══ MODALS ═══ */
+function openM(cls,title,sub,warn){
+  $('modal').className='modal'+(cls?' '+cls:'');
+  $('mT').innerHTML=title+'<button class="x" data-act="mx">'+I('close')+'</button>';
+  $('mSub').innerHTML=(sub?`<div class="msub">${sub}</div>`:'')+(warn?`<div class="mwarn">${warn}</div>`:'');
+  $('mask').classList.remove('hidden');
+}
+function closeM(){$('mask').classList.add('hidden');S.dlg=null;}
+
+/* OCR Data Sync */
+const syncable=f=>fState(f)!=='noocr';
+function openSync(){
+  FIELDS.forEach(f=>{if(S.sync.sel[f.k]===undefined){const st=fState(f);S.sync.sel[f.k]=(st==='same'||st==='fill')?1:0;}});
+  S.dlg='sync'; openM('','OCR Data Sync','Comparing manual entry with detected document data.',
+    'Selecting a checkbox means applying the OCR value to replace the current manual value.');
+  drawSync();
+}
+function drawSync(){
+  const grps=[...new Set(FIELDS.map(f=>f.g))];
+  let h='';
+  grps.forEach(g=>{
+    const gf=FIELDS.filter(f=>f.g===g&&syncable(f));
+    const all=gf.length&&gf.every(f=>S.sync.sel[f.k]);
+    h+=`<div class="sync-g">${g}</div><div class="tw" style="border:0"><table class="syn">
+      <thead><tr><th style="width:44px"><span class="bx ${all?'on':''}" data-gsel="${esc(g)}">${all?'✓':''}</span></th>
+        <th style="width:210px">Field Name</th><th style="width:200px">Current (Manual)</th>
+        <th>OCR Value</th><th style="width:100px;text-align:right">Status</th></tr></thead><tbody>`;
+    FIELDS.filter(f=>f.g===g).forEach(f=>{
+      const st=fState(f),on=!!S.sync.sel[f.k];
+      if(st==='noocr'){
+        h+=`<tr class="na"><td><span class="bx dis"></span></td><td>${esc(f.k)}</td>
+          <td>${(f.sys||'').trim()?esc(f.sys):'<span class="emptyv">(Empty)</span>'}</td>
+          <td><span class="emptyv">—</span></td><td style="text-align:right"><span class="st">NO OCR</span></td></tr>`;
+      }else{
+        h+=`<tr class="${on?'sel':''}"><td><span class="bx ${on?'on':''}" data-sel="${esc(f.k)}">${on?'✓':''}</span></td>
+          <td>${esc(f.k)}</td>
+          <td>${(f.sys||'').trim()?esc(f.sys):'<span class="emptyv">(Empty)</span>'}</td>
+          <td>${esc(f.ocr)}</td>
+          <td style="text-align:right"><span class="st ${st==='diff'?'cf':''}">${st==='diff'?'CONFLICT':'SYNC OK'}</span></td></tr>`;
+      }
+    });
+    h+='</tbody></table></div>';
+  });
+  const n=FIELDS.filter(f=>syncable(f)&&S.sync.sel[f.k]).length;
+  $('mB').innerHTML=h;
+  $('mF').innerHTML=`<span class="lf">${n} field(s) selected</span>
+    <button class="btn" data-act="mx">Cancel</button>
+    <button class="btn btn-pri" data-act="dosync">Apply</button>`;
+}
+function doSync(){
+  let n=0; FIELDS.forEach(f=>{if(syncable(f)&&S.sync.sel[f.k]&&(f.ocr||'').trim()){f.sys=f.ocr;n++;}});
+  closeM();render();toast(`${n} field(s) updated from OCR`);
+}
+
+/* Add Defect */
+function openAdd(){
+  S.dlg='add'; S.addDef={cat:'',ty:'',rect:0,ver:0,sr:'',cr:''};
+  openM('sm','Add Defect'); drawAdd();
+}
+function drawAdd(){
+  const a=S.addDef;
+  $('modal').className='modal';
+  $('mB').innerHTML=`<div class="dgrid">
+    <div class="dfield"><label>Defect Category <span class="req">*</span></label>
+      <select class="dsel" id="aCat"><option value=""></option>
+        ${DCATS.map(c=>`<option ${a.cat===c?'selected':''}>${c}</option>`).join('')}</select></div>
+    <div class="dfield"><label>Defect Type <span class="req">*</span></label>
+      <select class="dsel" id="aTy"><option value=""></option>
+        ${[...new Set(R0.map(r=>r.dty))].map(t=>`<option ${a.ty===t?'selected':''}>${esc(t)}</option>`).join('')}</select></div>
+    <div class="dfield"><label>Rectified</label>
+      <label class="dchk" data-atg="rect"><span class="bx ${a.rect?'on':''}">${a.rect?'✓':''}</span>Mark as Rectified</label></div>
+    <div class="dfield"><label>Verified</label>
+      <label class="dchk" data-atg="ver"><span class="bx ${a.ver?'on':''}">${a.ver?'✓':''}</span>Mark as Verified</label></div>
+    <div class="dfield"><label>Rectified Date</label>
+      <input class="ddate" placeholder="Select date" ${a.rect?'':'disabled'} value="${a.rect?'30-08-2026':''}"></div>
+    <div class="dfield"><label>Verified Date</label>
+      <input class="ddate" placeholder="Select date" ${a.ver?'':'disabled'} value="${a.ver?'30-08-2026':''}"></div>
+    <div class="dfield dfull" style="max-width:50%"><label>Create Date <span class="req">*</span></label>
+      <input class="ddate" value="30-08-2026 09:02:31" disabled></div>
+    <div class="dfield dfull"><label>Sales Remark</label>
+      <textarea class="dta" id="aSr" maxlength="500" placeholder="Enter Sales Remark">${esc(a.sr)}</textarea>
+      <div class="dcount"><span id="aSrN">${a.sr.length}</span> / 500</div></div>
+    <div class="dfield dfull"><label>CRA Remark</label>
+      <textarea class="dta" id="aCr" maxlength="500" placeholder="Enter CRA Remark">${esc(a.cr)}</textarea>
+      <div class="dcount"><span id="aCrN">${a.cr.length}</span> / 500</div></div>
+  </div>`;
+  $('mF').innerHTML=`<button class="btn" data-act="mx">Cancel</button>
+    <button class="btn btn-pri" data-act="doadd">OK</button>`;
+}
+function doAdd(){
+  const cat=$('aCat').value, ty=$('aTy').value;
+  if(!cat||!ty){toast('Defect Category and Type are required');return;}
+  S.dseq++;
+  DEFECTS.push({no:String(S.dseq),rule:'',code:'—',cat,type:ty,file:'—',
+    sr:$('aSr').value.trim(),cr:$('aCr').value.trim(),src:'User',
+    rect:S.addDef.rect?1:0,ver:S.addDef.ver?1:0,cd:'30-08-2026 09:02:31'});
+  closeM();S.open.def=1;render();toast('Defect #'+S.dseq+' created (Source: User)');
+}
+
+/* File Center rule handling */
+function openFix(id){
+  const r=RULES.find(x=>x.id===id); if(!r) return;
+  S.dlg={id,pick:null,who:'self',note:'',bad:0};
+  openM('fcx','<span class="fcb">FILE CENTER</span>Rule Handling'); drawFix();
+}
+function drawFix(){
+  const d=S.dlg,r=RULES.find(x=>x.id===d.id);
+  $('modal').className='modal fcx';
+  $('mB').innerHTML=`<div class="pre"><span class="lb">RULE</span><b class="mono">${r.id}</b> ${esc(r.nm)}
+      <div class="muted" style="margin-top:3px">${esc(r.file)}</div></div>
+    ${r.issue?`<div class="pre"><span class="lb">REASON</span>${esc(r.issue)}</div>`:''}
+    <div class="opt ${d.pick==='amend'?'on':''}" data-pick="amend"><span class="rb"></span>
+      <span><span class="on2">Amend the OCR result</span>
+        ${d.pick==='amend'?`<div class="sub2">
+          <div class="dfield"><label>Corrected value <span class="req">*</span></label>
+          <input class="fin" id="mAmend" value="${esc(d.note)}" placeholder="Enter the value read from the document"></div>
+        </div>`:''}</span></div>
+    <div class="opt ${d.pick==='file'?'on':''}" data-pick="file"><span class="rb"></span>
+      <span><span class="on2">Replace document</span>
+        ${d.pick==='file'?`<div class="sub2">
+          <label><input type="radio" name="who" ${d.who==='self'?'checked':''} data-who="self"><span>CRA replaces it now</span></label>
+          <label><input type="radio" name="who" ${d.who==='sales'?'checked':''} data-who="sales"><span>Return to Sales to replace</span></label>
+        </div>`:''}</span></div>
+    <div class="opt ${d.pick==='just'?'on':''}" data-pick="just"><span class="rb"></span>
+      <span><span class="on2">Justification</span></span></div>
+    ${(d.pick==='just'||(d.pick==='file'&&d.who==='sales'))
+      ? `<div class="dfield" style="margin-top:12px"><label>${d.pick==='just'?'Justification reason':'Note to Sales'} <span class="req">*</span></label>
+         <textarea class="dta" id="mNote" style="min-height:80px;border-color:${d.bad?'var(--err)':'#d6d9de'}">${esc(d.note)}</textarea></div>`:''}`;
+  $('mF').innerHTML=`<button class="btn" data-act="mx">Cancel</button>
+    <button class="btn btn-pri" ${d.pick?'':'disabled'} data-act="dofix">Confirm</button>`;
+}
+function doFix(){
+  const d=S.dlg,r=RULES.find(x=>x.id===d.id);
+  const ta=$('mNote'); if(ta)d.note=ta.value.trim();
+  const am=$('mAmend'); if(am)d.note=am.value.trim();
+  const needsNote = d.pick==='just' || d.pick==='amend' || (d.pick==='file'&&d.who==='sales');
+  if(needsNote&&!d.note){d.bad=1;drawFix();toast(d.pick==='amend'?'Enter the corrected value':'A note is required');return;}
+  // FSD 3.9.5 - all three methods count as rectification; the rule becomes Passed.
+  if(d.pick==='amend'){r.pass=1;r.act='amend';toast('Value amended — rule re-evaluated as passed');}
+  else if(d.pick==='just'){r.pass=1;r.act='just';toast('Justified — rule marked as passed');}
+  else{r.st='pending';r.act='file';
+    toast(d.who==='self'?'Document replaced — re-extraction in progress':'Returned to Sales for replacement');}
+  closeM();render();
+  if(r.pass&&DEFECTS.some(x=>x.rule===r.id&&x.src==='System'))
+    setTimeout(()=>toast('Its System defect can now be cleared via Sync System Defects'),1500);
+}
+
+/* Next */
+function openNext(){
+  S.dlg='next';S.phase='check';S.route=null;
+  openM('sm','Submit'); drawNext();
+  setTimeout(()=>{ if(S.dlg!=='next')return;
+    const ul=unlinked();
+    if(ul.length){S.phase='warn';S.blocks=ul;drawNext();return;}
+    goSave();},700);
+}
+function goSave(){
+  S.phase='save';drawNext();
+  setTimeout(()=>{ if(S.dlg!=='next')return;
+    const e=eligibility();
+    S.route={ok:e.ok,route:e.route,gate:e.failed,
+             reasons:e.blockers.map(i=>i.nm+(i.d?' — '+i.d:''))};
+    S.phase='done';drawNext();},700);
+}
+function drawNext(){
+  $('modal').className='modal';
+  const step=n=>`<div class="steps">${['1 Pre-submit check','2 Save','3 STP eligibility','4 Route']
+    .map((s,i)=>i+1<=n?`<b>${s}</b>`:s).join('  ·  ')}</div>`;
+  if(S.phase==='check'||S.phase==='save'){
+    const sv=S.phase==='save';
+    $('mB').innerHTML=`<div class="run"><div class="spin"></div>
+      <div><div class="t">${sv?'Saving and evaluating STP eligibility…':'Checking rules against defect records…'}</div>
+      <div class="d">${sv?'Maintenance content saved, then eligibility rules run':'Comparing via the rule–defect mapping'}</div></div></div>${step(sv?2:1)}`;
+    $('mF').innerHTML=''; return;
+  }
+  if(S.phase==='warn'){
+    $('mB').innerHTML=`<div class="route warn">${I('alert')}
+      <span><div class="t">${S.blocks.length} rule(s) not passed without a defect record</div>
+      <div class="d">Registering them as defects is your call — this check does not block submission.</div></span></div>
+      <div class="rsn"><div class="l">UNLINKED RULES</div>
+        ${S.blocks.map(r=>`<div class="ri"><b class="mono">${r.id}</b><span>${esc(r.nm)} — ${esc(r.dc)}</span></div>`).join('')}</div>${step(1)}`;
+    $('mF').innerHTML=`<button class="btn" data-act="backfix">Go back</button>
+      <button class="btn" data-act="warndef">Create all and continue</button>
+      <button class="btn btn-pri" data-act="anyway">Submit anyway</button>`;
+    return;
+  }
+  const r=S.route;
+  if(!r.ok && r.route==='maint'){
+    $('mB').innerHTML=`<div class="route auth">${I('exchange')}<span>
+        <div class="t">Not an STP scenario</div>
+        <div class="d">Gate 1 of 4 did not pass, so the Case goes to Disbursement Information
+          Maintenance for manual handling — it does <b>not</b> go to the Authorizer.</div></span></div>
+      <div class="rsn"><div class="l">GATE 1 · APPLICATION SCENARIO</div>
+        ${r.reasons.map(x=>`<div class="ri"><span>${esc(x)}</span></div>`).join('')}</div>
+      <div class="flow"><span class="a">ROUTE</span>CRA ${I('arrowRight')} <b>Disbursement Information Maintenance</b></div>`+step(4);
+    $('mF').innerHTML=`<button class="btn btn-pri" data-act="confirm">Got it</button>`;
+    return;
+  }
+  $('mB').innerHTML=(r.ok
+    ? `<div class="route stp">${I('bolt')}<span><div class="t">Eligible for STP</div>
+       <div class="d">Authorizer is skipped. Submitting triggers the disbursement interface directly.</div></span></div>
+       <div class="flow"><span class="a">ROUTE</span>CRA ${I('arrowRight')} <b>Disbursement Interface</b></div>`
+    : `<div class="route auth">${I('exchange')}<span><div class="t">Routed to Authorizer</div>
+       <div class="d">Gate ${r.gate?r.gate.n:''} of 4 did not pass: ${r.gate?esc(r.gate.label):''}.</div>
+       <div class="d">This case is not eligible for STP and needs manual authorisation.</div></span></div>
+       <div class="rsn"><div class="l">NOT ELIGIBLE BECAUSE</div>
+         ${r.reasons.map(x=>`<div class="ri"><span>${esc(x)}</span></div>`).join('')}</div>
+       <div class="flow"><span class="a">ROUTE</span>CRA ${I('arrowRight')} <b>Authorizer</b> ${I('arrowRight')} Disbursement Interface</div>`)+step(4);
+  $('mF').innerHTML=`<button class="btn" data-act="mx">Back</button>
+    <button class="btn btn-pri" data-act="confirm">${r.ok?'Confirm Disbursement':'Confirm Submit'}</button>`;
+}
+
+function toast(t){const m=$('msg');m.querySelector('span').textContent=t;m.classList.add('on');
+  clearTimeout(m._t);m._t=setTimeout(()=>m.classList.remove('on'),2300);}
+
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='aSr'){S.addDef.sr=t.value;$('aSrN').textContent=t.value.length;}
+  if(t.id==='aCr'){S.addDef.cr=t.value;$('aCrN').textContent=t.value.length;}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.fld){
+    const f=FIELDS.find(x=>x.k===t.dataset.fld); if(!f)return;
+    f.sys=t.value.trim(); renderRail(); renderFoot();
+    t.classList.toggle('bad',!!(f.req&&!f.sys)); return;
+  }
+});
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,a,label,[data-sel],[data-gsel],[data-who],[data-pick],[data-tog]');
+  if(!t) return;
+  if(t.dataset.who){S.dlg.who=t.dataset.who;S.dlg.bad=0;drawFix();return;}
+  if(t.dataset.sw!==undefined){S.stpSwitch=t.dataset.sw==='1';render();return;}
+  if(t.dataset.scn){S.scn=t.dataset.scn;reset(t.dataset.scn);render();return;}
+  if(t.dataset.go){const k=t.dataset.go;S.nav=k;S.open[k]=1;render();
+    const el=$('m-'+k); if(el)el.scrollIntoView({block:'start'}); return;}
+  if(t.dataset.tog){const k=t.dataset.tog;S.open[k]=!S.open[k];S.nav=k;render();return;}
+  if(t.dataset.link==='fc'){toast('Opening File Center');return;}
+  if(t.dataset.act==='expand'){S.expand=!S.expand;render();return;}
+  if(t.dataset.flag!==undefined){FLAGS[+t.dataset.flag].on=FLAGS[+t.dataset.flag].on?0:1;renderSide();renderFoot();return;}
+  if(t.dataset.yn){const[k,v]=t.dataset.yn.split('|');S[k]=v;renderSide();return;}
+  if(t.dataset.ck){const c=CHECK.find(x=>x.k===t.dataset.ck);c.on=c.on?0:1;render();return;}
+
+  if(t.dataset.act==='refresh'){
+    if(S.busy)return; S.busy=1;renderMain();
+    setTimeout(()=>{S.busy=0;const m=pullRules();render();toast(m);},800); return;
+  }
+  if(t.dataset.mkdef){const r=RULES.find(x=>x.id===t.dataset.mkdef);const n=mkDefect(r,'System');
+    render();toast(n?'Defect #'+n+' created':'This rule already has a defect');return;}
+  if(t.dataset.act==='defall'){const m=unlinked().map(r=>mkDefect(r,'System')).filter(Boolean);
+    render();toast(m.length+' defect(s) created');return;}
+  if(t.dataset.act==='syncdef'){const r=syncSystemDefects();render();
+    toast(r.changed?`${r.added} created, ${r.removed} removed · User-source defects untouched`
+                   :'System defects already aligned');return;}
+  if(t.dataset.act==='adddef'){openAdd();return;}
+  if(t.dataset.atg){S.addDef[t.dataset.atg]=S.addDef[t.dataset.atg]?0:1;
+    S.addDef.sr=$('aSr').value;S.addDef.cr=$('aCr').value;
+    S.addDef.cat=$('aCat').value;S.addDef.ty=$('aTy').value;drawAdd();return;}
+  if(t.dataset.act==='doadd'){doAdd();return;}
+  if(t.dataset.rect){DEFECTS.find(x=>x.no===t.dataset.rect).rect=1;render();toast('Marked as rectified');return;}
+  if(t.dataset.ver){DEFECTS.find(x=>x.no===t.dataset.ver).ver=1;render();toast('Verified');return;}
+
+  if(t.dataset.fix){openFix(t.dataset.fix);return;}
+  if(t.dataset.pick){S.dlg.pick=t.dataset.pick;S.dlg.bad=0;
+    const ta=$('mNote'); if(ta)S.dlg.note=ta.value; drawFix();return;}
+  if(t.dataset.act==='dofix'){doFix();return;}
+
+  if(t.dataset.act==='sync'){openSync();return;}
+  if(t.dataset.sel){S.sync.sel[t.dataset.sel]=!S.sync.sel[t.dataset.sel];drawSync();return;}
+  if(t.dataset.gsel){const g=t.dataset.gsel,gf=FIELDS.filter(f=>f.g===g&&syncable(f));
+    const all=gf.every(f=>S.sync.sel[f.k]); gf.forEach(f=>S.sync.sel[f.k]=all?0:1); drawSync();return;}
+  if(t.dataset.act==='dosync'){doSync();return;}
+
+  if(t.dataset.act==='next'){openNext();return;}
+  if(t.dataset.act==='backfix'){closeM();S.open.vsum=1;S.expand=1;render();
+    const el=$('m-vsum'); if(el)el.scrollIntoView({block:'start'}); return;}
+  if(t.dataset.act==='warndef'){S.blocks.forEach(r=>mkDefect(r,'System'));renderRail();goSave();return;}
+  if(t.dataset.act==='anyway'){goSave();return;}
+  if(t.dataset.act==='confirm'){const ok=S.route.ok;closeM();render();
+    toast(ok?'Disbursement interface triggered':'Submitted to Authorizer');return;}
+  if(t.dataset.act==='mx'){closeM();renderFoot();return;}
+});
+
+function initChrome(){
+  $('brand').innerHTML=I('diamond');
+  $('syncIc').innerHTML=I('sync');
+  $('rfBtn').innerHTML=I('refresh');
+  const rail=['grid','fileText','table','list','chart','checkSquare','book','docs'];
+  $('iconRail').innerHTML=rail.map((n,i)=>`<i class="${i===0?'on':''}">${I(n)}</i>`).join('')
+    +'<span class="sp"></span><i>'+I('list')+'</i>';
+}
+initChrome(); reset('manual'); render();
+})();
+<\/script>
+
+<script>
+(function(){
+  "use strict";
+  var HERE = 'wb';
+
+  /* Put the cross-prototype switch inside the existing demo bar rather than
+     floating it over the page, so it reads as part of the same chrome. */
+  var bar = document.querySelector('.demo');
+  if (bar) {
+    var nav = document.createElement('span');
+    nav.className = 'xnav';
+    nav.innerHTML =
+      '<button data-xnav="wb"' + (HERE === 'wb' ? ' aria-current="true"' : '') + '>CRA Workbench</button>' +
+      '<button data-xnav="fc"' + (HERE === 'fc' ? ' aria-current="true"' : '') + '>Document Center</button>';
+    var why = bar.querySelector('.why');
+    if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
+  }
+
+  function go(to){ if (to !== HERE) parent.postMessage({ nav: to }, '*'); }
+
+  /* Capture phase, so the prototype's own handler never runs for these -
+     otherwise the workbench would toast "Opening File Center" and stay put. */
+  document.addEventListener('click', function(e){
+    var x = e.target.closest('[data-xnav]');
+    if (x) { e.preventDefault(); e.stopPropagation(); go(x.dataset.xnav); return; }
+    var t = e.target.closest('[data-link="fc"]');
+    if (t) { e.preventDefault(); e.stopPropagation(); go('fc'); }
+  }, true);
+}());
+<\/script>
+</body></html></script>
+<script type="text/html" id="src-fc"><!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html{-webkit-text-size-adjust:100%}*{box-sizing:border-box}
+body{margin:0;background:#fafafa;font:14px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif}
+img{max-width:100%}[hidden]{display:none!important}
+button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit}
+.xnav{display:inline-flex;border:1px solid rgba(255,255,255,.22);border-radius:4px;overflow:hidden;margin-left:14px}
+.xnav button{background:transparent;border:0;color:rgba(255,255,255,.62);
+  padding:3px 11px;font-size:11.5px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.xnav button:hover{color:#fff}
+.xnav button[aria-current="true"]{background:#1677ff;color:#fff}
+</style></head><body>
+<title>Document Center</title>
+
+<style>
+/* ═══ Ant Design v5 tokens ═══ */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans',sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --primary:#1677ff; --primary-hover:#4096ff; --primary-active:#0958d9;
+  --primary-bg:#e6f4ff; --primary-border:#91caff;
+  --text:rgba(0,0,0,.88); --text-2:rgba(0,0,0,.65); --text-3:rgba(0,0,0,.45); --text-4:rgba(0,0,0,.25);
+  --border:#d9d9d9; --border-2:#f0f0f0;
+  --bg:#fff; --bg-layout:#f5f5f5; --fill-alter:#fafafa; --fill-q:rgba(0,0,0,.02);
+  --success:#52c41a; --success-bg:#f6ffed; --success-border:#b7eb8f; --success-text:#389e0d;
+  --warning:#faad14; --warning-bg:#fffbe6; --warning-border:#ffe58f; --warning-text:#d48806;
+  --error:#ff4d4f;   --error-bg:#fff2f0;   --error-border:#ffccc7;   --error-text:#cf1322;
+  --r:6px; --r-sm:4px; --r-lg:8px;
+  --shadow:0 6px 16px 0 rgba(0,0,0,.08),0 3px 6px -4px rgba(0,0,0,.12),0 9px 28px 8px rgba(0,0,0,.05);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-layout);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5714;-webkit-font-smoothing:antialiased}
+button,select,input{font-family:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed}
+:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+
+/* ═══ Ant primitives ═══ */
+.ant-btn{height:32px;padding:4px 15px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5714;transition:all .2s;white-space:nowrap}
+.ant-btn:hover:not(:disabled){border-color:var(--primary-hover);color:var(--primary-hover)}
+.ant-btn:disabled{color:var(--text-4);border-color:var(--border);background:var(--fill-q)}
+.ant-btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.ant-btn-primary:hover:not(:disabled){background:var(--primary-hover);border-color:var(--primary-hover);color:#fff}
+.ant-btn-primary:disabled{background:var(--fill-q);border-color:var(--border);color:var(--text-4)}
+.ant-btn-dangerous{color:var(--error);border-color:var(--border)}
+.ant-btn-dangerous:hover:not(:disabled){color:var(--error);border-color:var(--error)}
+.ant-btn-sm{height:24px;padding:0 7px;font-size:12px;border-radius:var(--r-sm)}
+.ant-btn-link{border-color:transparent;background:transparent;color:var(--primary);padding:0 4px;height:auto}
+.ant-btn-text{border-color:transparent;background:transparent;padding:4px 8px}
+.ant-btn-text:hover:not(:disabled){background:rgba(0,0,0,.06);color:var(--text)}
+.ant-select,.ant-input{height:32px;padding:4px 11px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);font-size:14px}
+.ant-select:hover,.ant-input:hover{border-color:var(--primary-hover)}
+.i{width:16px;height:16px;flex:none;display:inline-block;vertical-align:-3px}
+.ant-tag{display:inline-block;height:22px;padding:0 7px;font-size:12px;line-height:20px;border:1px solid var(--border-2);border-radius:var(--r-sm);background:var(--fill-alter);color:var(--text-2);white-space:nowrap}
+.ant-tag-blue{background:var(--primary-bg);border-color:var(--primary-border);color:var(--primary-active)}
+.ant-tag-green{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
+.ant-tag-gold{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
+.ant-tag-red{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text)}
+.ant-badge-count{display:inline-block;min-width:20px;height:20px;padding:0 6px;font-size:12px;line-height:20px;text-align:center;border-radius:10px;background:var(--fill-alter);color:var(--text-2);font-variant-numeric:tabular-nums}
+.ant-badge-count.on{background:var(--primary-bg);color:var(--primary-active)}
+.ant-badge-count.err{background:var(--error);color:#fff}
+
+/* ═══ demo bar ═══ */
+.demo{position:fixed;top:0;left:0;right:0;z-index:1200;background:#001529;color:rgba(255,255,255,.85);padding:7px 16px;display:flex;gap:12px;align-items:center;font-size:12px;flex-wrap:wrap;height:36px}
+.demo .lb{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.45);text-transform:uppercase}
+.demo .seg{display:inline-flex;border:1px solid rgba(255,255,255,.2);border-radius:var(--r-sm);overflow:hidden}
+.demo .seg button{background:transparent;border:0;color:rgba(255,255,255,.7);padding:3px 10px;font-size:12px}
+.demo .seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+.demo .hint{color:rgba(255,255,255,.55);line-height:1.4}
+.demo .why{margin-left:auto;color:rgba(255,255,255,.35);font-size:11px}
+
+/* ═══ page behind ═══ */
+.behind{padding:16px;padding-top:52px;filter:saturate(.15);opacity:.45;pointer-events:none}
+.behind div{background:#fff;border:1px solid var(--border-2);border-radius:var(--r);margin-bottom:12px}
+.behind .b1{height:38px}.behind .b2{height:170px}.behind .b3{height:220px}
+
+/* ═══ modal ═══ */
+.ant-modal-mask{position:fixed;top:36px;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000}
+.ant-modal-wrap{position:fixed;top:36px;left:0;right:0;bottom:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:10px}
+.ant-modal{width:100%;max-width:1840px;height:100%}
+.ant-modal-content{background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--shadow);height:100%;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.ant-modal-close{position:absolute;top:12px;right:14px;width:22px;height:22px;border:0;background:transparent;color:var(--text-3);font-size:16px;line-height:1;border-radius:var(--r-sm);z-index:5}
+.ant-modal-close:hover{background:rgba(0,0,0,.06);color:var(--text)}
+.ant-modal-header{padding:0 16px;border-bottom:1px solid var(--border-2);flex:none}
+.ant-modal-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.ant-modal-footer{padding:9px 16px;border-top:1px solid var(--border-2);flex:none;display:flex;align-items:center;gap:8px}
+
+.header-tabs{display:flex;gap:32px}
+.header-tabs button{background:transparent;border:0;padding:12px 0;font-size:14px;color:var(--text);position:relative}
+.header-tabs button[aria-pressed="true"]{color:var(--primary);font-weight:500}
+.header-tabs button[aria-pressed="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--primary)}
+
+/* ═══ layout: rail + main ═══ */
+.ocr-modal-content{flex:1;min-height:0;display:grid;grid-template-columns:212px minmax(0,1fr)}
+.ocr-modal-content.rail-collapsed{grid-template-columns:52px minmax(0,1fr)}
+.rail-collapsed .subject-rail{padding:12px 6px}
+.rail-collapsed .subj-item .sub{display:none}
+.rail-collapsed .rail-h{justify-content:center;margin:0 0 8px}
+.rail-collapsed .subj-item{grid-template-columns:1fr;justify-items:center;padding:6px 2px;gap:3px}
+.rail-collapsed .subj-item .mk{grid-row:auto}
+.rail-collapsed .subj-item .r1{flex-direction:column;gap:0;align-items:center}
+.rail-collapsed .subj-item .nm{display:none}
+.rail-collapsed .subj-item .ct{font-size:10px}
+.rail-toggle{background:transparent;border:0;color:var(--text-3);padding:2px 5px;border-radius:var(--r-sm);font-size:12px;line-height:1}
+.rail-toggle:hover{background:rgba(0,0,0,.06);color:var(--primary)}
+@media(max-width:900px){.ocr-modal-content{grid-template-columns:1fr}}
+.subject-rail{border-right:1px solid var(--border-2);background:var(--fill-alter);padding:10px 10px 14px;
+  overflow-y:auto;min-height:0;display:flex;flex-direction:column}
+.subject-rail .rail-h{display:flex;justify-content:flex-end;margin:0 0 4px}
+.subj-item{width:100%;text-align:left;background:transparent;border:1px solid transparent;
+  border-radius:var(--r);padding:7px 9px;margin-bottom:3px;transition:all .2s;
+  display:grid;grid-template-columns:26px minmax(0,1fr);gap:9px;align-items:center}
+.subj-item:hover{background:rgba(0,0,0,.045)}
+.subj-item[aria-pressed="true"]{background:var(--bg);border-color:var(--primary-border);
+  box-shadow:0 1px 2px rgba(16,24,40,.05)}
+.subj-item .mk{grid-row:1/span 2;align-self:start;width:26px;height:26px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.02em;color:var(--text-2);background:#fff;border:1px solid var(--border-2)}
+.subj-item .mk.ico{color:var(--text-3);background:transparent;border-color:transparent}
+.subj-item .mk .i{width:15px;height:15px}
+.subj-item[aria-pressed="true"] .mk{background:var(--primary-bg);border-color:var(--primary-border);
+  color:var(--primary-active)}
+.subj-item[aria-pressed="true"] .mk.ico{background:transparent;border-color:transparent}
+.subj-item .r1{display:flex;justify-content:space-between;align-items:baseline;gap:8px;min-width:0}
+.subj-item .nm{font-size:13.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.subj-item[aria-pressed="true"] .nm{color:var(--primary-active);font-weight:600}
+.subj-item .ct{font-family:var(--mono);font-size:12px;color:var(--text-3);white-space:nowrap;
+  font-variant-numeric:tabular-nums;flex:none}
+.subj-item.scope .nm{color:var(--text-2)}
+.subj-item.foot{margin-top:auto;position:relative}
+.subj-item.foot::before{content:"";position:absolute;left:9px;right:9px;top:-9px;height:1px;background:var(--border-2)}
+.subj-item .ct.ok{color:var(--success-text)} .subj-item .ct.bad{color:var(--error-text)}
+.subj-item .sub{grid-column:2;font-size:11.5px;color:var(--text-3);margin-top:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.subj-item.gone .nm{color:var(--text-3)}
+.rail-div{height:1px;background:var(--border-2);margin:8px 4px 9px}
+
+/* the only vertical scroll container; children keep natural height */
+.ocr-main{min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;scroll-padding-top:56px}
+.file-list-table tbody tr{scroll-margin-top:56px}
+
+/* ═══ upload section ═══ */
+.upload-section{padding:12px 16px;border-bottom:1px solid var(--border-2)}
+.upload-section.empty{padding:0;border-bottom:0}
+.upload-ctx b{font-weight:600}
+.section-header{display:flex;align-items:baseline;gap:12px;margin-bottom:9px;flex-wrap:wrap}
+.section-title{font-size:14px;font-weight:600;color:var(--text)}
+.section-subtitle{font-size:12px;color:var(--text-3)}
+.upload-ctx{margin-left:auto;font-size:12px}
+.upload-ctx b{color:var(--primary);font-weight:600}
+.upload-ctx.none{color:var(--warning-text)}
+.upload-grid{display:grid;gap:12px}
+.upload-grid--two{grid-template-columns:1fr 1fr;align-items:stretch}
+.upload-card{display:flex;flex-direction:column;border:1px solid var(--border-2);border-radius:var(--r);
+  padding:11px 12px 10px;background:var(--bg)}
+.upload-card.ai{border-color:var(--primary-border);background:linear-gradient(180deg,#f5faff,#fff 62px)}
+.upload-card.manual{background:var(--fill-q)}
+.ent-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;padding:1px 5px;border-radius:3px;
+  border:1px solid;flex:none}
+.ent-tag.ai{color:var(--primary-active);background:var(--primary-bg);border-color:var(--primary-border)}
+.ent-tag.manual{color:var(--text-3);background:var(--fill-alter);border-color:var(--border)}
+.ent-note{font-size:11.5px;color:var(--text-3);margin-left:auto;text-align:right}
+.type-hint{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:9px}
+.tchip{font-size:11px;color:var(--text-2);background:var(--fill-alter);border:1px solid var(--border-2);
+  border-radius:10px;padding:1px 8px;white-space:nowrap}
+.upload-card.ai .tchip{background:#fff;border-color:var(--primary-border);color:var(--primary-active)}
+.tmore{font-size:11px;color:var(--primary);background:transparent;border:0;padding:1px 4px;cursor:pointer}
+.tmore:hover{text-decoration:underline}
+.dl-grp{font-size:11px;font-family:var(--mono);letter-spacing:.07em;color:var(--text-3);
+  margin:15px 0 7px;text-transform:uppercase}
+.dl-grp:first-child{margin-top:0}
+.dl-row{display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--border-2);font-size:13px}
+.dl-row:last-child{border-bottom:0}
+.dl-row .nm{flex:1;min-width:0}
+.dl-none{padding:22px;text-align:center;color:var(--text-3);font-size:13px}
+.upload-card .uploader-box{flex:1;min-height:92px}
+@media(max-width:820px){.upload-grid--two{grid-template-columns:1fr}}
+.upload-card-header{margin-bottom:8px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.upload-card-title{font-size:13px;color:var(--text-2)}
+.info-icon{color:var(--text-4);font-size:12px}
+.uploader-box{border:1px dashed var(--border);border-radius:var(--r);background:var(--fill-alter);padding:14px 10px;text-align:center;transition:border-color .2s;min-height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.uploader-box:hover{border-color:var(--primary)}
+.uploader-box.non-ai{border-color:var(--border);background:var(--fill-q)}
+.upload-icon{color:var(--text-3);display:block;margin-bottom:6px;line-height:0}
+.upload-icon .i{width:22px;height:22px;stroke-width:1.2}
+.info-icon .i{width:13px;height:13px}
+.action-btn .i{width:15px;height:15px}
+.lockcell{display:inline-flex;color:var(--text-3)}
+.ant-modal-close .i{width:15px;height:15px}
+.viewer-bar .zc{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;
+  border:1px solid var(--border-2);border-radius:var(--r-sm);color:var(--text-2);cursor:pointer}
+.viewer-bar .zc .i{width:13px;height:13px}
+.upload-prompt{font-size:13px;color:var(--text-2)}
+.browse-link{color:var(--primary)}
+.upload-examples{font-size:12px;color:var(--text-3);margin-top:4px;line-height:1.5}
+.upload-section.disabled .uploader-box{opacity:.45;border-style:dashed;pointer-events:none}
+.upload-lock{border:1px dashed var(--warning-border);background:var(--warning-bg);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--warning-text);margin-bottom:9px;line-height:1.5}
+
+/* ═══ file list ═══ */
+.file-list-section{padding:0 16px 16px}
+.list-tabs{display:flex;gap:28px;border-bottom:1px solid var(--border-2);position:sticky;top:0;background:var(--bg);z-index:4}
+.list-tabs button{background:transparent;border:0;padding:12px 0;font-size:14px;color:var(--text);position:relative;display:flex;align-items:center;gap:8px}
+.list-tabs button[aria-pressed="true"]{color:var(--primary);font-weight:500}
+.list-tabs button[aria-pressed="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--primary)}
+.filter-bar{display:flex;gap:8px;align-items:center;padding:12px 0;flex-wrap:wrap}
+.filter-inputs{display:flex;gap:8px;flex-wrap:wrap}
+.filter-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.filter-actions .sel-n{font-size:12px;color:var(--text-3)}
+.table-container{overflow-x:auto;border:1px solid var(--border-2);border-radius:var(--r)}
+.file-list-table{border-collapse:collapse;width:100%;min-width:1300px;table-layout:fixed}
+.subject-cell,.category-cell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.filename-text{overflow-wrap:anywhere}
+.file-list-table td,.file-list-table th{overflow:hidden}
+.filename-cell{min-width:190px}
+.file-list-table th{background:var(--fill-alter);text-align:left;font-size:12px;font-weight:600;color:var(--text-2);padding:9px 12px;border-bottom:1px solid var(--border-2);white-space:nowrap}
+.file-list-table td{padding:7px 12px;border-bottom:1px solid var(--border-2);vertical-align:middle;font-size:13px}
+.file-list-table tbody tr:last-child td{border-bottom:0}
+.file-list-table tbody tr:hover{background:var(--fill-alter)}
+.file-list-table tbody tr.selected{background:#f0f7ff}
+.filename-text{color:var(--text)}
+.description-text{font-size:12px;color:var(--text-3)}
+.file-type-tag{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.is-ai-cell{font-family:var(--mono);font-size:12px;color:var(--text-2)}
+.time-cell{font-family:var(--mono);font-size:12px;color:var(--text-3);white-space:nowrap}
+.actions-cell{white-space:nowrap}
+.action-btn{background:transparent;border:0;color:var(--text-3);padding:4px 6px;border-radius:var(--r-sm);line-height:0}
+.action-btn:hover:not(:disabled){background:rgba(0,0,0,.06);color:var(--primary)}
+.action-btn.delete-btn:hover:not(:disabled){color:var(--error)}
+.action-btn:disabled{color:var(--text-4)}
+.rule-line{font-size:12px;line-height:1.6}
+.rule-line.open{color:var(--error-text)} .rule-line.done{color:var(--success-text)}
+.empty-state{padding:48px;text-align:center;color:var(--text-3);font-size:14px}
+.file-list-footer-actions{margin-left:auto;display:flex;gap:8px}
+.foot-note{font-size:12px;color:var(--text-3)}
+.tracks{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.trk{display:inline-flex;align-items:baseline;gap:3px;font-size:12px;color:var(--text-3);
+  border:1px solid var(--border-2);border-radius:var(--r-sm);padding:2px 9px;background:var(--fill-alter)}
+.trk b{font-family:var(--mono);font-size:12.5px;color:var(--text);font-variant-numeric:tabular-nums}
+.trk i{font-style:normal;color:var(--text-4)}
+.trk.ok{border-color:var(--success-border);background:var(--success-bg)}
+.trk.ok b{color:var(--success-text)}
+.trk.busy{border-color:var(--primary-border);background:var(--primary-bg)}
+.trk.busy b{color:var(--primary-active)}
+.trk em{font-style:normal;font-size:11px;color:var(--primary-active);margin-left:5px}
+.trk-open{font-size:12px;color:var(--text-3)}
+
+/* ═══ detail view ═══ */
+.detail{position:fixed;top:36px;left:0;right:0;bottom:0;background:var(--bg-layout);z-index:1100;display:flex;flex-direction:column}
+.detail.hidden{display:none}
+.detail-header{background:var(--bg);border-bottom:1px solid var(--border-2);padding:12px 24px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.detail-header .t{font-size:16px;font-weight:600}
+.detail-header .bc{font-size:12px;color:var(--text-3)}
+.detail-header .r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.detail-body{flex:1;display:grid;grid-template-columns:400px minmax(0,1fr);min-height:0}
+@media(max-width:900px){.detail-body{grid-template-columns:1fr;overflow-y:auto}}
+.detail-panel{border-right:1px solid var(--border-2);background:var(--bg);overflow-y:auto;padding:16px}
+.detail-viewer{background:#eceef1;overflow:auto;padding:24px;display:flex;flex-direction:column;align-items:center}
+
+/* A.11 Manual Check */
+.mc-grp{font-size:12px;font-weight:600;color:var(--text-2);background:var(--fill-alter);
+  border:1px solid var(--border-2);border-radius:var(--r-sm);padding:6px 10px;margin:14px 0 8px;
+  display:flex;align-items:center;gap:8px}
+.mc-grp.cur{border-color:var(--primary-border);color:var(--primary-active)}
+.mc-cur{margin-left:auto;font-size:10.5px;font-family:var(--mono);background:var(--primary);color:#fff;
+  padding:1px 6px;border-radius:2px;font-weight:400}
+.routed{font-size:10px;font-family:var(--mono);color:var(--text-3);
+  border:1px solid var(--border);border-radius:2px;padding:0 4px;margin-left:6px}
+.mc-seg{margin-left:auto;font-size:11px;color:var(--text-3)}
+.mc-doc{width:100%;max-width:720px;margin:0 auto 22px}
+.mc-doc-h{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--text-2);
+  background:rgba(255,255,255,.75);border:1px solid var(--border-2);border-radius:var(--r-sm);
+  padding:7px 12px;margin-bottom:8px;position:sticky;top:0;z-index:2;backdrop-filter:blur(4px)}
+.mc-doc-h span{margin-left:auto;font-weight:400;color:var(--text-3);font-family:var(--mono);font-size:11px}
+.panel-sect{font-size:12px;font-weight:600;color:var(--text-2);margin:0 0 10px;display:flex;align-items:center;gap:8px;letter-spacing:.02em}
+.panel-sect::after{content:"";flex:1;height:1px;background:var(--border-2)}
+.panel-sect.err{color:var(--error-text)}
+.alert-item{border:1px solid var(--border-2);border-left:3px solid var(--border);border-radius:0 var(--r) var(--r) 0;padding:11px 12px;margin-bottom:8px;background:var(--bg)}
+.alert-item.machine{border-left-color:var(--error)}
+.alert-item.eyeball{border-left-color:var(--warning)}
+.alert-item.resolved{border-left-color:var(--success);background:var(--fill-q)}
+.alert-item .ah{display:flex;gap:8px;align-items:baseline;margin-bottom:4px}
+.alert-item .rid{flex:none}
+.alert-item .rid{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:var(--r-sm);background:rgba(0,0,0,.06);color:var(--text-2)}
+.alert-item .rn{font-weight:600;font-size:13px}
+.alert-item .rd{font-size:12px;color:var(--text-2);margin-bottom:10px;line-height:1.6}
+.alert-item .acts{display:flex;gap:6px;flex-wrap:wrap}
+.alert-item .res{font-size:12px;color:var(--success-text);font-family:var(--mono)}
+.alert-item .acts .mc-on{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text);font-weight:600}
+.alert-item .acts .mc-off{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text);font-weight:600}
+.field-row{display:flex;justify-content:space-between;gap:10px;padding:7px 8px;border-bottom:1px solid var(--border-2);font-size:12px}
+.field-row:last-child{border-bottom:0}
+.field-row .k{color:var(--text-2)}
+.field-row .v{font-family:var(--mono);font-size:12px;text-align:right;word-break:break-all}
+.field-row .c{font-family:var(--mono);font-size:11px;min-width:36px;text-align:right}
+.confidence-high{color:var(--success-text)} .confidence-low{color:var(--error-text)}
+.field-group{font-size:11px;color:var(--text-3);background:var(--fill-alter);padding:5px 8px;margin-top:8px;font-family:var(--mono)}
+.classify-box{border:1px solid var(--border-2);border-radius:var(--r);padding:14px;background:var(--fill-alter);margin-bottom:14px}
+.classify-box label{display:block;font-size:12px;color:var(--text-2);margin:10px 0 4px}
+.classify-box select{width:100%}
+.pnote{font-size:12px;color:var(--text-2);background:var(--fill-alter);border-left:3px solid var(--border);padding:10px 12px;border-radius:0 var(--r-sm) var(--r-sm) 0;margin-bottom:12px;line-height:1.6}
+.pnote.warn{border-left-color:var(--warning)}
+.pnote.info{border-left-color:var(--primary)}
+.pnote.ok{border-left-color:var(--success)}
+
+/* ═══ document facsimile ═══ */
+.doc-page{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);width:min(900px,100%);min-height:600px;padding:48px 52px;font-size:13px;color:#262626}
+.doc-page.card{width:min(560px,100%);min-height:340px;background:linear-gradient(150deg,#dbe8f2,#c3d8e8);padding:30px;border-radius:12px}
+.doc-h{text-align:center;font-weight:700;font-size:16px;letter-spacing:.04em;margin-bottom:6px}
+.doc-s{text-align:center;color:#8c8c8c;font-size:12px;margin-bottom:24px}
+.doc-r{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;gap:24px}
+.doc-r .k{color:#595959} .doc-r .v{font-weight:600;text-align:right}
+.doc-r.hl{background:var(--fill-alter);margin:0 -10px;padding:8px 10px}
+.doc-l{height:9px;background:#f0f0f0;border-radius:2px;margin:10px 0}
+.doc-sig{margin-top:34px;display:flex;justify-content:space-between;gap:32px}
+.doc-sig div{flex:1;border-top:1px solid #bfbfbf;padding-top:6px;font-size:11px;color:#8c8c8c;text-align:center}
+.ic-h{font-weight:700;font-size:14px;letter-spacing:.08em;color:#15395b}
+.ic-n{font-family:var(--mono);font-size:22px;letter-spacing:.06em;margin:16px 0 6px;color:#0f2f4d}
+.ic-m{font-size:15px;font-weight:600;color:#0f2f4d}
+.ic-a{font-size:12px;color:#37587a;margin-top:8px;line-height:1.7}
+.ic-c{width:48px;height:36px;background:linear-gradient(135deg,#d8b95f,#b8932f);border-radius:6px;margin-top:20px}
+.viewer-bar{background:#fff;border:1px solid var(--border-2);border-radius:var(--r);padding:6px 12px;margin-bottom:16px;font-size:12px;color:var(--text-2);display:flex;gap:16px;align-items:center;width:min(900px,100%)}
+
+/* ═══ sub-modal ═══ */
+.sub-mask{position:fixed;top:36px;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1300;display:flex;align-items:center;justify-content:center;padding:20px}
+.sub-mask.hidden{display:none}
+.sub-modal{background:var(--bg);border-radius:var(--r-lg);width:min(620px,100%);max-height:86vh;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.sub-modal .h{padding:16px 24px;border-bottom:1px solid var(--border-2);font-size:16px;font-weight:600}
+.sub-modal .b{padding:20px 24px;overflow-y:auto}
+.sub-modal .f{padding:12px 24px;border-top:1px solid var(--border-2);display:flex;gap:8px;justify-content:flex-end}
+.miss-group{border:1px solid var(--border-2);border-radius:var(--r);margin-bottom:10px}
+.miss-group .gh{background:var(--fill-alter);padding:8px 12px;font-weight:600;font-size:13px;display:flex;justify-content:space-between}
+.miss-group ul{margin:0;padding:10px 12px 12px 28px} .miss-group li{font-size:13px;color:var(--text-2);margin-bottom:4px}
+.sub-modal table{width:100%;border-collapse:collapse;font-size:13px}
+.sub-modal table th{background:var(--fill-alter);text-align:left;padding:8px;font-weight:600}
+.sub-modal table td{padding:8px;border-top:1px solid var(--border-2)}
+
+.ant-message{position:fixed;top:48px;left:50%;transform:translateX(-50%);z-index:1400;opacity:0;transition:opacity .2s;pointer-events:none}
+.ant-message.on{opacity:1}
+.ant-message span{display:inline-block;background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:9px 16px;font-size:14px;color:var(--text)}
+</style>
+
+<div class="demo">
+  <span class="lb">Demo</span>
+  <span class="seg" id="roleSeg">
+    <button data-role="sales">Sales</button><button data-role="cra">CRA</button>
+  </span>
+  <span class="hint" id="permHint"></span>
+  <span class="why">Demo toolbar · not part of the product</span>
+</div>
+
+<div class="behind"><div class="b1"></div><div class="b2"></div><div class="b3"></div></div>
+
+<div class="ant-modal-mask"></div>
+<div class="ant-modal-wrap"><div class="ant-modal"><div class="ant-modal-content">
+  <button class="ant-modal-close" id="mClose" title="Close"></button>
+
+  <div class="ant-modal-header">
+    <div class="ocr-modal-header">
+      <div class="header-tabs" id="stageTabs">
+        <button data-stage="app">Application Submission</button>
+        <button data-stage="dis">Disbursement</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ant-modal-body">
+    <div class="ocr-modal-content">
+      <div class="subject-rail" id="rail"></div>
+      <div class="ocr-main">
+        <div class="upload-section" id="uploadSection"></div>
+        <div class="file-list-section">
+          <div class="list-tabs" id="listTabs"></div>
+          <div class="filter-bar" id="filterBar"></div>
+          <div class="table-container">
+            <table class="file-list-table"><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+            <div class="empty-state" id="emptyState" style="display:none">No files match the current filters.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ant-modal-footer" id="footer"></div>
+</div></div></div>
+
+<div class="detail hidden" id="detail">
+  <div class="detail-header">
+    <button class="ant-btn back-btn" id="dtBack">Back</button>
+    <span><span class="t" id="dtTitle"></span><br><span class="bc" id="dtCrumb"></span></span>
+    <span class="r">
+      <button class="ant-btn" id="dtPrev">‹ Previous</button>
+      <span class="time-cell" id="dtPos"></span>
+      <button class="ant-btn" id="dtNext">Next ›</button>
+      <button class="ant-btn" id="dtSync">OCR Sync</button>
+      <button class="ant-btn ant-btn-primary" id="dtSave">Save</button>
+    </span>
+  </div>
+  <div class="detail-body">
+    <div class="detail-panel" id="dtPanel"></div>
+    <div class="detail-viewer" id="dtViewer"></div>
+  </div>
+</div>
+
+<div class="sub-mask hidden" id="subMask">
+  <div class="sub-modal"><div class="h" id="smTitle"></div><div class="b" id="smBody"></div><div class="f" id="smFoot"></div></div>
+</div>
+
+<div class="ant-message" id="msg"><span></span></div>
+
+<script>
+(function(){
+"use strict";
+
+const IC={
+  file:'<path d="M9 1.8H4.2A1.2 1.2 0 0 0 3 3v10a1.2 1.2 0 0 0 1.2 1.2h7.6A1.2 1.2 0 0 0 13 13V5.8z"/><path d="M9 1.8V5.8H13"/>',
+  fileText:'<path d="M9 1.8H4.2A1.2 1.2 0 0 0 3 3v10a1.2 1.2 0 0 0 1.2 1.2h7.6A1.2 1.2 0 0 0 13 13V5.8z"/><path d="M9 1.8V5.8H13M5.6 8.6h4.8M5.6 11h3.4"/>',
+  user:'<path d="M13 13.6v-1.3a2.7 2.7 0 0 0-2.7-2.6H5.7A2.7 2.7 0 0 0 3 12.3v1.3"/><circle cx="8" cy="5.2" r="2.6"/>',
+  users:'<path d="M11.2 13.6v-1.3a2.7 2.7 0 0 0-2.7-2.6H4.4a2.7 2.7 0 0 0-2.7 2.6v1.3"/><circle cx="6.45" cy="5" r="2.4"/><path d="M14.3 13.6v-1.3a2.7 2.7 0 0 0-2-2.6M11.1 2.6a2.7 2.7 0 0 1 0 5"/>',
+  check:'<path d="M13.2 4.3 6.4 11.6 2.8 8"/>',
+  checkCircle:'<circle cx="8" cy="8" r="6.2"/><path d="M5.4 8.1 7.2 10l3.5-3.7"/>',
+  alert:'<path d="M7.1 2.4 1.6 11.7a1 1 0 0 0 .9 1.5h11a1 1 0 0 0 .9-1.5L8.9 2.4a1 1 0 0 0-1.8 0z"/><path d="M8 6.2v2.7M8 11.3h.01"/>',
+  checkSquare:'<rect x="2.4" y="2.4" width="11.2" height="11.2" rx="1.6"/><path d="M5.4 8.1 7.2 9.9l3.5-3.6"/>',
+  card:'<rect x="1.8" y="3.4" width="12.4" height="9.2" rx="1.4"/><path d="M1.8 6.6h12.4"/>',
+  car:'<path d="M2.2 9.6 3.4 6a1.6 1.6 0 0 1 1.5-1.1h6.2A1.6 1.6 0 0 1 12.6 6l1.2 3.6"/><rect x="2.2" y="9.6" width="11.6" height="2.6" rx="0.8"/><path d="M4.4 12.2v1.2M11.6 12.2v1.2"/>',
+  store:'<path d="M2.4 6.2h11.2v7.2H2.4z"/><path d="M1.8 6.2 3.2 2.6h9.6l1.4 3.6"/><path d="M6.4 13.4V9.4h3.2v4"/>',
+  shield:'<path d="M8 1.8 3 3.8v3.6c0 3 2.1 5.8 5 6.8 2.9-1 5-3.8 5-6.8V3.8z"/>',
+  list:'<path d="M5.6 4h8.2M5.6 8h8.2M5.6 12h8.2M2.4 4h.01M2.4 8h.01M2.4 12h.01"/>',
+  table:'<rect x="2" y="2.8" width="12" height="10.4" rx="1.3"/><path d="M2 6.4h12M6.6 6.4v6.8"/>',
+  grid:'<rect x="2.2" y="2.2" width="5" height="5" rx="1"/><rect x="8.8" y="2.2" width="5" height="5" rx="1"/><rect x="2.2" y="8.8" width="5" height="5" rx="1"/><rect x="8.8" y="8.8" width="5" height="5" rx="1"/>',
+  clock:'<circle cx="8" cy="8" r="6.2"/><path d="M8 4.4V8l2.4 1.4"/>',
+  gear:'<circle cx="8" cy="8" r="2.3"/><path d="M8 1.6v1.7M8 12.7v1.7M14.4 8h-1.7M3.3 8H1.6M12.5 3.5l-1.2 1.2M4.7 11.3l-1.2 1.2M12.5 12.5l-1.2-1.2M4.7 4.7 3.5 3.5"/>',
+  edit:'<path d="M8 13.4H14"/><path d="M11.1 2.6a1.6 1.6 0 0 1 2.3 2.3L5.2 13 2 13.8l.8-3.2z"/>',
+  trash:'<path d="M2.6 4.4h10.8M5.6 4.4V3.2a1.2 1.2 0 0 1 1.2-1.2h2.4a1.2 1.2 0 0 1 1.2 1.2v1.2m1.8 0v8.4a1.2 1.2 0 0 1-1.2 1.2H5a1.2 1.2 0 0 1-1.2-1.2V4.4"/>',
+  download:'<path d="M13.4 10v2.6a1.2 1.2 0 0 1-1.2 1.2H3.8a1.2 1.2 0 0 1-1.2-1.2V10"/><path d="M5 6.8 8 9.8l3-3M8 9.8V2.4"/>',
+  upload:'<path d="M13.4 10v2.6a1.2 1.2 0 0 1-1.2 1.2H3.8a1.2 1.2 0 0 1-1.2-1.2V10"/><path d="M11 5.4 8 2.4 5 5.4M8 2.4v7.4"/>',
+  lock:'<rect x="3" y="7" width="10" height="7" rx="1.4"/><path d="M5.4 7V4.8a2.6 2.6 0 0 1 5.2 0V7"/>',
+  refresh:'<path d="M13.6 6.6A5.8 5.8 0 0 0 3.4 4.2L1.8 5.8M2.4 9.4a5.8 5.8 0 0 0 10.2 2.4l1.6-1.6"/><path d="M1.8 2.6v3.2h3.2M14.2 13.4v-3.2H11"/>',
+  sync:'<path d="M4.6 2.6 2.2 5l2.4 2.4M2.2 5h9.2a2.4 2.4 0 0 1 2.4 2.4"/><path d="M11.4 13.4 13.8 11l-2.4-2.4M13.8 11H4.6a2.4 2.4 0 0 1-2.4-2.4"/>',
+  right:'<path d="M6 3.2 10.8 8 6 12.8"/>',
+  down:'<path d="M3.2 6 8 10.8 12.8 6"/>',
+  close:'<path d="M12.2 3.8 3.8 12.2M3.8 3.8l8.4 8.4"/>',
+  info:'<circle cx="8" cy="8" r="6.2"/><path d="M8 10.8V7.6M8 5.2h.01"/>',
+  search:'<circle cx="7.2" cy="7.2" r="4.8"/><path d="M13.6 13.6 10.6 10.6"/>',
+  docs:'<rect x="5" y="1.8" width="9" height="10.4" rx="1.3"/><path d="M11 14.2H3.6a1.4 1.4 0 0 1-1.4-1.4V4.6"/>',
+  bolt:'<path d="M9.2 1.6 2.8 9.2h4.4l-.4 5.2 6.4-7.6H8.8z"/>',
+  arrowRight:'<path d="M2.6 8h10.8M9.4 4 13.4 8l-4 4"/>',
+  exchange:'<path d="M2.4 5.4h11.2M10.6 2.4l3 3-3 3M13.6 10.6H2.4M5.4 13.6l-3-3 3-3"/>',
+  inbox:'<path d="M14 9.4h-3.2l-1 2H6.2l-1-2H2"/><path d="M4.3 3.2h7.4l2.3 6.2v3.2a1.2 1.2 0 0 1-1.2 1.2H3.2A1.2 1.2 0 0 1 2 12.6V9.4z"/>',
+  chart:'<path d="M2.4 2.4v11.2h11.2"/><path d="M5 10.6 7.6 8l2 2 3-3.4"/>',
+  book:'<path d="M2.4 3.2A1.4 1.4 0 0 1 3.8 1.8H13v10.4H3.8a1.4 1.4 0 0 0-1.4 1.4z"/><path d="M2.4 13.6a1.4 1.4 0 0 1 1.4-1.4H13"/>',
+  diamond:'<path d="M8 1.6 14.4 8 8 14.4 1.6 8z"/>'
+};
+function I(n,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(IC[n]||'')+'</svg>';}
+
+
+/* ═══════ DATA ═══════ */
+const SUBJ={
+ app:[{id:'primary',nm:'Main Applicant',sub:''},
+      {id:'g1',nm:'Guarantor 1',sub:''},
+      {id:'seller',nm:'Seller',sub:''},
+      ],
+ dis:[{id:'primary',nm:'Main Applicant',sub:'incl. vehicle documents',need:11},
+      {id:'g1',nm:'Guarantor 1',sub:'',need:3},
+      {id:'g2',nm:'Guarantor 2',sub:'Wong Mei Ling · removed from application',gone:1},
+      {id:'seller',nm:'Seller',sub:'',need:2},
+      ]
+};
+function F(o){return Object.assign({ch:'ocr',src:'sales',cls:1,alerts:[],checks:[],fields:[],pages:1,del:null,doc:'form',mix:0,
+  sz:'1.2 MB',up:'19/08/26 14:32'},o);}
+
+const DATA={
+app:[
+ F({id:'a1',sj:'primary',nm:'Form BE.pdf',cat:'Applicant Income',ty:'Form BE',tyc:'(1-12)',pages:12,doc:'statement',sz:'0.69 MB',up:'19/08/26 14:33',
+   desc:'Pending manual action',
+   alerts:[{id:'Form BE - annual_records.bill_number Exist',k:'m',nm:'bill_number missing in annual records',d:'No value extracted for bill_number in the annual_records group'},
+           {id:'Form BE - id_no Consistency',k:'m',nm:'ID number differs from application form',d:'Document 780819015623 \u2260 Application form 750126145233'}],
+   fields:[{g:'basic'},{n:'serial_number',v:'BE 1139715',c:99},{n:'name',v:'LAI HOO WENG',c:97},{n:'id_no',v:'780819015623',c:96},
+           {g:'annual_records'},{n:'total_income',v:'RM 237,152',c:99},{n:'bill_number',v:'—',c:0}]}),
+ F({id:'a2',sj:'primary',nm:'EPF Statement (1).pdf',cat:'Applicant Income',ty:'EPF Statement',tyc:'(1-1)',doc:'statement',sz:'0.07 MB',up:'19/08/26 14:33',
+   alerts:[{id:'General Document Rules',k:'m',nm:'Document out of validity period',d:'YA2026 FAIL: Statement Date 2026-06-22 is outdated (D-14 rule)'}],
+   fields:[{g:'customer_info'},{n:'customer_name',v:'IP CHOR YEOW',c:99},{n:'id_no',v:'750126145233',c:99},
+           {g:'annual_records'},{n:'statement_date',v:'22-06-2026',c:99},{n:'total_savings',v:'812,690.02',c:99}]}),
+ F({id:'a3',sj:'primary',nm:'ps (16) (2).pdf',cat:'Applicant Income',ty:'Payslip',tyc:'(1-6)',pages:6,doc:'statement',sz:'1.16 MB',up:'19/08/26 14:29',
+   alerts:[{id:'Eyeball Check',k:'e',nm:'Employer chop and pay date',d:'Confirm visually that the payslip carries the employer chop and the pay date falls within the last three months'}],
+   fields:[{n:'employer',v:'Petronas Sdn Bhd',c:98},{n:'gross_pay',v:'RM 8,420.00',c:99}]}),
+ F({id:'a4',sj:'primary',nm:'mykad.png',cat:'Personal Identity',ty:'Other Documents',tyc:'(1-1)',cls:0,doc:'card',low:1,sz:'0.60 MB',up:'19/08/26 14:29',
+   desc:'DocType classification failed',fields:[{n:'—',v:'Pending classification',c:0}]}),
+ F({id:'a5',sj:'primary',nm:'047 HP Application Form.pdf',cat:'Personal Identity',ty:'HP Application Form',tyc:'(1-4)',pages:4,sz:'0.03 MB',up:'19/08/26 14:28',
+   desc:'All succeeded',fields:[{n:'application_date',v:'19-08-2026',c:99},{n:'applicant_name',v:'Tan Wei Ming',c:99}]}),
+ F({id:'a6',sj:'g1',nm:'Guarantor MyKad.jpg',cat:'Personal Identity',ty:'MyKad',doc:'card',sz:'0.44 MB',
+   fields:[{n:'id_no',v:'820304105566',c:99},{n:'name',v:'Lim Ah Kow',c:98}]}),
+ F({id:'a7',sj:'g1',nm:'Guarantor Payslip.pdf',cat:'Applicant Income',ty:'Payslip',tyc:'(1-3)',pages:3,doc:'statement',sz:'0.82 MB',
+   alerts:[{id:'Eyeball Check',k:'e',nm:'Employer chop and pay date',d:'Confirm visually that the payslip carries the employer chop'}],
+   fields:[{n:'employer',v:'Maybank Bhd',c:96},{n:'gross_pay',v:'RM 5,100.00',c:98}]}),
+ F({id:'a8',sj:'vehicle',nm:'CRA Form.pdf',cat:'Other Application & Vehicle',ty:'CRA Form',sz:'0.31 MB',fields:[{n:'vehicle_model',v:'Toyota Vios 1.5E',c:99}]}),
+ F({id:'a9',sj:'vehicle',nm:'VSO.pdf',cat:'Other Application & Vehicle',ty:'VSO',sz:'0.28 MB',fields:[{n:'otr_price',v:'RM 128,000',c:99}]}),
+ F({id:'a10',sj:'seller',nm:'Seller Invoice.pdf',cat:'Seller Documents',ty:'Seller Invoice',doc:'invoice',sz:'0.51 MB',fields:[{n:'invoice_no',v:'INV-2026-0812',c:99}]}),
+ F({id:'a11',sj:'primary',nm:'Income Proof Supplement.docx',cat:'Other Documents',ty:'—',ch:'manual',cls:0,sz:'0.09 MB',desc:'Uploaded via the non-AI entry'}),
+ F({id:'a12',sj:'primary',nm:'Payslip (old).pdf',cat:'Applicant Income',ty:'Payslip',doc:'statement',sz:'0.95 MB',
+   del:{by:'SalesOfficer1',at:'18/08/26 09:12',rs:'Customer resubmitted the latest month'}})
+],
+dis:[
+ F({id:'d1',sj:'case',nm:'2nd Schedule Part I.pdf',cat:'CRA HP Agreement',ty:'2nd Schedule Part I',tyc:'(1-2)',pages:2,doc:'invoice',sz:'5.39 MB',
+   alerts:[{id:'S52',k:'m',nm:'Arithmetic check failed \u00b7 Balance originally payable',d:'Cash price less deposit + freight + registration + insurance + total term charges = 98,000.00; document states 96,500.00'}],
+   fields:[{g:'loan_terms'},{n:'cash_price_less_deposit',v:'88,000.00',c:99},{n:'freight',v:'1,200.00',c:98},
+           {n:'balance_originally_payable',v:'96,500.00',c:99},{n:'total_term_charges',v:'8,800.00',c:97}]}),
+ F({id:'d2',sj:'case',nm:'HP Agreement (Signed).pdf',cat:'CRA HP Agreement',ty:'HP Agreement (E-Acceptance)',tyc:'(1-8)',pages:8,src:'system',ao:'external',sz:'1.47 MB',
+   alerts:[{id:'Eyeball Check',k:'e',nm:'Hirer signature and witness completeness',d:'Confirm visually that every page carries the hirer initials and the last page carries the witness signature and date'}],
+   fields:[{n:'template_version',v:'HP17NEWREV052025E',c:99},{n:'hirer_date',v:'12-08-2026',c:98}]}),
+ F({id:'d3',sj:'case',nm:'Application Form.pdf',cat:'CRA HP Agreement',ty:'Application Form',src:'system',ao:'internal',sz:'0.22 MB',
+   desc:'System-generated, no validation',fields:[{n:'application_date',v:'19-08-2026',c:100}]}),
+ F({id:'d4',sj:'primary',nm:'NRIC.png',cat:'CRA Applicant Identity',ty:'Other Documents',tyc:'(1-1)',cls:0,doc:'card',low:1,sz:'2.03 MB',
+   desc:'DocType classification failed',fields:[{n:'—',v:'Pending classification',c:0}]}),
+ F({id:'d5',sj:'primary',nm:'HP Agreement.pdf',cat:'CRA HP Agreement',ty:'HP Agreement',tyc:'(1-8)',pages:8,sz:'1.47 MB',
+   alerts:[{id:'A155',k:'m',nm:'More than 5 days since the signing date',d:'Hirer date 12-08-2026, today 19-08-2026, exceeds the 5-day parameter'}],
+   fields:[{n:'hirer_date',v:'12-08-2026',c:99},{n:'witness_date',v:'12-08-2026',c:98},{n:'moa_date',v:'12-08-2026',c:97}]}),
+ F({id:'d6',sj:'primary',nm:'Biometric Result.pdf',cat:'CRA Applicant Identity',ty:'Biometric Result',src:'system',ao:'external',sz:'9.47 MB',
+   fields:[{n:'match_result',v:'MATCHED',c:100},{n:'verified_at',v:'12-08-2026 14:22',c:100}]}),
+ F({id:'d7',sj:'primary',nm:'Letter of Setoff.docx',cat:'Other Documents',ty:'LOSO',ch:'manual',sz:'0.18 MB',mix:1,
+   checks:[{id:'M-11',nm:'LOSO amount matches the CED approval',d:'Against the CED conditional approval: FD pledge RM 100,000 \u00b7 3 years',pg:3},
+           {id:'M-12',nm:'Witness signature complete',d:'Page 10 must carry an HLBB staff witness signature and date',pg:10}]}),
+ F({id:'d8',sj:'primary',nm:'Partnership Mandate.docx',cat:'Other Documents',ty:'Partnership Mandate',ch:'manual',sz:'0.14 MB',
+   checks:[{id:'M-21',nm:'Mandate date falls between application and disbursement',d:'Application date 19-08-2026 to today',pg:1}]}),
+ F({id:'d9',sj:'g1',nm:'HP Guarantee Agreement.pdf',cat:'CRA HP Agreement',ty:'Guarantee Agreement',tyc:'(1-4)',pages:4,sz:'1.02 MB',
+   alerts:[{id:'A153',k:'m',nm:'HPGA date differs from the MOA date',d:'HPGA 14-08-2026 ≠ HP Agreement MOA 12-08-2026'}],
+   fields:[{n:'hpga_date',v:'14-08-2026',c:99},{n:'template_version',v:'HP26 REV052020',c:98}]}),
+ F({id:'d10',sj:'g1',nm:'Guarantor NRIC.jpg',cat:'CRA Applicant Identity',ty:'MyKad',doc:'card',sz:'0.44 MB',fields:[{n:'id_no',v:'820304105566',c:99}]}),
+ F({id:'d11',sj:'g2',nm:'G2 MyKad.jpg',cat:'CRA Applicant Identity',ty:'MyKad',doc:'card',sz:'0.39 MB',fields:[{n:'id_no',v:'880912065544',c:98}]}),
+ F({id:'d12',sj:'g2',nm:'G2 Payslip.pdf',cat:'Applicant Income',ty:'Payslip',doc:'statement',sz:'0.77 MB',fields:[{n:'employer',v:'Sime Darby Bhd',c:97}]}),
+ F({id:'d13',sj:'g2',nm:'G2 Guarantee Agreement.pdf',cat:'CRA HP Agreement',ty:'Guarantee Agreement',pages:4,sz:'1.01 MB',fields:[{n:'hpga_date',v:'14-08-2026',c:98}]}),
+ F({id:'d14',sj:'g2',nm:'G2 Waiver Appendix III.pdf',cat:'CRA HP Agreement',ty:'Guarantor Waiver',sz:'0.33 MB',fields:[{n:'appendix',v:'III',c:99}]}),
+ F({id:'d15',sj:'vehicle',nm:'Vehicle Invoice.pdf',cat:'CRA Vehicle Related',ty:'Vehicle Invoice',doc:'invoice',sz:'0.53 MB',
+   alerts:[{id:'I67',k:'m',nm:'Invoice date outside application-to-delivery window',d:'Invoice date 02-07-2026 is earlier than Application date 19-08-2026'}],
+   fields:[{n:'invoice_date',v:'02-07-2026',c:94},{n:'deposit_date',v:'15-08-2026',c:97},{n:'otr_price',v:'128,000.00',c:99}]}),
+ F({id:'d16',sj:'vehicle',nm:'VOC.pdf',cat:'CRA Vehicle Related',ty:'VOC',sz:'0.61 MB',fields:[{n:'registration_no',v:'WXY 4471',c:99}]}),
+ F({id:'d17',sj:'vehicle',nm:'Road Tax Disc.jpg',cat:'CRA Vehicle Related',ty:'Road Tax Disc',doc:'card',sz:'0.29 MB',fields:[{n:'roadtax_start',v:'20-08-2026',c:97}]}),
+ F({id:'d18',sj:'vehicle',nm:'Insurance Cover Note.pdf',cat:'CRA Vehicle Related',ty:'Insurance Cover Note',sz:'1.37 MB',
+   alerts:[{id:'I33',k:'m',nm:'Sum insured insufficient',d:'Sum insured 98,000.00 < max(OTR \u00d7 0.8 = 102,400.00, loan + interest)'}],
+   fields:[{n:'sum_insured',v:'98,000.00',c:99},{n:'insurer',v:'Ace Jerneh Insurance Bhd',c:96}]}),
+ F({id:'d19',sj:'vehicle',nm:'Puspakom B7.pdf',cat:'CRA Vehicle Related',ty:'Puspakom B7',sz:'0.88 MB',fields:[{n:'inspection_date',v:'05-08-2026',c:98}]}),
+ F({id:'d20',sj:'seller',nm:'Seller Invoice.pdf',cat:'CRA Other Funding',ty:'HP216 Seller Invoice',doc:'invoice',sz:'0.47 MB',fields:[{n:'invoice_no',v:'HP216-8841',c:99}]}),
+ F({id:'d21',sj:'seller',nm:'Seller IC.jpg',cat:'CRA Applicant Identity',ty:'Seller IC',doc:'card',sz:'0.36 MB',fields:[{n:'id_no',v:'690712086611',c:98}]}),
+ F({id:'d22',sj:'primary',nm:'scan_001.pdf',cat:'CRA Other Funding',ty:'—',cls:0,sz:'1.11 MB',desc:'Pending classification'}),
+ F({id:'d24',sj:'vehicle',nm:'Road Tax (Superseded).jpg',cat:'CRA Vehicle Related',ty:'Road Tax Disc',doc:'card',sz:'0.27 MB',
+   del:{by:'CRA · v_kangyi',at:'19/08/26 15:02',rs:'Sales re-uploaded the renewed road tax'}}),
+ F({id:'d25',sj:'primary',nm:'Company Resolution.docx',cat:'Other Documents',ty:'Company Resolution',ch:'manual',sz:'0.21 MB'}),
+ F({id:'d26',sj:'vehicle',nm:'Road Tax (Manual).jpg',cat:'CRA Vehicle Related',ty:'Road Tax Disc',ch:'manual',doc:'card',sz:'0.31 MB',
+   desc:'Uploaded via the non-AI entry'})
+]};
+
+/* A.11 Manual Check - case-level manual rule set.
+   The left panel always shows this whole set, regardless of which file is previewed.
+   Count is derived: case total minus rules handled by OCR. routed=1 marks a rule that
+   OCR would normally handle, routed to manual because the file came in via the non-AI entry. */
+const MC={
+  // The Case has 25 expert rules in total, the same number the CRA Workbench
+  // header summary reports. 19 are handled by OCR, the remaining 6 by eye.
+  caseTotal:25, ocrHandled:19,
+  rules:[
+    {id:'M-11',nm:'LOSO amount matches the CED approval',d:'Against the CED conditional approval: FD pledge RM 100,000 \u00b7 3 years',file:'Letter of Setoff.docx',pg:3},
+    {id:'M-12',nm:'Witness signature complete',d:'Page 10 must carry an HLBB staff witness signature and date',file:'Letter of Setoff.docx',pg:10},
+    {id:'M-21',nm:'Mandate date falls between application and disbursement',d:'Application date 19-08-2026 to today',file:'Partnership Mandate.docx',pg:1},
+    {id:'M-31',nm:'Resolution signatories appear in the SSM director list',d:'Against the SSM Search director list',file:'Company Resolution.docx',pg:2},
+    {id:'M-32',nm:'Resolution bears the company seal',d:'The last page must carry the company seal and two director signatures',file:'Company Resolution.docx',pg:2},
+    {id:'V13',nm:'Road tax validity covers the disbursement date',d:'The road tax expiry must be later than the disbursement date',file:'Road Tax (Manual).jpg',pg:1,routed:1}
+  ],
+  res:{}
+};
+const MC_FILES=()=>[...new Set(MC.rules.map(r=>r.file))];
+
+/* A Case has one rule set. It splits into two tracks only by how each rule gets
+   concluded - by the engine (Cross Validation) or by eye (Manual Check). So the
+   footer reports both tracks on both pages, and submission is a single Case-level
+   action rather than two page-level ones.
+   The two tracks have very different latency: revalidation is an async batch over
+   every file in the Case (FSD 2.8.3), manual marking is immediate. They therefore
+   must not share a lock - only the moment of submission is shared. */
+const ocrAlerts=()=>live().filter(f=>f.ch==='ocr'&&f.cls).flatMap(f=>f.alerts);
+const ocrOpen=()=>ocrAlerts().filter(a=>!a.res).length;
+const mcDone=()=>MC.rules.filter(r=>MC.res[r.id]).length;
+function trackState(){
+  // OCR concludes most of its rules by itself; only the alerting ones wait on CRA.
+  const ot=MC.ocrHandled, od=ot-ocrOpen();
+  const mt=MC.rules.length, md=mcDone();
+  return {ot,od,mt,md,open:(ot-od)+(mt-md),all:ot+mt,done:od+md};
+}
+// A.11: a mixed master file stacks every file in one window; a per-file upload gets one window.
+// This follows the file's own `mix` flag, recorded at upload — not a viewer toggle.
+const isMixed=f=>!!f.mix;
+const mcOpen=()=>MC.rules.filter(r=>!MC.res[r.id]).length;
+
+const TYPES=['MyKad','Passport','Driving License','Payslip','EPF Statement','Form BE','HP Application Form',
+ 'HP Agreement','Guarantee Agreement','2nd Schedule Part I','Vehicle Invoice','VOC','Road Tax Disc',
+ 'Insurance Cover Note','Puspakom B7','LOSO','Partnership Mandate','Seller IC','Other Documents'];
+const DOCLIST=[
+  ['Identity',            ['MyKad','MyPR','Passport','Driving License','Work Permit','Military ID']],
+  ['Income',              ['Payslip','EPF Statement','Form B','Form BE','EA Form','EC Form',
+                           'Notice of Assessment','Bank Statement','Commission Statement']],
+  ['Application & Vehicle',['HP Application Form','CRA Form','VSO','VOC','Form 8','JK69',
+                           'Vehicle Invoice','Road Tax Disc','Puspakom B7','Insurance Cover Note',
+                           'Delivery Order']],
+  ['Agreement',           ['HP Agreement','HP Agreement (Islamic)','Guarantee Agreement',
+                           '2nd Schedule Part I','2nd Schedule Part II','Guarantor Waiver',
+                           'Appendix I–V','Letter of Undertaking']],
+  ['Seller',              ['Seller Invoice','Seller IC','HP216 Seller Invoice','Information on Seller']],
+  ['System-generated',    ['Application Form','Biometric Result']]
+];
+const MANUAL_DOCS=[
+  ['Statutory & corporate',['Letter of Setoff (LOSO)','Partnership Mandate','Company Resolution',
+                            'SSM Search','Board Resolution','Trust Deed','Power of Attorney',
+                            'Statutory Declaration']],
+  ['Anything else',       ['Any document outside the OCR File List',
+                            'Any scan OCR cannot read reliably']]
+];
+const OCR_COUNT=DOCLIST.reduce((n,g)=>n+g[1].length,0);
+
+const ZONES={
+ app:[['Personal Identity','Mykad, MyPR, Passport, DL, Work Permit...'],
+      ['Applicant Income','Payslip, EPF, Form B/BE, EA/EC Form, NOA...'],
+      ['Other Application & Vehicle','CRA Form, VSO, VOC, Form 8, JK69...'],
+      ['Seller Documents','Seller Invoice, Seller Identity, Information on seller...']],
+ dis:[['CRA Applicant Identity','Driving License, Company Resolution, Director NRIC...'],
+      ['CRA HP Agreement','HP Agreement (Ind/Com/Islamic), Guarantor Agreement, Appendix I–V...'],
+      ['CRA Vehicle Related','Application Form, 2nd Schedule, SI Form, LOSO, Seller Invoice/IC...'],
+      ['CRA Other Funding','Vehicle Invoice, VOC, Road Tax, Insurance Cover Note, Puspakom...']]
+};
+const CATS=s=>ZONES[s].map(z=>z[0]).concat(['Other Documents']);
+
+/* ═══════ STATE ═══════ */
+const S={role:'sales',stage:'dis',tab:'fl',subj:'all',sel:new Set(),dt:null,fType:'',fStatus:'',railCollapsed:false,reval:0};
+// vehicle category is folded into the main applicant
+Object.values(DATA).forEach(a=>a.forEach(f=>{if(f.sj==='vehicle'||f.sj==='case')f.sj='primary';}));
+
+// FSD 2.7.3: deleting a guarantor moves that guarantor's files to the Deleted list.
+(function removeGuarantor(id){
+  const i=SUBJ.dis.findIndex(s=>s.id===id); if(i>-1) SUBJ.dis.splice(i,1);
+  DATA.dis.forEach(f=>{ if(f.sj===id && !f.del)
+    f.del={by:'Sales · SalesOfficer1',at:'19/08/26 11:40',rs:'Guarantor removed from application'}; });
+})('g2');
+const PERM={
+ 'sales|app':{up:1,cls:1,rule:1,del:1,l:'Sales \u00b7 Application: upload, confirm classification, handle rules'},
+ 'cra|app':  {up:1,cls:1,rule:1,del:1,l:'CRA \u00b7 Application: upload, confirm classification, handle rules'},
+ 'sales|dis':{up:1,cls:0,rule:0,del:1,l:'Sales \u00b7 Disbursement: upload only'},
+ 'cra|dis':  {up:1,cls:1,rule:1,del:1,l:'CRA \u00b7 Disbursement: upload, confirm classification, handle rules'}
+};
+const P=()=>PERM[S.role+'|'+S.stage];
+const all=()=>DATA[S.stage];
+const live=()=>all().filter(f=>!f.del);
+const byId=i=>all().find(f=>f.id===i);
+const tabs3=()=>S.stage==='dis';
+const curSubj=()=>SUBJ[S.stage].find(x=>x.id===S.subj);
+// FSD 2.7.5: system documents belong to an entity and are shown under that
+// role's entry, with the creator recorded as System.
+const subjNm=f=>{const x=SUBJ[S.stage].find(y=>y.id===f.sj); return x?x.nm:'\u2014';};
+const canUpload=()=>P().up && S.subj!=='all' && S.subj!=='deleted' && !!curSubj();
+
+function inTab(f,t){
+  if(t==='fl') return true;
+  if(!f.cls) return false;
+  if(t==='cv') return f.ch==='ocr';
+  if(t==='mc') return f.ch==='manual' && MC_FILES().includes(f.nm);
+  return false;
+}
+function openCount(f){ return f.ch==='manual'?MC.rules.filter(r=>r.file===f.nm&&!MC.res[r.id]).length:f.alerts.filter(a=>!a.res).length; }
+function statusKey(f){
+  if(!f.cls) return 'pending';
+  if(f.src==='system'&&f.ao==='internal') return 'skip';
+  return openCount(f)?'issue':'done';
+}
+function rows(){
+  if(S.subj==='deleted') return all().filter(f=>f.del);
+  let r=live().filter(f=>inTab(f,S.tab));
+  if(S.subj!=='all') r=r.filter(f=>f.sj===S.subj);
+  if(S.fType) r=r.filter(f=>f.ty===S.fType);
+  if(S.fStatus) r=r.filter(f=>statusKey(f)===S.fStatus);
+  return r;
+}
+const tabCount=t=>live().filter(f=>inTab(f,t)&&(S.subj==='all'||S.subj==='deleted'||f.sj===S.subj)).length;
+const tabIssues=t=>live().filter(f=>inTab(f,t)&&(S.subj==='all'||S.subj==='deleted'||f.sj===S.subj)&&openCount(f)>0).length;
+
+/* ═══════ RENDER ═══════ */
+const $=i=>document.getElementById(i);
+const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function render(){
+  [...$('roleSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.role===S.role));
+  $('permHint').textContent=P().l;
+  [...$('stageTabs').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.stage===S.stage));
+  renderRail(); renderUpload(); renderTabs(); renderFilter(); renderTable(); renderFooter();
+}
+
+/* The rail holds three kinds of entry, and that is the structure worth showing:
+   a scope (All Files), the parties who own documents, and an archive (Deleted).
+   Parties carry a monogram because identity is what distinguishes them; the two
+   scopes carry a muted icon instead. Position does the grouping - Deleted sits at
+   the foot of the rail - so no headings or extra rules are needed. */
+const monogram=nm=>nm.replace('Guarantor ','G').replace('Main Applicant','MA')
+  .replace('Seller','SL').replace('Case Level','CL');
+
+function renderRail(){
+  const col=S.railCollapsed;
+  let h=`<div class="rail-h">
+      <button class="rail-toggle" data-railtoggle="1" title="${col?'Expand':'Collapse'}">${col?'\u00bb':'\u00ab'}</button></div>`;
+  h+=`<button class="subj-item scope" data-subj="all" aria-pressed="${S.subj==='all'}" title="All Files">
+        <span class="mk ico">${I('grid')}</span>
+        <span class="r1"><span class="nm">All Files</span>
+          <span class="ct">${live().filter(f=>inTab(f,S.tab)).length}</span></span></button>
+      <div class="rail-div"></div>`;
+  SUBJ[S.stage].forEach(s=>{
+    const n=live().filter(f=>f.sj===s.id&&inTab(f,S.tab)).length;
+    // FSD 2.7.4 records three mandatory-file scopes that are not aligned, so a
+    // required denominator here would assert a number the system cannot back.
+    h+=`<button class="subj-item ${s.gone?'gone':''}" data-subj="${s.id}"
+          aria-pressed="${S.subj===s.id}" title="${s.nm}">
+          <span class="mk">${monogram(s.nm)}</span>
+          <span class="r1"><span class="nm">${s.nm}</span><span class="ct">${n}</span></span>
+          ${s.sub?`<span class="sub">${s.sub}</span>`:''}</button>`;
+  });
+  h+=`<button class="subj-item scope foot" data-subj="deleted"
+        aria-pressed="${S.subj==='deleted'}" title="Deleted">
+        <span class="mk ico">${I('trash')}</span>
+        <span class="r1"><span class="nm">Deleted</span>
+          <span class="ct">${all().filter(f=>f.del).length}</span></span></button>`;
+
+  $('rail').innerHTML=h;
+  document.querySelector('.ocr-modal-content').className='ocr-modal-content'+(col?' rail-collapsed':'');
+}
+
+function renderUpload(){
+  const ok=canUpload(), sj=curSubj(), sec=$('uploadSection');
+  if(!ok){ sec.className='upload-section empty'; sec.innerHTML=''; return; }
+  sec.className='upload-section';
+  sec.innerHTML=`<div class="section-header">
+      <span class="section-title">Categorized Upload Area</span>
+      <span class="section-subtitle">5KB–20MB per file</span>
+      <span class="upload-ctx">Upload Subject <b>${sj.nm}</b></span>
+    </div>
+    <div class="upload-grid upload-grid--two">
+      <div class="upload-card ai">
+        <div class="upload-card-header">
+          <span class="ent-tag ai">AI</span>
+          <span class="upload-card-title">AI Scanning</span>
+          <span class="ent-note">Classified and extracted automatically</span></div>
+        <div class="uploader-box"><span class="upload-icon">${I('upload')}</span>
+          <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
+          <div class="upload-examples">PDF, JPG, JPEG, PNG</div></div>
+        <div class="type-hint">
+          ${['MyKad','Payslip','HP Agreement','Vehicle Invoice','Insurance Cover Note']
+            .map(t=>`<span class="tchip">${t}</span>`).join('')}
+          <button class="tmore" data-act="doclist">+${OCR_COUNT-5} more</button>
+        </div>
+      </div>
+      <div class="upload-card manual">
+        <div class="upload-card-header">
+          <span class="ent-tag manual">MANUAL</span>
+          <span class="upload-card-title">Non AI Scanning</span></div>
+        <div class="uploader-box non-ai"><span class="upload-icon">${I('fileText')}</span>
+          <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
+          <div class="upload-examples">PDF, JPG, JPEG, PNG, DOCX, XLSX</div></div>
+      </div>
+    </div>`;
+}
+
+function renderTabs(){
+  // Rule verification is always scoped to one subject. Offering it under All
+  // Files would mean reconciling every entity's rules in one view.
+  const T=[{k:'fl',n:'File List'}];
+  if(S.subj!=='all'&&S.subj!=='deleted'){
+    T.push({k:'cv',n:'Cross-Validation Results'});
+    if(tabs3()) T.push({k:'mc',n:'Manual Check Results'});
+  }
+  $('listTabs').innerHTML=T.map(t=>{
+    const c=tabCount(t.k), iss=t.k!=='fl'?tabIssues(t.k):0;
+    return `<button data-tab="${t.k}" aria-pressed="${S.tab===t.k}">${t.n}
+      <span class="ant-badge-count ${iss?'err':(S.tab===t.k?'on':'')}">${iss||c}</span></button>`;
+  }).join('');
+}
+
+function renderFilter(){
+  if(S.subj==='deleted'){ $('filterBar').innerHTML=`<span class="foot-note">Deleted files are kept as records only. They cannot be previewed or restored.</span>`; return; }
+  const p=P(),n=S.sel.size;
+  const types=[...new Set(live().filter(f=>inTab(f,S.tab)).map(f=>f.ty))].filter(t=>t!=='—');
+  const sts=[['pending','Pending Classification'],['issue','Pending Action'],['done','Passed'],['skip','No Validation']];
+  $('filterBar').innerHTML=
+   `<div class="filter-inputs">
+      <input class="ant-input" placeholder="Search values" style="width:180px">
+      <select class="ant-select filter-select" id="fType"><option value="">File Type</option>
+        ${types.map(t=>`<option ${S.fType===t?'selected':''}>${t}</option>`).join('')}</select>
+      <select class="ant-select filter-select" id="fStatus"><option value="">File Status</option>
+        ${sts.map(([k,v])=>`<option value="${k}" ${S.fStatus===k?'selected':''}>${v}</option>`).join('')}</select>
+      <button class="ant-btn" data-act="reset">Reset Filters</button>
+    </div>
+    <div class="filter-actions">
+      <span class="sel-n">Selected ${n}</span>
+      <button class="ant-btn" data-act="reassign" ${n&&(p.cls||p.up)?'':'disabled'}>Change Subject</button>
+      <button class="ant-btn ant-btn-dangerous" data-act="del" ${n&&p.del?'':'disabled'}>Delete</button>
+      <button class="ant-btn" data-act="dl" ${n?'':'disabled'}>Download</button>
+      <button class="ant-btn" data-act="refresh">Refresh</button>
+    </div>`;
+}
+
+function statusCell(f){
+  if(!f.cls) return f.low?'<span class="ant-tag ant-tag-red">Type Not Recognised</span>':'<span class="ant-tag ant-tag-gold">Pending Classification</span>';
+  if(f.src==='system'&&f.ao==='internal') return '<span class="ant-tag">No Validation</span>';
+  const o=openCount(f);
+  if(!o) return '<span class="ant-tag ant-tag-green">Passed</span>';
+  if(f.ch==='manual') return `<span class="ant-tag ant-tag-gold">Manual Check ${o}</span>`;
+  const e=f.alerts.filter(a=>!a.res).every(a=>a.k==='e');
+  return `<span class="ant-tag ${e?'ant-tag-gold':'ant-tag-red'}">${e?'Manual Check ':'Alert '}${o}</span>`;
+}
+
+function renderTable(){
+  const r=rows();
+  $('emptyState').style.display=r.length?'none':'block';
+  if(S.subj==='deleted'){
+    $('thead').innerHTML=`<tr><th>File Name</th><th>Subject</th><th>File Type</th><th>Deleted By</th><th>Deleted At</th><th>Reason</th><th>Action</th></tr>`;
+    $('tbody').innerHTML=r.map(f=>{const s=SUBJ[S.stage].find(x=>x.id===f.sj);
+      return `<tr><td class="filename-text">${f.nm}</td><td class="subject-cell">${subjNm(f)}</td>
+        <td><span class="ant-tag">${f.ty}</span></td><td>${f.del.by}</td><td class="time-cell">${f.del.at}</td>
+        <td class="description-text">${f.del.rs}</td>
+        <td><span class="description-text">Record only</span></td></tr>`;}).join('');
+    return;
+  }
+  const mc=S.tab==='mc', cv=S.tab==='cv', rule=cv||mc;
+  $('thead').innerHTML=`<tr><th style="width:44px"></th><th style="width:200px">File Name</th><th style="width:112px">Subject</th><th style="width:150px">Category</th><th style="width:180px">File Type</th>
+    ${rule?`<th style="width:250px">${mc?'Pending Rules':'Alert Rules'}</th>`
+          :'<th style="width:72px">OCR Flag</th><th style="width:118px">Description</th>'}
+    <th style="width:146px">File Status</th><th style="width:118px">Upload Time</th>
+    <th style="width:84px">File Size</th><th style="width:106px">Source</th>
+    <th style="width:96px">Action</th></tr>`;
+  $('tbody').innerHTML=r.map(f=>{
+    const s=SUBJ[S.stage].find(x=>x.id===f.sj), sys=f.src==='system';
+    const items=mc
+      ? MC.rules.filter(r2=>r2.file===f.nm).map(r2=>({id:r2.id,nm:r2.nm,res:MC.res[r2.id]}))
+      : f.alerts;
+    const mid=rule
+      ? `<td>${items.length?items.map(a=>`<div class="rule-line ${a.res?'done':'open'}">${a.res?'&#10003; ':''}${a.id||a.nm}</div>`).join(''):'<span class="description-text">—</span>'}</td>`
+      : `<td class="is-ai-cell">${f.ch==='ocr'?'Y':'N'}</td><td class="description-cell"><span class="description-text">${f.desc||'—'}</span></td>`;
+    return `<tr class="${S.sel.has(f.id)?'selected':''}" data-id="${f.id}">
+      <td><input type="checkbox" data-chk="${f.id}" ${S.sel.has(f.id)?'checked':''}></td>
+      <td class="filename-cell"><div class="filename-text">${f.nm}</div><div class="description-text">${f.pages} page${f.pages>1?'s':''}</div></td>
+      <td class="subject-cell">${subjNm(f)}</td>
+      <td class="category-cell">${f.cat}</td>
+      <td class="file-type-cell">${f.ty==='\u2014'?'<span class="description-text">Unclassified</span>'
+        :`<span class="ant-tag file-type-tag ${f.low?'ant-tag-red':''}">${f.ty}${f.tyc?' '+f.tyc:''}</span>`}</td>
+      ${mid}
+      <td class="ocr-status-cell">${statusCell(f)}</td>
+      <td class="time-cell">${f.up}</td>
+      <td class="time-cell">${f.sz}</td>
+      <td class="description-text">${sys?'System':'SalesOfficer1'}</td>
+      <td class="actions-cell">
+        <button class="action-btn edit-btn" data-open="${f.id}" title="Edit">${I('edit')}</button>
+        <button class="action-btn" title="Download">${I('download')}</button>
+        <button class="action-btn delete-btn" data-del1="${f.id}" title="Delete" ${P().del?'':'disabled'}>${I('trash')}</button>
+      </td></tr>`;
+  }).join('');
+}
+
+function renderFooter(){
+  const p=P(), can=p.cls||p.rule||p.up;
+  if(S.tab==='fl'){
+    $('footer').innerHTML=`<span class="foot-note">File List \u00b7 Full ledger and classification confirmation</span>
+      <span class="file-list-footer-actions"><button class="ant-btn back-btn">Back To List</button>
+      <button class="ant-btn ant-btn-primary submit-btn" id="btnSubmit" ${can?'':'disabled'}>Submit for Verification (${S.stage==='app'?'Application':'Disbursement'})</button></span>`;
+    return;
+  }
+  const t=trackState();
+  const chip=(l,d,n,busy)=>`<span class="trk ${busy?'busy':(d>=n&&n?'ok':'')}">${l}
+    <b>${busy?'\u2026':d}</b><i>/</i><b>${n}</b>${busy?'<em>recalculating</em>':''}</span>`;
+  $('footer').innerHTML=`<span class="tracks">
+      ${chip('OCR',t.od,t.ot,S.reval)}
+      ${chip('Manual',t.md,t.mt,false)}
+      <span class="trk-open">${t.open?`${t.open} rule(s) still open`:'All rules concluded'}</span>
+    </span>
+    <span class="file-list-footer-actions">
+      <button class="ant-btn back-btn">Back To List</button>
+      ${S.tab==='cv'?`<button class="ant-btn" id="btnReval" ${can&&!S.reval?'':'disabled'}>${S.reval?'Revalidating\u2026':'Revalidate'}</button>`:''}
+      <button class="ant-btn ant-btn-primary submit-btn" id="btnSubmit"
+        ${can&&!S.reval?'':'disabled'}
+        title="${S.reval?'Wait for revalidation to finish':'Submit the rule results for the whole Case'}">Submit Rule Results</button></span>`;
+}
+
+/* ═══════ DETAIL ═══════ */
+function openDt(i){S.dt=i;$('detail').classList.remove('hidden');renderDt();}
+function closeDt(){S.dt=null;$('detail').classList.add('hidden');render();}
+const dtList=()=>rows();
+
+function renderDt(){
+  const f=byId(S.dt); if(!f) return closeDt();
+  const s=SUBJ[S.stage].find(x=>x.id===f.sj), L=dtList(), i=L.findIndex(x=>x.id===f.id), p=P();
+  $('dtTitle').textContent=f.nm;
+  $('dtCrumb').textContent=`${subjNm(f)} \u203a ${f.cat} \u203a ${f.ty==='\u2014'?'Unclassified':f.ty}`;
+  $('dtPos').textContent=(i+1)+' / '+L.length;
+  $('dtPrev').disabled=i<=0; $('dtNext').disabled=i>=L.length-1;
+  $('dtSave').disabled=!(p.cls||p.rule);
+  $('dtSync').style.display=f.ch==='ocr'&&f.cls?'':'none';
+  $('dtPanel').innerHTML=panel(f,p);
+  $('dtViewer').innerHTML=viewer(f);
+}
+
+function panel(f,p){
+  let h='';
+  if(f.src==='system')
+    h+=f.ao==='external'
+      ? `<div class="pnote info"><b>System archived \u00b7 External return</b><br>Returned from e-acceptance / biometric devices. Signature completeness and version are validated. Cannot be deleted.</div>`
+      : `<div class="pnote ok"><b>System archived \u00b7 System-generated</b><br>Generated from a template. Rule validation is skipped. Cannot be deleted.</div>`;
+  if(!f.cls){
+    if(f.low) h+=`<div class="pnote warn"><b>Low overall confidence \u00b7 file type may not match</b><br>Confirm the classification first \u2014 it determines which field template is applied.</div>`;
+    h+=`<div class="classify-box">
+      <label>Category</label><select class="ant-select">${CATS(S.stage).map(c=>`<option ${c===f.cat?'selected':''}>${c}</option>`).join('')}</select>
+      <label>File Type</label><select class="ant-select" id="clsTy">${TYPES.map(t=>`<option ${t===f.ty?'selected':''}>${t}</option>`).join('')}</select>
+      <div style="margin-top:12px"><button class="ant-btn ant-btn-primary ant-btn-sm" id="btnCls" ${p.cls?'':'disabled'}>Confirm Classification</button></div>
+      <div class="description-text" style="margin-top:8px">On confirmation the file moves to ${f.ch==='ocr'?'Cross-Validation Results':'Manual Check Results'}</div>
+      ${p.cls?'':'<div class="description-text" style="margin-top:6px">This role cannot confirm classification.</div>'}</div>`;
+  }
+  // A.11 left panel always shows the whole case rule set, independent of the previewed file
+  if(f.cls&&f.ch==='manual'){
+    const o=mcOpen();
+    h+=`<div class="pnote"><b>${MC.rules.length} manual rule(s) for this case</b><br>
+      ${MC.caseTotal} total \u2212 ${MC.ocrHandled} handled by OCR = ${MC.rules.length}
+      (${MC.rules.filter(r=>r.routed).length} routed here from the non-AI upload entry)</div>
+      <p class="panel-sect ${o?'err':''}">EXPERT RULES \u00b7 ${o?o+' pending':'all reviewed'}</p>`;
+    MC_FILES().forEach(fn=>{
+      const cur=fn===f.nm;
+      h+=`<div class="mc-grp ${cur?'cur':''}">${fn}${cur?'<span class="mc-cur">Previewing</span>':''}</div>`;
+      MC.rules.filter(r=>r.file===fn).forEach(r=>{
+        const res=MC.res[r.id];
+        h+=`<div class="alert-item ${res?'resolved':'eyeball'}">
+          <div class="ah"><span class="rid">${r.id}</span><span class="rn">${r.nm}</span>
+            ${r.routed?'<span class="routed">ROUTED</span>':''}</div><div class="rd">${r.d}</div>`;
+        h+=`<div class="acts">
+            <button class="ant-btn ant-btn-sm ${res==='pass'?'mc-on':''}" data-mc="pass" data-r="${r.id}" ${p.rule?'':'disabled'}>Pass</button>
+            <button class="ant-btn ant-btn-sm ${res==='fail'?'mc-off':''}" data-mc="fail" data-r="${r.id}" ${p.rule?'':'disabled'}>Fail</button></div>`;
+        h+=`</div>`;
+      });
+    });
+  }
+  if(f.cls&&f.ch==='ocr'&&f.alerts.length){
+    const o=f.alerts.filter(a=>!a.res).length;
+    h+=`<p class="panel-sect ${o?'err':''}">VALIDATION ALERTS \u00b7 ${o?o+' pending':'all handled'}</p>`;
+    f.alerts.forEach((a,i)=>{
+      h+=`<div class="alert-item ${a.res?'resolved':(a.k==='e'?'eyeball':'machine')}"><div class="ah"><span class="rid">${a.id}</span><span class="rn">${a.nm}</span></div><div class="rd">${a.d}</div>`;
+      h+=a.res?`<div class="res">&#10003; ${a.res}</div>`
+        :a.k==='e'
+          ?`<div class="acts"><button class="ant-btn ant-btn-sm" data-al="pass" data-i="${i}" ${p.rule?'':'disabled'}>Pass</button>
+            <button class="ant-btn ant-btn-sm ant-btn-dangerous" data-al="fail" data-i="${i}" ${p.rule?'':'disabled'}>Fail</button>
+            <button class="ant-btn ant-btn-link ant-btn-sm" data-al="loc" data-i="${i}">Check image \u2192</button></div>`
+          :`<div class="acts"><button class="ant-btn ant-btn-sm" data-al="just" data-i="${i}" ${p.rule?'':'disabled'}>Justification</button>
+            <button class="ant-btn ant-btn-sm" data-al="repl" data-i="${i}" ${p.rule?'':'disabled'}>Replace Document</button>
+            <button class="ant-btn ant-btn-link ant-btn-sm" data-al="loc" data-i="${i}">Check image \u2192</button></div>`;
+      h+=`</div>`;
+    });
+  }
+  if(f.cls&&f.ch==='ocr'&&!f.alerts.length&&f.src!=='system')
+    h+=`<div class="pnote ok"><b>All rules passed</b></div>`;
+  if(f.fields.length){
+    h+=`<p class="panel-sect">FIELDS</p>`;
+    f.fields.forEach(x=>{h+=x.g?`<div class="field-group">${x.g}</div>`
+      :`<div class="field-row"><span class="k">${x.n}</span><span class="v">${x.v}</span>
+         <span class="c ${x.c>=90?'confidence-high':'confidence-low'}">${x.c}%</span></div>`;});
+  }
+  return h;
+}
+
+/* A.11 right pane: mixed upload -> one window stacking all files; per-file upload -> one window each */
+function viewerMC(f){
+  const names=MC_FILES(), mix=isMixed(f);
+  const bar=`<div class="viewer-bar"><span class="time-cell">${mix?names.length+' files':'1 / '+f.pages}</span>
+    <span class="zc">\u2212</span><span class="zc">+</span><span class="zc">${I('refresh')}</span>
+    <span class="mc-seg">${mix?'Mixed upload \u00b7 all files in one window':'Per-file upload \u00b7 one window per file'}</span></div>`;
+  if(!mix) return bar+docBody(f);
+  return bar+names.map(fn=>{
+    const t=live().find(x=>x.nm===fn)||f;
+    return `<div class="mc-doc" id="mcdoc-${fn.replace(/[^\w]/g,'_')}">
+      <div class="mc-doc-h">${fn}<span>${MC.rules.filter(r=>r.file===fn).length} rule(s)</span></div>
+      ${docBody(t)}</div>`;
+  }).join('');
+}
+function viewer(f){
+  if(f.ch==='manual'&&f.cls) return viewerMC(f);
+  const bar=`<div class="viewer-bar"><span class="time-cell">1 / ${f.pages}</span><span class="zc">\u2212</span><span class="zc">+</span><span class="zc">${I('refresh')}</span><span>Auto zoom</span></div>`;
+  return bar+docBody(f);
+}
+function docBody(f){
+  const rs=()=>(f.fields||[]).filter(x=>!x.g).map(x=>
+    `<div class="doc-r ${x.c<95?'hl':''}"><span class="k">${x.n}</span><span class="v">${x.v}</span></div>`).join('');
+  let b;
+  if(f.doc==='card'){
+    const id=(f.fields||[]).find(x=>x.n==='id_no');
+    b=`<div class="doc-page card"><div class="ic-h">KAD PENGENALAN MALAYSIA</div>
+      <div class="ic-n">${id?id.v.replace(/(\d{6})(\d{2})(\d{4})/,'$1-$2-$3'):'900101-10-5123'}</div>
+      <div class="ic-m">${f.sj==='g1'?'LIM AH KOW':f.sj==='g2'?'WONG MEI LING':f.sj==='seller'?'CHONG KAH WAI':'TAN WEI MING'}</div>
+      <div class="ic-a">29 JALAN DURIAN, TAMAN CHERAS<br>56100 KUALA LUMPUR</div><div class="ic-c"></div></div>`;
+  } else if(f.doc==='invoice'){
+    b=`<div class="doc-page"><div class="doc-h">${f.ty}</div><div class="doc-s">Cycle &amp; Carriage Malaysia Automotive Sdn Bhd</div>
+      ${rs()}<div class="doc-l"></div><div class="doc-l" style="width:70%"></div>
+      <div class="doc-sig"><div>Authorised Signature</div><div>Company Chop</div></div></div>`;
+  } else if(f.doc==='statement'){
+    b=`<div class="doc-page"><div class="doc-h">${f.ty}</div><div class="doc-s">PENYATA / STATEMENT · 2026</div>
+      ${rs()}<div class="doc-l"></div><div class="doc-l" style="width:84%"></div><div class="doc-l" style="width:62%"></div></div>`;
+  } else {
+    b=`<div class="doc-page"><div class="doc-h">${f.ty==='\u2014'?'UNCLASSIFIED DOCUMENT':f.ty.toUpperCase()}</div>
+      <div class="doc-s">Hong Leong Bank Berhad · Hire Purchase</div>${rs()}
+      <div class="doc-l"></div><div class="doc-l" style="width:88%"></div><div class="doc-l" style="width:74%"></div>
+      <div class="doc-sig"><div>Hirer Signature &amp; Date</div><div>Witness (EHP)</div></div></div>`;
+  }
+  return b;
+}
+
+/* ═══════ SUB-MODAL / MESSAGE ═══════ */
+function sm(t,b,f){$('smTitle').textContent=t;$('smBody').innerHTML=b;
+  $('smFoot').innerHTML=f||'<button class="ant-btn" data-cl="1">Close</button>';$('subMask').classList.remove('hidden');}
+function smClose(){$('subMask').classList.add('hidden');}
+let mt;function msg(m){const e=$('msg');e.firstElementChild.textContent=m;e.classList.add('on');clearTimeout(mt);mt=setTimeout(()=>e.classList.remove('on'),2000);}
+const roleNm=()=>({sales:'Sales',cra:'CRA'})[S.role];
+
+function askDelete(ids){
+  sm('Delete Files',
+    `<div class="pnote info"><b>${ids.length}</b> file(s) will be deleted.<br><br>Deleted files move to <b>Deleted</b> in the left rail, keeping the deleter, timestamp and reason. They are kept as records only and <b>cannot be restored</b>.</div>
+     <label style="font-size:12px;color:var(--text-2)">Reason (optional)</label>
+     <input class="ant-input" id="delRs" style="width:100%;margin-top:4px" placeholder="e.g. Customer resubmitted the latest month">`,
+    `<button class="ant-btn" data-cl="1">Cancel</button>
+     <button class="ant-btn ant-btn-primary" data-dodel='${JSON.stringify(ids)}'>Confirm Delete</button>`);
+}
+/* One submission for both tracks. It never requires the Case to be complete -
+   it submits what is concluded and says what is left, so an interrupted session
+   resumes with nothing lost. */
+function submitRules(){
+  const t=trackState();
+  if(!t.open){ msg(`Rule results submitted \u00b7 ${t.done}/${t.all} concluded`); return; }
+  sm('Submit Rule Results',
+    `<div class="pnote warn"><b>${t.open} rule(s) are still open.</b><br>
+       Submitting now records the conclusions you have made so far. The open rules stay open and can be concluded later.</div>
+     <table><tr><th>Track</th><th>Concluded</th><th>Open</th><th>Where</th></tr>
+      <tr><td>OCR</td><td>${t.od} / ${t.ot}</td><td>${t.ot-t.od}</td><td>Cross-Validation Results</td></tr>
+      <tr><td>Manual</td><td>${t.md} / ${t.mt}</td><td>${t.mt-t.md}</td><td>Manual Check Results</td></tr></table>`,
+    `<button class="ant-btn" data-cl="1">Keep working</button>
+     <button class="ant-btn ant-btn-primary" data-cl="1" data-tst="Rule results submitted \u00b7 open rules left for later">Submit anyway</button>`);
+}
+/* Which entry a document belongs to is a lookup question, not something to
+   memorise. Search answers it directly; the grouped list is there to browse. */
+function docListBody(q){
+  const k=(q||'').trim().toLowerCase();
+  const hit=n=>!k||n.toLowerCase().includes(k);
+  const row=(n,ocr)=>`<div class="dl-row"><span class="nm">${esc(n)}</span>
+    <span class="ant-tag ${ocr?'ant-tag-blue':''}">${ocr?'AI Scanning':'Non AI Scanning'}</span></div>`;
+  let h='',n=0;
+  DOCLIST.forEach(([g,items])=>{
+    const f=items.filter(hit); if(!f.length)return; n+=f.length;
+    h+=`<div class="dl-grp">${esc(g)}</div>`+f.map(x=>row(x,1)).join('');
+  });
+  MANUAL_DOCS.forEach(([g,items])=>{
+    const f=items.filter(hit); if(!f.length)return; n+=f.length;
+    h+=`<div class="dl-grp">${esc(g)}</div>`+f.map(x=>row(x,0)).join('');
+  });
+  return n?h:`<div class="dl-none">No document type matches “${esc(q)}”.<br>
+    Anything outside the OCR File List goes to <b>Non AI Scanning</b>.</div>`;
+}
+function openDocList(){
+  sm('Where does this document go?',
+    `<input class="ant-input" id="dlq" style="width:100%" placeholder="Search a document type, e.g. payslip">
+     <div class="description-text" style="margin:8px 0 4px">${OCR_COUNT} types are read automatically by AI Scanning. Everything else goes to Non AI Scanning.</div>
+     <div id="dlBody">${docListBody('')}</div>`,
+    `<button class="ant-btn ant-btn-primary" data-cl="1">Close</button>`);
+  const q=$('dlq'); if(q){q.focus();}
+}
+function missing(){
+  sm('Completeness Check',
+    `<div class="pnote info">The required list is computed at submission, once the vehicle type, guarantor arrangement and identity type are known.</div>
+     <div class="miss-group"><div class="gh"><span>Main Applicant</span><span style="color:var(--error-text)">2 missing</span></div>
+       <ul><li>Driving License \u2014 not uploaded</li><li>MyKad \u2014 uploaded but <b>type not confirmed</b> (mykad.png still pending in File List)</li></ul></div>
+     <div class="miss-group"><div class="gh"><span>Guarantor 1</span><span style="color:var(--error-text)">1 missing</span></div>
+       <ul><li>Guarantor EPF Statement \u2014 not uploaded</li></ul></div>`,
+    `<button class="ant-btn" data-cl="1">Later</button><button class="ant-btn ant-btn-primary" data-gomiss="1">Handle Now</button>`);
+}
+
+/* ═══════ EVENTS ═══════ */
+document.addEventListener('input',e=>{
+  if(e.target.id==='dlq'){ $('dlBody').innerHTML=docListBody(e.target.value); }
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='fType'){S.fType=e.target.value;renderTable();}
+  if(e.target.id==='fStatus'){S.fStatus=e.target.value;renderTable();}
+});
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,input[type=checkbox]'); if(!t) return;
+
+  if(t.dataset.railtoggle){S.railCollapsed=!S.railCollapsed;render();return;}
+  if(t.dataset.role){S.role=t.dataset.role;S.sel.clear();render();if(S.dt)renderDt();return;}
+  if(t.dataset.stage){S.stage=t.dataset.stage;S.tab='fl';S.subj='all';S.sel.clear();S.fType=S.fStatus='';render();return;}
+  if(t.dataset.tab){S.tab=t.dataset.tab;S.sel.clear();S.fType=S.fStatus='';if(S.subj==='deleted')S.subj='all';render();return;}
+  if(t.dataset.subj){S.subj=t.dataset.subj;S.sel.clear();
+    if((S.subj==='all'||S.subj==='deleted')&&S.tab!=='fl'){S.tab='fl';S.fType=S.fStatus='';}
+    render();return;}
+  if(t.dataset.chk){const i=t.dataset.chk;S.sel.has(i)?S.sel.delete(i):S.sel.add(i);render();return;}
+  if(t.dataset.open){openDt(t.dataset.open);return;}
+  if(t.dataset.del1){askDelete([t.dataset.del1]);return;}
+
+  if(t.dataset.act){
+    const a=t.dataset.act,n=S.sel.size;
+    if(a==='doclist'){openDocList();return;}
+    if(a==='reset'){S.fType=S.fStatus='';render();return;}
+    if(a==='refresh'){msg('Refreshed');return;}
+    if(a==='del'){askDelete([...S.sel]);return;}
+    if(a==='dl'){msg(`${n} file(s) downloaded`);return;}
+    if(a==='reassign'){
+      sm('Change Subject',
+        `<div class="pnote info">Move the selected <b>${n}</b> file(s) to another Subject. Classification confirmations and extraction results are kept.</div>
+         <label style="font-size:12px;color:var(--text-2)">Target Subject</label>
+         <select class="ant-select" id="tgtSubj" style="width:100%;margin-top:4px">
+         ${SUBJ[S.stage].map(s=>`<option value="${s.id}">${s.nm}</option>`).join('')}</select>`,
+        `<button class="ant-btn" data-cl="1">Cancel</button><button class="ant-btn ant-btn-primary" data-doreassign="1">Confirm Change</button>`);
+      return;
+    }
+  }
+
+  if(t.dataset.dodel){
+    const ids=JSON.parse(t.dataset.dodel);
+    const rs=($('delRs')&&$('delRs').value.trim())||'No reason given';
+    const at=new Date().toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(',','');
+    ids.forEach(i=>{const f=byId(i);if(f)f.del={by:roleNm()+' · '+(S.role==='sales'?'SalesOfficer1':'v_kangyi'),at,rs};});
+    S.sel.clear();smClose();render();msg(`${ids.length} file(s) deleted`);return;
+  }
+  if(t.dataset.doreassign){
+    const v=$('tgtSubj').value;let n=0;
+    S.sel.forEach(i=>{const f=byId(i);if(f){f.sj=v;n++;}});
+    S.sel.clear();smClose();render();msg(`Subject changed for ${n} file(s)`);return;
+  }
+
+  if(t.id==='dtBack'){closeDt();return;}
+  if(t.id==='dtPrev'||t.id==='dtNext'){
+    const L=dtList(),i=L.findIndex(x=>x.id===S.dt),j=t.id==='dtPrev'?i-1:i+1;
+    if(L[j]){S.dt=L[j].id;renderDt();}return;
+  }
+  if(t.id==='dtSave'){msg('Saved');return;}
+  if(t.id==='dtSync'){
+    sm('OCR Data Sync',
+      `<div class="pnote warn">Selecting a checkbox means applying the OCR value to replace the current value.</div>
+       <table><tr><th>Field</th><th>Current Value</th><th>OCR Value</th><th>Status</th></tr>
+        <tr><td><input type="checkbox"> Customer Name</td><td>FX</td><td>QQQ</td><td style="color:var(--warning-text)">CONFLICT</td></tr>
+        <tr><td><input type="checkbox" checked> Address Line 1</td><td>(Empty)</td><td>16 ES TAMAN UDA MURNI</td><td style="color:var(--text-3)">SYNC OK</td></tr>
+        <tr><td><input type="checkbox" checked> Postcode</td><td>(Empty)</td><td>16400</td><td style="color:var(--text-3)">SYNC OK</td></tr></table>`,
+      `<button class="ant-btn" data-cl="1">Cancel</button><button class="ant-btn ant-btn-primary" data-cl="1" data-tst="Selected fields merged">Merge Selected Fields</button>`);
+    return;
+  }
+  if(t.id==='btnCls'){
+    const f=byId(S.dt),sel=$('clsTy');
+    f.ty=sel?sel.value:f.ty;f.low=0;f.tyc='';f.cls=1;f.desc='Classification Confirmed';
+    if(f.fields.length===1&&f.fields[0].c===0)
+      f.fields=f.ty==='MyKad'?[{n:'id_no',v:'900101105123',c:99},{n:'name',v:'TAN WEI MING',c:98},{n:'address',v:'29 JALAN DURIAN, KL',c:95}]
+        :[{n:'document_no',v:'—',c:0}];
+    msg(`Classification confirmed \u00b7 moved to ${f.ch==='ocr'?'Cross-Validation':'Manual Check'} Results`);
+    renderDt();render();return;
+  }
+  if(t.dataset.al){
+    const f=byId(S.dt),a=f.alerts[+t.dataset.i],k=t.dataset.al;
+    if(k==='loc'){msg('Image scrolled to the location defined by this rule');return;}
+    a.res={pass:'Passed',fail:'Failed \u00b7 returned to Sales',just:'Justification recorded',repl:'Replace Document requested'}[k]+' \u00b7 '+roleNm();
+    renderDt();render();return;
+  }
+  if(t.dataset.mc){
+    const r=MC.rules.find(x=>x.id===t.dataset.r), k=t.dataset.mc;
+    if(MC.res[r.id]===k) delete MC.res[r.id]; else MC.res[r.id]=k;
+    renderDt();render();
+    msg(MC.res[r.id]?`${r.id} marked as ${k==='pass'?'Pass':'Fail'}`:`${r.id} cleared`);
+    return;
+  }
+  if(t.id==='btnReval'){
+    // FSD 2.8.3 - reruns every rule in the Case. Manual marking stays available
+    // throughout; only submission waits, so no stale OCR conclusion gets persisted.
+    S.reval=1;renderFooter();msg('Revalidating all files in the Case\u2026');
+    setTimeout(()=>{S.reval=0;render();msg('Revalidation complete \u00b7 OCR results refreshed');},2200);
+    return;
+  }
+  if(t.id==='btnSubmit'){
+    if(S.stage==='app'&&S.tab==='fl'&&P().up){missing();return;}
+    if(S.tab==='fl'){msg('Classification submitted \u00b7 extraction and rule validation started');return;}
+    submitRules();return;
+  }
+  if(t.dataset.gomiss){smClose();S.tab='fl';S.subj='primary';S.fStatus='pending';render();msg('Filtered to files pending classification');return;}
+  if(t.dataset.cl){if(t.dataset.tst)msg(t.dataset.tst);smClose();return;}
+});
+
+$('subMask').addEventListener('click',e=>{if(e.target===$('subMask'))smClose();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(!$('subMask').classList.contains('hidden'))smClose();else if(S.dt)closeDt();}
+});
+
+$('mClose').innerHTML=I('close');
+render();
+})();
+<\/script>
+
+<script>
+(function(){
+  "use strict";
+  var HERE = 'fc';
+
+  /* Put the cross-prototype switch inside the existing demo bar rather than
+     floating it over the page, so it reads as part of the same chrome. */
+  var bar = document.querySelector('.demo');
+  if (bar) {
+    var nav = document.createElement('span');
+    nav.className = 'xnav';
+    nav.innerHTML =
+      '<button data-xnav="wb"' + (HERE === 'wb' ? ' aria-current="true"' : '') + '>CRA Workbench</button>' +
+      '<button data-xnav="fc"' + (HERE === 'fc' ? ' aria-current="true"' : '') + '>Document Center</button>';
+    var why = bar.querySelector('.why');
+    if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
+  }
+
+  function go(to){ if (to !== HERE) parent.postMessage({ nav: to }, '*'); }
+
+  /* Capture phase, so the prototype's own handler never runs for these -
+     otherwise the workbench would toast "Opening File Center" and stay put. */
+  document.addEventListener('click', function(e){
+    var x = e.target.closest('[data-xnav]');
+    if (x) { e.preventDefault(); e.stopPropagation(); go(x.dataset.xnav); return; }
+    var t = e.target.closest('#mClose, .file-list-footer-actions .back-btn');
+    if (t) { e.preventDefault(); e.stopPropagation(); go('wb'); }
+  }, true);
+}());
+<\/script>
+</body></html></script>
+
+<script>
+(function(){
+  "use strict";
+  var frames = { wb: document.getElementById('fr-wb'), fc: document.getElementById('fr-fc') };
+  var loaded = {};
+
+  function source(k){
+    // undo the closing-tag escaping applied at build time
+    return document.getElementById('src-' + k).textContent.replace(/<\\\/script>/g, '<\/script>');
+  }
+
+  function show(k){
+    if (!loaded[k]) { frames[k].srcdoc = source(k); loaded[k] = 1; }
+    Object.keys(frames).forEach(function(n){ frames[n].hidden = (n !== k); });
+    try { history.replaceState(null, '', '#' + k); } catch (e) {}
+    var f = frames[k];
+    // focus the visible frame so keyboard shortcuts land in the right document
+    setTimeout(function(){ try { f.contentWindow.focus(); } catch (e) {} }, 0);
+  }
+
+  window.addEventListener('message', function(e){
+    var to = e.data && e.data.nav;
+    if (to === 'wb' || to === 'fc') show(to);
+  });
+
+  var start = (location.hash || '').replace('#', '');
+  show(start === 'fc' ? 'fc' : 'wb');
+  frames.wb.addEventListener('load', function(){
+    var b = document.getElementById('boot'); if (b) b.remove();
+  });
+}());
+</script>
