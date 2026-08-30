@@ -99,29 +99,46 @@ button:disabled{cursor:not-allowed}
 .ocr-modal-content{flex:1;min-height:0;display:grid;grid-template-columns:212px minmax(0,1fr)}
 .ocr-modal-content.rail-collapsed{grid-template-columns:52px minmax(0,1fr)}
 .rail-collapsed .subject-rail{padding:12px 6px}
-.rail-collapsed .rail-h > span,.rail-collapsed .subj-item .sub{display:none}
-.rail-collapsed .rail-h{flex-direction:column;gap:6px;align-items:center;margin:0 0 10px}
-.rail-collapsed .subj-item{padding:7px 4px;text-align:center}
-.rail-collapsed .subj-item .r1{flex-direction:column;gap:2px;align-items:center}
-.rail-collapsed .subj-item .nm{font-size:11px;line-height:1.2}
+.rail-collapsed .subj-item .sub{display:none}
+.rail-collapsed .rail-h{justify-content:center;margin:0 0 8px}
+.rail-collapsed .subj-item{grid-template-columns:1fr;justify-items:center;padding:6px 2px;gap:3px}
+.rail-collapsed .subj-item .mk{grid-row:auto}
+.rail-collapsed .subj-item .r1{flex-direction:column;gap:0;align-items:center}
+.rail-collapsed .subj-item .nm{display:none}
 .rail-collapsed .subj-item .ct{font-size:10px}
 .rail-toggle{background:transparent;border:0;color:var(--text-3);padding:2px 5px;border-radius:var(--r-sm);font-size:12px;line-height:1}
 .rail-toggle:hover{background:rgba(0,0,0,.06);color:var(--primary)}
 @media(max-width:900px){.ocr-modal-content{grid-template-columns:1fr}}
-.subject-rail{border-right:1px solid var(--border-2);background:var(--fill-alter);padding:12px 10px;overflow-y:auto;min-height:0}
-.subject-rail .rail-h{display:flex;justify-content:space-between;align-items:baseline;margin:0 4px 10px;font-size:12px;color:var(--text-3)}
-.subject-rail .rail-h b{font-size:13px;color:var(--text-2);font-weight:600}
-.subj-item{width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:var(--r);padding:8px 10px;margin-bottom:4px;display:block;transition:all .2s}
-.subj-item:hover{background:rgba(0,0,0,.04)}
-.subj-item[aria-pressed="true"]{background:var(--primary-bg);border-color:var(--primary-border)}
-.subj-item .r1{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.subj-item .nm{font-size:14px;color:var(--text)}
+.subject-rail{border-right:1px solid var(--border-2);background:var(--fill-alter);padding:10px 10px 14px;
+  overflow-y:auto;min-height:0;display:flex;flex-direction:column}
+.subject-rail .rail-h{display:flex;justify-content:flex-end;margin:0 0 4px}
+.subj-item{width:100%;text-align:left;background:transparent;border:1px solid transparent;
+  border-radius:var(--r);padding:7px 9px;margin-bottom:3px;transition:all .2s;
+  display:grid;grid-template-columns:26px minmax(0,1fr);gap:9px;align-items:center}
+.subj-item:hover{background:rgba(0,0,0,.045)}
+.subj-item[aria-pressed="true"]{background:var(--bg);border-color:var(--primary-border);
+  box-shadow:0 1px 2px rgba(16,24,40,.05)}
+.subj-item .mk{grid-row:1/span 2;align-self:start;width:26px;height:26px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.02em;color:var(--text-2);background:#fff;border:1px solid var(--border-2)}
+.subj-item .mk.ico{color:var(--text-3);background:transparent;border-color:transparent}
+.subj-item .mk .i{width:15px;height:15px}
+.subj-item[aria-pressed="true"] .mk{background:var(--primary-bg);border-color:var(--primary-border);
+  color:var(--primary-active)}
+.subj-item[aria-pressed="true"] .mk.ico{background:transparent;border-color:transparent}
+.subj-item .r1{display:flex;justify-content:space-between;align-items:baseline;gap:8px;min-width:0}
+.subj-item .nm{font-size:13.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .subj-item[aria-pressed="true"] .nm{color:var(--primary-active);font-weight:600}
-.subj-item .ct{font-family:var(--mono);font-size:12px;color:var(--text-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.subj-item .ct{font-family:var(--mono);font-size:12px;color:var(--text-3);white-space:nowrap;
+  font-variant-numeric:tabular-nums;flex:none}
+.subj-item.scope .nm{color:var(--text-2)}
+.subj-item.foot{margin-top:auto;position:relative}
+.subj-item.foot::before{content:"";position:absolute;left:9px;right:9px;top:-9px;height:1px;background:var(--border-2)}
 .subj-item .ct.ok{color:var(--success-text)} .subj-item .ct.bad{color:var(--error-text)}
-.subj-item .sub{font-size:12px;color:var(--text-3);margin-top:2px}
+.subj-item .sub{grid-column:2;font-size:11.5px;color:var(--text-3);margin-top:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .subj-item.gone .nm{color:var(--text-3)}
-.rail-div{height:1px;background:var(--border-2);margin:12px 4px}
+.rail-div{height:1px;background:var(--border-2);margin:8px 4px 9px}
 
 /* the only vertical scroll container; children keep natural height */
 .ocr-main{min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;scroll-padding-top:56px}
@@ -677,31 +694,38 @@ function render(){
   renderRail(); renderUpload(); renderTabs(); renderFilter(); renderTable(); renderFooter();
 }
 
-function renderRail(){
-  const dis=S.stage==='dis';
-  const col=S.railCollapsed;
-  let h=`<div class="rail-h"><b>${col?'S':'Subject'}</b>
+/* The rail holds three kinds of entry, and that is the structure worth showing:
+   a scope (All Files), the parties who own documents, and an archive (Deleted).
+   Parties carry a monogram because identity is what distinguishes them; the two
+   scopes carry a muted icon instead. Position does the grouping - Deleted sits at
+   the foot of the rail - so no headings or extra rules are needed. */
+const monogram=nm=>nm.replace('Guarantor ','G').replace('Main Applicant','MA')
+  .replace('Seller','SL').replace('Case Level','CL');
 
+function renderRail(){
+  const col=S.railCollapsed;
+  let h=`<div class="rail-h">
       <button class="rail-toggle" data-railtoggle="1" title="${col?'Expand':'Collapse'}">${col?'\u00bb':'\u00ab'}</button></div>`;
-  h+=`<button class="subj-item" data-subj="all" aria-pressed="${S.subj==='all'}">
-        <span class="r1"><span class="nm">All Files</span><span class="ct">${live().filter(f=>inTab(f,S.tab)).length}</span></span>
-        </button><div class="rail-div"></div>`;
+  h+=`<button class="subj-item scope" data-subj="all" aria-pressed="${S.subj==='all'}" title="All Files">
+        <span class="mk ico">${I('grid')}</span>
+        <span class="r1"><span class="nm">All Files</span>
+          <span class="ct">${live().filter(f=>inTab(f,S.tab)).length}</span></span></button>
+      <div class="rail-div"></div>`;
   SUBJ[S.stage].forEach(s=>{
     const n=live().filter(f=>f.sj===s.id&&inTab(f,S.tab)).length;
     // FSD 2.7.4 records three mandatory-file scopes that are not aligned, so a
     // required denominator here would assert a number the system cannot back.
-    let ct=String(n),cls='';
-    const short=s.nm.replace('Guarantor ','G').replace('Main Applicant','MA').replace('Case Level','CL')
-      .replace('Seller','SL').replace('Unassigned','UA');
     h+=`<button class="subj-item ${s.gone?'gone':''}" data-subj="${s.id}"
           aria-pressed="${S.subj===s.id}" title="${s.nm}">
-          <span class="r1"><span class="nm">${col?short:s.nm}</span><span class="ct ${cls}">${ct}</span></span>
+          <span class="mk">${monogram(s.nm)}</span>
+          <span class="r1"><span class="nm">${s.nm}</span><span class="ct">${n}</span></span>
           ${s.sub?`<span class="sub">${s.sub}</span>`:''}</button>`;
   });
-  h+=`<div class="rail-div"></div>
-      <button class="subj-item" data-subj="deleted" aria-pressed="${S.subj==='deleted'}">
-        <span class="r1"><span class="nm" style="color:var(--text-3)">Deleted</span><span class="ct">${all().filter(f=>f.del).length}</span></span>
-        <span class="sub">Record only, not restorable</span></button>`;
+  h+=`<button class="subj-item scope foot" data-subj="deleted"
+        aria-pressed="${S.subj==='deleted'}" title="Deleted">
+        <span class="mk ico">${I('trash')}</span>
+        <span class="r1"><span class="nm">Deleted</span>
+          <span class="ct">${all().filter(f=>f.del).length}</span></span></button>`;
 
   $('rail').innerHTML=h;
   document.querySelector('.ocr-modal-content').className='ocr-modal-content'+(col?' rail-collapsed':'');
