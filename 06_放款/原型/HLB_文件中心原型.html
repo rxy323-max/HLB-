@@ -99,7 +99,7 @@ button:disabled{cursor:not-allowed}
 .ocr-modal-content{flex:1;min-height:0;display:grid;grid-template-columns:212px minmax(0,1fr)}
 .ocr-modal-content.rail-collapsed{grid-template-columns:52px minmax(0,1fr)}
 .rail-collapsed .subject-rail{padding:12px 6px}
-.rail-collapsed .rail-h > span,.rail-collapsed .rail-note,.rail-collapsed .subj-item .sub{display:none}
+.rail-collapsed .rail-h > span,.rail-collapsed .subj-item .sub{display:none}
 .rail-collapsed .rail-h{flex-direction:column;gap:6px;align-items:center;margin:0 0 10px}
 .rail-collapsed .subj-item{padding:7px 4px;text-align:center}
 .rail-collapsed .subj-item .r1{flex-direction:column;gap:2px;align-items:center}
@@ -122,7 +122,6 @@ button:disabled{cursor:not-allowed}
 .subj-item .sub{font-size:12px;color:var(--text-3);margin-top:2px}
 .subj-item.gone .nm{color:var(--text-3)}
 .rail-div{height:1px;background:var(--border-2);margin:12px 4px}
-.rail-note{font-size:12px;color:var(--text-3);padding:0 6px;line-height:1.6}
 
 /* the only vertical scroll container; children keep natural height */
 .ocr-main{min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;scroll-padding-top:56px}
@@ -130,6 +129,7 @@ button:disabled{cursor:not-allowed}
 
 /* ═══ upload section ═══ */
 .upload-section{padding:12px 16px;border-bottom:1px solid var(--border-2)}
+.upload-section.empty{padding:0;border-bottom:0}
 .upload-ctx b{font-weight:600}
 .section-header{display:flex;align-items:baseline;gap:12px;margin-bottom:9px;flex-wrap:wrap}
 .section-title{font-size:14px;font-weight:600;color:var(--text)}
@@ -162,8 +162,6 @@ button:disabled{cursor:not-allowed}
 .dl-row .nm{flex:1;min-width:0}
 .dl-none{padding:22px;text-align:center;color:var(--text-3);font-size:13px}
 .upload-card .uploader-box{flex:1;min-height:92px}
-.browse-hint{padding:9px 14px;background:var(--fill-alter);border:1px solid var(--border-2);border-radius:var(--r);font-size:12px;color:var(--text-3);display:flex;align-items:center;gap:8px}
-.browse-hint b{color:var(--text-2);font-weight:600}
 @media(max-width:820px){.upload-grid--two{grid-template-columns:1fr}}
 .upload-card-header{margin-bottom:8px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .upload-card-title{font-size:13px;color:var(--text-2)}
@@ -629,7 +627,7 @@ Object.values(DATA).forEach(a=>a.forEach(f=>{if(f.sj==='vehicle'||f.sj==='case')
 })('g2');
 const PERM={
  'sales|app':{up:1,cls:1,rule:1,del:1,l:'Sales \u00b7 Application: upload, confirm classification, handle rules'},
- 'cra|app':  {up:0,cls:0,rule:0,del:0,l:'CRA \u00b7 Application: read-only, available for cross-stage comparison'},
+ 'cra|app':  {up:1,cls:1,rule:1,del:1,l:'CRA \u00b7 Application: upload, confirm classification, handle rules'},
  'sales|dis':{up:1,cls:0,rule:0,del:1,l:'Sales \u00b7 Disbursement: upload only'},
  'cra|dis':  {up:1,cls:1,rule:1,del:1,l:'CRA \u00b7 Disbursement: upload, confirm classification, handle rules'}
 };
@@ -704,22 +702,14 @@ function renderRail(){
       <button class="subj-item" data-subj="deleted" aria-pressed="${S.subj==='deleted'}">
         <span class="r1"><span class="nm" style="color:var(--text-3)">Deleted</span><span class="ct">${all().filter(f=>f.del).length}</span></span>
         <span class="sub">Record only, not restorable</span></button>`;
-  h+=S.stage==='app'
-    ? `<div class="rail-div"></div><div class="rail-note">Missing documents are prompted upon Submit.</div>`
-    : '';
+
   $('rail').innerHTML=h;
   document.querySelector('.ocr-modal-content').className='ocr-modal-content'+(col?' rail-collapsed':'');
 }
 
 function renderUpload(){
   const ok=canUpload(), sj=curSubj(), sec=$('uploadSection');
-  if(!ok){
-    sec.className='upload-section browse-only';
-    sec.innerHTML=`<div class="browse-hint">${P().up
-      ? '<b>Browse mode</b>\u2003Select a Subject on the left to upload files'
-      : '<b>Browse mode</b>\u2003'+roleNm()+' does not upload in the '+(S.stage==='app'?'Application':'Disbursement')+' stage'}</div>`;
-    return;
-  }
+  if(!ok){ sec.className='upload-section empty'; sec.innerHTML=''; return; }
   sec.className='upload-section';
   sec.innerHTML=`<div class="section-header">
       <span class="section-title">Categorized Upload Area</span>
