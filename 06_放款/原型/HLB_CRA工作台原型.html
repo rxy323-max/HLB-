@@ -67,7 +67,8 @@ button,select,input,textarea{font-family:inherit}button{cursor:pointer}button:di
 .topbar .who{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:13px;color:var(--ink-2)}
 .topbar .who .clk{font-variant-numeric:tabular-nums;color:var(--ink)}
 .topbar .rf{width:34px;height:34px;border:1px solid var(--line);border-radius:var(--r-md);background:#fff;color:var(--ink-3);font-size:15px}
-.topbar .tb-sync{height:30px}
+.topbar .tb-sync{height:30px;display:inline-flex;align-items:center;gap:7px}
+.topbar .tb-sync .i{width:14px;height:14px}
 
 .body{flex:1;min-height:0;display:grid;grid-template-columns:76px 268px minmax(0,1fr) 300px}
 @media(max-width:1400px){.body{grid-template-columns:76px 240px minmax(0,1fr) 268px}}
@@ -280,10 +281,15 @@ tbody tr:hover td{background:var(--alt)}
 .route .d{font-size:13.5px;color:var(--ink-2);margin-top:5px}
 .rsn{margin-top:14px;background:var(--alt);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px}
 .rsn .l{font-size:11px;font-family:var(--mono);color:var(--ink-3);letter-spacing:.06em;margin-bottom:7px}
-.rsn .i{font-size:13px;color:var(--ink-2);line-height:1.8}
+.rsn .ri{display:flex;gap:8px;font-size:13px;color:var(--ink-2);line-height:1.7;padding:3px 0}
+.rsn .ri + .ri{border-top:1px solid var(--line-2)}
+.rsn .ri .mono{flex:none}
+.route .i{width:22px;height:22px;flex:none;margin-top:1px}
+.route.stp .i{color:var(--ok)} .route.auth .i,.route.warn .i{color:var(--warn)}
 .flow{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink-2);margin-top:14px;padding:11px 14px;background:var(--alt);border-radius:var(--r-md)}
 .flow .a{color:var(--ink-3);font-family:var(--mono);font-size:11px}
-.steps{display:flex;gap:8px;align-items:center;margin-top:14px;font-size:11.5px;color:var(--ink-4);font-family:var(--mono)}
+.steps{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:18px;padding-top:14px;
+  border-top:1px solid var(--line-2);font-size:11.5px;color:var(--ink-4);font-family:var(--mono)}
 .steps b{color:var(--primary-deep);font-weight:600}
 
 .msg{position:fixed;top:52px;left:50%;transform:translateX(-50%);z-index:500;opacity:0;transition:.2s;pointer-events:none}
@@ -294,6 +300,8 @@ tbody tr:hover td{background:var(--alt)}
 <div class="demo">
   <span class="lb">Demo</span><span>Scenario</span>
   <span class="seg" id="scnSeg"><button data-scn="manual">Manual</button><button data-scn="stp">STP</button></span>
+  <span>STP switch</span>
+  <span class="seg" id="swSeg"><button data-sw="1">ON</button><button data-sw="0">OFF</button></span>
   <span class="why">CRA Workbench Prototype</span>
 </div>
 
@@ -303,7 +311,7 @@ tbody tr:hover td{background:var(--alt)}
     <span class="tbtn">CRA To Do List</span>
     <span class="tbtn on">Disbursement:BKI/HP/2026/Y0063327</span>
     <span class="who">
-      <button class="btn btn-sm tb-sync" data-act="sync"><span id="syncIc"></span> Sync from OCR</button>
+      <button class="btn btn-sm btn-pri tb-sync" data-act="sync"><span id="syncIc"></span> Sync from OCR</button>
       <span>crediosadmin</span><span>|</span><span class="clk" id="clk">59:29</span>
       <button class="rf" id="rfBtn"></button></span>
   </div>
@@ -455,7 +463,7 @@ const DCATS=['AGREEMENT - MASTER','AGREEMENT - GUARANTOR','INSURANCE','INVOICE -
 const UPLOADED=17, AGE_DAYS=12, AGE_CAP=90;
 
 let RULES=[],FIELDS=[],CHECK=[],DEFECTS=[];
-const S={scn:'manual',noGtee:0,open:{vsum:1,def:1,chk:0},expand:0,dlg:null,
+const S={scn:'manual',stpSwitch:1,noGtee:0,open:{vsum:1,def:1,chk:0},expand:0,dlg:null,
   sync:{sel:{}},archAt:'14:02',pullAt:'',dseq:0,busy:0,route:null,phase:'',blocks:[],
   addDef:{cat:'',ty:'',rect:0,ver:0,sr:'',cr:''},
   custDel:'No',fullMt:'Yes',nav:'vsum'};
@@ -515,26 +523,46 @@ function mkDefect(r,src){
     sr:'',cr:r.issue||r.nm,src:src||'System',rect:0,ver:0,cd:'30-08-2026 09:02:31'});
   return S.dseq;
 }
+// FSD 4.1.2 - four ordered gates. Gate 1 routes to manual maintenance;
+// gates 2-4 route to the Authorizer. The distinction matters: they are not
+// the same destination, so the prototype must not collapse them into one.
 function eligibility(){
   const fo=FLAGS.filter(f=>f.on&&f.stp);
-  const items=[
-    {ok:!fo.length,nm:'No non-standard case flags',d:fo.map(f=>f.k).join(', ')},
+  const g1=[  // FSD 4.1.1 a-h, the scenario restrictions
+    {ok:1,nm:'Individual customer',d:''},
+    {ok:1,nm:'New car',d:''},
+    {ok:1,nm:'Single beneficiary, matching the dealer record',d:''},
+    {ok:1,nm:'No payoff',d:''},
+    {ok:!fo.length,nm:'No non-standard case flag',d:fo.map(f=>f.k).join(', ')},
     {ok:!!S.noGtee,nm:'No guarantor',d:'Guarantor LIM AH KOW present'},
-    {ok:1,nm:'Customer type is Individual',d:''},
-    {ok:1,nm:'Product code in STP whitelist',d:''},
-    {ok:1,nm:'Panel dealer',d:''},
-    {ok:1,nm:'Loan amount within cap',d:''},
-    {ok:rulesOK(),nm:'All rules passed',d:rFail().length+' not passed'},
-    {ok:openDefects()===0,nm:'No unresolved defect',d:openDefects()+' unresolved'},
-    {ok:usedJust()===0,nm:'No justification used',d:usedJust()+' justified'},
-    {ok:AGE_DAYS<=AGE_CAP,nm:`Case age within ${AGE_CAP} days`,d:`${AGE_DAYS} days`}
+    {ok:1,nm:'Not a floor-stock dealer',d:''},
+    {ok:AGE_DAYS<=AGE_CAP,nm:`Within ${AGE_CAP} days of first approval`,d:`${AGE_DAYS} days`}
   ];
-  return {items,ok:items.every(i=>i.ok),blockers:items.filter(i=>!i.ok)};
+  const g2=[
+    {ok:ckMandOn()===ckMand().length,nm:'All mandatory documents checked',
+     d:`${ckMand().length-ckMandOn()} unchecked`},
+    {ok:fMissing().length===0,nm:'All required information captured',
+     d:`${fMissing().length} field(s) empty`}
+  ];
+  const g3=[{ok:openDefects()===0,nm:'No unresolved defect',d:`${openDefects()} unresolved`}];
+  const g4=[{ok:!!S.stpSwitch,nm:'STP switch is ON',d:'Switch is OFF'}];
+  const gates=[
+    {n:1,label:'Application scenario suitable for STP',items:g1,route:'maint'},
+    {n:2,label:'Mandatory files and information obtained',items:g2,route:'auth'},
+    {n:3,label:'Unresolved defects at zero',items:g3,route:'auth'},
+    {n:4,label:'STP switch',items:g4,route:'auth'}
+  ];
+  const failed=gates.find(g=>!g.items.every(i=>i.ok));
+  const items=gates.flatMap(g=>g.items);
+  return {gates,items,ok:!failed,failed:failed||null,
+          route:failed?failed.route:'stp',
+          blockers:failed?failed.items.filter(i=>!i.ok):[]};
 }
 
 /* ═══ RENDER ═══ */
 function render(){
   document.querySelectorAll('#scnSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===S.scn));
+  document.querySelectorAll('#swSeg button').forEach(b=>b.setAttribute('aria-pressed',(b.dataset.sw==='1')===!!S.stpSwitch));
   renderRail();renderMain();renderSide();renderFoot();
 }
 
@@ -601,7 +629,7 @@ function vsumBody(){
           <span class="r"><span class="tag ${p?'tag-blue':'tag-err'}">${p?'In progress':'Not passed'}</span>
           ${p?'':(d?`<span class="tag tag-warn mono">Defect #${d.no}</span><button class="btn btn-sm" data-go="def">View</button>`
                   :`<button class="btn btn-sm" data-mkdef="${r.id}">Create Defect</button>`)}
-          <button class="btn btn-sm" data-fix="${r.id}" ${p?'disabled':''}>Open in File Center</button></span></div>`;
+          <button class="btn btn-sm" data-fix="${r.id}" ${p?'disabled':''}>Handle rule</button></span></div>`;
       }).join(''):`<div class="muted">All ${rTotal()} rules passed.</div>`}
       ${ul>1?`<div class="batchbar"><span>${ul} rule(s) not passed without a defect record</span>
         <button class="btn btn-sm" data-act="defall">Create All (${ul})</button></div>`:''}
@@ -835,6 +863,12 @@ function drawFix(){
   $('mB').innerHTML=`<div class="pre"><span class="lb">RULE</span><b class="mono">${r.id}</b> ${esc(r.nm)}
       <div class="muted" style="margin-top:3px">${esc(r.file)}</div></div>
     ${r.issue?`<div class="pre"><span class="lb">REASON</span>${esc(r.issue)}</div>`:''}
+    <div class="opt ${d.pick==='amend'?'on':''}" data-pick="amend"><span class="rb"></span>
+      <span><span class="on2">Amend the OCR result</span>
+        ${d.pick==='amend'?`<div class="sub2">
+          <div class="dfield"><label>Corrected value <span class="req">*</span></label>
+          <input class="fin" id="mAmend" value="${esc(d.note)}" placeholder="Enter the value read from the document"></div>
+        </div>`:''}</span></div>
     <div class="opt ${d.pick==='file'?'on':''}" data-pick="file"><span class="rb"></span>
       <span><span class="on2">Replace document</span>
         ${d.pick==='file'?`<div class="sub2">
@@ -852,11 +886,17 @@ function drawFix(){
 function doFix(){
   const d=S.dlg,r=RULES.find(x=>x.id===d.id);
   const ta=$('mNote'); if(ta)d.note=ta.value.trim();
-  if((d.pick==='just'||(d.pick==='file'&&d.who==='sales'))&&!d.note){d.bad=1;drawFix();toast('A note is required');return;}
-  if(d.pick==='just'){r.pass=1;r.act='just';toast('Justified — rule marked as passed');}
+  const am=$('mAmend'); if(am)d.note=am.value.trim();
+  const needsNote = d.pick==='just' || d.pick==='amend' || (d.pick==='file'&&d.who==='sales');
+  if(needsNote&&!d.note){d.bad=1;drawFix();toast(d.pick==='amend'?'Enter the corrected value':'A note is required');return;}
+  // FSD 3.9.5 - all three methods count as rectification; the rule becomes Passed.
+  if(d.pick==='amend'){r.pass=1;r.act='amend';toast('Value amended — rule re-evaluated as passed');}
+  else if(d.pick==='just'){r.pass=1;r.act='just';toast('Justified — rule marked as passed');}
   else{r.st='pending';r.act='file';
     toast(d.who==='self'?'Document replaced — re-extraction in progress':'Returned to Sales for replacement');}
   closeM();render();
+  if(r.pass&&DEFECTS.some(x=>x.rule===r.id&&x.src==='System'))
+    setTimeout(()=>toast('Its System defect can now be cleared via Sync System Defects'),1500);
 }
 
 /* Next */
@@ -872,7 +912,8 @@ function goSave(){
   S.phase='save';drawNext();
   setTimeout(()=>{ if(S.dlg!=='next')return;
     const e=eligibility();
-    S.route={ok:e.ok,reasons:e.blockers.map(i=>i.nm+(i.d?' ('+i.d+')':''))};
+    S.route={ok:e.ok,route:e.route,gate:e.failed,
+             reasons:e.blockers.map(i=>i.nm+(i.d?' — '+i.d:''))};
     S.phase='done';drawNext();},700);
 }
 function drawNext(){
@@ -891,21 +932,33 @@ function drawNext(){
       <span><div class="t">${S.blocks.length} rule(s) not passed without a defect record</div>
       <div class="d">Registering them as defects is your call — this check does not block submission.</div></span></div>
       <div class="rsn"><div class="l">UNLINKED RULES</div>
-        ${S.blocks.map(r=>`<div class="i">· <b class="mono">${r.id}</b> ${esc(r.nm)} — ${esc(r.dc)}</div>`).join('')}</div>${step(1)}`;
+        ${S.blocks.map(r=>`<div class="ri"><b class="mono">${r.id}</b><span>${esc(r.nm)} — ${esc(r.dc)}</span></div>`).join('')}</div>${step(1)}`;
     $('mF').innerHTML=`<button class="btn" data-act="backfix">Go back</button>
       <button class="btn" data-act="warndef">Create all and continue</button>
       <button class="btn btn-pri" data-act="anyway">Submit anyway</button>`;
     return;
   }
   const r=S.route;
+  if(!r.ok && r.route==='maint'){
+    $('mB').innerHTML=`<div class="route auth">${I('exchange')}<span>
+        <div class="t">Not an STP scenario</div>
+        <div class="d">Gate 1 of 4 did not pass, so the Case goes to Disbursement Information
+          Maintenance for manual handling — it does <b>not</b> go to the Authorizer.</div></span></div>
+      <div class="rsn"><div class="l">GATE 1 · APPLICATION SCENARIO</div>
+        ${r.reasons.map(x=>`<div class="ri"><span>${esc(x)}</span></div>`).join('')}</div>
+      <div class="flow"><span class="a">ROUTE</span>CRA ${I('arrowRight')} <b>Disbursement Information Maintenance</b></div>`+step(4);
+    $('mF').innerHTML=`<button class="btn btn-pri" data-act="confirm">Got it</button>`;
+    return;
+  }
   $('mB').innerHTML=(r.ok
     ? `<div class="route stp">${I('bolt')}<span><div class="t">Eligible for STP</div>
        <div class="d">Authorizer is skipped. Submitting triggers the disbursement interface directly.</div></span></div>
        <div class="flow"><span class="a">ROUTE</span>CRA ${I('arrowRight')} <b>Disbursement Interface</b></div>`
     : `<div class="route auth">${I('exchange')}<span><div class="t">Routed to Authorizer</div>
+       <div class="d">Gate ${r.gate?r.gate.n:''} of 4 did not pass: ${r.gate?esc(r.gate.label):''}.</div>
        <div class="d">This case is not eligible for STP and needs manual authorisation.</div></span></div>
        <div class="rsn"><div class="l">NOT ELIGIBLE BECAUSE</div>
-         ${r.reasons.map(x=>`<div class="i">· ${esc(x)}</div>`).join('')}</div>
+         ${r.reasons.map(x=>`<div class="ri"><span>${esc(x)}</span></div>`).join('')}</div>
        <div class="flow"><span class="a">ROUTE</span>CRA ${I('arrowRight')} <b>Authorizer</b> ${I('arrowRight')} Disbursement Interface</div>`)+step(4);
   $('mF').innerHTML=`<button class="btn" data-act="mx">Back</button>
     <button class="btn btn-pri" data-act="confirm">${r.ok?'Confirm Disbursement':'Confirm Submit'}</button>`;
@@ -931,6 +984,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('button,a,label,[data-sel],[data-gsel],[data-who],[data-pick],[data-tog]');
   if(!t) return;
   if(t.dataset.who){S.dlg.who=t.dataset.who;S.dlg.bad=0;drawFix();return;}
+  if(t.dataset.sw!==undefined){S.stpSwitch=t.dataset.sw==='1';render();return;}
   if(t.dataset.scn){S.scn=t.dataset.scn;reset(t.dataset.scn);render();return;}
   if(t.dataset.go){const k=t.dataset.go;S.nav=k;S.open[k]=1;render();
     const el=$('m-'+k); if(el)el.scrollIntoView({block:'start'}); return;}

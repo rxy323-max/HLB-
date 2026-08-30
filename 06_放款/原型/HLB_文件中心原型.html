@@ -203,6 +203,17 @@ button:disabled{cursor:not-allowed}
 .empty-state{padding:48px;text-align:center;color:var(--text-3);font-size:14px}
 .file-list-footer-actions{margin-left:auto;display:flex;gap:8px}
 .foot-note{font-size:12px;color:var(--text-3)}
+.tracks{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.trk{display:inline-flex;align-items:baseline;gap:3px;font-size:12px;color:var(--text-3);
+  border:1px solid var(--border-2);border-radius:var(--r-sm);padding:2px 9px;background:var(--fill-alter)}
+.trk b{font-family:var(--mono);font-size:12.5px;color:var(--text);font-variant-numeric:tabular-nums}
+.trk i{font-style:normal;color:var(--text-4)}
+.trk.ok{border-color:var(--success-border);background:var(--success-bg)}
+.trk.ok b{color:var(--success-text)}
+.trk.busy{border-color:var(--primary-border);background:var(--primary-bg)}
+.trk.busy b{color:var(--primary-active)}
+.trk em{font-style:normal;font-size:11px;color:var(--primary-active);margin-left:5px}
+.trk-open{font-size:12px;color:var(--text-3)}
 
 /* ═══ detail view ═══ */
 .detail{position:fixed;top:36px;left:0;right:0;bottom:0;background:var(--bg-layout);z-index:1100;display:flex;flex-direction:column}
@@ -415,14 +426,14 @@ function I(n,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 16 16" fill=
 
 /* ═══════ DATA ═══════ */
 const SUBJ={
- app:[{id:'primary',nm:'Main Applicant',sub:'Tan Wei Ming'},
-      {id:'g1',nm:'Guarantor 1',sub:'Lim Ah Kow'},
-      {id:'seller',nm:'Seller',sub:'Cycle & Carriage'},
+ app:[{id:'primary',nm:'Main Applicant',sub:''},
+      {id:'g1',nm:'Guarantor 1',sub:''},
+      {id:'seller',nm:'Seller',sub:''},
       {id:'unassigned',nm:'Unassigned',sub:'Historical-exception fallback',un:1}],
- dis:[{id:'primary',nm:'Main Applicant',sub:'Tan Wei Ming · incl. vehicle documents',need:11},
-      {id:'g1',nm:'Guarantor 1',sub:'Lim Ah Kow',need:3},
+ dis:[{id:'primary',nm:'Main Applicant',sub:'incl. vehicle documents',need:11},
+      {id:'g1',nm:'Guarantor 1',sub:'',need:3},
       {id:'g2',nm:'Guarantor 2',sub:'Wong Mei Ling · removed from application',gone:1},
-      {id:'seller',nm:'Seller',sub:'Cycle & Carriage',need:2},
+      {id:'seller',nm:'Seller',sub:'',need:2},
       {id:'unassigned',nm:'Unassigned',sub:'Historical-exception fallback',un:1}]
 };
 function F(o){return Object.assign({ch:'ocr',src:'sales',cls:1,alerts:[],checks:[],fields:[],pages:1,del:null,doc:'form',mix:0,
@@ -525,6 +536,21 @@ const MC={
   res:{}
 };
 const MC_FILES=()=>[...new Set(MC.rules.map(r=>r.file))];
+
+/* A Case has one rule set. It splits into two tracks only by how each rule gets
+   concluded - by the engine (Cross Validation) or by eye (Manual Check). So the
+   footer reports both tracks on both pages, and submission is a single Case-level
+   action rather than two page-level ones.
+   The two tracks have very different latency: revalidation is an async batch over
+   every file in the Case (FSD 2.8.3), manual marking is immediate. They therefore
+   must not share a lock - only the moment of submission is shared. */
+const ocrRules=()=>live().filter(f=>f.ch==='ocr'&&f.cls).flatMap(f=>f.alerts);
+const ocrDone=()=>ocrRules().filter(a=>a.res).length;
+const mcDone=()=>MC.rules.filter(r=>MC.res[r.id]).length;
+function trackState(){
+  const ot=ocrRules().length, od=ocrDone(), mt=MC.rules.length, md=mcDone();
+  return {ot,od,mt,md,open:(ot-od)+(mt-md),all:ot+mt,done:od+md};
+}
 // A.11: a mixed master file stacks every file in one window; a per-file upload gets one window.
 // This follows the file's own `mix` flag, recorded at upload — not a viewer toggle.
 const isMixed=f=>!!f.mix;
@@ -546,7 +572,7 @@ const ZONES={
 const CATS=s=>ZONES[s].map(z=>z[0]).concat(['Other Documents']);
 
 /* ═══════ STATE ═══════ */
-const S={role:'sales',stage:'dis',tab:'fl',subj:'all',sel:new Set(),dt:null,fType:'',fStatus:'',railCollapsed:false};
+const S={role:'sales',stage:'dis',tab:'fl',subj:'all',sel:new Set(),dt:null,fType:'',fStatus:'',railCollapsed:false,reval:0};
 // vehicle category is folded into the main applicant
 Object.values(DATA).forEach(a=>a.forEach(f=>{if(f.sj==='vehicle'||f.sj==='case')f.sj='primary';}));
 
@@ -622,9 +648,9 @@ function renderRail(){
     const short=s.nm.replace('Guarantor ','G').replace('Main Applicant','MA').replace('Case Level','CL')
       .replace('Seller','SL').replace('Unassigned','UA');
     h+=`<button class="subj-item ${s.gone?'gone':''} ${s.un?'unassigned':''}" data-subj="${s.id}"
-          aria-pressed="${S.subj===s.id}" title="${s.nm} · ${s.sub}">
+          aria-pressed="${S.subj===s.id}" title="${s.nm}">
           <span class="r1"><span class="nm">${col?short:s.nm}</span><span class="ct ${cls}">${ct}</span></span>
-          <span class="sub">${s.sub}</span></button>`;
+          ${s.sub?`<span class="sub">${s.sub}</span>`:''}</button>`;
   });
   h+=`<div class="rail-div"></div>
       <button class="subj-item" data-subj="deleted" aria-pressed="${S.subj==='deleted'}">
@@ -650,7 +676,7 @@ function renderUpload(){
   sec.innerHTML=`<div class="section-header">
       <span class="section-title">Categorized Upload Area</span>
       <span class="section-subtitle">5KB–20MB per file</span>
-      <span class="upload-ctx">Upload Subject <b>${sj.nm}${sj.sub&&!sj.gone?' \u00b7 '+sj.sub.split(' \u00b7 ')[0]:''}</b></span>
+      <span class="upload-ctx">Upload Subject <b>${sj.nm}</b></span>
     </div>
     <div class="upload-grid upload-grid--two">
       <div class="upload-card">
@@ -739,7 +765,8 @@ function renderTable(){
       ? `<td>${items.length?items.map(a=>`<div class="rule-line ${a.res?'done':'open'}">${a.res?'&#10003; ':''}${a.id||a.nm}</div>`).join(''):'<span class="description-text">—</span>'}</td>`
       : `<td class="is-ai-cell">${f.ch==='ocr'?'Y':'N'}</td><td class="description-cell"><span class="description-text">${f.desc||'—'}</span></td>`;
     return `<tr class="${S.sel.has(f.id)?'selected':''}" data-id="${f.id}">
-      <td>${sys?`<span class="description-text lockcell" title="System archived \u00b7 cannot be deleted">${I('lock')}</span>`:`<input type="checkbox" data-chk="${f.id}" ${S.sel.has(f.id)?'checked':''}>`}</td>
+      <td><input type="checkbox" data-chk="${f.id}" ${S.sel.has(f.id)?'checked':''}
+        ${sys?'disabled title="System archived · cannot be selected or deleted"':''}></td>
       <td class="filename-cell"><div class="filename-text">${f.nm}</div><div class="description-text">${f.pages} page${f.pages>1?'s':''}</div></td>
       <td class="subject-cell">${subjNm(f)}</td>
       <td class="category-cell">${f.cat}</td>
@@ -759,15 +786,27 @@ function renderTable(){
 }
 
 function renderFooter(){
-  const p=P();
-  const lbl={fl:`Submit for Verification (${S.stage==='app'?'Application':'Disbursement'})`,
-             cv:'Revalidation & Submit Results', mc:'Submit Manual Check Results'}[S.tab];
-  $('footer').innerHTML=`<span class="foot-note">${
-    S.tab==='fl'?'File List \u00b7 Full ledger and classification confirmation'
-    :S.tab==='cv'?'Cross-Validation Results \u00b7 OCR Flag = Y \u00b7 AI extraction and rule validation'
-    :'Manual Check Results \u00b7 OCR Flag = N \u00b7 manual review against the image'}</span>
-    <span class="file-list-footer-actions"><button class="ant-btn back-btn">Back To List</button>
-    <button class="ant-btn ant-btn-primary submit-btn" id="btnSubmit" ${p.cls||p.rule||p.up?'':'disabled'}>${lbl}</button></span>`;
+  const p=P(), can=p.cls||p.rule||p.up;
+  if(S.tab==='fl'){
+    $('footer').innerHTML=`<span class="foot-note">File List \u00b7 Full ledger and classification confirmation</span>
+      <span class="file-list-footer-actions"><button class="ant-btn back-btn">Back To List</button>
+      <button class="ant-btn ant-btn-primary submit-btn" id="btnSubmit" ${can?'':'disabled'}>Submit for Verification (${S.stage==='app'?'Application':'Disbursement'})</button></span>`;
+    return;
+  }
+  const t=trackState();
+  const chip=(l,d,n,busy)=>`<span class="trk ${busy?'busy':(d>=n&&n?'ok':'')}">${l}
+    <b>${busy?'\u2026':d}</b><i>/</i><b>${n}</b>${busy?'<em>recalculating</em>':''}</span>`;
+  $('footer').innerHTML=`<span class="tracks">
+      ${chip('OCR',t.od,t.ot,S.reval)}
+      ${chip('Manual',t.md,t.mt,false)}
+      <span class="trk-open">${t.open?`${t.open} rule(s) still open`:'All rules concluded'}</span>
+    </span>
+    <span class="file-list-footer-actions">
+      <button class="ant-btn back-btn">Back To List</button>
+      ${S.tab==='cv'?`<button class="ant-btn" id="btnReval" ${can&&!S.reval?'':'disabled'}>${S.reval?'Revalidating\u2026':'Revalidate'}</button>`:''}
+      <button class="ant-btn ant-btn-primary submit-btn" id="btnSubmit"
+        ${can&&!S.reval?'':'disabled'}
+        title="${S.reval?'Wait for revalidation to finish':'Submit the rule results for the whole Case'}">Submit Rule Results</button></span>`;
 }
 
 /* ═══════ DETAIL ═══════ */
@@ -912,12 +951,27 @@ function askDelete(ids){
     `<button class="ant-btn" data-cl="1">Cancel</button>
      <button class="ant-btn ant-btn-primary" data-dodel='${JSON.stringify(ids)}'>Confirm Delete</button>`);
 }
+/* One submission for both tracks. It never requires the Case to be complete -
+   it submits what is concluded and says what is left, so an interrupted session
+   resumes with nothing lost. */
+function submitRules(){
+  const t=trackState();
+  if(!t.open){ msg(`Rule results submitted \u00b7 ${t.done}/${t.all} concluded`); return; }
+  sm('Submit Rule Results',
+    `<div class="pnote warn"><b>${t.open} rule(s) are still open.</b><br>
+       Submitting now records the conclusions you have made so far. The open rules stay open and can be concluded later.</div>
+     <table><tr><th>Track</th><th>Concluded</th><th>Open</th><th>Where</th></tr>
+      <tr><td>OCR</td><td>${t.od} / ${t.ot}</td><td>${t.ot-t.od}</td><td>Cross-Validation Results</td></tr>
+      <tr><td>Manual</td><td>${t.md} / ${t.mt}</td><td>${t.mt-t.md}</td><td>Manual Check Results</td></tr></table>`,
+    `<button class="ant-btn" data-cl="1">Keep working</button>
+     <button class="ant-btn ant-btn-primary" data-cl="1" data-tst="Rule results submitted \u00b7 open rules left for later">Submit anyway</button>`);
+}
 function missing(){
   sm('Completeness Check',
     `<div class="pnote info">The required list is computed at submission, once the vehicle type, guarantor arrangement and identity type are known.</div>
-     <div class="miss-group"><div class="gh"><span>Main Applicant \u00b7 Tan Wei Ming</span><span style="color:var(--error-text)">2 missing</span></div>
+     <div class="miss-group"><div class="gh"><span>Main Applicant</span><span style="color:var(--error-text)">2 missing</span></div>
        <ul><li>Driving License \u2014 not uploaded</li><li>MyKad \u2014 uploaded but <b>type not confirmed</b> (mykad.png still pending in File List)</li></ul></div>
-     <div class="miss-group"><div class="gh"><span>Guarantor 1 \u00b7 Lim Ah Kow</span><span style="color:var(--error-text)">1 missing</span></div>
+     <div class="miss-group"><div class="gh"><span>Guarantor 1</span><span style="color:var(--error-text)">1 missing</span></div>
        <ul><li>Guarantor EPF Statement \u2014 not uploaded</li></ul></div>`,
     `<button class="ant-btn" data-cl="1">Later</button><button class="ant-btn ant-btn-primary" data-gomiss="1">Handle Now</button>`);
 }
@@ -951,7 +1005,7 @@ document.addEventListener('click',e=>{
         `<div class="pnote info">Move the selected <b>${n}</b> file(s) to another Subject. Classification confirmations and extraction results are kept.</div>
          <label style="font-size:12px;color:var(--text-2)">Target Subject</label>
          <select class="ant-select" id="tgtSubj" style="width:100%;margin-top:4px">
-         ${SUBJ[S.stage].map(s=>`<option value="${s.id}">${s.nm}${s.sub?' \u00b7 '+s.sub:''}</option>`).join('')}</select>`,
+         ${SUBJ[S.stage].map(s=>`<option value="${s.id}">${s.nm}</option>`).join('')}</select>`,
         `<button class="ant-btn" data-cl="1">Cancel</button><button class="ant-btn ant-btn-primary" data-doreassign="1">Confirm Change</button>`);
       return;
     }
@@ -1008,9 +1062,17 @@ document.addEventListener('click',e=>{
     msg(MC.res[r.id]?`${r.id} marked as ${k==='pass'?'Pass':'Fail'}`:`${r.id} cleared`);
     return;
   }
+  if(t.id==='btnReval'){
+    // FSD 2.8.3 - reruns every rule in the Case. Manual marking stays available
+    // throughout; only submission waits, so no stale OCR conclusion gets persisted.
+    S.reval=1;renderFooter();msg('Revalidating all files in the Case\u2026');
+    setTimeout(()=>{S.reval=0;render();msg('Revalidation complete \u00b7 OCR results refreshed');},2200);
+    return;
+  }
   if(t.id==='btnSubmit'){
     if(S.stage==='app'&&S.tab==='fl'&&P().up){missing();return;}
-    msg({fl:'Classification submitted \u00b7 extraction and rule validation started',cv:'Validation results submitted',mc:'Manual check results submitted'}[S.tab]);return;
+    if(S.tab==='fl'){msg('Classification submitted \u00b7 extraction and rule validation started');return;}
+    submitRules();return;
   }
   if(t.dataset.gomiss){smClose();S.tab='fl';S.subj='primary';S.fStatus='pending';render();msg('Filtered to files pending classification');return;}
   if(t.dataset.cl){if(t.dataset.tst)msg(t.dataset.tst);smClose();return;}
