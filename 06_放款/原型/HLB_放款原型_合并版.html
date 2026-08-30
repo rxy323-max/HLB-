@@ -1076,6 +1076,8 @@ initChrome(); reset('manual'); render();
     var why = bar.querySelector('.why');
     if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
   }
+  if (why0()) why0().textContent = 'Prototype build ' + '2026-08-30';
+  function why0(){ return bar && bar.querySelector('.why'); }
 
   function go(to){ if (to !== HERE) parent.postMessage({ nav: to }, '*'); }
 
@@ -2301,6 +2303,8 @@ render();
     var why = bar.querySelector('.why');
     if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
   }
+  if (why0()) why0().textContent = 'Prototype build ' + '2026-08-30';
+  function why0(){ return bar && bar.querySelector('.why'); }
 
   function go(to){ if (to !== HERE) parent.postMessage({ nav: to }, '*'); }
 

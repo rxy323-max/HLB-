@@ -7,7 +7,11 @@ globals (S, $, I, render). Merging their stylesheets would mean rewriting
 both. Isolating them means each behaves exactly as the standalone version
 that was tested, and only the navigation between them is new.
 """
-import re, os
+import re, os, datetime
+
+# Every generated file carries the date it was built. A copy sent to a client is
+# a frozen snapshot, so both sides need to be able to say which one they are on.
+STAMP = datetime.date.today().strftime('%Y-%m-%d')
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 WB = open(os.path.join(HERE, 'cra-workbench.html'), encoding='utf-8').read()
@@ -45,6 +49,8 @@ button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit
     var why = bar.querySelector('.why');
     if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
   }
+  if (why0()) why0().textContent = 'Prototype build ' + %s;
+  function why0(){ return bar && bar.querySelector('.why'); }
 
   function go(to){ if (to !== HERE) parent.postMessage({ nav: to }, '*'); }
 
@@ -61,10 +67,10 @@ button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit
 </body></html>'''
 
 # the workbench's three routes into the file center
-WB_DOC = SHELL % (WB, "'wb'", "'[data-link=\"fc\"]'", "'fc'")
+WB_DOC = SHELL % (WB, "'wb'", "'" + STAMP + "'", "'[data-link=\"fc\"]'", "'fc'")
 # the file centre's ways out: the modal close, and Back To List in the footer.
 # #dtBack is excluded - that closes the document detail, it does not leave.
-FC_DOC = SHELL % (FC, "'fc'", "'#mClose, .file-list-footer-actions .back-btn'", "'wb'")
+FC_DOC = SHELL % (FC, "'fc'", "'" + STAMP + "'", "'#mClose, .file-list-footer-actions .back-btn'", "'wb'")
 
 
 def embed(doc):
@@ -126,6 +132,7 @@ html,body{height:100%%;margin:0;background:#0d1424}
 </script>
 ''' % (embed(WB_DOC), embed(FC_DOC))
 
+print('build stamp:', STAMP)
 out = os.path.join(HERE, 'merged-prototype.html')
 open(out, 'w', encoding='utf-8').write(HOST)
 print('written', out, os.path.getsize(out), 'bytes')
