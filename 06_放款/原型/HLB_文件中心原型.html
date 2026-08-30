@@ -105,17 +105,6 @@ button:disabled{cursor:not-allowed}
 .rail-collapsed .subj-item .ct{font-size:10px}
 .rail-toggle{background:transparent;border:0;color:var(--text-3);padding:2px 5px;border-radius:var(--r-sm);font-size:12px;line-height:1}
 .rail-toggle:hover{background:rgba(0,0,0,.06);color:var(--primary)}
-.layout-top .rail-toggle{display:none}
-.ocr-modal-content.layout-top{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
-/* top layout: Subject collapses into a horizontal chip strip */
-.layout-top .subject-rail{border-right:0;border-bottom:1px solid var(--border-2);padding:8px 16px;overflow-x:auto;overflow-y:hidden;display:flex;align-items:center;gap:8px;white-space:nowrap}
-.layout-top .rail-h{margin:0 4px 0 0;flex:none}
-.layout-top .rail-div,.layout-top .rail-note{display:none}
-.layout-top .subj-item{width:auto;flex:none;padding:5px 12px;margin:0;border:1px solid var(--border);border-radius:16px;background:var(--bg)}
-.layout-top .subj-item .r1{gap:6px}
-.layout-top .subj-item .nm{font-size:13px}
-.layout-top .subj-item .sub{display:none}
-.layout-top .subj-item .ct{font-size:11px}
 @media(max-width:900px){.ocr-modal-content{grid-template-columns:1fr}}
 .subject-rail{border-right:1px solid var(--border-2);background:var(--fill-alter);padding:12px 10px;overflow-y:auto;min-height:0}
 .subject-rail .rail-h{display:flex;justify-content:space-between;align-items:baseline;margin:0 4px 10px;font-size:12px;color:var(--text-3)}
@@ -249,6 +238,8 @@ button:disabled{cursor:not-allowed}
 .alert-item .rd{font-size:12px;color:var(--text-2);margin-bottom:10px;line-height:1.6}
 .alert-item .acts{display:flex;gap:6px;flex-wrap:wrap}
 .alert-item .res{font-size:12px;color:var(--success-text);font-family:var(--mono)}
+.alert-item .acts .mc-on{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text);font-weight:600}
+.alert-item .acts .mc-off{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text);font-weight:600}
 .field-row{display:flex;justify-content:space-between;gap:10px;padding:7px 8px;border-bottom:1px solid var(--border-2);font-size:12px}
 .field-row:last-child{border-bottom:0}
 .field-row .k{color:var(--text-2)}
@@ -304,14 +295,9 @@ button:disabled{cursor:not-allowed}
 <div class="demo">
   <span class="lb">Demo</span>
   <span class="seg" id="roleSeg">
-    <button data-role="sales">Sales</button><button data-role="ced">CED</button>
-    <button data-role="cra">CRA</button><button data-role="auth">Authorizer</button>
+    <button data-role="sales">Sales</button><button data-role="cra">CRA</button>
   </span>
   <span class="hint" id="permHint"></span>
-  <span class="lb" style="margin-left:8px">Layout</span>
-  <span class="seg" id="layoutSeg">
-    <button data-layout="side">Side</button><button data-layout="top">Top</button>
-  </span>
   <span class="why">Demo toolbar · not part of the product</span>
 </div>
 
@@ -509,18 +495,14 @@ const ZONES={
 const CATS=s=>ZONES[s].map(z=>z[0]).concat(['Other Documents']);
 
 /* ═══════ STATE ═══════ */
-const S={role:'sales',stage:'dis',tab:'fl',subj:'all',sel:new Set(),dt:null,fType:'',fStatus:'',layout:'side',railCollapsed:false,mcMode:'mixed'};
+const S={role:'sales',stage:'dis',tab:'fl',subj:'all',sel:new Set(),dt:null,fType:'',fStatus:'',railCollapsed:false,mcMode:'mixed'};
 // vehicle category is folded into the main applicant
 Object.values(DATA).forEach(a=>a.forEach(f=>{if(f.sj==='vehicle')f.sj='primary';}));
 const PERM={
  'sales|app':{up:1,cls:1,rule:1,del:1,l:'Sales \u00b7 Application: upload, confirm classification, handle rules'},
- 'ced|app':  {up:0,cls:0,rule:0,del:0,l:'CED \u00b7 Application: read-only review, all justifications visible'},
  'cra|app':  {up:0,cls:0,rule:0,del:0,l:'CRA \u00b7 Application: read-only, available for cross-stage comparison'},
- 'auth|app': {up:0,cls:0,rule:0,del:0,l:'Authorizer \u00b7 Application: read-only'},
  'sales|dis':{up:1,cls:0,rule:0,del:1,l:'Sales \u00b7 Disbursement: upload only'},
- 'ced|dis':  {up:0,cls:0,rule:0,del:0,l:'CED \u00b7 Disbursement: read-only'},
- 'cra|dis':  {up:0,cls:1,rule:1,del:1,l:'CRA \u00b7 Disbursement: confirm classification, handle rules'},
- 'auth|dis': {up:0,cls:0,rule:0,del:0,l:'Authorizer \u00b7 Disbursement: read-only review'}
+ 'cra|dis':  {up:1,cls:1,rule:1,del:1,l:'CRA \u00b7 Disbursement: upload, confirm classification, handle rules'}
 };
 const P=()=>PERM[S.role+'|'+S.stage];
 const all=()=>DATA[S.stage];
@@ -558,7 +540,6 @@ const tabIssues=t=>live().filter(f=>inTab(f,t)&&(S.subj==='all'||S.subj==='delet
 const $=i=>document.getElementById(i);
 function render(){
   [...$('roleSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.role===S.role));
-  [...$('layoutSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.layout===S.layout));
   $('permHint').textContent=P().l;
   [...$('stageTabs').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.stage===S.stage));
   renderRail(); renderUpload(); renderTabs(); renderFilter(); renderTable(); renderFooter();
@@ -566,7 +547,7 @@ function render(){
 
 function renderRail(){
   const dis=S.stage==='dis';
-  const col=S.railCollapsed&&S.layout==='side';
+  const col=S.railCollapsed;
   let h=`<div class="rail-h"><b>${col?'S':'Subject'}</b>
       <span>${dis?'Uploaded / Required':'Uploaded'}</span>
       <button class="rail-toggle" data-railtoggle="1" title="${col?'Expand':'Collapse'}">${col?'\u00bb':'\u00ab'}</button></div>`;
@@ -592,8 +573,7 @@ function renderRail(){
       ? 'Required list is not available in the Application stage. Missing documents will be prompted upon Submit.'
       : 'Required list shares its source with the File Check List in the CRA Workbench.'}</div>`;
   $('rail').innerHTML=h;
-  document.querySelector('.ocr-modal-content').className='ocr-modal-content'
-    +(S.layout==='top'?' layout-top':'')+(col?' rail-collapsed':'');
+  document.querySelector('.ocr-modal-content').className='ocr-modal-content'+(col?' rail-collapsed':'');
 }
 
 function renderUpload(){
@@ -710,7 +690,7 @@ function renderTable(){
       <td class="time-cell">${f.sz}</td>
       <td class="description-text">${sys?'System':'SalesOfficer1'}</td>
       <td class="actions-cell">
-        <button class="action-btn preview-btn" data-open="${f.id}" title="Preview">👁</button>
+        <button class="action-btn edit-btn" data-open="${f.id}" title="Edit">✎</button>
         <button class="action-btn" title="Download">⬇</button>
         <button class="action-btn delete-btn" data-del1="${f.id}" title="Delete" ${sys||!P().del?'disabled':''}>🗑</button>
       </td></tr>`;
@@ -777,11 +757,9 @@ function panel(f,p){
         h+=`<div class="alert-item ${res?'resolved':'eyeball'}">
           <div class="ah"><span class="rid">${r.id}</span><span class="rn">${r.nm}</span>
             ${r.routed?'<span class="routed">ROUTED</span>':''}</div><div class="rd">${r.d}</div>`;
-        h+=res?`<div class="res">\u2713 ${res==='pass'?'Passed':'Failed \u00b7 defect logged'}
-              <button class="ant-btn ant-btn-link ant-btn-sm" data-mcu="${r.id}">Undo</button></div>`
-          :`<div class="acts"><button class="ant-btn ant-btn-sm" data-mc="pass" data-r="${r.id}" ${p.rule?'':'disabled'}>Pass</button>
-            <button class="ant-btn ant-btn-sm ant-btn-dangerous" data-mc="fail" data-r="${r.id}" ${p.rule?'':'disabled'}>Fail \u00b7 Log Defect</button>
-            <button class="ant-btn ant-btn-link ant-btn-sm" data-mc="loc" data-r="${r.id}">Go to page ${r.pg} \u2192</button></div>`;
+        h+=`<div class="acts">
+            <button class="ant-btn ant-btn-sm ${res==='pass'?'mc-on':''}" data-mc="pass" data-r="${r.id}" ${p.rule?'':'disabled'}>Pass</button>
+            <button class="ant-btn ant-btn-sm ${res==='fail'?'mc-off':''}" data-mc="fail" data-r="${r.id}" ${p.rule?'':'disabled'}>Fail</button></div>`;
         h+=`</div>`;
       });
     });
@@ -864,7 +842,7 @@ function sm(t,b,f){$('smTitle').textContent=t;$('smBody').innerHTML=b;
   $('smFoot').innerHTML=f||'<button class="ant-btn" data-cl="1">Close</button>';$('subMask').classList.remove('hidden');}
 function smClose(){$('subMask').classList.add('hidden');}
 let mt;function msg(m){const e=$('msg');e.firstElementChild.textContent=m;e.classList.add('on');clearTimeout(mt);mt=setTimeout(()=>e.classList.remove('on'),2000);}
-const roleNm=()=>({sales:'Sales',ced:'CED',cra:'CRA',auth:'Authorizer'})[S.role];
+const roleNm=()=>({sales:'Sales',cra:'CRA'})[S.role];
 
 function askDelete(ids){
   sm('Delete Files',
@@ -893,7 +871,6 @@ document.addEventListener('change',e=>{
 document.addEventListener('click',e=>{
   const t=e.target.closest('button,input[type=checkbox]'); if(!t) return;
 
-  if(t.dataset.layout){S.layout=t.dataset.layout;render();return;}
   if(t.dataset.railtoggle){S.railCollapsed=!S.railCollapsed;render();return;}
   if(t.dataset.role){S.role=t.dataset.role;S.sel.clear();render();if(S.dt)renderDt();return;}
   if(t.dataset.stage){S.stage=t.dataset.stage;S.tab='fl';S.subj='all';S.sel.clear();S.fType=S.fStatus='';render();return;}
@@ -967,23 +944,11 @@ document.addEventListener('click',e=>{
   }
   if(t.dataset.mc){
     const r=MC.rules.find(x=>x.id===t.dataset.r), k=t.dataset.mc;
-    if(k==='loc'){
-      if(S.mcMode==='mixed'){
-        const el=$('mcdoc-'+r.file.replace(/[^\w]/g,'_'));
-        if(el){el.scrollIntoView({behavior:'smooth',block:'start'});msg(`Scrolled to ${r.file} page ${r.pg}`);}
-      }else{
-        const tgt=live().find(x=>x.nm===r.file);
-        if(tgt){S.dt=tgt.id;renderDt();msg(`Switched to ${r.file} page ${r.pg}`);}
-        else msg('That file is not in the current list');
-      }
-      return;
-    }
-    MC.res[r.id]=k;
+    if(MC.res[r.id]===k) delete MC.res[r.id]; else MC.res[r.id]=k;
     renderDt();render();
-    msg(k==='pass'?`${r.id} passed`:`${r.id} failed \u00b7 defect logged`);
+    msg(MC.res[r.id]?`${r.id} marked as ${k==='pass'?'Pass':'Fail'}`:`${r.id} cleared`);
     return;
   }
-  if(t.dataset.mcu){ delete MC.res[t.dataset.mcu]; renderDt(); render(); return; }
   if(t.dataset.mcm){ S.mcMode=t.dataset.mcm; renderDt(); return; }
   if(t.id==='btnSubmit'){
     if(S.stage==='app'&&S.tab==='fl'&&P().up){missing();return;}

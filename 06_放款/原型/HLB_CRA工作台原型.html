@@ -65,6 +65,7 @@ button,select,input,textarea{font-family:inherit}button{cursor:pointer}button:di
 .topbar .who{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:13px;color:var(--ink-2)}
 .topbar .who .clk{font-variant-numeric:tabular-nums;color:var(--ink)}
 .topbar .rf{width:34px;height:34px;border:1px solid var(--line);border-radius:var(--r-md);background:#fff;color:var(--ink-3);font-size:15px}
+.topbar .tb-sync{height:30px}
 
 .body{flex:1;min-height:0;display:grid;grid-template-columns:76px 268px minmax(0,1fr) 300px}
 @media(max-width:1400px){.body{grid-template-columns:76px 240px minmax(0,1fr) 268px}}
@@ -143,7 +144,7 @@ tbody tr:hover td{background:var(--alt)}
 .rrow .n{flex:1;min-width:0;font-size:13px}
 .rrow .s{display:block;font-size:11.5px;color:var(--ink-3);margin-top:1px}
 .rrow .r{flex:none;display:flex;gap:8px;align-items:center}
-.batchbar{display:flex;align-items:center;gap:12px;padding:9px 12px;margin-bottom:10px;background:var(--warn-bg);
+.batchbar{display:flex;align-items:center;gap:12px;padding:9px 12px;margin-top:12px;background:var(--warn-bg);
   border:1px solid var(--warn-line);border-radius:var(--r-md);font-size:12.5px;color:var(--warn)}
 .batchbar button{margin-left:auto}
 
@@ -296,7 +297,9 @@ tbody tr:hover td{background:var(--alt)}
     <span class="brand">◈</span>
     <span class="tbtn">CRA To Do List</span>
     <span class="tbtn on">Disbursement:BKI/HP/2026/Y0063327</span>
-    <span class="who"><span>crediosadmin</span><span>|</span><span class="clk" id="clk">59:29</span>
+    <span class="who">
+      <button class="btn btn-sm tb-sync" data-act="sync">⇅ Sync from OCR</button>
+      <span>crediosadmin</span><span>|</span><span class="clk" id="clk">59:29</span>
       <button class="rf">⟳</button></span>
   </div>
   <div class="body">
@@ -533,8 +536,6 @@ function vsumBody(){
     </div>
     <button class="btn btn-sm" data-act="expand">${S.expand?'Collapse detail':'View detail'}</button>
     ${S.expand?`<div style="margin-top:14px">
-      ${ul>1?`<div class="batchbar"><span>${ul} rule(s) not passed without a defect record</span>
-        <button class="btn btn-sm" data-act="defall">Create All (${ul})</button></div>`:''}
       ${[...fl,...pd].length?[...fl,...pd].map(r=>{
         const p=r.st==='pending',d=DEFECTS.find(x=>x.rule===r.id);
         return `<div class="rrow"><span class="n"><b class="mono">${r.id}</b> ${esc(r.nm)}
@@ -544,6 +545,8 @@ function vsumBody(){
                   :`<button class="btn btn-sm" data-mkdef="${r.id}">Create Defect</button>`)}
           <button class="btn btn-sm" data-fix="${r.id}" ${p?'disabled':''}>Open in File Center</button></span></div>`;
       }).join(''):`<div class="muted">All ${rTotal()} rules passed.</div>`}
+      ${ul>1?`<div class="batchbar"><span>${ul} rule(s) not passed without a defect record</span>
+        <button class="btn btn-sm" data-act="defall">Create All (${ul})</button></div>`:''}
     </div>`:''}`;
 }
 
@@ -595,8 +598,7 @@ function dmBody(grp){
       <span class="fhint ${st==='diff'?'diff':''}">${(f.ocr||'').trim()
         ? 'OCR: '+esc(f.ocr)+(st==='diff'?'  (differs)':'') : 'OCR: —'}</span></div>`;
   }).join('')}</div>`;
-  return gs.map(block).join('')+
-  `<div style="margin-top:14px"><button class="btn btn-sm btn-pri" data-act="sync">Sync from OCR</button></div>`;
+  return gs.map(block).join('');
 }
 
 function renderMain(){
