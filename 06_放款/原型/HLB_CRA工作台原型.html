@@ -608,15 +608,12 @@ function renderMain(){
     items.forEach(([k,nm])=>{
       if(k==='vsum'){
         const b=rulesOK()?`<span class="badge ok">✓</span>`:`<span class="badge err">${rFail().length}</span>`;
-        h+=mod(k,'◈','Verification Summary',vsumBody(),
-          `<button class="btn btn-sm" data-tog="vsum">${S.open.vsum?'Collapse':'Expand'}</button>`,b,1);
+        h+=mod(k,'◈','Verification Summary',vsumBody(),'',b,1);
       }else if(k==='def'){
-        h+=mod(k,'⚠','Defect List',defBody(),
-          `<button class="btn btn-sm" data-tog="def">${S.open.def?'Collapse':'Expand'}</button>`,
+        h+=mod(k,'⚠','Defect List',defBody(),'',
           DEFECTS.length?`<span class="badge err">${DEFECTS.length}</span>`:'');
       }else if(k==='chk'){
-        h+=mod(k,'☑','File Check List',chkBody(),
-          `<button class="btn btn-sm" data-tog="chk">${S.open.chk?'Collapse':'Expand'}</button>`,
+        h+=mod(k,'☑','File Check List',chkBody(),'',
           ckMandOn()<ckMand().length?`<span class="badge err">${ckMand().length-ckMandOn()}</span>`:`<span class="badge ok">✓</span>`);
       }else{
         const map={fis:'Collateral Info',fac:'Facility Information',dealer:'Seller Info',hirer:'Hirer Info'};
