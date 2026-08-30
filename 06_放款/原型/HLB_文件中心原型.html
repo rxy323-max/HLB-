@@ -121,8 +121,6 @@ button:disabled{cursor:not-allowed}
 .subj-item .ct.ok{color:var(--success-text)} .subj-item .ct.bad{color:var(--error-text)}
 .subj-item .sub{font-size:12px;color:var(--text-3);margin-top:2px}
 .subj-item.gone .nm{color:var(--text-3)}
-.subj-item.unassigned{border:1px dashed var(--border)}
-.subj-item.unassigned .nm{color:var(--text-2)}
 .rail-div{height:1px;background:var(--border-2);margin:12px 4px}
 .rail-note{font-size:12px;color:var(--text-3);padding:0 6px;line-height:1.6}
 
@@ -429,12 +427,12 @@ const SUBJ={
  app:[{id:'primary',nm:'Main Applicant',sub:''},
       {id:'g1',nm:'Guarantor 1',sub:''},
       {id:'seller',nm:'Seller',sub:''},
-      {id:'unassigned',nm:'Unassigned',sub:'Historical-exception fallback',un:1}],
+      ],
  dis:[{id:'primary',nm:'Main Applicant',sub:'incl. vehicle documents',need:11},
       {id:'g1',nm:'Guarantor 1',sub:'',need:3},
       {id:'g2',nm:'Guarantor 2',sub:'Wong Mei Ling · removed from application',gone:1},
       {id:'seller',nm:'Seller',sub:'',need:2},
-      {id:'unassigned',nm:'Unassigned',sub:'Historical-exception fallback',un:1}]
+      ]
 };
 function F(o){return Object.assign({ch:'ocr',src:'sales',cls:1,alerts:[],checks:[],fields:[],pages:1,del:null,doc:'form',mix:0,
   sz:'1.2 MB',up:'19/08/26 14:32'},o);}
@@ -466,7 +464,7 @@ app:[
  F({id:'a8',sj:'vehicle',nm:'CRA Form.pdf',cat:'Other Application & Vehicle',ty:'CRA Form',sz:'0.31 MB',fields:[{n:'vehicle_model',v:'Toyota Vios 1.5E',c:99}]}),
  F({id:'a9',sj:'vehicle',nm:'VSO.pdf',cat:'Other Application & Vehicle',ty:'VSO',sz:'0.28 MB',fields:[{n:'otr_price',v:'RM 128,000',c:99}]}),
  F({id:'a10',sj:'seller',nm:'Seller Invoice.pdf',cat:'Seller Documents',ty:'Seller Invoice',doc:'invoice',sz:'0.51 MB',fields:[{n:'invoice_no',v:'INV-2026-0812',c:99}]}),
- F({id:'a11',sj:'unassigned',nm:'Income Proof Supplement.docx',cat:'Other Documents',ty:'—',ch:'manual',cls:0,sz:'0.09 MB',desc:'Historical data, no subject'}),
+ F({id:'a11',sj:'primary',nm:'Income Proof Supplement.docx',cat:'Other Documents',ty:'—',ch:'manual',cls:0,sz:'0.09 MB',desc:'Uploaded via the non-AI entry'}),
  F({id:'a12',sj:'primary',nm:'Payslip (old).pdf',cat:'Applicant Income',ty:'Payslip',doc:'statement',sz:'0.95 MB',
    del:{by:'SalesOfficer1',at:'18/08/26 09:12',rs:'Customer resubmitted the latest month'}})
 ],
@@ -511,7 +509,7 @@ dis:[
  F({id:'d19',sj:'vehicle',nm:'Puspakom B7.pdf',cat:'CRA Vehicle Related',ty:'Puspakom B7',sz:'0.88 MB',fields:[{n:'inspection_date',v:'05-08-2026',c:98}]}),
  F({id:'d20',sj:'seller',nm:'Seller Invoice.pdf',cat:'CRA Other Funding',ty:'HP216 Seller Invoice',doc:'invoice',sz:'0.47 MB',fields:[{n:'invoice_no',v:'HP216-8841',c:99}]}),
  F({id:'d21',sj:'seller',nm:'Seller IC.jpg',cat:'CRA Applicant Identity',ty:'Seller IC',doc:'card',sz:'0.36 MB',fields:[{n:'id_no',v:'690712086611',c:98}]}),
- F({id:'d22',sj:'unassigned',nm:'scan_001.pdf',cat:'CRA Other Funding',ty:'—',cls:0,sz:'1.11 MB',desc:'Historical data, no subject'}),
+ F({id:'d22',sj:'primary',nm:'scan_001.pdf',cat:'CRA Other Funding',ty:'—',cls:0,sz:'1.11 MB',desc:'Pending classification'}),
  F({id:'d24',sj:'vehicle',nm:'Road Tax (Superseded).jpg',cat:'CRA Vehicle Related',ty:'Road Tax Disc',doc:'card',sz:'0.27 MB',
    del:{by:'CRA · v_kangyi',at:'19/08/26 15:02',rs:'Sales re-uploaded the renewed road tax'}}),
  F({id:'d25',sj:'primary',nm:'Company Resolution.docx',cat:'Other Documents',ty:'Company Resolution',ch:'manual',sz:'0.21 MB'}),
@@ -524,7 +522,9 @@ dis:[
    Count is derived: case total minus rules handled by OCR. routed=1 marks a rule that
    OCR would normally handle, routed to manual because the file came in via the non-AI entry. */
 const MC={
-  caseTotal:24, ocrHandled:18,
+  // The Case has 25 expert rules in total, the same number the CRA Workbench
+  // header summary reports. 19 are handled by OCR, the remaining 6 by eye.
+  caseTotal:25, ocrHandled:19,
   rules:[
     {id:'M-11',nm:'LOSO amount matches the CED approval',d:'Against the CED conditional approval: FD pledge RM 100,000 \u00b7 3 years',file:'Letter of Setoff.docx',pg:3},
     {id:'M-12',nm:'Witness signature complete',d:'Page 10 must carry an HLBB staff witness signature and date',file:'Letter of Setoff.docx',pg:10},
@@ -544,11 +544,13 @@ const MC_FILES=()=>[...new Set(MC.rules.map(r=>r.file))];
    The two tracks have very different latency: revalidation is an async batch over
    every file in the Case (FSD 2.8.3), manual marking is immediate. They therefore
    must not share a lock - only the moment of submission is shared. */
-const ocrRules=()=>live().filter(f=>f.ch==='ocr'&&f.cls).flatMap(f=>f.alerts);
-const ocrDone=()=>ocrRules().filter(a=>a.res).length;
+const ocrAlerts=()=>live().filter(f=>f.ch==='ocr'&&f.cls).flatMap(f=>f.alerts);
+const ocrOpen=()=>ocrAlerts().filter(a=>!a.res).length;
 const mcDone=()=>MC.rules.filter(r=>MC.res[r.id]).length;
 function trackState(){
-  const ot=ocrRules().length, od=ocrDone(), mt=MC.rules.length, md=mcDone();
+  // OCR concludes most of its rules by itself; only the alerting ones wait on CRA.
+  const ot=MC.ocrHandled, od=ot-ocrOpen();
+  const mt=MC.rules.length, md=mcDone();
   return {ot,od,mt,md,open:(ot-od)+(mt-md),all:ot+mt,done:od+md};
 }
 // A.11: a mixed master file stacks every file in one window; a per-file upload gets one window.
@@ -636,18 +638,19 @@ function renderRail(){
   const dis=S.stage==='dis';
   const col=S.railCollapsed;
   let h=`<div class="rail-h"><b>${col?'S':'Subject'}</b>
-      <span>${dis?'Uploaded / Required':'Uploaded'}</span>
+
       <button class="rail-toggle" data-railtoggle="1" title="${col?'Expand':'Collapse'}">${col?'\u00bb':'\u00ab'}</button></div>`;
   h+=`<button class="subj-item" data-subj="all" aria-pressed="${S.subj==='all'}">
         <span class="r1"><span class="nm">All Files</span><span class="ct">${live().filter(f=>inTab(f,S.tab)).length}</span></span>
-        <span class="sub">View only</span></button><div class="rail-div"></div>`;
+        </button><div class="rail-div"></div>`;
   SUBJ[S.stage].forEach(s=>{
     const n=live().filter(f=>f.sj===s.id&&inTab(f,S.tab)).length;
+    // FSD 2.7.4 records three mandatory-file scopes that are not aligned, so a
+    // required denominator here would assert a number the system cannot back.
     let ct=String(n),cls='';
-    if(dis&&s.need){ ct=n+'/'+s.need; cls=n>=s.need?'ok':'bad'; }
     const short=s.nm.replace('Guarantor ','G').replace('Main Applicant','MA').replace('Case Level','CL')
       .replace('Seller','SL').replace('Unassigned','UA');
-    h+=`<button class="subj-item ${s.gone?'gone':''} ${s.un?'unassigned':''}" data-subj="${s.id}"
+    h+=`<button class="subj-item ${s.gone?'gone':''}" data-subj="${s.id}"
           aria-pressed="${S.subj===s.id}" title="${s.nm}">
           <span class="r1"><span class="nm">${col?short:s.nm}</span><span class="ct ${cls}">${ct}</span></span>
           ${s.sub?`<span class="sub">${s.sub}</span>`:''}</button>`;
@@ -656,9 +659,9 @@ function renderRail(){
       <button class="subj-item" data-subj="deleted" aria-pressed="${S.subj==='deleted'}">
         <span class="r1"><span class="nm" style="color:var(--text-3)">Deleted</span><span class="ct">${all().filter(f=>f.del).length}</span></span>
         <span class="sub">Record only, not restorable</span></button>`;
-  h+=`<div class="rail-div"></div><div class="rail-note">${S.stage==='app'
-      ? 'Required list is not available in the Application stage. Missing documents will be prompted upon Submit.'
-      : 'Required list shares its source with the File Check List in the CRA Workbench.'}</div>`;
+  h+=S.stage==='app'
+    ? `<div class="rail-div"></div><div class="rail-note">Missing documents are prompted upon Submit.</div>`
+    : '';
   $('rail').innerHTML=h;
   document.querySelector('.ocr-modal-content').className='ocr-modal-content'+(col?' rail-collapsed':'');
 }
@@ -695,8 +698,13 @@ function renderUpload(){
 }
 
 function renderTabs(){
-  const T=[{k:'fl',n:'File List'},{k:'cv',n:'Cross-Validation Results'}];
-  if(tabs3()) T.push({k:'mc',n:'Manual Check Results'});
+  // Rule verification is always scoped to one subject. Offering it under All
+  // Files would mean reconciling every entity's rules in one view.
+  const T=[{k:'fl',n:'File List'}];
+  if(S.subj!=='all'&&S.subj!=='deleted'){
+    T.push({k:'cv',n:'Cross-Validation Results'});
+    if(tabs3()) T.push({k:'mc',n:'Manual Check Results'});
+  }
   $('listTabs').innerHTML=T.map(t=>{
     const c=tabCount(t.k), iss=t.k!=='fl'?tabIssues(t.k):0;
     return `<button data-tab="${t.k}" aria-pressed="${S.tab===t.k}">${t.n}
@@ -765,8 +773,7 @@ function renderTable(){
       ? `<td>${items.length?items.map(a=>`<div class="rule-line ${a.res?'done':'open'}">${a.res?'&#10003; ':''}${a.id||a.nm}</div>`).join(''):'<span class="description-text">—</span>'}</td>`
       : `<td class="is-ai-cell">${f.ch==='ocr'?'Y':'N'}</td><td class="description-cell"><span class="description-text">${f.desc||'—'}</span></td>`;
     return `<tr class="${S.sel.has(f.id)?'selected':''}" data-id="${f.id}">
-      <td><input type="checkbox" data-chk="${f.id}" ${S.sel.has(f.id)?'checked':''}
-        ${sys?'disabled title="System archived · cannot be selected or deleted"':''}></td>
+      <td><input type="checkbox" data-chk="${f.id}" ${S.sel.has(f.id)?'checked':''}></td>
       <td class="filename-cell"><div class="filename-text">${f.nm}</div><div class="description-text">${f.pages} page${f.pages>1?'s':''}</div></td>
       <td class="subject-cell">${subjNm(f)}</td>
       <td class="category-cell">${f.cat}</td>
@@ -780,7 +787,7 @@ function renderTable(){
       <td class="actions-cell">
         <button class="action-btn edit-btn" data-open="${f.id}" title="Edit">${I('edit')}</button>
         <button class="action-btn" title="Download">${I('download')}</button>
-        <button class="action-btn delete-btn" data-del1="${f.id}" title="Delete" ${sys||!P().del?'disabled':''}>${I('trash')}</button>
+        <button class="action-btn delete-btn" data-del1="${f.id}" title="Delete" ${P().del?'':'disabled'}>${I('trash')}</button>
       </td></tr>`;
   }).join('');
 }
@@ -989,7 +996,9 @@ document.addEventListener('click',e=>{
   if(t.dataset.role){S.role=t.dataset.role;S.sel.clear();render();if(S.dt)renderDt();return;}
   if(t.dataset.stage){S.stage=t.dataset.stage;S.tab='fl';S.subj='all';S.sel.clear();S.fType=S.fStatus='';render();return;}
   if(t.dataset.tab){S.tab=t.dataset.tab;S.sel.clear();S.fType=S.fStatus='';if(S.subj==='deleted')S.subj='all';render();return;}
-  if(t.dataset.subj){S.subj=t.dataset.subj;S.sel.clear();render();return;}
+  if(t.dataset.subj){S.subj=t.dataset.subj;S.sel.clear();
+    if((S.subj==='all'||S.subj==='deleted')&&S.tab!=='fl'){S.tab='fl';S.fType=S.fStatus='';}
+    render();return;}
   if(t.dataset.chk){const i=t.dataset.chk;S.sel.has(i)?S.sel.delete(i):S.sel.add(i);render();return;}
   if(t.dataset.open){openDt(t.dataset.open);return;}
   if(t.dataset.del1){askDelete([t.dataset.del1]);return;}
