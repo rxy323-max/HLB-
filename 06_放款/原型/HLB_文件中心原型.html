@@ -548,7 +548,14 @@ const CATS=s=>ZONES[s].map(z=>z[0]).concat(['Other Documents']);
 /* ═══════ STATE ═══════ */
 const S={role:'sales',stage:'dis',tab:'fl',subj:'all',sel:new Set(),dt:null,fType:'',fStatus:'',railCollapsed:false};
 // vehicle category is folded into the main applicant
-Object.values(DATA).forEach(a=>a.forEach(f=>{if(f.sj==='vehicle')f.sj='primary';}));
+Object.values(DATA).forEach(a=>a.forEach(f=>{if(f.sj==='vehicle'||f.sj==='case')f.sj='primary';}));
+
+// FSD 2.7.3: deleting a guarantor moves that guarantor's files to the Deleted list.
+(function removeGuarantor(id){
+  const i=SUBJ.dis.findIndex(s=>s.id===id); if(i>-1) SUBJ.dis.splice(i,1);
+  DATA.dis.forEach(f=>{ if(f.sj===id && !f.del)
+    f.del={by:'Sales · SalesOfficer1',at:'19/08/26 11:40',rs:'Guarantor removed from application'}; });
+})('g2');
 const PERM={
  'sales|app':{up:1,cls:1,rule:1,del:1,l:'Sales \u00b7 Application: upload, confirm classification, handle rules'},
  'cra|app':  {up:0,cls:0,rule:0,del:0,l:'CRA \u00b7 Application: read-only, available for cross-stage comparison'},
@@ -561,9 +568,9 @@ const live=()=>all().filter(f=>!f.del);
 const byId=i=>all().find(f=>f.id===i);
 const tabs3=()=>S.stage==='dis';
 const curSubj=()=>SUBJ[S.stage].find(x=>x.id===S.subj);
-// A.4: system documents are Case-scoped and must not be folded into a role entry.
-// They carry no drawer entry, so the column labels them directly.
-const subjNm=f=>{const x=SUBJ[S.stage].find(y=>y.id===f.sj); return x?x.nm:(f.sj==='case'?'Case':'\u2014');};
+// FSD 2.7.5: system documents belong to an entity and are shown under that
+// role's entry, with the creator recorded as System.
+const subjNm=f=>{const x=SUBJ[S.stage].find(y=>y.id===f.sj); return x?x.nm:'\u2014';};
 const canUpload=()=>P().up && S.subj!=='all' && S.subj!=='deleted' && !!curSubj();
 
 function inTab(f,t){
@@ -622,7 +629,7 @@ function renderRail(){
   h+=`<div class="rail-div"></div>
       <button class="subj-item" data-subj="deleted" aria-pressed="${S.subj==='deleted'}">
         <span class="r1"><span class="nm" style="color:var(--text-3)">Deleted</span><span class="ct">${all().filter(f=>f.del).length}</span></span>
-        <span class="sub">Deleted records</span></button>`;
+        <span class="sub">Record only, not restorable</span></button>`;
   h+=`<div class="rail-div"></div><div class="rail-note">${S.stage==='app'
       ? 'Required list is not available in the Application stage. Missing documents will be prompted upon Submit.'
       : 'Required list shares its source with the File Check List in the CRA Workbench.'}</div>`;
@@ -672,7 +679,7 @@ function renderTabs(){
 }
 
 function renderFilter(){
-  if(S.subj==='deleted'){ $('filterBar').innerHTML=`<span class="foot-note">Deleted files keep the deleter, timestamp and reason, and can be restored at any time.</span>`; return; }
+  if(S.subj==='deleted'){ $('filterBar').innerHTML=`<span class="foot-note">Deleted files are kept as records only. They cannot be previewed or restored.</span>`; return; }
   const p=P(),n=S.sel.size;
   const types=[...new Set(live().filter(f=>inTab(f,S.tab)).map(f=>f.ty))].filter(t=>t!=='—');
   const sts=[['pending','Pending Classification'],['issue','Pending Action'],['done','Passed'],['skip','No Validation']];
@@ -713,7 +720,7 @@ function renderTable(){
       return `<tr><td class="filename-text">${f.nm}</td><td class="subject-cell">${subjNm(f)}</td>
         <td><span class="ant-tag">${f.ty}</span></td><td>${f.del.by}</td><td class="time-cell">${f.del.at}</td>
         <td class="description-text">${f.del.rs}</td>
-        <td><button class="ant-btn ant-btn-sm" data-restore="${f.id}" ${P().del?'':'disabled'}>Restore</button></td></tr>`;}).join('');
+        <td><span class="description-text">Record only</span></td></tr>`;}).join('');
     return;
   }
   const mc=S.tab==='mc', cv=S.tab==='cv', rule=cv||mc;
@@ -899,7 +906,7 @@ const roleNm=()=>({sales:'Sales',cra:'CRA'})[S.role];
 
 function askDelete(ids){
   sm('Delete Files',
-    `<div class="pnote info"><b>${ids.length}</b> file(s) will be deleted.<br><br>Deleted files move to <b>Deleted</b> in the left rail, keeping the deleter, timestamp and reason, and can be restored at any time.</div>
+    `<div class="pnote info"><b>${ids.length}</b> file(s) will be deleted.<br><br>Deleted files move to <b>Deleted</b> in the left rail, keeping the deleter, timestamp and reason. They are kept as records only and <b>cannot be restored</b>.</div>
      <label style="font-size:12px;color:var(--text-2)">Reason (optional)</label>
      <input class="ant-input" id="delRs" style="width:100%;margin-top:4px" placeholder="e.g. Customer resubmitted the latest month">`,
     `<button class="ant-btn" data-cl="1">Cancel</button>
@@ -955,9 +962,8 @@ document.addEventListener('click',e=>{
     const rs=($('delRs')&&$('delRs').value.trim())||'No reason given';
     const at=new Date().toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(',','');
     ids.forEach(i=>{const f=byId(i);if(f)f.del={by:roleNm()+' · '+(S.role==='sales'?'SalesOfficer1':'v_kangyi'),at,rs};});
-    S.sel.clear();smClose();render();msg(`${ids.length} file(s) deleted \u00b7 restorable under Deleted`);return;
+    S.sel.clear();smClose();render();msg(`${ids.length} file(s) deleted`);return;
   }
-  if(t.dataset.restore){const f=byId(t.dataset.restore);if(f)f.del=null;render();msg('Restored');return;}
   if(t.dataset.doreassign){
     const v=$('tgtSubj').value;let n=0;
     S.sel.forEach(i=>{const f=byId(i);if(f){f.sj=v;n++;}});

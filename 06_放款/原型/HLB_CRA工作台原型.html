@@ -479,6 +479,8 @@ const rSettled=()=>rTotal()-rPend().length;
 const usedJust=()=>RULES.filter(r=>r.act==='just').length;
 const rulesOK=()=>rFail().length===0&&rPend().length===0;
 const hasDefect=r=>DEFECTS.some(d=>d.rule===r.id);
+// FSD 3.11.3 Step 3 - a defect counts as resolved only once rectified and verified
+const openDefects=()=>DEFECTS.filter(d=>!(d.rect&&d.ver)).length;
 const unlinked=()=>rFail().filter(r=>!hasDefect(r));
 
 function fState(f){const s=(f.sys||'').trim(),o=(f.ocr||'').trim();
@@ -488,12 +490,23 @@ const fFilled=()=>FIELDS.filter(f=>(f.sys||'').trim()).length;
 const ckOn=()=>CHECK.filter(c=>c.on).length;
 const ckMand=()=>CHECK.filter(c=>c.g==='Mandatory');
 const ckMandOn=()=>ckMand().filter(c=>c.on).length;
-const canNext=()=>fMissing().length===0 && ckMandOn()===ckMand().length;
+const craDone=()=>!!(FLAGS.find(f=>f.k==='CRA Completed')||{}).on;
+// FSD 3.11.2 - Next is never hard-blocked by unresolved defects or unconfirmed
+// rules. The only gate is the BAU "CRA Completed" indicator.
+const canNext=()=>craDone();
 
 function pullRules(){
   const n=rPend().length; rPend().forEach(r=>{r.pass=1;r.st='';});
   S.pullAt=new Date().toTimeString().slice(0,5);
   return n?`${n} rule(s) re-extracted, conclusion updated`:'No change in rule conclusions';
+}
+// FSD 3.9.7 method 3: aligns System-source defects with the latest rule results.
+// Creates the missing ones, drops System ones whose rule now passes, never touches User ones.
+function syncSystemDefects(){
+  const gone=DEFECTS.filter(d=>d.src==='System'&&d.rule&&!rFail().some(r=>r.id===d.rule));
+  gone.forEach(d=>DEFECTS.splice(DEFECTS.indexOf(d),1));
+  const made=unlinked().map(r=>mkDefect(r,'System')).filter(Boolean);
+  return {added:made.length,removed:gone.length,changed:made.length>0||gone.length>0};
 }
 function mkDefect(r,src){
   if(hasDefect(r))return null;
@@ -512,7 +525,7 @@ function eligibility(){
     {ok:1,nm:'Panel dealer',d:''},
     {ok:1,nm:'Loan amount within cap',d:''},
     {ok:rulesOK(),nm:'All rules passed',d:rFail().length+' not passed'},
-    {ok:DEFECTS.length===0,nm:'No defect record',d:DEFECTS.length+' defect(s)'},
+    {ok:openDefects()===0,nm:'No unresolved defect',d:openDefects()+' unresolved'},
     {ok:usedJust()===0,nm:'No justification used',d:usedJust()+' justified'},
     {ok:AGE_DAYS<=AGE_CAP,nm:`Case age within ${AGE_CAP} days`,d:`${AGE_DAYS} days`}
   ];
@@ -597,13 +610,15 @@ function vsumBody(){
 
 function defBody(){
   if(!DEFECTS.length) return `<div class="tot"><span class="t">Total: <b>0</b> defect(s)</span>
-    <span class="r"><button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button></span></div>
+    <span class="r"><button class="btn btn-sm" data-act="syncdef">Sync System Defects</button>
+      <button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button></span></div>
     <div class="tw"><table><thead><tr><th style="width:60px">NO.</th><th style="width:80px">SOURCE</th>
       <th style="width:180px">CATEGORY</th><th style="width:200px">TYPE</th><th style="width:90px">RECTIFIED</th>
       <th style="width:80px">VERIFIED</th><th>SALES REMARK</th><th style="width:110px">ACTION</th></tr></thead>
       <tbody><tr><td colspan="8"><div class="nodata">${I('inbox')}No data</div></td></tr></tbody></table></div>`;
-  return `<div class="tot"><span class="t">Total: <b>${DEFECTS.length}</b> defect(s)${unlinked().length?` · ${unlinked().length} rule(s) still unlinked`:''}</span>
-    <span class="r"><button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button></span></div>
+  return `<div class="tot"><span class="t">Total: <b>${DEFECTS.length}</b> defect(s)${unlinked().length?` · ${unlinked().length} rule(s) still unlinked`:''}${openDefects()?` · ${openDefects()} unresolved`:''}</span>
+    <span class="r"><button class="btn btn-sm" data-act="syncdef">Sync System Defects</button>
+      <button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button></span></div>
   <div class="tw"><table style="min-width:1080px"><thead><tr><th style="width:56px">NO.</th><th style="width:80px">SOURCE</th>
     <th style="width:76px">RULE</th><th style="width:110px">DEFECT CODE</th><th style="width:180px">CATEGORY</th>
     <th style="width:190px">TYPE</th><th style="width:90px">RECTIFIED</th><th style="width:80px">VERIFIED</th>
@@ -698,13 +713,15 @@ function renderFoot(){
   const ok=canNext(),left=[];
   if(fMissing().length) left.push(`${fMissing().length} required field(s) empty`);
   if(ckMandOn()<ckMand().length) left.push(`${ckMand().length-ckMandOn()} mandatory doc(s) unchecked`);
-  const note=S.route?(S.route.ok?'Disbursement triggered via STP':'Routed to Authorizer'):(ok?'':left.join(' · '));
+  if(unlinked().length) left.push(`${unlinked().length} failed rule(s) without a defect`);
+  if(!ok) left.push('Select CRA Completed to submit');
+  const note=S.route?(S.route.ok?'Disbursement triggered via STP':'Routed to Authorizer'):left.join(' · ');
   $('foot').innerHTML=`<select><option>-Select-</option><option>Reassign</option><option>Hold</option></select>
     <span class="fn">${note}</span>
     <span class="r"><button class="btn">Save</button><button class="btn">Exit Application</button>
       <button class="btn">To CRA Defect</button><button class="btn">To Sales Defect</button>
       <button class="btn btn-pri" data-act="next" ${ok?'':'disabled'}
-        title="${ok?'Submit':'Complete required content first'}">Next</button></span>`;
+        title="${ok?'Submit':'Select the CRA Completed indicator to submit'}">Next</button></span>`;
 }
 
 /* ═══ MODALS ═══ */
@@ -920,7 +937,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.tog){const k=t.dataset.tog;S.open[k]=!S.open[k];S.nav=k;render();return;}
   if(t.dataset.link==='fc'){toast('Opening File Center');return;}
   if(t.dataset.act==='expand'){S.expand=!S.expand;render();return;}
-  if(t.dataset.flag!==undefined){FLAGS[+t.dataset.flag].on=FLAGS[+t.dataset.flag].on?0:1;renderSide();return;}
+  if(t.dataset.flag!==undefined){FLAGS[+t.dataset.flag].on=FLAGS[+t.dataset.flag].on?0:1;renderSide();renderFoot();return;}
   if(t.dataset.yn){const[k,v]=t.dataset.yn.split('|');S[k]=v;renderSide();return;}
   if(t.dataset.ck){const c=CHECK.find(x=>x.k===t.dataset.ck);c.on=c.on?0:1;render();return;}
 
@@ -932,6 +949,9 @@ document.addEventListener('click',e=>{
     render();toast(n?'Defect #'+n+' created':'This rule already has a defect');return;}
   if(t.dataset.act==='defall'){const m=unlinked().map(r=>mkDefect(r,'System')).filter(Boolean);
     render();toast(m.length+' defect(s) created');return;}
+  if(t.dataset.act==='syncdef'){const r=syncSystemDefects();render();
+    toast(r.changed?`${r.added} created, ${r.removed} removed · User-source defects untouched`
+                   :'System defects already aligned');return;}
   if(t.dataset.act==='adddef'){openAdd();return;}
   if(t.dataset.atg){S.addDef[t.dataset.atg]=S.addDef[t.dataset.atg]?0:1;
     S.addDef.sr=$('aSr').value;S.addDef.cr=$('aCr').value;
