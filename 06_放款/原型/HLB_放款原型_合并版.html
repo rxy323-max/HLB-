@@ -1,4 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<style>
+/* standalone compat reset - single file, open directly in a browser */
+html{-webkit-text-size-adjust:100%}
+*{box-sizing:border-box}
+body{margin:0;background:#fafafa;font:14px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit}
+</style>
 <title>HLB Disbursement Prototype</title>
+</head>
+<body>
 <style>
 html,body{height:100%;margin:0;background:#0d1424}
 #stage{position:fixed;inset:0}
@@ -1076,7 +1093,7 @@ initChrome(); reset('manual'); render();
     var why = bar.querySelector('.why');
     if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
   }
-  if (why0()) why0().textContent = 'Prototype build ' + '2026-08-30';
+  if (why0()) why0().textContent = 'Prototype build ' + '2026-08-31';
   function why0(){ return bar && bar.querySelector('.why'); }
 
   function go(to){ if (to !== HERE) parent.postMessage({ nav: to }, '*'); }
@@ -1289,6 +1306,34 @@ button:disabled{cursor:not-allowed}
 .upload-examples{font-size:12px;color:var(--text-3);margin-top:4px;line-height:1.5}
 .upload-section.disabled .uploader-box{opacity:.45;border-style:dashed;pointer-events:none}
 .upload-lock{border:1px dashed var(--warning-border);background:var(--warning-bg);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--warning-text);margin-bottom:9px;line-height:1.5}
+
+/* ── categorized AI entries ──
+   One zone per document category, because the category decides which field
+   template OCR applies. Equal columns so no category reads as the default. */
+.zone-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:stretch}
+.zone{display:flex;flex-direction:column;border:1px solid var(--primary-border);border-radius:var(--r);
+  padding:9px 10px 10px;background:linear-gradient(180deg,#f5faff,#fff 54px)}
+.zone-h{display:flex;align-items:center;gap:7px;margin-bottom:7px;min-height:18px}
+.zone-t{font-size:13px;font-weight:600;color:var(--text-2);line-height:1.3}
+.zone .uploader-box{flex:1;min-height:86px;padding:12px 8px}
+.zone .upload-icon .i{width:19px;height:19px}
+.zone .upload-prompt{font-size:12.5px}
+.zone .upload-examples{font-size:11.5px;margin-top:3px}
+
+/* The fallback sits on its own full-width strip below the categories, so it
+   never reads as one more category to choose between. */
+.manual-strip{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:10px;
+  border:1px dashed var(--border);border-radius:var(--r);background:var(--fill-q);padding:10px 14px}
+.manual-strip .ms-l{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2)}
+.manual-strip .ms-l .i{width:16px;height:16px;color:var(--text-3);flex:none}
+.manual-strip .ms-l b{font-weight:600;color:var(--text)}
+.manual-strip .ms-l em{font-style:normal;font-size:11.5px;color:var(--text-3)}
+.manual-strip .ms-r{margin-left:auto;font-size:12.5px;color:var(--text-2)}
+.manual-strip .muted-fmt{color:var(--text-3);font-size:11.5px;margin-left:4px}
+.manual-strip:hover{border-color:var(--primary)}
+.upload-section.disabled .manual-strip{opacity:.45;pointer-events:none}
+.tmore.hdr{padding:0;font-size:12px}
+@media(max-width:820px){.manual-strip .ms-r{margin-left:0}}
 
 /* ═══ file list ═══ */
 .file-list-section{padding:0 16px 16px}
@@ -1720,6 +1765,33 @@ const ZONES={
 };
 const CATS=s=>ZONES[s].map(z=>z[0]).concat(['Other Documents']);
 
+/* The AI entry is split by document category, because the category decides which
+   field template OCR applies. Which categories appear depends on the stage and on
+   whose documents these are - a guarantor has no vehicle documents, a seller has
+   only its own. A subject with a single category is not split; there is nothing
+   to choose between. */
+const UPZONES={
+  app:{
+    primary:[['Personal Identity','MyKad, Passport, Driving License'],
+             ['Applicant Income','Payslip, EPF Statement, Form BE'],
+             ['Other Application & Vehicle','CRA Form, VSO, VOC']],
+    g1:     [['Guarantor Identity','MyKad, Passport, Driving License'],
+             ['Guarantor Income','Payslip, EPF Statement, Form BE / EA']],
+    seller: [['Seller Documents','Seller Invoice, Seller Identity']]
+  },
+  dis:{
+    primary:[['CRA Applicant Identity','Driving License, Director NRIC'],
+             ['CRA HP Agreement','HP Agreement, Application Form'],
+             ['CRA Vehicle Related','Vehicle Invoice, VOC, Road Tax, Insurance']],
+    g1:     [['CRA Applicant Identity','Guarantor NRIC, MyKad'],
+             ['CRA HP Agreement','Guarantee Agreement, Guarantor Waiver']],
+    g2:     [['CRA Applicant Identity','Guarantor NRIC, MyKad'],
+             ['CRA HP Agreement','Guarantee Agreement, Guarantor Waiver']],
+    seller: [['CRA Other Funding','HP216 Seller Invoice, Seller IC']]
+  }
+};
+const upZones=()=>(UPZONES[S.stage]||{})[S.subj]||[['AI Scanning','PDF, JPG, JPEG, PNG']];
+
 /* ═══════ STATE ═══════ */
 const S={role:'sales',stage:'dis',tab:'fl',subj:'all',sel:new Set(),dt:null,fType:'',fStatus:'',railCollapsed:false,reval:0};
 // vehicle category is folded into the main applicant
@@ -1823,36 +1895,53 @@ function renderRail(){
 function renderUpload(){
   const ok=canUpload(), sj=curSubj(), sec=$('uploadSection');
   if(!ok){ sec.className='upload-section empty'; sec.innerHTML=''; return; }
+  const zones=upZones(), split=zones.length>1;
+
+  const zoneCard=([label,eg])=>`<div class="zone">
+      <div class="zone-h"><span class="ent-tag ai">AI</span>
+        <span class="zone-t">${esc(label)}</span></div>
+      <div class="uploader-box"><span class="upload-icon">${I('upload')}</span>
+        <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
+        <div class="upload-examples">${esc(eg)}</div></div>
+    </div>`;
+
+  // Split layouts put the fallback on its own full-width strip below the
+  // categories, so it never reads as one more category to choose between.
+  const manualStrip=`<div class="manual-strip">
+      <span class="ms-l">${I('fileText')}<b>Non-AI Scanning / Other Files</b>
+        <em>Requires manual check</em></span>
+      <span class="ms-r">Drag &amp; drop, or <span class="browse-link">browse</span>
+        <span class="muted-fmt">(PDF, JPG, PNG, DOCX, XLSX)</span></span>
+    </div>`;
+  const manualCard=`<div class="upload-card manual">
+      <div class="upload-card-header">
+        <span class="ent-tag manual">MANUAL</span>
+        <span class="upload-card-title">Non AI Scanning</span></div>
+      <div class="uploader-box non-ai"><span class="upload-icon">${I('fileText')}</span>
+        <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
+        <div class="upload-examples">PDF, JPG, JPEG, PNG, DOCX, XLSX</div></div>
+    </div>`;
+
   sec.className='upload-section';
   sec.innerHTML=`<div class="section-header">
-      <span class="section-title">Categorized Upload Area</span>
+      <span class="section-title">${esc(sj.nm)} \u00b7 ${split?'Categorized Upload Area':'Upload Area'}</span>
       <span class="section-subtitle">5KB–20MB per file</span>
-      <span class="upload-ctx">Upload Subject <b>${sj.nm}</b></span>
+      <button class="tmore hdr" data-act="doclist">Which entry does a document go to?</button>
+      <span class="upload-ctx">Upload Subject <b>${esc(sj.nm)}</b></span>
     </div>
-    <div class="upload-grid upload-grid--two">
-      <div class="upload-card ai">
-        <div class="upload-card-header">
-          <span class="ent-tag ai">AI</span>
-          <span class="upload-card-title">AI Scanning</span>
-          <span class="ent-note">Classified and extracted automatically</span></div>
-        <div class="uploader-box"><span class="upload-icon">${I('upload')}</span>
-          <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
-          <div class="upload-examples">PDF, JPG, JPEG, PNG</div></div>
-        <div class="type-hint">
-          ${['MyKad','Payslip','HP Agreement','Vehicle Invoice','Insurance Cover Note']
-            .map(t=>`<span class="tchip">${t}</span>`).join('')}
-          <button class="tmore" data-act="doclist">+${OCR_COUNT-5} more</button>
-        </div>
-      </div>
-      <div class="upload-card manual">
-        <div class="upload-card-header">
-          <span class="ent-tag manual">MANUAL</span>
-          <span class="upload-card-title">Non AI Scanning</span></div>
-        <div class="uploader-box non-ai"><span class="upload-icon">${I('fileText')}</span>
-          <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
-          <div class="upload-examples">PDF, JPG, JPEG, PNG, DOCX, XLSX</div></div>
-      </div>
-    </div>`;
+    ${split
+      ? `<div class="zone-grid">${zones.map(zoneCard).join('')}</div>${manualStrip}`
+      : `<div class="upload-grid upload-grid--two">
+           <div class="upload-card ai">
+             <div class="upload-card-header">
+               <span class="ent-tag ai">AI</span>
+               <span class="upload-card-title">AI Scanning</span>
+               <span class="ent-note">Classified and extracted automatically</span></div>
+             <div class="uploader-box"><span class="upload-icon">${I('upload')}</span>
+               <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
+               <div class="upload-examples">${esc(zones[0][1])}</div></div>
+           </div>${manualCard}
+         </div>`}`;
 }
 
 function renderTabs(){
@@ -2303,7 +2392,7 @@ render();
     var why = bar.querySelector('.why');
     if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
   }
-  if (why0()) why0().textContent = 'Prototype build ' + '2026-08-30';
+  if (why0()) why0().textContent = 'Prototype build ' + '2026-08-31';
   function why0(){ return bar && bar.querySelector('.why'); }
 
   function go(to){ if (to !== HERE) parent.postMessage({ nav: to }, '*'); }
@@ -2352,3 +2441,5 @@ render();
   });
 }());
 </script>
+</body>
+</html>

@@ -63,14 +63,20 @@ Document Center, with the role set to Sales.
 
   1. Choose who the documents belong to on the left — Main Applicant,
      Guarantor 1 or Seller.
-  2. Two upload entries appear. AI Scanning reads and classifies the
-     document automatically — it covers around 40 document types.
-     Non AI Scanning stores anything else as-is.
-  3. Not sure which entry a document belongs to? Click "+35 more" and
-     search for it. The list says which entry each type goes to.
-  4. The File List below shows everything uploaded, with its classification
+  2. The upload entries appear above the list, one per document category —
+     for the main applicant, Personal Identity, Applicant Income and Other
+     Application & Vehicle. Each is read and classified automatically.
+     Which categories appear depends on who the documents belong to and on
+     the stage: a guarantor has identity and income only, and in
+     Disbursement the CRA set is shown instead.
+  3. Anything the categories do not cover goes to the strip below them,
+     Non-AI Scanning / Other Files. It is stored as-is and checked by hand.
+  4. Not sure which entry a document belongs to? Click "Which entry does a
+     document go to?" beside the heading and search for it. The list says
+     which entry each type goes to.
+  5. The File List below shows everything uploaded, with its classification
      and status.
-  5. When the documents are complete, click Submit for Verification at the
+  6. When the documents are complete, click Submit for Verification at the
      bottom right to trigger rule validation.
 
 
