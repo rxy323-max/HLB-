@@ -22,6 +22,8 @@
 | 文件 | 说明 |
 |------|------|
 | `05_签约/需求文档/e-acceptance-prototype.html` | **E-Acceptance 主原型文件（session-v9，持续迭代）** |
+| `05_签约/需求文档/e-acceptance-prototype-FROZEN-20260721.html` | 冻结快照（对应 draft-v2 tag），发给同事的存档版，不修改 |
+| `05_签约/需求文档/电子签约(E-Acceptance)原始需求整理.md` | **原始 vendor FRS（HP047+HP075+Training Deck）中文整理稿，含差异核对清单，新一轮需求走查基准** |
 | `05_签约/需求文档/_v4_reference.html` | v4 快照，保留为参考，不修改 |
 | `02_AIOCR/需求文档/aiocr-prototype.html` | AIOCR 旧原型文件（参考用） |
 | `02_AIOCR/需求文档/aiocr-prototype_v1_定稿.html` | AIOCR v1 定稿快照（git tag `aiocr-v1`），保留参考，不修改 |
