@@ -221,6 +221,21 @@ tr:hover td{background:#fafafa;}
 .amd-new{color:#137333;font-weight:600;}
 .amd-step-row{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid #f1f3f4;margin-top:4px;gap:12px;flex-wrap:wrap;}
 .amd-step-label{font-size:12px;color:#5f6368;}
+/* prominent step banner (moved to top of amendment body) */
+.amd-stepbar{display:flex;align-items:center;gap:10px;background:#eef3fb;border:1px solid #d3e0f5;border-radius:6px;padding:9px 14px;margin-bottom:12px;}
+.amd-stepnum{background:#1967d2;color:#fff;font-size:12px;font-weight:700;border-radius:4px;padding:3px 10px;letter-spacing:.3px;flex-shrink:0;}
+.amd-steptitle{font-size:14px;font-weight:700;color:#174ea6;}
+.amd-stepdesc{font-size:12px;color:#5f6368;margin-left:auto;text-align:right;}
+/* customer info strip */
+.amd-cust{display:flex;align-items:center;gap:18px;background:#fafafa;border-radius:6px;padding:8px 14px;margin-bottom:10px;font-size:12px;flex-wrap:wrap;}
+.amd-cust b{color:#202124;}
+.amd-cust span{color:#5f6368;}
+/* sms status pill */
+.sms-pill{display:inline-flex;align-items:center;gap:6px;border-radius:12px;padding:3px 11px;font-size:11px;font-weight:600;}
+.sms-ok{background:#e6f4ea;color:#137333;}
+.sms-fail{background:#fce8e6;color:#c5221f;}
+.amd-errbox{background:#fce8e6;border:1px solid #f5c6cb;border-radius:6px;padding:10px 14px;font-size:12px;color:#c5221f;line-height:1.6;margin-bottom:10px;}
+.demo-tag{font-size:10px;color:#9aa0a6;border:1px dashed #dadce0;border-radius:3px;padding:1px 5px;margin-left:6px;}
 .amd-waiting-steps{font-size:12px;color:#3c4043;line-height:2;padding:8px 0;}
 .amd-waiting-steps span{display:block;}
 
@@ -433,7 +448,6 @@ tr:hover td{background:#fafafa;}
                 <div class="mgc-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1967d2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M7 10H4M7 14H4M20 10h-3M20 14h-3M10 7V4M14 7V4M10 20v-3M14 20v-3"/></svg></div>
                 <div class="mgc-title">E-Acceptance</div>
                 <div class="mgc-desc">Fully electronic. Customer verifies identity via biometric and reviews &amp; signs documents through RIB Portal.</div>
-                <div class="mgc-note" id="mgcEANote" style="display:none;">Not available — application has guarantor(s)</div>
                 <button class="btn btn-primary btn-sm" id="btnSelectEA" onclick="selectMode('ea')">Select E-Acceptance →</button>
               </div>
               <div class="mgc">
@@ -443,6 +457,7 @@ tr:hover td{background:#fafafa;}
                 <button class="btn btn-secondary btn-sm" onclick="selectMode('manual')">Select Manual Acceptance →</button>
               </div>
             </div>
+            <div id="gateLockNote" style="display:none;font-size:12px;color:#b45309;background:#fef7e0;border:1px solid #fde68a;border-radius:6px;padding:10px 14px;margin-top:14px;line-height:1.6;text-align:left;"></div>
           </div>
         </div>
 
@@ -456,8 +471,8 @@ tr:hover td{background:#fafafa;}
             <div class="ep-step" id="eps3"><div class="ep-circle" id="epc3">3</div><div class="ep-label">E-Acceptance<br>Confirmation</div></div>
           </div>
 
-          <!-- Switch link (hidden after completion) -->
-          <div class="switch-link-row" id="switchLinkRow">
+          <!-- Persistent switch link, top-right. Available at any point before completion. -->
+          <div class="switch-link-row" id="switchLinkRow" style="display:flex;justify-content:flex-end;">
             <button class="lnk" onclick="openModal('modalSwitchConfirm')">Switch to Manual Acceptance</button>
           </div>
 
@@ -522,7 +537,8 @@ tr:hover td{background:#fafafa;}
   </div><!-- end content -->
 
   <div class="footer">
-    <button class="btn btn-secondary" onclick="alert('Return to case list — navigate back in the real system.')">Cancel</button>
+    <button class="btn btn-secondary" id="btnBackEntry" style="display:none;" onclick="backToEntry()">← Back to Signing Mode</button>
+    <button class="btn btn-secondary" id="btnCancel" onclick="alert('Return to case list — navigate back in the real system.')">Cancel</button>
     <button class="btn btn-primary" id="btnConfirm" disabled onclick="confirmProceed()">Confirm &amp; Proceed</button>
   </div>
   <style>
@@ -681,7 +697,8 @@ tr:hover td{background:#fafafa;}
         <button class="dev-btn" data-sc="ea-s1-fail3" onclick="applyScenario('ea-s1-fail3',this)">S1 · ✗ 3/3 → force Manual</button>
         <button class="dev-btn" data-sc="ea-s3-fail1" onclick="applyScenario('ea-s3-fail1',this)">S3 · ✗ Failed 1/3</button>
         <button class="dev-btn" data-sc="ea-s3-fail2" onclick="applyScenario('ea-s3-fail2',this)">S3 · ✗ Failed 2/3</button>
-        <button class="dev-btn" data-sc="ea-s3-otp" onclick="applyScenario('ea-s3-otp',this)">S3 · ✗ 3/3 → OTP fallback</button>
+        <button class="dev-btn" data-sc="ea-s3-otp" onclick="applyScenario('ea-s3-otp',this)">S3 · ✗ 3/3 → OTP at RIB</button>
+        <button class="dev-btn" data-sc="ea-s3-otp-ok" onclick="applyScenario('ea-s3-otp-ok',this)">S3 · OTP verified at RIB (then Refresh)</button>
       </div>
     </div>
 
@@ -703,18 +720,16 @@ tr:hover td{background:#fafafa;}
     </div>
 
     <div class="dev-acc" id="devAcc-amd">
-      <button class="dev-acc-hdr" onclick="devToggleAcc('amd')"><span>Amendment (CILT) <span class="dev-caret">▶</span></span><span class="dev-cnt">8</span></button>
+      <button class="dev-acc-hdr" onclick="devToggleAcc('amd')"><span>Amendment (CILT) <span class="dev-caret">▶</span></span><span class="dev-cnt">6</span></button>
       <div class="dev-acc-body">
-        <div class="dev-group">On E-Acceptance</div>
-        <button class="dev-btn" data-sc="ea-amendment" onclick="applyScenario('ea-amendment',this)">① CILT approved</button>
-        <button class="dev-btn" data-sc="ea-amendment-ready" onclick="applyScenario('ea-amendment-ready',this)">② Ready — pending SMS</button>
-        <button class="dev-btn" data-sc="ea-amendment-sent" onclick="applyScenario('ea-amendment-sent',this)">③ SMS sent — awaiting customer</button>
-        <button class="dev-btn" data-sc="ea-amendment-done" onclick="applyScenario('ea-amendment-done',this)">④ ✓ Customer confirmed</button>
-        <div class="dev-group">On Manual</div>
-        <button class="dev-btn" data-sc="m-amendment" onclick="applyScenario('m-amendment',this)">① CILT approved</button>
-        <button class="dev-btn" data-sc="m-amendment-ready" onclick="applyScenario('m-amendment-ready',this)">② Ready — pending SMS</button>
-        <button class="dev-btn" data-sc="m-amendment-sent" onclick="applyScenario('m-amendment-sent',this)">③ SMS sent — awaiting customer</button>
-        <button class="dev-btn" data-sc="m-amendment-done" onclick="applyScenario('m-amendment-done',this)">④ ✓ Customer confirmed</button>
+        <div class="dev-group">First signing = E-Acceptance</div>
+        <button class="dev-btn" data-sc="ea-amendment" onclick="applyScenario('ea-amendment',this)">① CILT approved — Step 1</button>
+        <button class="dev-btn" data-sc="ea-amendment-fail" onclick="applyScenario('ea-amendment-fail',this)">① ✗ e-Tracker sync failed</button>
+        <button class="dev-btn" data-sc="ea-amendment-sent" onclick="applyScenario('ea-amendment-sent',this)">② SMS sent — awaiting customer</button>
+        <button class="dev-btn" data-sc="ea-amendment-smsfail" onclick="applyScenario('ea-amendment-smsfail',this)">② ✗ SMS delivery failed</button>
+        <button class="dev-btn" data-sc="ea-amendment-done" onclick="applyScenario('ea-amendment-done',this)">③ ✓ Customer confirmed</button>
+        <div class="dev-group">First signing = Manual</div>
+        <button class="dev-btn" data-sc="m-cilt-nosign" onclick="applyScenario('m-cilt-nosign',this)">CILT — no re-signing required</button>
       </div>
     </div>
 
@@ -777,6 +792,10 @@ let S={
   s2RibStatus:'waiting',          // 'waiting' | 'submitted'
   s3Dev:'disconnected', s3Attempts:0, s3Remarks:'',
   eaComplete:false, amendmentRequired:false, amendmentStep:'none', smsSent:false,
+  smsStatus:'', smsSentAt:'', custConfirmed:false, amdSyncFail:false,
+  eaLocked:false,                 // true once EA hit max failures — cannot pick EA again this cycle
+  firstAcceptMode:'',             // 'ea' | 'manual' — first completed signing mode; drives CILT behaviour
+  otpVerified:false,              // set when RIB returns a successful OTP result
   eaViaOTP:false,
   s1Remarks:'',                    // officer remarks on Step 1 failure (required to retry)
   // Manual flow
@@ -817,29 +836,39 @@ function openHistory(name,ver,date,multiVer){
 // ═══════════════════════════════════════════════
 //  MODE SWITCH
 // ═══════════════════════════════════════════════
+// Switching rules (per 2026-09-01 review):
+//  · Both modes must be eligible for switching to be offered at all.
+//  · Either direction is allowed at any point BEFORE the signing completes.
+//  · Once EA hits max failures and is force-switched, EA is locked for this cycle.
+//  · Once a signing completes, no further switching.
+function eaSelectable(){
+  return !S.hasGuarantor && !S.eaLocked && S.firstAcceptMode!=='manual';
+}
+
 // One-time gate selection — called from mode gate cards
 function selectMode(mode){
-  if(mode==='ea'&&S.hasGuarantor)return;
+  if(mode==='ea'&&!eaSelectable())return;
   applyMode(mode);
 }
 
-// EA → Manual: reset EA flow state, preserve EA Log
+// EA → Manual: manual switch by the officer. EA stays selectable.
 function confirmSwitchToManual(){
   closeModal('modalSwitchConfirm');
   S.eaStep=1;S.s1Dev='disconnected';S.s1Attempts=0;
   S.s2RibStatus='waiting';S.s3Dev='disconnected';S.s3Attempts=0;
   applyMode('manual');
 }
-// Auto-forced switch (3/3 bio failure)
+// Auto-forced switch after max biometric failures — locks EA for this cycle.
 function forceManualSwitch(){
   S.eaStep=1;S.s1Dev='disconnected';S.s1Attempts=0;
   S.s2RibStatus='waiting';S.s3Dev='disconnected';S.s3Attempts=0;
+  S.eaLocked=true;   // persisted server-side in the real system; refreshing must not bypass it
   applyMode('manual');
 }
 
 // Manual → EA: validate conditions then show confirm
 function switchToEACheck(){
-  if(S.hasGuarantor)return;
+  if(!eaSelectable())return;
   openModal('modalSwitchToEA');
 }
 // Manual → EA: confirmed — reset manual bio, restart EA from Step 1
@@ -861,15 +890,22 @@ function applyMode(mode){
   updateFooter();
 }
 
-// Show the mode gate (before any mode is confirmed)
+// Show the mode gate (before any mode is confirmed).
+// When E-Acceptance is not selectable the card is HIDDEN entirely — not greyed out —
+// so an ineligible case only ever sees the Manual option.
 function renderGate(){
-  const disabled=S.hasGuarantor;
+  const ok=eaSelectable();
   const mgcEA=document.getElementById('mgcEA');
-  if(mgcEA) mgcEA.classList.toggle('mgc-disabled',disabled);
-  const note=document.getElementById('mgcEANote');
-  if(note) note.style.display=disabled?'block':'none';
-  const btnEA=document.getElementById('btnSelectEA');
-  if(btnEA) btnEA.disabled=disabled;
+  if(mgcEA) mgcEA.style.display=ok?'':'none';
+  const gateNote=document.getElementById('gateLockNote');
+  if(gateNote){
+    gateNote.style.display=ok?'none':'block';
+    gateNote.textContent=S.eaLocked
+      ? 'E-Acceptance is no longer available for this case — maximum biometric attempts were reached. Proceed with Manual Acceptance.'
+      : S.firstAcceptMode==='manual'
+        ? 'First signing was completed via Manual Acceptance, so E-Acceptance cannot be selected for subsequent rounds.'
+        : 'This application is not eligible for E-Acceptance. Proceed with Manual Acceptance.';
+  }
   document.getElementById('modeGate').style.display='block';
   document.getElementById('panelEA').style.display='none';
   document.getElementById('panelManual').style.display='none';
@@ -1033,7 +1069,6 @@ function renderStep1(){
         </div>
         <div style="display:flex;gap:8px;justify-content:center;">
           <button class="btn btn-primary btn-sm" id="s1RetryBtn" ${hasRmk?'':'disabled'} onclick="retryS1()">Retry (${rem} left)</button>
-          <button class="btn btn-danger btn-sm" onclick="openModal('modalSwitchConfirm')">Switch to Manual Acceptance</button>
         </div>
       </div>`;
     }
@@ -1139,24 +1174,30 @@ function renderStep3(){
   const now=fmtNow(),now2=fmtNow(2);
   let leftOpts={trigPoint:'E-Acceptance Confirmation'},right='';
 
-  // OTP entry state — replaces right panel entirely
+  // OTP handover state.
+  // OTP is owned end-to-end by RIB: RIB triggers, sends, collects and verifies the code.
+  // CrediOS only notifies RIB that the 2nd biometric failed, then waits for the result.
   if(dev==='otp-sent'){
-    leftOpts={...leftOpts,bioStatus:'OTP Sent',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:'3 / 3',remark:'Biometric failed 3/3. OTP fallback activated.'};
+    leftOpts={...leftOpts,bioStatus:'Handed to RIB',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:'3 / 3',remark:'2nd biometric failed. RIB notified — OTP fallback handled at RIB.'};
     right=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;padding:8px 0;">
-      <div class="otp-panel" style="width:100%;max-width:340px;">
-        <div class="otp-title">OTP Verification</div>
-        <div class="otp-sub">6-digit OTP sent to customer's registered mobile.<br>Ask the customer to enter the code shown on their phone.</div>
-        <div class="otp-inputs">
-          <input class="otp-input" maxlength="1" oninput="otpNext(this)">
-          <input class="otp-input" maxlength="1" oninput="otpNext(this)">
-          <input class="otp-input" maxlength="1" oninput="otpNext(this)">
-          <input class="otp-input" maxlength="1" oninput="otpNext(this)">
-          <input class="otp-input" maxlength="1" oninput="otpNext(this)">
-          <input class="otp-input" maxlength="1" oninput="otpNext(this)">
+      <div class="otp-panel" style="width:100%;max-width:400px;">
+        <div class="otp-title">OTP Verification in Progress at RIB</div>
+        <div class="otp-sub" style="text-align:left;line-height:1.85;">
+          CrediOS has notified RIB that the 2nd biometric failed.<br>
+          The customer completes OTP verification <strong>on the RIB portal</strong>:
+        </div>
+        <div style="font-size:12px;color:#3c4043;line-height:2;margin:10px 0 4px;text-align:left;">
+          <div>1. RIB displays the OTP request page</div>
+          <div>2. Customer clicks <strong>Receive OTP</strong> — RIB sends the SMS</div>
+          <div>3. Customer enters the 6-digit code on the RIB page</div>
+          <div>4. RIB verifies the code and returns the result</div>
+        </div>
+        <div style="background:#fff4e5;border:1px solid #ffd8a8;border-radius:5px;padding:8px 11px;font-size:11px;color:#9a5b00;line-height:1.6;margin:8px 0 12px;">
+          <strong>Pending confirmation:</strong> the interface for RIB to return the OTP result to CrediOS has not been identified yet. Awaiting client IT.
         </div>
         <div style="display:flex;gap:8px;justify-content:center;">
-          <button class="btn btn-primary btn-sm" onclick="verifyOTP()">Verify OTP</button>
-          <button class="btn btn-secondary btn-sm">Resend OTP</button>
+          <button class="btn btn-primary btn-sm" id="s3OtpRefresh" onclick="s3RefreshOtp()">Refresh</button>
+          <button class="btn btn-danger btn-sm" onclick="openModal('modalSwitchConfirm')">Switch to Manual Acceptance</button>
         </div>
         <div id="otpResult" style="margin-top:8px;text-align:center;font-size:12px;"></div>
       </div>
@@ -1229,7 +1270,20 @@ function renderStep3(){
   document.getElementById('s3Left').innerHTML=leftPanel(3,leftOpts);
   document.getElementById('s3Right').innerHTML=right;
 }
+// Notify RIB that the 2nd biometric failed; RIB then owns the OTP fallback.
 function sendOTP(){S.s3Dev='otp-sent';renderStep3();}
+// Officer refreshes to pick up the OTP outcome returned by RIB.
+function s3RefreshOtp(){
+  const b=document.getElementById('s3OtpRefresh');
+  if(b){b.disabled=true;b.textContent='Refreshing…';}
+  setTimeout(()=>{
+    const r=document.getElementById('otpResult');
+    if(S.otpVerified){completeEA(true);return;}
+    if(r){r.style.color='#5f6368';r.textContent='No result from RIB yet. Customer has not completed OTP verification.';}
+    const b2=document.getElementById('s3OtpRefresh');
+    if(b2){b2.disabled=false;b2.textContent='Refresh';}
+  },700);
+}
 
 function s3StartFP(outcome){
   S.s3Dev='scanning-fp';
@@ -1249,6 +1303,7 @@ function goStep2(){S.eaStep=2;renderEAPanel();}
 function goStep3(){S.eaStep=3;S.s3Dev='disconnected';renderEAPanel();}
 function completeEA(viaOTP){
   S.eaComplete=true;S.eaViaOTP=!!viaOTP;
+  if(!S.firstAcceptMode)S.firstAcceptMode='ea';   // drives CILT behaviour later
   updateHeaderStatus();
   renderEAPanel();updateFooter();
 }
@@ -1271,47 +1326,65 @@ function renderAmendmentSectionHTML(){
   const ICO_AMD=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
   const ICO_WAIT=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1967d2" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
   const ICO_DONE=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#137333" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`;
-  const badges={'cilt-approved':['bd-orange','Action Required'],'ready':['bd-orange','Ready — Pending Notification'],'sent':['bd-blue','Awaiting Customer'],'confirmed':['bd-green','Confirmed']};
+  const badges={'cilt-approved':['bd-orange','Action Required'],'sent':['bd-blue','Awaiting Customer'],'confirmed':['bd-green','Confirmed']};
   const [badgeClass,badgeLabel]=badges[step]||['bd-orange',''];
   const changesHtml=`<div class="amd-changes-grid">`+AMD_CHANGES.map(c=>`<div class="amd-change-row"><span class="amd-field">${c.field}</span><span class="amd-old">${c.old}</span><span class="amd-arrow">→</span><span class="amd-new">${c.new}</span></div>`).join('')+`</div>`;
+  // Customer info strip — moved up from the old Step-2 panel
+  const custStrip=`<div class="amd-cust">
+    <span>Customer</span><b>GGBOUND</b>
+    <span>Mobile</span><b>+60 12-230 8243</b>
+    <span>CILT Ref</span><b>CILT-2026-001</b>
+  </div>`;
+  const stepBar=(n,title,desc)=>`<div class="amd-stepbar">
+    <span class="amd-stepnum">STEP ${n} OF 2</span>
+    <span class="amd-steptitle">${title}</span>
+    <span class="amd-stepdesc">${desc}</span>
+  </div>`;
   let bodyHtml='',ico=ICO_AMD;
+
   if(step==='cilt-approved'){
-    bodyHtml=`<p style="font-size:12px;color:#5f6368;margin:0 0 4px;">CILT ref: CILT-2026-001 &nbsp;·&nbsp; Approved 20-05-2026</p>
-      <div style="background:#f8f9fa;border-radius:5px;padding:7px 12px;font-size:11px;color:#5f6368;margin:0 0 8px;line-height:1.6;">Fields modified in CrediOS → system auto-tracked changes → contract v2 generated with changed fields highlighted</div>
+    // Step 1 — single action: sync to e-Tracker AND send SMS (backend sequenced)
+    const errBox=S.amdSyncFail?`<div class="amd-errbox"><strong>Sync to e-Tracker failed.</strong> SMS was not sent. Please try again later.</div>`:'';
+    bodyHtml=stepBar(1,'Sync &amp; Notify Customer','Syncs e-Tracker first, then sends SMS')
+      +custStrip+errBox
+      +`<div style="background:#f8f9fa;border-radius:5px;padding:7px 12px;font-size:11px;color:#5f6368;margin:0 0 8px;line-height:1.6;">Fields modified in CrediOS → system auto-tracked changes → contract v2 generated with changed fields highlighted</div>
       <p style="font-size:12px;color:#3c4043;margin:0 0 6px;">A new contract version (v2) has been generated with the following changes. Customer must review and re-confirm remotely — no in-person visit required.</p>
       ${changesHtml}
       <div class="amd-step-row">
-        <span class="amd-step-label">Step 1 of 2 — Set status before sending notification.</span>
-        <button class="btn btn-primary btn-sm" onclick="setAmendmentReady()">Set to "Ready for Amendment Acceptance" →</button>
-      </div>`;
-  } else if(step==='ready'){
-    bodyHtml=`<p style="font-size:12px;color:#137333;font-weight:600;margin:0 0 8px;">Status: Ready for Amendment Acceptance ✓</p>
-      ${changesHtml}
-      <div class="amd-step-row">
-        <div><span class="amd-step-label">Step 2 of 2 — Send re-signing notification.</span><br>
-        <span style="font-size:12px;color:#3c4043;">Customer: <strong>GGBOUND</strong> &nbsp;·&nbsp; +60 12-230 8243</span></div>
-        <button class="btn btn-primary btn-sm" onclick="sendAmendmentSMS()">Send Re-signing Notification →</button>
+        <span class="amd-step-label">One action syncs the amendment to e-Tracker and notifies the customer by SMS. If the sync fails, no SMS is sent.</span>
+        <button class="btn btn-primary btn-sm" onclick="amdSyncAndNotify()">Sync &amp; Notify Customer →</button>
       </div>`;
   } else if(step==='sent'){
     ico=ICO_WAIT;
-    bodyHtml=`<p style="font-size:12px;color:#5f6368;margin:0 0 8px;">Notification sent to <strong>GGBOUND</strong> (+60 12-230 8243) at <strong>${fmtNow()}</strong></p>
-      <div class="amd-waiting-steps">
+    const smsPill=S.smsStatus==='failed'
+      ? `<span class="sms-pill sms-fail">SMS Failed</span>`
+      : `<span class="sms-pill sms-ok">SMS Sent</span>`;
+    const smsLine=S.smsStatus==='failed'
+      ? `<p style="font-size:12px;color:#c5221f;margin:0 0 8px;">${smsPill} &nbsp; Delivery failed. Use <strong>Resend SMS</strong> to retry.</p>`
+      : `<p style="font-size:12px;color:#5f6368;margin:0 0 8px;">${smsPill} &nbsp; Sent to +60 12-230 8243 at <strong>${S.smsSentAt||fmtNow()}</strong></p>`;
+    bodyHtml=stepBar(2,'Awaiting Customer Confirmation','Refresh to update this screen')
+      +custStrip+smsLine
+      +`<div class="amd-waiting-steps">
         <span>1. Customer opens SMS link → logs in to e-Tracker</span>
         <span>2. Clicks <strong>"Review Now"</strong> — changed fields highlighted in yellow</span>
         <span>3. Ticks agreement checkbox → clicks <strong>"Confirm"</strong></span>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px;flex-wrap:wrap;">
-        <span style="font-size:12px;color:#5f6368;">Status updates automatically when customer confirms.</span>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-secondary btn-sm">Resend SMS</button>
-          <button class="btn btn-primary btn-sm" onclick="openETracker()">Preview Customer View (e-Tracker) →</button>
+        <span style="font-size:12px;color:#5f6368;" id="amdRefreshHint">Refresh to check whether the customer has confirmed.</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-secondary btn-sm" id="amdResendBtn" onclick="amdResendSMS()">Resend SMS</button>
+          <button class="btn btn-primary btn-sm" id="amdRefreshBtn" onclick="amdRefreshStatus()">Refresh</button>
         </div>
+      </div>
+      <div style="margin-top:8px;text-align:right;">
+        <button class="lnk" style="font-size:11px;" onclick="openETracker()">Preview customer view<span class="demo-tag">DEMO ONLY</span></button>
       </div>`;
   } else if(step==='confirmed'){
     ico=ICO_DONE;
-    bodyHtml=`<p style="font-size:13px;color:#137333;font-weight:600;margin:0 0 4px;">Customer confirmed via e-Tracker</p>
+    bodyHtml=stepBar(2,'Amendment Confirmed','Completed')
+      +`<p style="font-size:13px;color:#137333;font-weight:600;margin:0 0 4px;">Customer confirmed via e-Tracker</p>
       <p style="font-size:12px;color:#5f6368;margin:0 0 10px;">GGBOUND &nbsp;·&nbsp; 20-05-2026 17:02:41 &nbsp;·&nbsp; CILT-2026-001</p>
-      <p style="font-size:12px;color:#3c4043;margin:0 0 10px;">Amendment contract (v2) is now active. Original signed contract (v1) is permanently retained — no overwrite. You may confirm and proceed.</p>
+      <p style="font-size:12px;color:#3c4043;margin:0 0 10px;">Amendment contract (v2) is now active. Original signed contract (v1) is permanently retained — no overwrite.</p>
       <div style="display:flex;gap:10px;">
         <button class="btn btn-secondary btn-sm" onclick="openAmdHistory()">View Version History</button>
         <button class="btn btn-secondary btn-sm" onclick="openEALog()">View E-Acceptance Log</button>
@@ -1323,14 +1396,44 @@ function renderAmendment(){
   const el=document.getElementById('eaAmendmentContent');
   if(el)el.innerHTML=renderAmendmentSectionHTML();
 }
-function setAmendmentReady(){S.amendmentStep='ready';refreshAmendmentPanel();}
-function sendAmendmentSMS(){S.amendmentStep='sent';S.smsSent=true;refreshAmendmentPanel();}
+// Step 1 — one action: sync e-Tracker first, then send SMS.
+// If sync fails, no SMS is sent and the screen stays on Step 1.
+function amdSyncAndNotify(){
+  if(S.amdSyncFail){          // dev-tool simulated failure
+    refreshAmendmentPanel();  // stay on step 1, show error box, status not advanced
+    return;
+  }
+  S.amendmentStep='sent';
+  S.smsSent=true;
+  S.smsStatus='success';
+  S.smsSentAt=fmtNow();
+  refreshAmendmentPanel();
+}
+// Resend SMS — loading, then refresh everything on this screen
+function amdResendSMS(){
+  const btn=document.getElementById('amdResendBtn');
+  if(btn){btn.disabled=true;btn.textContent='Sending…';}
+  setTimeout(()=>{
+    S.smsStatus='success';
+    S.smsSentAt=fmtNow();
+    refreshAmendmentPanel();
+  },900);
+}
+// Refresh — refreshes everything shown on this screen, including SMS status
+function amdRefreshStatus(){
+  const btn=document.getElementById('amdRefreshBtn');
+  if(btn){btn.disabled=true;btn.textContent='Refreshing…';}
+  setTimeout(()=>{
+    if(S.custConfirmed) S.amendmentStep='confirmed';
+    refreshAmendmentPanel();
+  },700);
+}
 function refreshAmendmentPanel(){
   if(S.mode==='ea')renderEAPanel(); else renderManualPanel();
   updateFooter();
   updateHeaderStatus();
 }
-function triggerSMS(){sendAmendmentSMS();}
+function triggerSMS(){amdSyncAndNotify();}
 // Version history for the amended contract (v1 retained + v2 active)
 function openAmdHistory(){
   openHistory('HP Agreement with T&C','v2','20-05-2026 17:02:41',true);
@@ -1346,9 +1449,12 @@ function etAgreeToggle(cb){
   if(b)b.disabled=!etAgreed;
 }
 function etConfirm(){
-  S.amendmentStep='confirmed';
+  // Customer confirms on e-Tracker. LOAD$ does NOT advance on its own —
+  // the officer must press Refresh to pick the result up.
+  S.custConfirmed=true;
   etScreen=4;renderETracker();
-  refreshAmendmentPanel();
+  const hint=document.getElementById('amdRefreshHint');
+  if(hint){hint.textContent='Customer has confirmed — press Refresh to update.';hint.style.color='#137333';}
 }
 function renderETracker(){
   const body=document.getElementById('etPhoneBody');
@@ -1474,21 +1580,34 @@ function openEALog(){
 function renderManualPanel(){
   const persons=S.hasGuarantor?MANUAL_PERSONS:[MANUAL_PERSONS[0]];
   const allDone=persons.every(p=>S[p.key].done);
-  // Amendment section
+  // Amendment section.
+  // When the first signing was Manual, a CILT needs no re-signing — show the
+  // no-action notice instead of the sync/notify flow.
   const amdEl=document.getElementById('manualAmendmentSection');
   if(amdEl){
-    const showAmd=S.amendmentRequired&&S.amendmentStep!=='none';
-    amdEl.style.display=showAmd?'block':'none';
-    if(showAmd)amdEl.innerHTML=renderAmendmentSectionHTML();
+    if(S.amendmentRequired&&S.firstAcceptMode==='manual'){
+      amdEl.style.display='block';
+      amdEl.innerHTML=`<div class="amendment-wrap">
+        <div class="amendment-hdr"><div class="amendment-hdr-title">Amendment (CILT)</div><span class="badge bd-green">No Re-signing Required</span></div>
+        <div class="amendment-body">
+          <p style="font-size:12px;color:#3c4043;margin:0 0 8px;line-height:1.7;">First signing was completed via <strong>Manual Acceptance</strong>. Under a CILT the customer is <strong>not required to sign again</strong> — the acceptance status remains <strong>Completed</strong> and the case can proceed to funding.</p>
+          <p style="font-size:12px;color:#5f6368;margin:0 0 10px;">Updated documents are regenerated and archived. All versions remain available in the Document Library.</p>
+          <button class="btn btn-secondary btn-sm" onclick="openEALog()">View Acceptance Log</button>
+        </div></div>`;
+    } else {
+      const showAmd=S.amendmentRequired&&S.amendmentStep!=='none';
+      amdEl.style.display=showAmd?'block':'none';
+      if(showAmd)amdEl.innerHTML=renderAmendmentSectionHTML();
+    }
   }
 
   // Top row: skip all visibility
   const skipBtn=document.getElementById('skipAllBtn');
   if(skipBtn) skipBtn.style.display=allDone?'none':'inline';
 
-  // Switch to EA link: only if no guarantor
+  // Switch back to EA — only when EA is still selectable for this case
   const eaBtn=document.getElementById('manualSwitchEABtn');
-  if(eaBtn) eaBtn.style.display=(!S.hasGuarantor)?'inline':'none';
+  if(eaBtn) eaBtn.style.display=eaSelectable()?'inline':'none';
 
   // Render person cards
   document.getElementById('manualPersonCards').innerHTML=persons.map(p=>renderPersonCard(p)).join('');
@@ -1643,17 +1762,34 @@ function skipAllManualBio(){
 // ═══════════════════════════════════════════════
 //  FOOTER
 // ═══════════════════════════════════════════════
+// Footer rules (per 2026-09-01 review):
+//  · During the in-flight signing steps the footer stays (Cancel / Confirm & Proceed).
+//  · Once a signing has completed — and throughout the CILT/Amendment screens —
+//    the footer action buttons are removed; only a Back to the mode entry remains.
 function updateFooter(){
   const btn=document.getElementById('btnConfirm');
-  btn.style.display=''; // always visible
-  const amdDone=!S.amendmentRequired||(S.amendmentStep==='confirmed');
-  if(S.mode==='manual'){
-    // Manual: enabled only when amendment confirmed; otherwise always disabled
-    btn.disabled=!(S.amendmentRequired&&S.amendmentStep==='confirmed');
-  } else {
-    // EA: enabled when EA complete AND (no amendment OR amendment confirmed)
-    btn.disabled=!(S.eaComplete&&amdDone);
+  const cancelBtn=document.getElementById('btnCancel');
+  const backBtn=document.getElementById('btnBackEntry');
+  const inAmendment=S.amendmentRequired&&(S.amendmentStep!=='none'||S.firstAcceptMode==='manual');
+  const signedOff=S.eaComplete||inAmendment;
+
+  if(signedOff){
+    // Completed / amendment screens: no bottom actions, just Back to entry
+    btn.style.display='none';
+    if(cancelBtn)cancelBtn.style.display='none';
+    if(backBtn)backBtn.style.display='';
+    return;
   }
+  if(backBtn)backBtn.style.display='none';
+  if(cancelBtn)cancelBtn.style.display='';
+  btn.style.display='';
+  btn.disabled=!(S.mode==='ea'&&S.eaComplete);
+}
+// Back to the signing-mode entry screen
+function backToEntry(){
+  S.modeConfirmed=false;
+  renderGate();
+  updateFooter();
 }
 function confirmProceed(){
   const msg=S.amendmentRequired
@@ -1694,10 +1830,9 @@ const DEV_WALK=[
   ['ea-s2-done',        'S2 · RIB accepted'],
   ['ea-s3-ready',       'S3 · Device ready'],
   ['ea-complete',       'EA Completed'],
-  ['ea-amendment',      'CILT approved'],
-  ['ea-amendment-ready','Amendment ready'],
-  ['ea-amendment-sent', 'SMS sent'],
-  ['ea-amendment-done', 'Amendment confirmed'],
+  ['ea-amendment',      'CILT · Step 1'],
+  ['ea-amendment-sent', 'CILT · Step 2 — SMS sent'],
+  ['ea-amendment-done', 'CILT · Confirmed'],
 ];
 let devWalkIdx=-1;
 function devWalk(dir){
@@ -1723,6 +1858,8 @@ function applyScenario(key,btn,keepOpen){
     eaStep:1, s1Dev:'disconnected', s1Attempts:0,
     s2RibStatus:'waiting', s3Dev:'disconnected', s3Attempts:0, s3Remarks:'',
     eaComplete:false, amendmentRequired:false, amendmentStep:'none', smsSent:false, eaViaOTP:false,
+    smsStatus:'', smsSentAt:'', custConfirmed:false, amdSyncFail:false,
+    eaLocked:false, firstAcceptMode:'', otpVerified:false,
     s1Remarks:'',
     mBioPrimary:{dev:'disconnected',done:false,attempts:0,remarks:''},
     mBioGuarantor:{dev:'disconnected',done:false,attempts:0,remarks:''},
@@ -1748,11 +1885,13 @@ function applyScenario(key,btn,keepOpen){
     'ea-s3-fail1':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'unmatched',s3Attempts:1},
     'ea-s3-fail2':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'unmatched',s3Attempts:2},
     'ea-s3-otp':    {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'unmatched',s3Attempts:3},
+    'ea-s3-otp-ok': {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'otp-sent',s3Attempts:3,otpVerified:true},
     'ea-complete':        {eaComplete:true},
-    'ea-amendment':       {eaComplete:true,amendmentRequired:true,amendmentStep:'cilt-approved'},
-    'ea-amendment-ready': {eaComplete:true,amendmentRequired:true,amendmentStep:'ready'},
-    'ea-amendment-sent':  {eaComplete:true,amendmentRequired:true,amendmentStep:'sent',smsSent:true},
-    'ea-amendment-done':  {eaComplete:true,amendmentRequired:true,amendmentStep:'confirmed',smsSent:true},
+    'ea-amendment':       {eaComplete:true,firstAcceptMode:'ea',amendmentRequired:true,amendmentStep:'cilt-approved'},
+    'ea-amendment-fail':  {eaComplete:true,firstAcceptMode:'ea',amendmentRequired:true,amendmentStep:'cilt-approved',amdSyncFail:true},
+    'ea-amendment-sent':  {eaComplete:true,firstAcceptMode:'ea',amendmentRequired:true,amendmentStep:'sent',smsSent:true,smsStatus:'success'},
+    'ea-amendment-smsfail':{eaComplete:true,firstAcceptMode:'ea',amendmentRequired:true,amendmentStep:'sent',smsSent:true,smsStatus:'failed'},
+    'ea-amendment-done':  {eaComplete:true,firstAcceptMode:'ea',amendmentRequired:true,amendmentStep:'confirmed',smsSent:true,smsStatus:'success',custConfirmed:true},
     // Manual no guarantor
     'm-ng-disc':    {mode:'manual'},
     'm-ng-ready':   {mode:'manual',mBioPrimary:{dev:'ready',done:false,attempts:0}},
@@ -1770,14 +1909,10 @@ function applyScenario(key,btn,keepOpen){
     'm-g-skip':     {mode:'manual',hasGuarantor:true,
                      mBioPrimary:{dev:'skipped',done:true,attempts:0},
                      mBioGuarantor:{dev:'skipped',done:true,attempts:0}},
-    // Manual amendment
-    'm-amendment':       {mode:'manual',amendmentRequired:true,amendmentStep:'cilt-approved',
-                          mBioPrimary:{dev:'matched',done:true,attempts:1}},
-    'm-amendment-ready': {mode:'manual',amendmentRequired:true,amendmentStep:'ready',
-                          mBioPrimary:{dev:'matched',done:true,attempts:1}},
-    'm-amendment-sent':  {mode:'manual',amendmentRequired:true,amendmentStep:'sent',smsSent:true,
-                          mBioPrimary:{dev:'matched',done:true,attempts:1}},
-    'm-amendment-done':  {mode:'manual',amendmentRequired:true,amendmentStep:'confirmed',smsSent:true,
+    // Manual CILT — first signing was Manual, so NO re-signing is required.
+    // Acceptance status stays Completed and EA can no longer be selected.
+    'm-cilt-nosign':     {mode:'manual',firstAcceptMode:'manual',amendmentRequired:true,
+                          amendmentStep:'none',eaLocked:true,
                           mBioPrimary:{dev:'matched',done:true,attempts:1}},
   };
 
