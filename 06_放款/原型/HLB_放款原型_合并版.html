@@ -1093,7 +1093,7 @@ initChrome(); reset('manual'); render();
     var why = bar.querySelector('.why');
     if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
   }
-  if (why0()) why0().textContent = 'Prototype build ' + '2026-08-31';
+  if (why0()) why0().textContent = 'Prototype build ' + '2026-09-01';
   function why0(){ return bar && bar.querySelector('.why'); }
 
   function go(to){ if (to !== HERE) parent.postMessage({ nav: to }, '*'); }
@@ -1307,33 +1307,31 @@ button:disabled{cursor:not-allowed}
 .upload-section.disabled .uploader-box{opacity:.45;border-style:dashed;pointer-events:none}
 .upload-lock{border:1px dashed var(--warning-border);background:var(--warning-bg);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--warning-text);margin-bottom:9px;line-height:1.5}
 
-/* ── categorized AI entries ──
-   One zone per document category, because the category decides which field
-   template OCR applies. Equal columns so no category reads as the default. */
-.zone-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:stretch}
-.zone{display:flex;flex-direction:column;border:1px solid var(--primary-border);border-radius:var(--r);
-  padding:9px 10px 10px;background:linear-gradient(180deg,#f5faff,#fff 54px)}
-.zone-h{display:flex;align-items:center;gap:7px;margin-bottom:7px;min-height:18px}
-.zone-t{font-size:13px;font-weight:600;color:var(--text-2);line-height:1.3}
-.zone .uploader-box{flex:1;min-height:86px;padding:12px 8px}
-.zone .upload-icon .i{width:19px;height:19px}
-.zone .upload-prompt{font-size:12.5px}
-.zone .upload-examples{font-size:11.5px;margin-top:3px}
-
-/* The fallback sits on its own full-width strip below the categories, so it
-   never reads as one more category to choose between. */
-.manual-strip{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:10px;
-  border:1px dashed var(--border);border-radius:var(--r);background:var(--fill-q);padding:10px 14px}
-.manual-strip .ms-l{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2)}
-.manual-strip .ms-l .i{width:16px;height:16px;color:var(--text-3);flex:none}
-.manual-strip .ms-l b{font-weight:600;color:var(--text)}
-.manual-strip .ms-l em{font-style:normal;font-size:11.5px;color:var(--text-3)}
-.manual-strip .ms-r{margin-left:auto;font-size:12.5px;color:var(--text-2)}
-.manual-strip .muted-fmt{color:var(--text-3);font-size:11.5px;margin-left:4px}
-.manual-strip:hover{border-color:var(--primary)}
-.upload-section.disabled .manual-strip{opacity:.45;pointer-events:none}
-.tmore.hdr{padding:0;font-size:12px}
-@media(max-width:820px){.manual-strip .ms-r{margin-left:0}}
+/* ── version chain, defects, inline category ── */
+.ver-chip{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--text-3);
+  border:1px solid var(--border-2);border-radius:2px;padding:0 4px;margin-left:6px;vertical-align:1px}
+.ver-chip.new{color:var(--primary-active);border-color:var(--primary-border);background:var(--primary-bg)}
+.cat-sel{width:100%;max-width:150px;height:26px;padding:0 6px;font-size:12.5px;border:1px solid transparent;
+  border-radius:var(--r-sm);background:transparent;color:var(--text-2);
+  appearance:none;text-overflow:ellipsis}
+.cat-sel:hover:not(:disabled){border-color:var(--border);background:var(--bg)}
+.cat-sel:focus{border-color:var(--primary);background:var(--bg);outline:none}
+.cat-sel:disabled{color:var(--text-2);opacity:1}
+.d-st{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;padding:1px 6px;border-radius:2px;border:1px solid}
+.d-st.open{color:var(--error-text);background:var(--error-bg);border-color:var(--error-border)}
+.d-st.responded{color:var(--primary-active);background:var(--primary-bg);border-color:var(--primary-border)}
+.d-st.closed{color:var(--success-text);background:var(--success-bg);border-color:var(--success-border)}
+.d-why{font-size:12px;color:var(--text-3);margin-top:2px;line-height:1.5}
+.d-src{font-size:11px;font-family:var(--mono);color:var(--text-3)}
+.stage-note{display:flex;align-items:center;gap:10px;padding:9px 12px;margin-bottom:12px;font-size:12.5px;
+  border-radius:var(--r);border:1px solid var(--primary-border);background:var(--primary-bg);color:var(--primary-active)}
+.stage-note .i{width:15px;height:15px;flex:none}
+.stage-note b{font-weight:600}
+.vh{border:1px solid var(--border-2);border-radius:var(--r);padding:10px 12px;margin-bottom:12px;background:var(--fill-alter)}
+.vh-h{font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:7px}
+.vh-r{display:flex;gap:9px;align-items:baseline;font-size:12px;color:var(--text-3);padding:3px 0;line-height:1.5}
+.vh-r b{font-family:var(--mono);font-size:11px;color:var(--text-2);flex:none}
+.vh-r.cur b{color:var(--primary-active)}
 
 /* ═══ file list ═══ */
 .file-list-section{padding:0 16px 16px}
@@ -1483,6 +1481,11 @@ button:disabled{cursor:not-allowed}
   <span class="seg" id="roleSeg">
     <button data-role="sales">Sales</button><button data-role="cra">CRA</button>
   </span>
+  <span>Case</span>
+  <span class="seg" id="csSeg">
+    <button data-cs="draft">Sales Drafting</button><button data-cs="review">CRA Review</button
+    ><button data-cs="returned">Returned</button><button data-cs="recheck">CRA Re-check</button>
+  </span>
   <span class="hint" id="permHint"></span>
   <span class="why">Demo toolbar · not part of the product</span>
 </div>
@@ -1604,8 +1607,10 @@ const SUBJ={
       {id:'seller',nm:'Seller',sub:'',need:2},
       ]
 };
+// ver / vers carry the version chain. A replacement never modifies a file - it
+// supersedes it, so what CRA reviewed stays byte-identical and stays retrievable.
 function F(o){return Object.assign({ch:'ocr',src:'sales',cls:1,alerts:[],checks:[],fields:[],pages:1,del:null,doc:'form',mix:0,
-  sz:'1.2 MB',up:'19/08/26 14:32'},o);}
+  ver:1,vers:[],sz:'1.2 MB',up:'19/08/26 14:32'},o);}
 
 const DATA={
 app:[
@@ -1765,35 +1770,9 @@ const ZONES={
 };
 const CATS=s=>ZONES[s].map(z=>z[0]).concat(['Other Documents']);
 
-/* The AI entry is split by document category, because the category decides which
-   field template OCR applies. Which categories appear depends on the stage and on
-   whose documents these are - a guarantor has no vehicle documents, a seller has
-   only its own. A subject with a single category is not split; there is nothing
-   to choose between. */
-const UPZONES={
-  app:{
-    primary:[['Personal Identity','MyKad, Passport, Driving License'],
-             ['Applicant Income','Payslip, EPF Statement, Form BE'],
-             ['Other Application & Vehicle','CRA Form, VSO, VOC']],
-    g1:     [['Guarantor Identity','MyKad, Passport, Driving License'],
-             ['Guarantor Income','Payslip, EPF Statement, Form BE / EA']],
-    seller: [['Seller Documents','Seller Invoice, Seller Identity']]
-  },
-  dis:{
-    primary:[['CRA Applicant Identity','Driving License, Director NRIC'],
-             ['CRA HP Agreement','HP Agreement, Application Form'],
-             ['CRA Vehicle Related','Vehicle Invoice, VOC, Road Tax, Insurance']],
-    g1:     [['CRA Applicant Identity','Guarantor NRIC, MyKad'],
-             ['CRA HP Agreement','Guarantee Agreement, Guarantor Waiver']],
-    g2:     [['CRA Applicant Identity','Guarantor NRIC, MyKad'],
-             ['CRA HP Agreement','Guarantee Agreement, Guarantor Waiver']],
-    seller: [['CRA Other Funding','HP216 Seller Invoice, Seller IC']]
-  }
-};
-const upZones=()=>(UPZONES[S.stage]||{})[S.subj]||[['AI Scanning','PDF, JPG, JPEG, PNG']];
-
 /* ═══════ STATE ═══════ */
-const S={role:'sales',stage:'dis',tab:'fl',subj:'all',sel:new Set(),dt:null,fType:'',fStatus:'',railCollapsed:false,reval:0};
+const S={role:'cra',cs:'review',stage:'dis',tab:'fl',subj:'all',sel:new Set(),dt:null,
+  fType:'',fStatus:'',railCollapsed:false,reval:0};
 // vehicle category is folded into the main applicant
 Object.values(DATA).forEach(a=>a.forEach(f=>{if(f.sj==='vehicle'||f.sj==='case')f.sj='primary';}));
 
@@ -1803,13 +1782,44 @@ Object.values(DATA).forEach(a=>a.forEach(f=>{if(f.sj==='vehicle'||f.sj==='case')
   DATA.dis.forEach(f=>{ if(f.sj===id && !f.del)
     f.del={by:'Sales · SalesOfficer1',at:'19/08/26 11:40',rs:'Guarantor removed from application'}; });
 })('g2');
+/* Permission follows the case state, not just the role. The freeze rule is the
+   whole design in one table: what CRA has reviewed is frozen to Sales, and a
+   returned case reopens only the slots that an open defect names. */
 const PERM={
- 'sales|app':{up:1,cls:1,rule:1,del:1,l:'Sales \u00b7 Application: upload, confirm classification, handle rules'},
- 'cra|app':  {up:1,cls:1,rule:1,del:1,l:'CRA \u00b7 Application: upload, confirm classification, handle rules'},
- 'sales|dis':{up:1,cls:0,rule:0,del:1,l:'Sales \u00b7 Disbursement: upload only'},
- 'cra|dis':  {up:1,cls:1,rule:1,del:1,l:'CRA \u00b7 Disbursement: upload, confirm classification, handle rules'}
+ 'sales|draft':   {up:1,cls:1,rule:0,del:1,def:0,     l:'Sales \u00b7 Drafting: upload, set category, delete'},
+ 'cra|draft':     {up:0,cls:0,rule:0,del:0,def:0,     l:'CRA \u00b7 Drafting: read-only until Sales submits'},
+ 'sales|review':  {up:0,cls:0,rule:0,del:0,def:0,     l:'Sales \u00b7 CRA Review: read-only, files frozen'},
+ 'cra|review':    {up:1,cls:1,rule:1,del:1,def:'manage',l:'CRA \u00b7 Review: check rules, raise defects, return the case'},
+ 'sales|returned':{up:'scoped',cls:1,rule:0,del:0,def:'respond',l:'Sales \u00b7 Returned: replace only the documents your defects name'},
+ 'cra|returned':  {up:0,cls:0,rule:0,del:0,def:0,     l:'CRA \u00b7 Returned: waiting on Sales'},
+ 'sales|recheck': {up:0,cls:0,rule:0,del:0,def:0,     l:'Sales \u00b7 CRA Re-check: read-only, files frozen'},
+ 'cra|recheck':   {up:1,cls:1,rule:1,del:1,def:'verify',l:'CRA \u00b7 Re-check: verify the rectified defects'}
 };
-const P=()=>PERM[S.role+'|'+S.stage];
+const P=()=>PERM[S.role+'|'+S.cs];
+
+/* The defect ledger. A defect exists because a rule failed (System) or because
+   CRA judged it so (User). Sales supplies evidence; CRA closes it. */
+const DEF0=[
+ {no:'1',rule:'I33',fid:'d18',cat:'INSURANCE',ty:'Insurance sum insured insufficient',
+  cr:'Sum insured 98,000.00 is below the required 102,400.00',src:'System',st:'open'},
+ {no:'2',rule:'A155',fid:'d5',cat:'AGREEMENT - MASTER',ty:'Hirer and/or witnessed wrongly dated',
+  cr:'Hirer date 12-08-2026 exceeds the 5-day parameter',src:'System',st:'open'},
+ {no:'3',rule:'I67',fid:'d15',cat:'INVOICE - VEHICLE',ty:'Vehicle invoice outside the delivery window',
+  cr:'Invoice date 02-07-2026 is earlier than the application date',src:'System',st:'open'},
+ {no:'4',rule:'',fid:'d17',cat:'COLLATERAL',ty:'Scan quality insufficient',
+  cr:'Road tax disc is cut off at the expiry date \u2014 please re-scan the whole disc',src:'User',st:'open'}
+];
+let DEFECTS=DEF0.map(d=>Object.assign({},d));
+const defFile=d=>DATA.dis.find(f=>f.id===d.fid);
+const myDefects=()=>DEFECTS;
+const defOpen=()=>DEFECTS.filter(d=>d.st==='open').length;
+const defResponded=()=>DEFECTS.filter(d=>d.st==='responded').length;
+// A returned case reopens exactly the file slots its open defects name.
+const scopedIds=()=>new Set(DEFECTS.filter(d=>d.st==='open'&&d.fid).map(d=>d.fid));
+function scopedFor(subj){
+  const ids=scopedIds();
+  return DATA.dis.filter(f=>ids.has(f.id)&&(subj==null||f.sj===subj));
+}
 const all=()=>DATA[S.stage];
 const live=()=>all().filter(f=>!f.del);
 const byId=i=>all().find(f=>f.id===i);
@@ -1818,7 +1828,8 @@ const curSubj=()=>SUBJ[S.stage].find(x=>x.id===S.subj);
 // FSD 2.7.5: system documents belong to an entity and are shown under that
 // role's entry, with the creator recorded as System.
 const subjNm=f=>{const x=SUBJ[S.stage].find(y=>y.id===f.sj); return x?x.nm:'\u2014';};
-const canUpload=()=>P().up && S.subj!=='all' && S.subj!=='deleted' && !!curSubj();
+const canUpload=()=>!!P().up && S.subj!=='all' && S.subj!=='deleted' && !!curSubj();
+const uploadLocked=()=>P().up==='scoped';
 
 function inTab(f,t){
   if(t==='fl') return true;
@@ -1850,6 +1861,7 @@ const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function render(){
   [...$('roleSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.role===S.role));
+  [...$('csSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.cs===S.cs));
   $('permHint').textContent=P().l;
   [...$('stageTabs').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.stage===S.stage));
   renderRail(); renderUpload(); renderTabs(); renderFilter(); renderTable(); renderFooter();
@@ -1864,16 +1876,16 @@ const monogram=nm=>nm.replace('Guarantor ','G').replace('Main Applicant','MA')
   .replace('Seller','SL').replace('Case Level','CL');
 
 function renderRail(){
-  const col=S.railCollapsed;
+  const col=S.railCollapsed, ct=S.tab==='df'?'fl':S.tab;
   let h=`<div class="rail-h">
       <button class="rail-toggle" data-railtoggle="1" title="${col?'Expand':'Collapse'}">${col?'\u00bb':'\u00ab'}</button></div>`;
   h+=`<button class="subj-item scope" data-subj="all" aria-pressed="${S.subj==='all'}" title="All Files">
         <span class="mk ico">${I('grid')}</span>
         <span class="r1"><span class="nm">All Files</span>
-          <span class="ct">${live().filter(f=>inTab(f,S.tab)).length}</span></span></button>
+          <span class="ct">${live().filter(f=>inTab(f,ct)).length}</span></span></button>
       <div class="rail-div"></div>`;
   SUBJ[S.stage].forEach(s=>{
-    const n=live().filter(f=>f.sj===s.id&&inTab(f,S.tab)).length;
+    const n=live().filter(f=>f.sj===s.id&&inTab(f,ct)).length;
     // FSD 2.7.4 records three mandatory-file scopes that are not aligned, so a
     // required denominator here would assert a number the system cannot back.
     h+=`<button class="subj-item ${s.gone?'gone':''}" data-subj="${s.id}"
@@ -1894,72 +1906,76 @@ function renderRail(){
 
 function renderUpload(){
   const ok=canUpload(), sj=curSubj(), sec=$('uploadSection');
-  if(!ok){ sec.className='upload-section empty'; sec.innerHTML=''; return; }
-  const zones=upZones(), split=zones.length>1;
-
-  const zoneCard=([label,eg])=>`<div class="zone">
-      <div class="zone-h"><span class="ent-tag ai">AI</span>
-        <span class="zone-t">${esc(label)}</span></div>
-      <div class="uploader-box"><span class="upload-icon">${I('upload')}</span>
-        <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
-        <div class="upload-examples">${esc(eg)}</div></div>
-    </div>`;
-
-  // Split layouts put the fallback on its own full-width strip below the
-  // categories, so it never reads as one more category to choose between.
-  const manualStrip=`<div class="manual-strip">
-      <span class="ms-l">${I('fileText')}<b>Non-AI Scanning / Other Files</b>
-        <em>Requires manual check</em></span>
-      <span class="ms-r">Drag &amp; drop, or <span class="browse-link">browse</span>
-        <span class="muted-fmt">(PDF, JPG, PNG, DOCX, XLSX)</span></span>
-    </div>`;
-  const manualCard=`<div class="upload-card manual">
-      <div class="upload-card-header">
-        <span class="ent-tag manual">MANUAL</span>
-        <span class="upload-card-title">Non AI Scanning</span></div>
-      <div class="uploader-box non-ai"><span class="upload-icon">${I('fileText')}</span>
-        <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
-        <div class="upload-examples">PDF, JPG, JPEG, PNG, DOCX, XLSX</div></div>
-    </div>`;
-
-  sec.className='upload-section';
-  sec.innerHTML=`<div class="section-header">
-      <span class="section-title">${esc(sj.nm)} \u00b7 ${split?'Categorized Upload Area':'Upload Area'}</span>
-      <span class="section-subtitle">5KB–20MB per file</span>
-      <button class="tmore hdr" data-act="doclist">Which entry does a document go to?</button>
+  if(!ok || S.tab==='df'){ sec.className='upload-section empty'; sec.innerHTML=''; return; }
+  const locked=uploadLocked(), mine=locked?scopedFor(sj.id):[];
+  sec.className='upload-section'+(locked?' disabled':'');
+  const lock=locked?`<div class="upload-lock">Free upload is closed while the case is returned.
+      ${mine.length
+        ? `Replace <b>${mine.map(f=>esc(f.nm)).join('</b>, <b>')}</b> from the
+           <b>Defects To Fix</b> tab \u2014 that is where the open defects name them.`
+        : `No open defect names a document under ${esc(sj.nm)}.`}</div>`:'';
+  sec.innerHTML=lock+`<div class="section-header">
+      <span class="section-title">${esc(sj.nm)} \u00b7 Upload Area</span>
+      <span class="section-subtitle">5KB\u201320MB per file</span>
       <span class="upload-ctx">Upload Subject <b>${esc(sj.nm)}</b></span>
     </div>
-    ${split
-      ? `<div class="zone-grid">${zones.map(zoneCard).join('')}</div>${manualStrip}`
-      : `<div class="upload-grid upload-grid--two">
-           <div class="upload-card ai">
-             <div class="upload-card-header">
-               <span class="ent-tag ai">AI</span>
-               <span class="upload-card-title">AI Scanning</span>
-               <span class="ent-note">Classified and extracted automatically</span></div>
-             <div class="uploader-box"><span class="upload-icon">${I('upload')}</span>
-               <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
-               <div class="upload-examples">${esc(zones[0][1])}</div></div>
-           </div>${manualCard}
-         </div>`}`;
+    <div class="upload-grid upload-grid--two">
+      <div class="upload-card ai">
+        <div class="upload-card-header">
+          <span class="ent-tag ai">AI</span>
+          <span class="upload-card-title">AI Scanning</span>
+          <span class="ent-note">Classified and extracted automatically</span></div>
+        <div class="uploader-box"><span class="upload-icon">${I('upload')}</span>
+          <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
+          <div class="upload-examples">PDF, JPG, JPEG, PNG</div></div>
+        <div class="type-hint">
+          ${['MyKad','Payslip','HP Agreement','Vehicle Invoice','Insurance Cover Note']
+            .map(t=>`<span class="tchip">${t}</span>`).join('')}
+          <button class="tmore" data-act="doclist">+${OCR_COUNT-5} more</button>
+        </div>
+      </div>
+      <div class="upload-card manual">
+        <div class="upload-card-header">
+          <span class="ent-tag manual">MANUAL</span>
+          <span class="upload-card-title">Non AI Scanning</span></div>
+        <div class="uploader-box non-ai"><span class="upload-icon">${I('fileText')}</span>
+          <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
+          <div class="upload-examples">PDF, JPG, JPEG, PNG, DOCX, XLSX</div></div>
+      </div>
+    </div>`;
 }
 
 function renderTabs(){
-  // Rule verification is always scoped to one subject. Offering it under All
-  // Files would mean reconciling every entity's rules in one view.
   const T=[{k:'fl',n:'File List'}];
-  if(S.subj!=='all'&&S.subj!=='deleted'){
+  // Alerts and rules are evidence-level and case-level judgements - CRA's work.
+  // Sales never sees them; Sales works from the defect list alone.
+  // Rule verification is also always scoped to one subject: offering it under
+  // All Files would mean reconciling every entity's rules in one view.
+  if(P().rule && S.subj!=='all' && S.subj!=='deleted'){
     T.push({k:'cv',n:'Cross-Validation Results'});
     if(tabs3()) T.push({k:'mc',n:'Manual Check Results'});
   }
+  // Defects are case-level, so unlike the rule tabs they show under any subject.
+  if(P().def) T.push({k:'df',n:S.role==='sales'?'Defects To Fix':'Defect Verification'});
+  if(!T.some(t=>t.k===S.tab)) S.tab='fl';
   $('listTabs').innerHTML=T.map(t=>{
-    const c=tabCount(t.k), iss=t.k!=='fl'?tabIssues(t.k):0;
+    let n=0,err=0;
+    if(t.k==='df'){ n=myDefects().length; err=S.role==='sales'?defOpen():defResponded(); }
+    else if(t.k!=='fl'){ n=tabCount(t.k); err=tabIssues(t.k); }
+    else n=tabCount(t.k);
     return `<button data-tab="${t.k}" aria-pressed="${S.tab===t.k}">${t.n}
-      <span class="ant-badge-count ${iss?'err':(S.tab===t.k?'on':'')}">${iss||c}</span></button>`;
+      <span class="ant-badge-count ${err?'err':(S.tab===t.k?'on':'')}">${err||n}</span></button>`;
   }).join('');
 }
 
 function renderFilter(){
+  if(S.tab==='df'){
+    const mine=S.role==='sales';
+    $('filterBar').innerHTML=`<span class="foot-note">${mine
+      ? 'Each defect names the document to replace. Uploading a replacement re-runs its rule; CRA closes the defect.'
+      : 'System defects follow their rule. User defects were raised by judgement and are closed by judgement.'}</span>`;
+    return;
+  }
   if(S.subj==='deleted'){ $('filterBar').innerHTML=`<span class="foot-note">Deleted files are kept as records only. They cannot be previewed or restored.</span>`; return; }
   const p=P(),n=S.sel.size;
   const types=[...new Set(live().filter(f=>inTab(f,S.tab)).map(f=>f.ty))].filter(t=>t!=='—');
@@ -1987,13 +2003,53 @@ function statusCell(f){
   if(f.src==='system'&&f.ao==='internal') return '<span class="ant-tag">No Validation</span>';
   const o=openCount(f);
   if(!o) return '<span class="ant-tag ant-tag-green">Passed</span>';
+  if(S.role==='sales') return '<span class="ant-tag ant-tag-blue">In Review</span>';
   if(f.ch==='manual') return `<span class="ant-tag ant-tag-gold">Manual Check ${o}</span>`;
   const e=f.alerts.filter(a=>!a.res).every(a=>a.k==='e');
   return `<span class="ant-tag ${e?'ant-tag-gold':'ant-tag-red'}">${e?'Manual Check ':'Alert '}${o}</span>`;
 }
 
+/* The defect list is the single channel between CRA and Sales. Sales responds by
+   supplying a document; CRA closes. Sales never marks a defect done itself. */
+function renderDefects(){
+  const D=myDefects(), mode=P().def;
+  $('emptyState').textContent='No defects on this case.';
+  $('emptyState').style.display=D.length?'none':'block';
+  $('thead').innerHTML=`<tr><th style="width:56px">No.</th><th style="width:78px">Source</th>
+    <th style="width:70px">Rule</th><th style="width:168px">Category</th>
+    <th>Defect</th><th style="width:210px">Document</th>
+    <th style="width:104px">Status</th><th style="width:168px">Action</th></tr>`;
+  $('tbody').innerHTML=D.map(d=>{
+    const f=defFile(d);
+    const st=d.st==='open'?'Open':d.st==='responded'?'Rectified':'Closed';
+    let act='<span class="description-text">\u2014</span>';
+    if(mode==='respond'&&d.st==='open'&&f)
+      act=`<button class="ant-btn ant-btn-primary ant-btn-sm" data-repl="${d.no}">Replace Document</button>`;
+    else if(mode==='respond'&&d.st==='responded')
+      act='<span class="description-text">Awaiting CRA</span>';
+    else if(mode==='verify'&&d.st==='responded')
+      act=`<button class="ant-btn ant-btn-primary ant-btn-sm" data-verify="${d.no}">Verify</button>`;
+    else if(mode==='verify'&&d.st==='open')
+      act='<span class="description-text">Not rectified</span>';
+    else if(mode==='manage'&&d.st!=='closed')
+      act=`<button class="ant-btn ant-btn-sm" data-waive="${d.no}">Waive with reason</button>`;
+    return `<tr><td class="time-cell">${esc(d.no)}</td>
+      <td><span class="ant-tag ${d.src==='System'?'ant-tag-blue':''}">${d.src}</span></td>
+      <td class="d-src">${esc(d.rule||'\u2014')}</td>
+      <td class="description-text">${esc(d.cat)}</td>
+      <td><div>${esc(d.ty)}</div><div class="d-why">${esc(d.cr)}</div></td>
+      <td>${f?`<div class="filename-text">${esc(f.nm)}${f.ver>1?`<span class="ver-chip new">v${f.ver}</span>`:''}</div>
+              <div class="description-text">${esc(subjNm(f))}</div>`
+             :'<span class="description-text">No document named</span>'}</td>
+      <td><span class="d-st ${d.st}">${st}</span></td>
+      <td class="actions-cell">${act}</td></tr>`;
+  }).join('');
+}
+
 function renderTable(){
+  if(S.tab==='df') return renderDefects();
   const r=rows();
+  $('emptyState').textContent='No files match the current filters.';
   $('emptyState').style.display=r.length?'none':'block';
   if(S.subj==='deleted'){
     $('thead').innerHTML=`<tr><th>File Name</th><th>Subject</th><th>File Type</th><th>Deleted By</th><th>Deleted At</th><th>Reason</th><th>Action</th></tr>`;
@@ -2021,9 +2077,15 @@ function renderTable(){
       : `<td class="is-ai-cell">${f.ch==='ocr'?'Y':'N'}</td><td class="description-cell"><span class="description-text">${f.desc||'—'}</span></td>`;
     return `<tr class="${S.sel.has(f.id)?'selected':''}" data-id="${f.id}">
       <td><input type="checkbox" data-chk="${f.id}" ${S.sel.has(f.id)?'checked':''}></td>
-      <td class="filename-cell"><div class="filename-text">${f.nm}</div><div class="description-text">${f.pages} page${f.pages>1?'s':''}</div></td>
+      <td class="filename-cell"><div class="filename-text">${f.nm}${f.ver>1
+          ?`<span class="ver-chip new" title="Superseded ${f.ver-1} time(s)">v${f.ver}</span>`:''}</div>
+        <div class="description-text">${f.pages} page${f.pages>1?'s':''}</div></td>
       <td class="subject-cell">${subjNm(f)}</td>
-      <td class="category-cell">${f.cat}</td>
+      <td class="category-cell"><select class="cat-sel" data-cat="${f.id}"
+        ${P().cls?'':'disabled'} title="${P().cls?'Change category':'Read-only in this case state'}">
+        ${CATS(S.stage).map(c=>`<option ${c===f.cat?'selected':''}>${esc(c)}</option>`).join('')}
+        ${CATS(S.stage).includes(f.cat)?'':`<option selected>${esc(f.cat)}</option>`}
+      </select></td>
       <td class="file-type-cell">${f.ty==='\u2014'?'<span class="description-text">Unclassified</span>'
         :`<span class="ant-tag file-type-tag ${f.low?'ant-tag-red':''}">${f.ty}${f.tyc?' '+f.tyc:''}</span>`}</td>
       ${mid}
@@ -2041,10 +2103,31 @@ function renderTable(){
 
 function renderFooter(){
   const p=P(), can=p.cls||p.rule||p.up;
+  if(S.tab==='df'){
+    const o=defOpen(), rd=defResponded();
+    const note=`<span class="foot-note">${o} open \u00b7 ${rd} rectified, awaiting verification \u00b7 ${DEFECTS.filter(d=>d.st==='closed').length} closed</span>`;
+    let right='';
+    if(p.def==='manage')
+      right=`<button class="ant-btn ant-btn-primary" data-act="toSales" ${o?'':'disabled'}
+        title="${o?'Send the open defects to Sales':'No open defect to return'}">Return To Sales (${o})</button>`;
+    if(p.def==='respond')
+      right=`<button class="ant-btn ant-btn-primary" data-act="toCRA" ${o?'':''}
+        >Return To CRA${o?` (${o} still open)`:''}</button>`;
+    if(p.def==='verify')
+      right=`<button class="ant-btn ant-btn-primary" data-act="done" ${rd?'disabled':''}
+        title="${rd?'Verify the rectified defects first':'All rectified defects verified'}">Complete Re-check</button>`;
+    $('footer').innerHTML=note+`<span class="file-list-footer-actions">
+      <button class="ant-btn back-btn">Back To List</button>${right}</span>`;
+    return;
+  }
   if(S.tab==='fl'){
+    // While the case is out with Sales the file list is a record, not a work
+    // surface - the work lives on the defect tab, so send them there.
+    const act = p.def==='respond'
+      ? `<button class="ant-btn ant-btn-primary" data-tab="df">Go To Defects To Fix (${defOpen()})</button>`
+      : `<button class="ant-btn ant-btn-primary submit-btn" id="btnSubmit" ${can?'':'disabled'}>Submit for Verification (${S.stage==='app'?'Application':'Disbursement'})</button>`;
     $('footer').innerHTML=`<span class="foot-note">File List \u00b7 Full ledger and classification confirmation</span>
-      <span class="file-list-footer-actions"><button class="ant-btn back-btn">Back To List</button>
-      <button class="ant-btn ant-btn-primary submit-btn" id="btnSubmit" ${can?'':'disabled'}>Submit for Verification (${S.stage==='app'?'Application':'Disbursement'})</button></span>`;
+      <span class="file-list-footer-actions"><button class="ant-btn back-btn">Back To List</button>${act}</span>`;
     return;
   }
   const t=trackState();
@@ -2083,6 +2166,14 @@ function renderDt(){
 
 function panel(f,p){
   let h='';
+  // The superseded versions stay retrievable, with the alerts CRA saw still on
+  // them - that record is what makes freezing the entry unnecessary.
+  if(f.vers.length){
+    h+=`<div class="vh"><div class="vh-h">Version chain \u00b7 superseded copies are kept, never modified</div>`;
+    f.vers.forEach(v=>{ h+=`<div class="vh-r"><b>v${v.ver}</b><span>${esc(v.up)} \u00b7 ${esc(v.by)}
+      \u00b7 ${esc(v.rs)}${v.alerts.length?` \u00b7 carried ${v.alerts.length} alert(s)`:''}</span></div>`; });
+    h+=`<div class="vh-r cur"><b>v${f.ver}</b><span>${esc(f.up)} \u00b7 current</span></div></div>`;
+  }
   if(f.src==='system')
     h+=f.ao==='external'
       ? `<div class="pnote info"><b>System archived \u00b7 External return</b><br>Returned from e-acceptance / biometric devices. Signature completeness and version are validated. Cannot be deleted.</div>`
@@ -2190,6 +2281,35 @@ function docBody(f){
   return b;
 }
 
+/* Replacing never edits a file. v1 is pushed onto the version chain with the
+   alerts CRA saw still attached to it, and v2 arrives clean and re-extracted -
+   which is why the rule can re-conclude by itself instead of by assertion. */
+function replaceDoc(no){
+  const d=DEFECTS.find(x=>x.no===no), f=d&&defFile(d); if(!f) return;
+  const at=new Date().toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit',
+    hour:'2-digit',minute:'2-digit'}).replace(',','');
+  f.vers.push({ver:f.ver,up:f.up,by:f.src==='system'?'System':'SalesOfficer1',
+    alerts:f.alerts,rs:`Superseded for defect #${d.no}`});
+  f.ver++; f.up=at; f.alerts=[]; f.cls=1; f.low=0;
+  f.desc=`Re-extracted from v${f.ver}`;
+  d.st='responded';
+  smClose(); render();
+  msg(`${f.nm} v${f.ver} uploaded \u00b7 rule ${d.rule||'\u2014'} re-evaluated, awaiting CRA verification`);
+}
+function askReplace(no){
+  const d=DEFECTS.find(x=>x.no===no), f=d&&defFile(d); if(!f) return;
+  sm('Replace Document',
+    `<div class="pnote info">Defect <b>#${esc(d.no)}</b> \u00b7 ${esc(d.ty)}<br>${esc(d.cr)}</div>
+     <div class="vh"><div class="vh-h">Version chain</div>
+       <div class="vh-r"><b>v${f.ver}</b><span>${esc(f.up)} \u00b7 current \u2014 will be superseded, not modified</span></div>
+       <div class="vh-r cur"><b>v${f.ver+1}</b><span>your upload \u00b7 goes through AI Scanning as normal</span></div></div>
+     <div class="uploader-box"><span class="upload-icon">${I('upload')}</span>
+       <div class="upload-prompt">Drag &amp; drop <b>${esc(f.nm)}</b>, or <span class="browse-link">browse</span></div>
+       <div class="upload-examples">PDF, JPG, JPEG, PNG</div></div>`,
+    `<button class="ant-btn" data-cl="1">Cancel</button>
+     <button class="ant-btn ant-btn-primary" data-dorepl="${esc(d.no)}">Simulate Upload</button>`);
+}
+
 /* ═══════ SUB-MODAL / MESSAGE ═══════ */
 function sm(t,b,f){$('smTitle').textContent=t;$('smBody').innerHTML=b;
   $('smFoot').innerHTML=f||'<button class="ant-btn" data-cl="1">Close</button>';$('subMask').classList.remove('hidden');}
@@ -2264,6 +2384,13 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',e=>{
   if(e.target.id==='fType'){S.fType=e.target.value;renderTable();}
   if(e.target.id==='fStatus'){S.fStatus=e.target.value;renderTable();}
+  // The category decides which field template applies, so it stays the
+  // uploader's call rather than something the entry has to guess up front.
+  if(e.target.dataset.cat){
+    const f=byId(e.target.dataset.cat); if(!f)return;
+    f.cat=e.target.value; renderRail(); renderTable();
+    msg(`${f.nm} moved to ${f.cat}`);
+  }
 });
 
 document.addEventListener('click',e=>{
@@ -2271,6 +2398,32 @@ document.addEventListener('click',e=>{
 
   if(t.dataset.railtoggle){S.railCollapsed=!S.railCollapsed;render();return;}
   if(t.dataset.role){S.role=t.dataset.role;S.sel.clear();render();if(S.dt)renderDt();return;}
+  if(t.dataset.cs){S.cs=t.dataset.cs;S.sel.clear();render();if(S.dt)renderDt();return;}
+  if(t.dataset.repl){askReplace(t.dataset.repl);return;}
+  if(t.dataset.dorepl){replaceDoc(t.dataset.dorepl);return;}
+  if(t.dataset.verify){
+    const d=DEFECTS.find(x=>x.no===t.dataset.verify);
+    d.st='closed'; render(); msg(`Defect #${d.no} verified and closed`); return;
+  }
+  if(t.dataset.waive){
+    const d=DEFECTS.find(x=>x.no===t.dataset.waive);
+    sm('Waive Defect',
+      `<div class="pnote warn">The rule stays failed. Waiving records why it is acceptable, and the
+         reason goes into the audit trail alongside the failed rule.</div>
+       <label style="font-size:12px;color:var(--text-2)">Justification <span style="color:var(--error-text)">*</span></label>
+       <textarea class="ant-input" id="wvR" style="width:100%;height:80px;margin-top:4px;padding:8px 11px"
+         placeholder="e.g. CED approved the shortfall on 18-08-2026"></textarea>`,
+      `<button class="ant-btn" data-cl="1">Cancel</button>
+       <button class="ant-btn ant-btn-primary" data-dowaive="${d.no}">Waive</button>`);
+    return;
+  }
+  if(t.dataset.dowaive){
+    const d=DEFECTS.find(x=>x.no===t.dataset.dowaive);
+    const r=($('wvR')&&$('wvR').value.trim())||'';
+    if(!r){msg('A justification is required');return;}
+    d.st='closed'; d.cr=d.cr+' \u00b7 Waived: '+r;
+    smClose(); render(); msg(`Defect #${d.no} waived and closed`); return;
+  }
   if(t.dataset.stage){S.stage=t.dataset.stage;S.tab='fl';S.subj='all';S.sel.clear();S.fType=S.fStatus='';render();return;}
   if(t.dataset.tab){S.tab=t.dataset.tab;S.sel.clear();S.fType=S.fStatus='';if(S.subj==='deleted')S.subj='all';render();return;}
   if(t.dataset.subj){S.subj=t.dataset.subj;S.sel.clear();
@@ -2283,6 +2436,12 @@ document.addEventListener('click',e=>{
   if(t.dataset.act){
     const a=t.dataset.act,n=S.sel.size;
     if(a==='doclist'){openDocList();return;}
+    if(a==='toSales'){S.cs='returned';S.role='sales';render();
+      msg(`${defOpen()} defect(s) returned to Sales \u00b7 only the documents they name are unlocked`);return;}
+    if(a==='toCRA'){S.cs='recheck';S.role='cra';render();
+      msg('Case returned to CRA for verification');return;}
+    if(a==='done'){S.cs='review';S.role='cra';S.tab='fl';render();
+      msg('Re-check complete \u00b7 case back with CRA');return;}
     if(a==='reset'){S.fType=S.fStatus='';render();return;}
     if(a==='refresh'){msg('Refreshed');return;}
     if(a==='del'){askDelete([...S.sel]);return;}
@@ -2358,7 +2517,11 @@ document.addEventListener('click',e=>{
   }
   if(t.id==='btnSubmit'){
     if(S.stage==='app'&&S.tab==='fl'&&P().up){missing();return;}
-    if(S.tab==='fl'){msg('Classification submitted \u00b7 extraction and rule validation started');return;}
+    if(S.tab==='fl'){
+      if(S.cs==='draft'){S.cs='review';S.role='cra';render();
+        msg('Submitted \u00b7 extraction and rule validation started, case now with CRA');return;}
+      msg('Classification submitted \u00b7 extraction and rule validation started');return;
+    }
     submitRules();return;
   }
   if(t.dataset.gomiss){smClose();S.tab='fl';S.subj='primary';S.fStatus='pending';render();msg('Filtered to files pending classification');return;}
@@ -2392,7 +2555,7 @@ render();
     var why = bar.querySelector('.why');
     if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
   }
-  if (why0()) why0().textContent = 'Prototype build ' + '2026-08-31';
+  if (why0()) why0().textContent = 'Prototype build ' + '2026-09-01';
   function why0(){ return bar && bar.querySelector('.why'); }
 
   function go(to){ if (to !== HERE) parent.postMessage({ nav: to }, '*'); }
