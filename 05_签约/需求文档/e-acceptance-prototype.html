@@ -194,10 +194,15 @@ tr:hover td{background:#fafafa;}
 .otp-input:focus{border-color:#1967d2;}
 
 /* ── Complete banner ── */
-.complete-banner{background:#e6f4ea;border:1px solid #ceead6;border-radius:8px;padding:14px 18px;display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;}
-.complete-banner svg{width:20px;height:20px;fill:#137333;flex-shrink:0;margin-top:2px;}
-.cb-title{font-size:13px;font-weight:700;color:#137333;margin-bottom:3px;}
-.cb-sub{font-size:12px;color:#3c4043;}
+/* Completed signing — compact summary, no large green fill.
+   Sits in the upper "previous information" layer. */
+.complete-banner{background:#fff;border:1px solid #e8eaed;border-left:3px solid #34a853;border-radius:6px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;}
+.complete-banner svg{width:16px;height:16px;fill:#137333;flex-shrink:0;margin-top:2px;}
+.cb-title{font-size:13px;font-weight:700;color:#202124;margin-bottom:3px;}
+.cb-sub{font-size:12px;color:#5f6368;line-height:1.6;}
+/* two-layer section labels */
+.sec-label{font-size:10px;font-weight:700;color:#9aa0a6;text-transform:uppercase;letter-spacing:.6px;margin:0 0 8px;}
+.sec-divider{border-top:1px solid #e8eaed;margin:18px 0 16px;}
 
 /* ── Amendment ── */
 .amendment-wrap{border:1px solid #e8eaed;border-radius:8px;overflow:hidden;}
@@ -221,15 +226,28 @@ tr:hover td{background:#fafafa;}
 .amd-new{color:#137333;font-weight:600;}
 .amd-step-row{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid #f1f3f4;margin-top:4px;gap:12px;flex-wrap:wrap;}
 .amd-step-label{font-size:12px;color:#5f6368;}
-/* prominent step banner (moved to top of amendment body) */
-.amd-stepbar{display:flex;align-items:center;gap:10px;background:#eef3fb;border:1px solid #d3e0f5;border-radius:6px;padding:9px 14px;margin-bottom:12px;}
-.amd-stepnum{background:#1967d2;color:#fff;font-size:12px;font-weight:700;border-radius:4px;padding:3px 10px;letter-spacing:.3px;flex-shrink:0;}
+/* prominent step banner — carries the primary action so it stays on-screen */
+.amd-stepbar{display:flex;align-items:center;justify-content:space-between;gap:20px;
+  background:#eef3fb;border:1px solid #d3e0f5;border-radius:6px;padding:12px 16px;margin-bottom:12px;flex-wrap:wrap;}
+.amd-stepbar-main{flex:1 1 300px;min-width:260px;}
+.amd-stepbar-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.amd-stepnum{background:#1967d2;color:#fff;font-size:11px;font-weight:700;border-radius:4px;padding:3px 9px;letter-spacing:.4px;flex-shrink:0;white-space:nowrap;}
 .amd-steptitle{font-size:14px;font-weight:700;color:#174ea6;}
-.amd-stepdesc{font-size:12px;color:#5f6368;margin-left:auto;text-align:right;}
-/* customer info strip */
-.amd-cust{display:flex;align-items:center;gap:18px;background:#fafafa;border-radius:6px;padding:8px 14px;margin-bottom:10px;font-size:12px;flex-wrap:wrap;}
-.amd-cust b{color:#202124;}
-.amd-cust span{color:#5f6368;}
+.amd-stepdesc{font-size:12px;color:#5f6368;margin-top:5px;line-height:1.5;}
+.amd-stepacts{display:flex;gap:10px;align-items:center;flex-shrink:0;}
+.amd-stepacts .btn{padding:9px 20px;font-size:13px;min-height:38px;}
+/* customer info strip — fixed grid, no wrapping */
+.amd-cust{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 18px;background:#fafafa;border-radius:6px;padding:10px 14px;margin-bottom:12px;}
+.amd-cust .lbl{font-size:10px;color:#80868b;text-transform:uppercase;letter-spacing:.4px;}
+.amd-cust .val{font-size:13px;font-weight:600;color:#202124;}
+/* action bar — flush to the bottom of the card, buttons never squeezed */
+.amd-actionbar{display:flex;align-items:center;justify-content:space-between;gap:18px;
+  background:#f8f9fa;border-top:1px solid #e8eaed;padding:14px 16px;
+  margin:16px -14px -14px;border-radius:0 0 7px 7px;flex-wrap:wrap;}
+.amd-actionbar .ab-hint{font-size:12px;color:#5f6368;line-height:1.6;flex:1 1 240px;min-width:200px;}
+.amd-actionbar .ab-acts{display:flex;gap:10px;align-items:center;flex-shrink:0;}
+/* larger hit targets in the action bar */
+.amd-actionbar .btn{padding:9px 20px;font-size:13px;min-height:38px;}
 /* sms status pill */
 .sms-pill{display:inline-flex;align-items:center;gap:6px;border-radius:12px;padding:3px 11px;font-size:11px;font-weight:600;}
 .sms-ok{background:#e6f4ea;color:#137333;}
@@ -498,21 +516,23 @@ tr:hover td{background:#fafafa;}
 
           <!-- Complete -->
           <div id="eaComplete" style="display:none;">
+
+            <!-- ── Upper layer: previous signing (historical) ── -->
+            <div class="sec-label" id="prevSecLabel" style="display:none;">Previous Signing</div>
             <div class="complete-banner">
               <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              <div>
+              <div style="flex:1;">
                 <div class="cb-title">E-Acceptance Completed</div>
                 <div class="cb-sub" id="eaCompleteSub">Customer GGBOUND completed E-Acceptance on 20-05-2026 16:50:29 via Biometric. Signed documents attached.</div>
+                <div class="cb-sub" style="margin-top:4px;">Signed documents archived to Document Centre.</div>
               </div>
+              <button class="btn btn-secondary btn-sm" style="flex-shrink:0;" onclick="openEALog()">E-Acceptance Log</button>
             </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#5f6368;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                Signed documents archived to Document Centre.
-              </div>
-              <button class="btn btn-secondary btn-sm" onclick="openEALog()">View E-Acceptance Log</button>
-            </div>
-            <div id="amendmentSection" style="display:none;margin-top:16px;">
+
+            <!-- ── Lower layer: current amendment ── -->
+            <div id="amendmentSection" style="display:none;">
+              <div class="sec-divider"></div>
+              <div class="sec-label">Current Amendment</div>
               <div id="eaAmendmentContent"></div>
             </div>
           </div>
@@ -939,6 +959,9 @@ function renderEAPanel(){
       'Customer GGBOUND completed E-Acceptance on 20-05-2026 16:50:29 via '+(S.eaViaOTP?'OTP':'Biometric')+'. Signed documents attached.';
     const showAmd=S.amendmentRequired&&S.amendmentStep!=='none';
     document.getElementById('amendmentSection').style.display=showAmd?'block':'none';
+    // The "Previous Signing" label only makes sense once a newer amendment layer exists
+    const prevLbl=document.getElementById('prevSecLabel');
+    if(prevLbl)prevLbl.style.display=showAmd?'block':'none';
     if(showAmd)renderAmendment();
   }
 }
@@ -1331,64 +1354,61 @@ function renderAmendmentSectionHTML(){
   const changesHtml=`<div class="amd-changes-grid">`+AMD_CHANGES.map(c=>`<div class="amd-change-row"><span class="amd-field">${c.field}</span><span class="amd-old">${c.old}</span><span class="amd-arrow">→</span><span class="amd-new">${c.new}</span></div>`).join('')+`</div>`;
   // Customer info strip — moved up from the old Step-2 panel
   const custStrip=`<div class="amd-cust">
-    <span>Customer</span><b>GGBOUND</b>
-    <span>Mobile</span><b>+60 12-230 8243</b>
-    <span>CILT Ref</span><b>CILT-2026-001</b>
+    <div class="lbl">Customer</div><div class="lbl">Mobile</div><div class="lbl">CILT Ref</div>
+    <div class="val">GGBOUND</div><div class="val">+60 12-230 8243</div><div class="val">CILT-2026-001</div>
   </div>`;
-  const stepBar=(n,title,desc)=>`<div class="amd-stepbar">
-    <span class="amd-stepnum">STEP ${n} OF 2</span>
-    <span class="amd-steptitle">${title}</span>
-    <span class="amd-stepdesc">${desc}</span>
+  // Step bar carries the primary action, so the button is visible without scrolling.
+  const stepBar=(n,title,desc,acts)=>`<div class="amd-stepbar">
+    <div class="amd-stepbar-main">
+      <div class="amd-stepbar-top">
+        <span class="amd-stepnum">STEP ${n} OF 2</span>
+        <span class="amd-steptitle">${title}</span>
+      </div>
+      <div class="amd-stepdesc">${desc}</div>
+    </div>
+    ${acts?`<div class="amd-stepacts">${acts}</div>`:''}
   </div>`;
+  // Secondary footer strip — supporting info only, no primary actions
+  const footStrip=(hint)=>`<div class="amd-actionbar"><div class="ab-hint">${hint}</div></div>`;
   let bodyHtml='',ico=ICO_AMD;
 
   if(step==='cilt-approved'){
     // Step 1 — single action: sync to e-Tracker AND send SMS (backend sequenced)
     const errBox=S.amdSyncFail?`<div class="amd-errbox"><strong>Sync to e-Tracker failed.</strong> SMS was not sent. Please try again later.</div>`:'';
-    bodyHtml=stepBar(1,'Sync &amp; Notify Customer','Syncs e-Tracker first, then sends SMS')
+    bodyHtml=stepBar(1,'Sync &amp; Notify Customer',
+        'Syncs the amendment to e-Tracker first, then notifies the customer by SMS. If the sync fails, no SMS is sent.',
+        `<button class="btn btn-primary" onclick="amdSyncAndNotify()">Sync &amp; Notify Customer →</button>`)
       +custStrip+errBox
       +`<div style="background:#f8f9fa;border-radius:5px;padding:7px 12px;font-size:11px;color:#5f6368;margin:0 0 8px;line-height:1.6;">Fields modified in CrediOS → system auto-tracked changes → contract v2 generated with changed fields highlighted</div>
       <p style="font-size:12px;color:#3c4043;margin:0 0 6px;">A new contract version (v2) has been generated with the following changes. Customer must review and re-confirm remotely — no in-person visit required.</p>
-      ${changesHtml}
-      <div class="amd-step-row">
-        <span class="amd-step-label">One action syncs the amendment to e-Tracker and notifies the customer by SMS. If the sync fails, no SMS is sent.</span>
-        <button class="btn btn-primary btn-sm" onclick="amdSyncAndNotify()">Sync &amp; Notify Customer →</button>
-      </div>`;
+      ${changesHtml}`;
   } else if(step==='sent'){
     ico=ICO_WAIT;
     const smsPill=S.smsStatus==='failed'
       ? `<span class="sms-pill sms-fail">SMS Failed</span>`
       : `<span class="sms-pill sms-ok">SMS Sent</span>`;
     const smsLine=S.smsStatus==='failed'
-      ? `<p style="font-size:12px;color:#c5221f;margin:0 0 8px;">${smsPill} &nbsp; Delivery failed. Use <strong>Resend SMS</strong> to retry.</p>`
-      : `<p style="font-size:12px;color:#5f6368;margin:0 0 8px;">${smsPill} &nbsp; Sent to +60 12-230 8243 at <strong>${S.smsSentAt||fmtNow()}</strong></p>`;
-    bodyHtml=stepBar(2,'Awaiting Customer Confirmation','Refresh to update this screen')
+      ? `<p style="font-size:12px;color:#c5221f;margin:0 0 10px;">${smsPill} &nbsp; Delivery failed. Use <strong>Resend SMS</strong> to retry.</p>`
+      : `<p style="font-size:12px;color:#5f6368;margin:0 0 10px;">${smsPill} &nbsp; Sent to +60 12-230 8243 at <strong>${S.smsSentAt||fmtNow()}</strong></p>`;
+    bodyHtml=stepBar(2,'Awaiting Customer Confirmation',
+        `<span id="amdRefreshHint">The customer reviews and confirms on e-Tracker. Refresh to pull the latest status into this screen.</span>`,
+        `<button class="btn btn-secondary" id="amdResendBtn" onclick="amdResendSMS()">Resend SMS</button>
+         <button class="btn btn-primary" id="amdRefreshBtn" onclick="amdRefreshStatus()">Refresh</button>`)
       +custStrip+smsLine
       +`<div class="amd-waiting-steps">
         <span>1. Customer opens SMS link → logs in to e-Tracker</span>
         <span>2. Clicks <strong>"Review Now"</strong> — changed fields highlighted in yellow</span>
         <span>3. Ticks agreement checkbox → clicks <strong>"Confirm"</strong></span>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px;flex-wrap:wrap;">
-        <span style="font-size:12px;color:#5f6368;" id="amdRefreshHint">Refresh to check whether the customer has confirmed.</span>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button class="btn btn-secondary btn-sm" id="amdResendBtn" onclick="amdResendSMS()">Resend SMS</button>
-          <button class="btn btn-primary btn-sm" id="amdRefreshBtn" onclick="amdRefreshStatus()">Refresh</button>
-        </div>
-      </div>
-      <div style="margin-top:8px;text-align:right;">
-        <button class="lnk" style="font-size:11px;" onclick="openETracker()">Preview customer view<span class="demo-tag">DEMO ONLY</span></button>
-      </div>`;
+      </div>`
+      +footStrip(`<button class="lnk" style="font-size:11px;" onclick="openETracker()">Preview customer view<span class="demo-tag">DEMO ONLY</span></button>`);
   } else if(step==='confirmed'){
     ico=ICO_DONE;
-    bodyHtml=stepBar(2,'Amendment Confirmed','Completed')
-      +`<p style="font-size:13px;color:#137333;font-weight:600;margin:0 0 4px;">Customer confirmed via e-Tracker</p>
-      <p style="font-size:12px;color:#5f6368;margin:0 0 10px;">GGBOUND &nbsp;·&nbsp; 20-05-2026 17:02:41 &nbsp;·&nbsp; CILT-2026-001</p>
-      <p style="font-size:12px;color:#3c4043;margin:0 0 10px;">Amendment contract (v2) is now active. Original signed contract (v1) is permanently retained — no overwrite.</p>
-      <div style="display:flex;gap:10px;">
-        <button class="btn btn-secondary btn-sm" onclick="openAmdHistory()">View Version History</button>
-        <button class="btn btn-secondary btn-sm" onclick="openEALog()">View E-Acceptance Log</button>
-      </div>`;
+    bodyHtml=stepBar(2,'Amendment Confirmed',
+        'Customer re-confirmed the amended terms on e-Tracker on 20-05-2026 17:02:41.',
+        `<button class="btn btn-secondary" onclick="openAmdHistory()">Version History</button>
+         <button class="btn btn-secondary" onclick="openEALog()">Acceptance Log</button>`)
+      +custStrip
+      +`<p style="font-size:12px;color:#3c4043;margin:0;">Amendment contract (v2) is now active. Original signed contract (v1) is permanently retained — no overwrite. All versions remain available in the Document Library.</p>`;
   }
   return `<div class="amendment-wrap"><div class="amendment-hdr"><div class="amendment-hdr-title">${ico} Amendment (CILT)</div><span class="badge ${badgeClass}">${badgeLabel}</span></div><div class="amendment-body">${bodyHtml}</div></div>`;
 }
@@ -1591,8 +1611,10 @@ function renderManualPanel(){
         <div class="amendment-hdr"><div class="amendment-hdr-title">Amendment (CILT)</div><span class="badge bd-green">No Re-signing Required</span></div>
         <div class="amendment-body">
           <p style="font-size:12px;color:#3c4043;margin:0 0 8px;line-height:1.7;">First signing was completed via <strong>Manual Acceptance</strong>. Under a CILT the customer is <strong>not required to sign again</strong> — the acceptance status remains <strong>Completed</strong> and the case can proceed to funding.</p>
-          <p style="font-size:12px;color:#5f6368;margin:0 0 10px;">Updated documents are regenerated and archived. All versions remain available in the Document Library.</p>
-          <button class="btn btn-secondary btn-sm" onclick="openEALog()">View Acceptance Log</button>
+          <div class="amd-actionbar">
+            <div class="ab-hint">Updated documents are regenerated and archived. All versions remain available in the Document Library.</div>
+            <div class="ab-acts"><button class="btn btn-secondary" onclick="openEALog()">Acceptance Log</button></div>
+          </div>
         </div></div>`;
     } else {
       const showAmd=S.amendmentRequired&&S.amendmentStep!=='none';
