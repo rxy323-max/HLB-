@@ -641,19 +641,24 @@ function defBody(){
       <button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button></span></div>
     <div class="tw"><table><thead><tr><th style="width:60px">NO.</th><th style="width:80px">SOURCE</th>
       <th style="width:180px">CATEGORY</th><th style="width:200px">TYPE</th><th style="width:90px">RECTIFIED</th>
-      <th style="width:80px">VERIFIED</th><th>SALES REMARK</th><th style="width:110px">ACTION</th></tr></thead>
-      <tbody><tr><td colspan="8"><div class="nodata">${I('inbox')}No data</div></td></tr></tbody></table></div>`;
+      <th style="width:80px">VERIFIED</th><th style="width:170px">DOCUMENT</th>
+      <th>SALES REMARK</th><th style="width:110px">ACTION</th></tr></thead>
+      <tbody><tr><td colspan="9"><div class="nodata">${I('inbox')}No data</div></td></tr></tbody></table></div>`;
   return `<div class="tot"><span class="t">Total: <b>${DEFECTS.length}</b> defect(s)${unlinked().length?` · ${unlinked().length} rule(s) still unlinked`:''}${openDefects()?` · ${openDefects()} unresolved`:''}</span>
     <span class="r"><button class="btn btn-sm" data-act="syncdef">Sync System Defects</button>
       <button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button></span></div>
-  <div class="tw"><table style="min-width:1080px"><thead><tr><th style="width:56px">NO.</th><th style="width:80px">SOURCE</th>
+  <div class="tw"><table style="min-width:1180px"><thead><tr><th style="width:56px">NO.</th><th style="width:80px">SOURCE</th>
     <th style="width:76px">RULE</th><th style="width:110px">DEFECT CODE</th><th style="width:180px">CATEGORY</th>
-    <th style="width:190px">TYPE</th><th style="width:90px">RECTIFIED</th><th style="width:80px">VERIFIED</th>
+    <th style="width:190px">TYPE</th><th style="width:170px">DOCUMENT</th>
+    <th style="width:90px">RECTIFIED</th><th style="width:80px">VERIFIED</th>
     <th style="width:150px">CRA REMARK</th><th style="width:120px">ACTION</th></tr></thead>
   <tbody>${DEFECTS.map(d=>`<tr><td class="mono">${d.no}</td>
     <td><span class="tag ${d.src==='System'?'tag-blue':''}" style="font-size:11px">${d.src}</span></td>
     <td class="mono">${esc(d.rule||'—')}</td><td class="mono">${esc(d.code||'—')}</td>
     <td style="font-size:12px">${esc(d.cat)}</td><td style="font-size:12px">${esc(d.type)}</td>
+    <td style="font-size:12px">${d.file&&d.file!=='—'
+      ? `${esc(d.file)}<span class="sub-row" style="display:block">Sales replaces it in the File Center</span>`
+      : '<span class="muted">Not document-bound</span>'}</td>
     <td>${d.rect?'<span class="tag tag-ok">Y</span>':'<span class="tag tag-err">N</span>'}</td>
     <td>${d.ver?'<span class="tag tag-ok">Y</span>':'<span class="tag">N</span>'}</td>
     <td style="font-size:12px">${esc(d.cr)}</td>

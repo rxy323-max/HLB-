@@ -671,19 +671,24 @@ function defBody(){
       <button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button></span></div>
     <div class="tw"><table><thead><tr><th style="width:60px">NO.</th><th style="width:80px">SOURCE</th>
       <th style="width:180px">CATEGORY</th><th style="width:200px">TYPE</th><th style="width:90px">RECTIFIED</th>
-      <th style="width:80px">VERIFIED</th><th>SALES REMARK</th><th style="width:110px">ACTION</th></tr></thead>
-      <tbody><tr><td colspan="8"><div class="nodata">${I('inbox')}No data</div></td></tr></tbody></table></div>`;
+      <th style="width:80px">VERIFIED</th><th style="width:170px">DOCUMENT</th>
+      <th>SALES REMARK</th><th style="width:110px">ACTION</th></tr></thead>
+      <tbody><tr><td colspan="9"><div class="nodata">${I('inbox')}No data</div></td></tr></tbody></table></div>`;
   return `<div class="tot"><span class="t">Total: <b>${DEFECTS.length}</b> defect(s)${unlinked().length?` · ${unlinked().length} rule(s) still unlinked`:''}${openDefects()?` · ${openDefects()} unresolved`:''}</span>
     <span class="r"><button class="btn btn-sm" data-act="syncdef">Sync System Defects</button>
       <button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button></span></div>
-  <div class="tw"><table style="min-width:1080px"><thead><tr><th style="width:56px">NO.</th><th style="width:80px">SOURCE</th>
+  <div class="tw"><table style="min-width:1180px"><thead><tr><th style="width:56px">NO.</th><th style="width:80px">SOURCE</th>
     <th style="width:76px">RULE</th><th style="width:110px">DEFECT CODE</th><th style="width:180px">CATEGORY</th>
-    <th style="width:190px">TYPE</th><th style="width:90px">RECTIFIED</th><th style="width:80px">VERIFIED</th>
+    <th style="width:190px">TYPE</th><th style="width:170px">DOCUMENT</th>
+    <th style="width:90px">RECTIFIED</th><th style="width:80px">VERIFIED</th>
     <th style="width:150px">CRA REMARK</th><th style="width:120px">ACTION</th></tr></thead>
   <tbody>${DEFECTS.map(d=>`<tr><td class="mono">${d.no}</td>
     <td><span class="tag ${d.src==='System'?'tag-blue':''}" style="font-size:11px">${d.src}</span></td>
     <td class="mono">${esc(d.rule||'—')}</td><td class="mono">${esc(d.code||'—')}</td>
     <td style="font-size:12px">${esc(d.cat)}</td><td style="font-size:12px">${esc(d.type)}</td>
+    <td style="font-size:12px">${d.file&&d.file!=='—'
+      ? `${esc(d.file)}<span class="sub-row" style="display:block">Sales replaces it in the File Center</span>`
+      : '<span class="muted">Not document-bound</span>'}</td>
     <td>${d.rect?'<span class="tag tag-ok">Y</span>':'<span class="tag tag-err">N</span>'}</td>
     <td>${d.ver?'<span class="tag tag-ok">Y</span>':'<span class="tag">N</span>'}</td>
     <td style="font-size:12px">${esc(d.cr)}</td>
@@ -1789,11 +1794,11 @@ const PERM={
  'sales|draft':   {up:1,cls:1,rule:0,del:1,def:0,     l:'Sales \u00b7 Drafting: upload, set category, delete'},
  'cra|draft':     {up:0,cls:0,rule:0,del:0,def:0,     l:'CRA \u00b7 Drafting: read-only until Sales submits'},
  'sales|review':  {up:0,cls:0,rule:0,del:0,def:0,     l:'Sales \u00b7 CRA Review: read-only, files frozen'},
- 'cra|review':    {up:1,cls:1,rule:1,del:1,def:'manage',l:'CRA \u00b7 Review: check rules, raise defects, return the case'},
+ 'cra|review':    {up:1,cls:1,rule:1,del:1,def:0,l:'CRA \u00b7 Review: check rules here, raise and close defects in the Workbench'},
  'sales|returned':{up:'scoped',cls:1,rule:0,del:0,def:'respond',l:'Sales \u00b7 Returned: replace only the documents your defects name'},
  'cra|returned':  {up:0,cls:0,rule:0,del:0,def:0,     l:'CRA \u00b7 Returned: waiting on Sales'},
  'sales|recheck': {up:0,cls:0,rule:0,del:0,def:0,     l:'Sales \u00b7 CRA Re-check: read-only, files frozen'},
- 'cra|recheck':   {up:1,cls:1,rule:1,del:1,def:'verify',l:'CRA \u00b7 Re-check: verify the rectified defects'}
+ 'cra|recheck':   {up:1,cls:1,rule:1,del:1,def:0,l:'CRA \u00b7 Re-check: review the replaced documents, then verify in the Workbench'}
 };
 const P=()=>PERM[S.role+'|'+S.cs];
 
@@ -1956,11 +1961,11 @@ function renderTabs(){
     if(tabs3()) T.push({k:'mc',n:'Manual Check Results'});
   }
   // Defects are case-level, so unlike the rule tabs they show under any subject.
-  if(P().def) T.push({k:'df',n:S.role==='sales'?'Defects To Fix':'Defect Verification'});
+  if(P().def) T.push({k:'df',n:'To Fix'});
   if(!T.some(t=>t.k===S.tab)) S.tab='fl';
   $('listTabs').innerHTML=T.map(t=>{
     let n=0,err=0;
-    if(t.k==='df'){ n=myDefects().length; err=S.role==='sales'?defOpen():defResponded(); }
+    if(t.k==='df'){ n=myDefects().length; err=defOpen(); }
     else if(t.k!=='fl'){ n=tabCount(t.k); err=tabIssues(t.k); }
     else n=tabCount(t.k);
     return `<button data-tab="${t.k}" aria-pressed="${S.tab===t.k}">${t.n}
@@ -1970,10 +1975,8 @@ function renderTabs(){
 
 function renderFilter(){
   if(S.tab==='df'){
-    const mine=S.role==='sales';
-    $('filterBar').innerHTML=`<span class="foot-note">${mine
-      ? 'Each defect names the document to replace. Uploading a replacement re-runs its rule; CRA closes the defect.'
-      : 'System defects follow their rule. User defects were raised by judgement and are closed by judgement.'}</span>`;
+    $('filterBar').innerHTML=`<span class="foot-note">Sent back by CRA. Replacing a document re-runs its
+      rule straight away \u2014 CRA then verifies and closes it in the Workbench.</span>`;
     return;
   }
   if(S.subj==='deleted'){ $('filterBar').innerHTML=`<span class="foot-note">Deleted files are kept as records only. They cannot be previewed or restored.</span>`; return; }
@@ -2009,38 +2012,28 @@ function statusCell(f){
   return `<span class="ant-tag ${e?'ant-tag-gold':'ant-tag-red'}">${e?'Manual Check ':'Alert '}${o}</span>`;
 }
 
-/* The defect list is the single channel between CRA and Sales. Sales responds by
-   supplying a document; CRA closes. Sales never marks a defect done itself. */
+/* Sales's to-do list, not a second defect ledger. The ledger lives in the CRA
+   Workbench and keeps the accounting dimensions - defect code, category, source,
+   rectified/verified. What reaches Sales is only the part Sales can act on:
+   which document, what is wrong with it, and a way to send a new one. */
 function renderDefects(){
-  const D=myDefects(), mode=P().def;
-  $('emptyState').textContent='No defects on this case.';
+  const D=myDefects();
+  $('emptyState').textContent='Nothing to fix. The case is with CRA.';
   $('emptyState').style.display=D.length?'none':'block';
-  $('thead').innerHTML=`<tr><th style="width:56px">No.</th><th style="width:78px">Source</th>
-    <th style="width:70px">Rule</th><th style="width:168px">Category</th>
-    <th>Defect</th><th style="width:210px">Document</th>
-    <th style="width:104px">Status</th><th style="width:168px">Action</th></tr>`;
+  $('thead').innerHTML=`<tr><th style="width:56px">Ref</th><th style="width:250px">Document</th>
+    <th>What needs fixing</th><th style="width:104px">Status</th><th style="width:180px">Action</th></tr>`;
   $('tbody').innerHTML=D.map(d=>{
     const f=defFile(d);
-    const st=d.st==='open'?'Open':d.st==='responded'?'Rectified':'Closed';
-    let act='<span class="description-text">\u2014</span>';
-    if(mode==='respond'&&d.st==='open'&&f)
-      act=`<button class="ant-btn ant-btn-primary ant-btn-sm" data-repl="${d.no}">Replace Document</button>`;
-    else if(mode==='respond'&&d.st==='responded')
-      act='<span class="description-text">Awaiting CRA</span>';
-    else if(mode==='verify'&&d.st==='responded')
-      act=`<button class="ant-btn ant-btn-primary ant-btn-sm" data-verify="${d.no}">Verify</button>`;
-    else if(mode==='verify'&&d.st==='open')
-      act='<span class="description-text">Not rectified</span>';
-    else if(mode==='manage'&&d.st!=='closed')
-      act=`<button class="ant-btn ant-btn-sm" data-waive="${d.no}">Waive with reason</button>`;
+    const st=d.st==='open'?'To fix':d.st==='responded'?'Sent to CRA':'Closed';
+    const act = d.st==='open'&&f
+      ? `<button class="ant-btn ant-btn-primary ant-btn-sm" data-repl="${d.no}">Replace Document</button>`
+      : d.st==='responded' ? '<span class="description-text">Awaiting CRA verification</span>'
+      : '<span class="description-text">\u2014</span>';
     return `<tr><td class="time-cell">${esc(d.no)}</td>
-      <td><span class="ant-tag ${d.src==='System'?'ant-tag-blue':''}">${d.src}</span></td>
-      <td class="d-src">${esc(d.rule||'\u2014')}</td>
-      <td class="description-text">${esc(d.cat)}</td>
-      <td><div>${esc(d.ty)}</div><div class="d-why">${esc(d.cr)}</div></td>
       <td>${f?`<div class="filename-text">${esc(f.nm)}${f.ver>1?`<span class="ver-chip new">v${f.ver}</span>`:''}</div>
               <div class="description-text">${esc(subjNm(f))}</div>`
              :'<span class="description-text">No document named</span>'}</td>
+      <td><div>${esc(d.ty)}</div><div class="d-why">${esc(d.cr)}</div></td>
       <td><span class="d-st ${d.st}">${st}</span></td>
       <td class="actions-cell">${act}</td></tr>`;
   }).join('');
@@ -2105,26 +2098,17 @@ function renderFooter(){
   const p=P(), can=p.cls||p.rule||p.up;
   if(S.tab==='df'){
     const o=defOpen(), rd=defResponded();
-    const note=`<span class="foot-note">${o} open \u00b7 ${rd} rectified, awaiting verification \u00b7 ${DEFECTS.filter(d=>d.st==='closed').length} closed</span>`;
-    let right='';
-    if(p.def==='manage')
-      right=`<button class="ant-btn ant-btn-primary" data-act="toSales" ${o?'':'disabled'}
-        title="${o?'Send the open defects to Sales':'No open defect to return'}">Return To Sales (${o})</button>`;
-    if(p.def==='respond')
-      right=`<button class="ant-btn ant-btn-primary" data-act="toCRA" ${o?'':''}
-        >Return To CRA${o?` (${o} still open)`:''}</button>`;
-    if(p.def==='verify')
-      right=`<button class="ant-btn ant-btn-primary" data-act="done" ${rd?'disabled':''}
-        title="${rd?'Verify the rectified defects first':'All rectified defects verified'}">Complete Re-check</button>`;
-    $('footer').innerHTML=note+`<span class="file-list-footer-actions">
-      <button class="ant-btn back-btn">Back To List</button>${right}</span>`;
+    $('footer').innerHTML=`<span class="foot-note">${o} to fix \u00b7 ${rd} sent back to CRA</span>
+      <span class="file-list-footer-actions">
+        <button class="ant-btn back-btn">Back To List</button>
+        <button class="ant-btn ant-btn-primary" data-act="toCRA">Return To CRA${o?` (${o} still to fix)`:''}</button></span>`;
     return;
   }
   if(S.tab==='fl'){
     // While the case is out with Sales the file list is a record, not a work
     // surface - the work lives on the defect tab, so send them there.
     const act = p.def==='respond'
-      ? `<button class="ant-btn ant-btn-primary" data-tab="df">Go To Defects To Fix (${defOpen()})</button>`
+      ? `<button class="ant-btn ant-btn-primary" data-tab="df">Go To \u201cTo Fix\u201d (${defOpen()})</button>`
       : `<button class="ant-btn ant-btn-primary submit-btn" id="btnSubmit" ${can?'':'disabled'}>Submit for Verification (${S.stage==='app'?'Application':'Disbursement'})</button>`;
     $('footer').innerHTML=`<span class="foot-note">File List \u00b7 Full ledger and classification confirmation</span>
       <span class="file-list-footer-actions"><button class="ant-btn back-btn">Back To List</button>${act}</span>`;
@@ -2401,33 +2385,10 @@ document.addEventListener('click',e=>{
   if(t.dataset.cs){S.cs=t.dataset.cs;S.sel.clear();render();if(S.dt)renderDt();return;}
   if(t.dataset.repl){askReplace(t.dataset.repl);return;}
   if(t.dataset.dorepl){replaceDoc(t.dataset.dorepl);return;}
-  if(t.dataset.verify){
-    const d=DEFECTS.find(x=>x.no===t.dataset.verify);
-    d.st='closed'; render(); msg(`Defect #${d.no} verified and closed`); return;
-  }
-  if(t.dataset.waive){
-    const d=DEFECTS.find(x=>x.no===t.dataset.waive);
-    sm('Waive Defect',
-      `<div class="pnote warn">The rule stays failed. Waiving records why it is acceptable, and the
-         reason goes into the audit trail alongside the failed rule.</div>
-       <label style="font-size:12px;color:var(--text-2)">Justification <span style="color:var(--error-text)">*</span></label>
-       <textarea class="ant-input" id="wvR" style="width:100%;height:80px;margin-top:4px;padding:8px 11px"
-         placeholder="e.g. CED approved the shortfall on 18-08-2026"></textarea>`,
-      `<button class="ant-btn" data-cl="1">Cancel</button>
-       <button class="ant-btn ant-btn-primary" data-dowaive="${d.no}">Waive</button>`);
-    return;
-  }
-  if(t.dataset.dowaive){
-    const d=DEFECTS.find(x=>x.no===t.dataset.dowaive);
-    const r=($('wvR')&&$('wvR').value.trim())||'';
-    if(!r){msg('A justification is required');return;}
-    d.st='closed'; d.cr=d.cr+' \u00b7 Waived: '+r;
-    smClose(); render(); msg(`Defect #${d.no} waived and closed`); return;
-  }
   if(t.dataset.stage){S.stage=t.dataset.stage;S.tab='fl';S.subj='all';S.sel.clear();S.fType=S.fStatus='';render();return;}
   if(t.dataset.tab){S.tab=t.dataset.tab;S.sel.clear();S.fType=S.fStatus='';if(S.subj==='deleted')S.subj='all';render();return;}
   if(t.dataset.subj){S.subj=t.dataset.subj;S.sel.clear();
-    if((S.subj==='all'||S.subj==='deleted')&&S.tab!=='fl'){S.tab='fl';S.fType=S.fStatus='';}
+    if((S.subj==='all'||S.subj==='deleted')&&S.tab!=='fl'&&S.tab!=='df'){S.tab='fl';S.fType=S.fStatus='';}
     render();return;}
   if(t.dataset.chk){const i=t.dataset.chk;S.sel.has(i)?S.sel.delete(i):S.sel.add(i);render();return;}
   if(t.dataset.open){openDt(t.dataset.open);return;}
@@ -2436,12 +2397,8 @@ document.addEventListener('click',e=>{
   if(t.dataset.act){
     const a=t.dataset.act,n=S.sel.size;
     if(a==='doclist'){openDocList();return;}
-    if(a==='toSales'){S.cs='returned';S.role='sales';render();
-      msg(`${defOpen()} defect(s) returned to Sales \u00b7 only the documents they name are unlocked`);return;}
     if(a==='toCRA'){S.cs='recheck';S.role='cra';render();
-      msg('Case returned to CRA for verification');return;}
-    if(a==='done'){S.cs='review';S.role='cra';S.tab='fl';render();
-      msg('Re-check complete \u00b7 case back with CRA');return;}
+      msg('Case returned to CRA \u00b7 verify and close the defects in the Workbench');return;}
     if(a==='reset'){S.fType=S.fStatus='';render();return;}
     if(a==='refresh'){msg('Refreshed');return;}
     if(a==='del'){askDelete([...S.sel]);return;}
