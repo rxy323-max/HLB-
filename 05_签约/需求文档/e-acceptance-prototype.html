@@ -37,7 +37,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 /* ── Badges ── */
 .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:500;}
 .bd-gray{background:#e8eaed;color:#5f6368;}
-.bd-green{background:#e6f4ea;color:#137333;}
+.bd-green{background:#e8f0fe;color:#174ea6;}
 .bd-blue{background:#e8f0fe;color:#1967d2;}
 .bd-orange{background:#fef7e0;color:#b45309;}
 .bd-red{background:#fce8e6;color:#c5221f;}
@@ -92,11 +92,11 @@ tr:hover td{background:#fafafa;}
 .ea-progress::before{content:'';position:absolute;top:13px;left:calc(16.67% + 13px);right:calc(16.67% + 13px);height:2px;background:#e8eaed;z-index:0;}
 .ep-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1;}
 .ep-circle{width:26px;height:26px;border-radius:50%;border:2px solid #dadce0;background:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#9aa0a6;transition:.2s;}
-.ep-step.done .ep-circle{background:#34a853;border-color:#34a853;color:#fff;}
+.ep-step.done .ep-circle{background:#1967d2;border-color:#1967d2;color:#fff;}
 .ep-step.active .ep-circle{background:#1967d2;border-color:#1967d2;color:#fff;}
 .ep-step.failed .ep-circle{background:#c5221f;border-color:#c5221f;color:#fff;}
 .ep-label{margin-top:5px;font-size:11px;color:#9aa0a6;text-align:center;line-height:1.4;}
-.ep-step.done .ep-label{color:#34a853;}
+.ep-step.done .ep-label{color:#1967d2;}
 .ep-step.active .ep-label{color:#1967d2;font-weight:600;}
 .ep-step.failed .ep-label{color:#c5221f;}
 
@@ -108,7 +108,7 @@ tr:hover td{background:#fafafa;}
 .m-section-hdr{padding:12px 16px;background:#f8f9fa;border-bottom:1px solid #e8eaed;display:flex;align-items:center;justify-content:space-between;}
 .m-section-hdr-left{display:flex;align-items:center;gap:12px;}
 .m-sec-num{width:24px;height:24px;border-radius:50%;background:#1967d2;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.m-sec-num.done{background:#34a853;}
+.m-sec-num.done{background:#1967d2;}
 .m-sec-num.skipped{background:#9aa0a6;}
 .m-sec-title{font-size:13px;font-weight:600;}
 .m-sec-sub{font-size:11px;color:#9aa0a6;margin-top:1px;}
@@ -132,7 +132,7 @@ tr:hover td{background:#fafafa;}
 
 /* ── Bio result inline summary ── */
 .bio-inline-result{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:500;}
-.bir-matched{background:#e6f4ea;color:#137333;}
+.bir-matched{background:#e8f0fe;color:#174ea6;}
 .bir-unmatched{background:#fce8e6;color:#c5221f;}
 .bir-skipped{background:#f1f3f4;color:#5f6368;}
 
@@ -147,7 +147,7 @@ tr:hover td{background:#fafafa;}
 .bio-row:last-child{border-bottom:none;}
 .bio-lbl{font-size:11px;color:#80868b;flex-shrink:0;}
 .bio-val{font-size:11px;font-weight:500;text-align:right;}
-.bio-val.matched{color:#137333;}
+.bio-val.matched{color:#174ea6;}
 .bio-val.failed{color:#c5221f;}
 .bio-val.warn{color:#b45309;}
 
@@ -159,11 +159,11 @@ tr:hover td{background:#fafafa;}
 .conn-indicator{display:flex;flex-direction:column;align-items:center;gap:3px;}
 .conn-dots{display:flex;gap:4px;}
 .conn-dot{width:5px;height:5px;border-radius:50%;background:#e8eaed;}
-.conn-dot.on{background:#34a853;}
+.conn-dot.on{background:#1967d2;}
 .conn-icon{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;}
 .ci-off{background:#fce8e6;color:#c5221f;}
 .ci-scan{background:#fef7e0;color:#b45309;}
-.ci-on{background:#e6f4ea;color:#137333;}
+.ci-on{background:#e8f0fe;color:#174ea6;}
 .spin{animation:spin 1.2s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .state-title{font-size:15px;font-weight:700;margin-bottom:5px;text-align:center;}
@@ -171,7 +171,7 @@ tr:hover td{background:#fafafa;}
 .bio-result{text-align:center;padding:10px 0;}
 .bio-result-icon{width:44px;height:44px;display:block;margin:0 auto 10px;}
 .bio-result-title{font-size:14px;font-weight:700;margin-bottom:4px;}
-.brt-matched{color:#137333;}
+.brt-matched{color:#174ea6;}
 .brt-failed{color:#c5221f;}
 .brt-warn{color:#b45309;}
 
@@ -182,8 +182,8 @@ tr:hover td{background:#fafafa;}
 .rib-doc-item{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #e8eaed;font-size:12px;}
 .rib-doc-item:last-child{border-bottom:none;}
 .rib-waiting{display:flex;align-items:center;gap:8px;justify-content:center;font-size:12px;color:#b45309;font-weight:500;margin-bottom:12px;}
-.rib-ok{background:#e6f4ea;border:1px solid #ceead6;border-radius:6px;padding:10px 14px;display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;}
-.rib-ok svg{width:16px;height:16px;fill:#137333;flex-shrink:0;margin-top:1px;}
+.rib-ok{background:#e8f0fe;border:1px solid #c6dafc;border-radius:6px;padding:10px 14px;display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;}
+.rib-ok svg{width:16px;height:16px;fill:#174ea6;flex-shrink:0;margin-top:1px;}
 
 /* ── OTP ── */
 .otp-panel{background:#fef7e0;border:1px solid #fde68a;border-radius:8px;padding:14px;width:100%;max-width:360px;}
@@ -205,7 +205,7 @@ tr:hover td{background:#fafafa;}
 .ux-hd .right{margin-left:auto;display:flex;align-items:center;gap:8px;}
 .ux-bd{padding:16px 18px;}
 .ux-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.ux-dot-done{background:#34a853;}
+.ux-dot-done{background:#1967d2;}
 .ux-dot-warn{background:#f9ab00;}
 .ux-dot-wait{background:#1967d2;}
 
@@ -217,8 +217,7 @@ tr:hover td{background:#fafafa;}
 .ux-step{background:#1967d2;color:#fff;font-size:11px;font-weight:700;border-radius:4px;padding:3px 9px;letter-spacing:.4px;white-space:nowrap;flex-shrink:0;}
 .ux-action-title{font-size:14px;font-weight:700;color:#174ea6;}
 .ux-action-desc{font-size:12px;color:#5f6368;margin-top:5px;line-height:1.55;}
-.ux-action-btns{display:flex;gap:10px;align-items:center;flex-shrink:0;}
-.ux-action-btns .btn{padding:9px 20px;font-size:13px;min-height:38px;}
+.ux-action-btns{display:flex;gap:8px;align-items:center;flex-shrink:0;}
 
 /* key/value row — no fill, separated by a thin rule */
 .ux-defs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 20px;padding:14px 0;border-bottom:1px solid #f1f3f4;}
@@ -228,6 +227,16 @@ tr:hover td{background:#fafafa;}
 /* small section heading inside a card */
 .ux-sub{font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.5px;margin:16px 0 2px;}
 
+/* completed steps, shown inside the signing-summary card.
+   Replaces the standalone progress bar once signing is done, so the steps
+   clearly belong to that signing rather than to whatever follows. */
+.ux-track{display:flex;align-items:center;gap:0;padding:2px 0 14px;border-bottom:1px solid #f1f3f4;margin-bottom:14px;}
+.ux-tstep{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.ux-tmark{width:20px;height:20px;border-radius:50%;background:#e8f0fe;color:#1967d2;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.ux-tlabel{font-size:12px;color:#3c4043;white-space:nowrap;}
+.ux-tline{flex:1;height:1px;background:#e8eaed;margin:0 12px;min-width:16px;}
+
 /* changed-terms rows — no fill */
 .ux-chg{display:grid;grid-template-columns:180px 1fr 22px 1fr;align-items:center;gap:10px;
   font-size:13px;padding:9px 0;border-bottom:1px solid #f6f7f8;}
@@ -235,7 +244,7 @@ tr:hover td{background:#fafafa;}
 .ux-chg .f{color:#5f6368;}
 .ux-chg .o{color:#9aa0a6;text-decoration:line-through;}
 .ux-chg .a{color:#c0c4c9;text-align:center;font-size:12px;}
-.ux-chg .n{color:#137333;font-weight:600;}
+.ux-chg .n{color:#174ea6;font-weight:600;}
 
 /* inline alert — one line, no heavy box */
 .ux-alert{display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.6;
@@ -244,7 +253,7 @@ tr:hover td{background:#fafafa;}
 
 /* status pill (SMS delivery) */
 .ux-pill{display:inline-flex;align-items:center;border-radius:11px;padding:3px 11px;font-size:11px;font-weight:600;}
-.ux-pill-ok{background:#e6f4ea;color:#137333;}
+.ux-pill-ok{background:#e8f0fe;color:#174ea6;}
 .ux-pill-err{background:#fce8e6;color:#c5221f;}
 
 /* ordered guidance list */
@@ -275,9 +284,9 @@ tr:hover td{background:#fafafa;}
 .et-hstep{display:flex;align-items:flex-start;padding:18px 24px 6px;}
 .et-hstep-item{flex:1;text-align:center;position:relative;}
 .et-hstep-item:not(:last-child)::after{content:'';position:absolute;top:11px;left:calc(50% + 14px);width:calc(100% - 28px);height:2px;background:#e8eaed;}
-.et-hstep-item.done:not(:last-child)::after{background:#137333;}
+.et-hstep-item.done:not(:last-child)::after{background:#174ea6;}
 .et-hstep-dot{width:22px;height:22px;border-radius:50%;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:11px;position:relative;z-index:1;}
-.et-hstep-item.done .et-hstep-dot{background:#137333;color:#fff;}
+.et-hstep-item.done .et-hstep-dot{background:#174ea6;color:#fff;}
 .et-hstep-item.cur .et-hstep-dot{background:#b45309;color:#fff;box-shadow:0 0 0 4px #fde68a66;}
 .et-hstep-item.todo .et-hstep-dot{background:#e8eaed;color:#9aa0a6;}
 .et-hstep-name{font-size:10px;font-weight:500;color:#5f6368;line-height:1.3;}
@@ -305,7 +314,7 @@ tr:hover td{background:#fafafa;}
 .doc-card{border:1px solid #e8eaed;border-radius:8px;padding:12px;}
 /* ── Manual Section 2 — Signing Package ── */
 .dc-status-banner{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:14px;border:1px solid;}
-.dc-status-complete{background:#e6f4ea;border-color:#a8d5b5;color:#137333;}
+.dc-status-complete{background:#e8f0fe;border-color:#c6dafc;color:#174ea6;}
 .dc-status-pending{background:#f8f9fa;border-color:#e8eaed;color:#5f6368;}
 .dc-status-dot{width:8px;height:8px;border-radius:50%;background:#9aa0a6;display:inline-block;flex-shrink:0;}
 .ma-doc-note{font-size:12px;color:#5f6368;margin-bottom:12px;line-height:1.6;padding:0 2px;}
@@ -322,7 +331,7 @@ tr:hover td{background:#fafafa;}
 .dc-icon svg{width:14px;height:14px;fill:none;stroke:#5f6368;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 .dc-name{font-size:12px;font-weight:500;}
 .dc-meta{font-size:10px;color:#9aa0a6;margin-top:2px;line-height:1.4;}
-.vbadge{color:#34a853;font-weight:700;}
+.vbadge{color:#1967d2;font-weight:700;}
 .dc-actions{display:flex;gap:5px;}
 .btn-outline-sm{flex:1;padding:5px 0;border:1px solid #dadce0;border-radius:5px;background:#fff;font-size:11px;color:#3c4043;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:.15s;}
 .btn-outline-sm:hover{border-color:#1967d2;color:#1967d2;}
@@ -330,15 +339,21 @@ tr:hover td{background:#fafafa;}
 .ma-divider{height:1px;background:#e8eaed;margin:14px 0;}
 
 /* ── Buttons ── */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;transition:.15s;white-space:nowrap;}
-.btn-primary{background:#1967d2;color:#fff;}
-.btn-primary:hover{background:#1557b0;}
-.btn-primary:disabled{background:#dadce0;color:#9aa0a6;cursor:not-allowed;}
-.btn-secondary{background:#fff;color:#3c4043;border:1px solid #dadce0;}
-.btn-secondary:hover{background:#f8f9fa;}
-.btn-danger{background:#fff;color:#c5221f;border:1px solid #c5221f;}
-.btn-danger:hover{background:#fce8e6;}
-.btn-sm{padding:5px 12px;font-size:12px;}
+/* One button scale for the whole prototype.
+   Default 34px, .btn-sm 28px. Only .btn-primary is filled — one filled
+   button per view keeps the visual weight where the next action is. */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  height:34px;padding:0 16px;border:1px solid transparent;border-radius:6px;
+  font-size:13px;font-weight:500;line-height:1;cursor:pointer;transition:.15s;white-space:nowrap;}
+.btn-primary{background:#1967d2;color:#fff;border-color:#1967d2;}
+.btn-primary:hover{background:#1557b0;border-color:#1557b0;}
+.btn-primary:disabled{background:#e8eaed;color:#9aa0a6;border-color:#e8eaed;cursor:not-allowed;}
+.btn-secondary{background:#fff;color:#3c4043;border-color:#dadce0;}
+.btn-secondary:hover{background:#f8f9fa;border-color:#c4c7c9;}
+.btn-secondary:disabled{color:#9aa0a6;background:#fff;border-color:#e8eaed;cursor:not-allowed;}
+.btn-danger{background:#fff;color:#c5221f;border-color:#f0b4b2;}
+.btn-danger:hover{background:#fce8e6;border-color:#c5221f;}
+.btn-sm{height:28px;padding:0 12px;font-size:12px;}
 
 /* ── Alert ── */
 .alert-warn{background:#fef7e0;border:1px solid #fde68a;border-radius:6px;padding:10px 14px;font-size:12px;color:#b45309;display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;}
@@ -366,7 +381,7 @@ tr:hover td{background:#fafafa;}
 .mig-item span{font-size:12px;font-weight:500;}
 .log-table th{background:#f8f9fa;font-size:11px;padding:7px 10px;}
 .log-table td{font-size:11px;padding:7px 10px;}
-.flag-y{color:#137333;font-weight:700;}
+.flag-y{color:#174ea6;font-weight:700;}
 .flag-n{color:#dadce0;}
 
 /* ── Dev tool ── */
@@ -526,6 +541,13 @@ tr:hover td{background:#fafafa;}
                 <div class="right"><button class="btn btn-secondary btn-sm" onclick="openEALog()">Acceptance Log</button></div>
               </div>
               <div class="ux-bd" style="padding:14px 18px;">
+                <div class="ux-track">
+                  <div class="ux-tstep"><span class="ux-tmark">✓</span><span class="ux-tlabel">Identity Verification</span></div>
+                  <div class="ux-tline"></div>
+                  <div class="ux-tstep"><span class="ux-tmark">✓</span><span class="ux-tlabel">Review &amp; Accept at RIB</span></div>
+                  <div class="ux-tline"></div>
+                  <div class="ux-tstep"><span class="ux-tmark">✓</span><span class="ux-tlabel" id="trackStep3Label">E-Acceptance Confirmation</span></div>
+                </div>
                 <div style="font-size:12px;color:#5f6368;line-height:1.7;" id="eaCompleteSub">Customer GGBOUND completed E-Acceptance. Signed documents archived to Document Centre.</div>
               </div>
             </div>
@@ -662,7 +684,7 @@ tr:hover td{background:#fafafa;}
     <div class="modal-body" style="padding:16px;">
       <div class="et-browser">
         <div class="et-chrome">
-          <div class="et-chrome-dots"><span style="background:#ea4335;"></span><span style="background:#fbbc04;"></span><span style="background:#34a853;"></span></div>
+          <div class="et-chrome-dots"><span style="background:#ea4335;"></span><span style="background:#fbbc04;"></span><span style="background:#1967d2;"></span></div>
           <div class="et-urlbar" id="etUrlbar">🔒 hlb.com.my/etracker</div>
         </div>
         <div class="et-page" id="etPhoneBody"></div>
@@ -760,11 +782,11 @@ tr:hover td{background:#fafafa;}
 // ═══════════════════════════════════════════════
 //  ICON CONSTANTS (SVG — no emoji)
 // ═══════════════════════════════════════════════
-const ICO_OK=`<svg class="bio-result-icon" viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`;
+const ICO_OK=`<svg class="bio-result-icon" viewBox="0 0 24 24" fill="none" stroke="#1967d2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`;
 const ICO_FAIL=`<svg class="bio-result-icon" viewBox="0 0 24 24" fill="none" stroke="#c5221f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
 const ICO_WARN=`<svg class="bio-result-icon" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
 // Small inline icons (13×13)
-const ICO_OK_SM=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#137333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`;
+const ICO_OK_SM=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#174ea6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`;
 const ICO_WARN_SM=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
 
 // ═══════════════════════════════════════════════
@@ -944,6 +966,10 @@ function renderEAPanel(){
     );
     document.getElementById('epc'+n).textContent=(S.eaComplete||S.eaStep>n)?'✓':(isFailed?'✗':n);
   });
+  // Once signing is done the stepper is history, so it moves inside the
+  // signing-summary card (see .ux-track) and the standalone bar is hidden —
+  // otherwise it reads as a summary of whatever sits below it.
+  document.getElementById('eaProgress').style.display=S.eaComplete?'none':'flex';
   document.getElementById('switchLinkRow').style.display=S.eaComplete?'none':'flex';
   document.getElementById('eaStep1').style.display=(!S.eaComplete&&S.eaStep===1)?'block':'none';
   document.getElementById('eaStep2').style.display=(!S.eaComplete&&S.eaStep===2)?'block':'none';
@@ -961,6 +987,9 @@ function renderEAPanel(){
       showAmd?'Initial Signing Completed':'E-Acceptance Completed';
     document.getElementById('prevCardMeta').textContent=
       '20-05-2026 16:50:29 · via '+(S.eaViaOTP?'OTP':'Biometric');
+    // Third step reflects how confirmation was actually obtained
+    document.getElementById('trackStep3Label').textContent=
+      S.eaViaOTP?'Confirmation via OTP':'E-Acceptance Confirmation';
     document.getElementById('eaCompleteSub').textContent=
       'Customer GGBOUND completed E-Acceptance. Signed documents archived to Document Centre.';
     document.getElementById('amendmentSection').style.display=showAmd?'block':'none';
@@ -1004,11 +1033,11 @@ function leftPanel(step,overrides={}){
 
 // ── Device SVG ──
 function devViz(st){
-  const bg={disconnected:'#fce8e6',scanning:'#fef7e0',connected:'#e6f4ea'};
+  const bg={disconnected:'#fce8e6',scanning:'#fef7e0',connected:'#e8f0fe'};
   const icon={
     disconnected:'<span style="color:#c5221f;font-size:14px;">✕</span>',
     scanning:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" class="spin"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>',
-    connected:'<span style="color:#137333;font-size:14px;">✓</span>'
+    connected:'<span style="color:#174ea6;font-size:14px;">✓</span>'
   };
   const dots=(on)=>[1,2,3].map(()=>`<div class="conn-dot ${on?'on':''}"></div>`).join('');
   return `<div class="device-vis">
@@ -1154,7 +1183,7 @@ function renderStep2(){
   const docs=['Product Disclosure Sheet','HP Agreement Second Schedule','HP Agreement with T&C'];
   const globeSvg=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`;
   const docSvg=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1967d2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
-  const chkSvg=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`;
+  const chkSvg=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1967d2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`;
 
   if(S.s2RibStatus==='waiting'){
     el.innerHTML=`<div class="rib-panel">
@@ -1173,12 +1202,12 @@ function renderStep2(){
     el.innerHTML=`<div class="rib-panel">
       <div class="rib-ok" style="margin-bottom:12px;"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         <div>
-          <div style="font-weight:600;font-size:13px;color:#137333;margin-bottom:2px;">Customer submitted at RIB Portal</div>
+          <div style="font-weight:600;font-size:13px;color:#174ea6;margin-bottom:2px;">Customer submitted at RIB Portal</div>
           <div style="font-size:12px;color:#3c4043;">All 3 documents reviewed and accepted. Acceptance flag confirmed.</div>
         </div>
       </div>
       <div class="rib-doc-list" style="margin-bottom:12px;">
-        ${docs.map(d=>`<div class="rib-doc-item">${chkSvg}<span style="flex:1;">${d}</span><span style="font-size:10px;color:#137333;font-weight:600;">Accepted</span></div>`).join('')}
+        ${docs.map(d=>`<div class="rib-doc-item">${chkSvg}<span style="flex:1;">${d}</span><span style="font-size:10px;color:#174ea6;font-weight:600;">Accepted</span></div>`).join('')}
       </div>
       <div style="background:#f8f9fa;border:1px solid #e8eaed;border-radius:6px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#5f6368;line-height:1.65;">
         <div style="font-weight:600;color:#202124;margin-bottom:4px;">RIB Portal message shown to customer:</div>
@@ -1336,9 +1365,9 @@ function completeEA(viaOTP){
 function updateHeaderStatus(){
   const el=document.getElementById('eaStatusHeader');
   if(S.amendmentRequired&&S.amendmentStep!=='none'){
-    if(S.amendmentStep==='confirmed'){el.textContent='Amendment Confirmed';el.style.color='#137333';}
+    if(S.amendmentStep==='confirmed'){el.textContent='Amendment Confirmed';el.style.color='#174ea6';}
     else{el.textContent='Amendment Pending';el.style.color='#b45309';}
-  } else if(S.eaComplete){el.textContent='Completed';el.style.color='#137333';}
+  } else if(S.eaComplete){el.textContent='Completed';el.style.color='#174ea6';}
   else{el.textContent='—';el.style.color='';}
   document.getElementById('amendmentVal').textContent=(S.amendmentRequired&&S.amendmentStep!=='none')?'Yes':'--';
 }
@@ -1484,7 +1513,7 @@ function etConfirm(){
   S.custConfirmed=true;
   etScreen=4;renderETracker();
   const hint=document.getElementById('amdRefreshHint');
-  if(hint){hint.textContent='Customer has confirmed — press Refresh to update.';hint.style.color='#137333';}
+  if(hint){hint.textContent='Customer has confirmed — press Refresh to update.';hint.style.color='#174ea6';}
 }
 function renderETracker(){
   const body=document.getElementById('etPhoneBody');
@@ -1576,8 +1605,8 @@ function renderETracker(){
   } else if(etScreen===4){
     html=topnav+`
       <div style="padding:56px 24px;text-align:center;">
-        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#137333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:14px;"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
-        <div style="font-size:16px;font-weight:700;color:#137333;margin-bottom:6px;">Amendment Confirmed</div>
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#174ea6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:14px;"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+        <div style="font-size:16px;font-weight:700;color:#174ea6;margin-bottom:6px;">Amendment Confirmed</div>
         <div style="font-size:12px;color:#5f6368;line-height:1.7;">Thank you. Your confirmation has been recorded.<br>Your loan will proceed with the updated terms.<br><br><span style="font-size:11px;color:#9aa0a6;">Confirmed at 17:02, 20 May 2026</span></div>
       </div>`;
   }
@@ -1846,7 +1875,7 @@ function verifyOTP(){
   const v=[...document.querySelectorAll('.otp-input')].map(i=>i.value).join('');
   const r=document.getElementById('otpResult');
   if(v.length===6){
-    r.style.color='#137333';
+    r.style.color='#174ea6';
     r.textContent='OTP verified. Completing E-Acceptance...';
     setTimeout(()=>completeEA(true),900);
   } else {
