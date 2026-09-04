@@ -1,21 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex">
-<style>
-/* standalone compat reset - single file, open directly in a browser */
-html{-webkit-text-size-adjust:100%}
-*{box-sizing:border-box}
-body{margin:0;background:#fafafa;font:14px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif}
-img{max-width:100%}
-[hidden]{display:none!important}
-button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit}
-</style>
-<title>CRA Workbench</title>
-</head>
-<body>
+<title>CRA 工作台原型</title>
+
 <style>
 :root{
   --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'PingFang SC','Microsoft YaHei',sans-serif;
@@ -244,6 +228,11 @@ tbody tr:hover td{background:var(--alt)}
 .dchk{display:flex;gap:9px;align-items:center;font-size:13.5px;color:var(--ink-2);cursor:pointer;height:36px}
 .dta{width:100%;min-height:110px;border:1px solid #d6d9de;border-radius:var(--r-md);padding:10px 12px;font-size:13.5px;resize:vertical}
 .dcount{text-align:right;font-size:12px;color:var(--ink-3);margin-top:4px}
+.tysel{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.tychip{border:1px solid var(--line);border-radius:var(--r-sm);padding:3px 9px;font-size:12px;
+  cursor:pointer;background:#fff;color:var(--ink-2);user-select:none}
+.tychip:hover{border-color:var(--pri);color:var(--pri)}
+.tychip.on{background:var(--pri);border-color:var(--pri);color:#fff}
 .dfull{grid-column:1/-1}
 
 /* File Center rule modal */
@@ -301,6 +290,8 @@ tbody tr:hover td{background:var(--alt)}
   <span class="seg" id="scnSeg"><button data-scn="manual">Manual</button><button data-scn="stp">STP</button></span>
   <span>STP switch</span>
   <span class="seg" id="swSeg"><button data-sw="1">ON</button><button data-sw="0">OFF</button></span>
+  <span>Round</span>
+  <span class="seg" id="rdSeg"><button data-rd="1">1 · First check</button><button data-rd="2">2 · After replacement</button></span>
   <span class="why">CRA Workbench Prototype</span>
 </div>
 
@@ -381,7 +372,11 @@ const R0=[
   issue:'Signed 12-08-2026, 14 days ago, exceeds 5-day limit',dc:'AGR-011',dcat:'AGREEMENT - MASTER',dty:'Hirer and/or Witnessed Wrongly Dated'},
  {id:'EB-SIG-1',nm:'Hirer signature & witness completeness',file:'HP Agreement Signed.pdf',pass:0,
   issue:'Eyeball check required on page 6',dc:'AGR-023',dcat:'AGREEMENT - MASTER',dty:'Signature incomplete / not witnessed'},
- {id:'S52',nm:'Loan amount reconciliation',file:'2nd Schedule Part I.pdf',pass:1,dc:'SCH-004',dcat:'SECOND SCHEDULE PART I',dty:'Loan Amount is wrong'},
+ // Surfaces only when the replacement clears A155 - scenario c, a rule the old file never hit.
+ {id:'A156',nm:'Hirer name matches the NRIC',file:'HP Agreement.pdf',pass:1,dc:'AGR-014',dcat:'AGREEMENT - MASTER',dty:'Hirer name mismatch'},
+ // xfile marks a rule that reads two documents. Replacing either one can flip it,
+ // which is the whole reason revalidation runs over the Case and not over one file.
+ {id:'S52',nm:'Loan amount reconciliation',file:'2nd Schedule Part I.pdf',xfile:'HP Agreement.pdf',pass:1,dc:'SCH-004',dcat:'SECOND SCHEDULE PART I',dty:'Loan Amount is wrong'},
  {id:'X-NRIC-1',nm:'NRIC cross-document match',file:'NRIC.png',pass:1,dc:'CUS-001',dcat:'CUSTOMER INFO',dty:'NRIC mismatch'},
  {id:'A153',nm:'Guarantee agreement date alignment',file:'HP Guarantee Agreement.pdf',pass:1,dc:'AGR-031',dcat:'AGREEMENT - GUARANTOR',dty:'Gtee Agrt wrongly dated'},
  {id:'I67',nm:'Vehicle invoice date sequence',file:'Vehicle Invoice.pdf',pass:1,dc:'INV-007',dcat:'INVOICE - VEHICLE',dty:'Vehicle Invoice not dated'},
@@ -405,29 +400,32 @@ const R0=[
  {id:'D62',nm:'Seller account details complete',file:'Seller Invoice.pdf',pass:1,dc:'DIR-006',dcat:'DIRECT CASE',dty:'Seller account incomplete'}
 ];
 
+/* doc names the document each field is read from. It is what makes the write-back
+   gate checkable: a field may only be pulled from a document that is the latest
+   version AND carries no open defect. */
 const F0=[
- {g:'Collateral Info', k:'Chassis No.',        sys:'',                  ocr:'WDF9073122A123456',  req:1},
- {g:'Collateral Info', k:'Engine No.',         sys:'',                  ocr:'OM642920C123456',    req:1},
- {g:'Collateral Info', k:'Registration No.',   sys:'',                  ocr:'ABC 1234',           req:0},
- {g:'Collateral Info', k:'Manufacture Year',   sys:'',                  ocr:'2023',               req:1},
- {g:'Collateral Info', k:'Vehicle Model',      sys:'PERODUA ALZA 1.5 AV',ocr:'PERODUA ALZA 1.5 AV',req:1},
- {g:'Facility Info',   k:'Agreement Date',     sys:'',                  ocr:'12-08-2026',         req:1},
+ {g:'Collateral Info', k:'Chassis No.',        sys:'',                  ocr:'WDF9073122A123456',  req:1,doc:'VOC.pdf'},
+ {g:'Collateral Info', k:'Engine No.',         sys:'',                  ocr:'OM642920C123456',    req:1,doc:'VOC.pdf'},
+ {g:'Collateral Info', k:'Registration No.',   sys:'',                  ocr:'ABC 1234',           req:0,doc:'VOC.pdf'},
+ {g:'Collateral Info', k:'Manufacture Year',   sys:'',                  ocr:'2023',               req:1,doc:'VOC.pdf'},
+ {g:'Collateral Info', k:'Vehicle Model',      sys:'PERODUA ALZA 1.5 AV',ocr:'PERODUA ALZA 1.5 AV',req:1,doc:'Vehicle Invoice.pdf'},
+ {g:'Facility Info',   k:'Agreement Date',     sys:'',                  ocr:'12-08-2026',         req:1,doc:'HP Agreement.pdf'},
  {g:'Facility Info',   k:'Total Price',        sys:'128,000.00',        ocr:'128,000.00',         req:1},
  {g:'Facility Info',   k:'Down Payment',       sys:'40,000.00',         ocr:'40,000.00',          req:1},
  {g:'Facility Info',   k:'Principal Amount',   sys:'88,000.00',         ocr:'88,000.00',          req:1},
  {g:'Facility Info',   k:'Tenure (months)',    sys:'84',                ocr:'84',                 req:1},
  {g:'Facility Info',   k:'Monthly Instalment', sys:'1,166.67',          ocr:'1,166.67',           req:1},
- {g:'Insurance Info',  k:'Insurer',            sys:'',                  ocr:'ALLIANZ GENERAL',    req:1},
- {g:'Insurance Info',  k:'Sum Insured',        sys:'102,400.00',        ocr:'98,000.00',          req:1},
- {g:'Insurance Info',  k:'Cover Note No.',     sys:'',                  ocr:'CN-2026-0088123',    req:0},
- {g:'Insurance Info',  k:'Policy Expiry',      sys:'',                  ocr:'18-08-2027',         req:1},
+ {g:'Insurance Info',  k:'Insurer',            sys:'',                  ocr:'ALLIANZ GENERAL',    req:1,doc:'Insurance Cover Note.pdf'},
+ {g:'Insurance Info',  k:'Sum Insured',        sys:'102,400.00',        ocr:'98,000.00',          req:1,doc:'Insurance Cover Note.pdf'},
+ {g:'Insurance Info',  k:'Cover Note No.',     sys:'',                  ocr:'CN-2026-0088123',    req:0,doc:'Insurance Cover Note.pdf'},
+ {g:'Insurance Info',  k:'Policy Expiry',      sys:'',                  ocr:'18-08-2027',         req:1,doc:'Insurance Cover Note.pdf'},
  {g:'Seller Info',     k:'Customer Name',      sys:'',                  ocr:'ABC MOTOR SDN BHD',  req:1},
  {g:'Seller Info',     k:'Address Line 1',     sys:'',                  ocr:'123 Jalan Ampang',   req:1},
  {g:'Seller Info',     k:'Address Line 2',     sys:'',                  ocr:'Pusat Bandar',       req:0},
  {g:'Seller Info',     k:'Postcode',           sys:'',                  ocr:'50450',              req:1},
  {g:'Seller Info',     k:'Dealer Code',        sys:'CC-KL-001',         ocr:'',                   req:1},
- {g:'Hirer Info',      k:'NRIC No.',           sys:'900101-10-1234',    ocr:'900101-10-1284',     req:1},
- {g:'Hirer Info',      k:'Hirer Name',         sys:'TAN WEI MING',      ocr:'TAN WEI MING',       req:1},
+ {g:'Hirer Info',      k:'NRIC No.',           sys:'900101-10-1234',    ocr:'900101-10-1284',     req:1,doc:'NRIC.png'},
+ {g:'Hirer Info',      k:'Hirer Name',         sys:'TAN WEI MING',      ocr:'TAN WEI MING',       req:1,doc:'HP Agreement.pdf'},
  {g:'Hirer Info',      k:'Disbursement Account',sys:'',                 ocr:'',                   req:1}
 ];
 
@@ -464,7 +462,11 @@ const UPLOADED=17, AGE_DAYS=12, AGE_CAP=90;
 let RULES=[],FIELDS=[],CHECK=[],DEFECTS=[];
 const S={scn:'manual',stpSwitch:1,noGtee:0,open:{vsum:1,def:1,chk:0},expand:0,dlg:null,
   sync:{sel:{}},archAt:'14:02',pullAt:'',dseq:0,busy:0,route:null,phase:'',blocks:[],
-  addDef:{cat:'',ty:'',rect:0,ver:0,sr:'',cr:''},
+  addDef:{cat:'',types:[],rect:0,ver:0,sr:'',cr:''},
+  // round 2 = Sales has replaced the documents the defects named and the Case has
+  // been revalidated end to end. replaced lists what came back; showAll unfolds
+  // the rules the focused view keeps out of the way.
+  round:1,replaced:[],showAll:0,
   custDel:'No',fullMt:'Yes',nav:'vsum'};
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -474,9 +476,35 @@ function reset(scn){
   FIELDS=F0.map(f=>Object.assign({},f));
   CHECK=CK0.map(c=>Object.assign({},c,{on:0}));
   DEFECTS=[];S.sync={sel:{}};S.route=null;S.busy=0;S.pullAt='';S.dseq=0;S.expand=0;
+  S.round=1;S.replaced=[];S.showAll=0;
   S.noGtee = scn==='stp'?1:0;
   FLAGS.forEach(f=>{f.on=(scn==='manual'&&f.k==='FBR')?1:0;});
 }
+
+/* Round 2. Sales replaced the two documents the System defects named; the Case was
+   revalidated end to end. Each of the four agreed outcomes shows up once:
+     Insurance Cover Note - I33 cleared            -> scenario b, the defect can close
+     HP Agreement         - A155 cleared, A156 hit -> scenario c, the defect is rewritten
+     HP Agreement Signed  - EB-SIG-1 still failing -> scenario a, the defect stands
+     2nd Schedule Part I  - S52 flips to failing   -> the cross-file consequence
+   S52 reads the HP Agreement as well, so replacing that document moves a rule on a
+   file nobody touched. It is why the rerun covers the Case rather than one file. */
+function applyRound2(){
+  S.replaced=['Insurance Cover Note.pdf','HP Agreement.pdf'];
+  RULES.forEach(r=>{ r.chg=''; r.prev=r.pass?'pass':'fail'; });
+  const set=(id,pass,chg,issue)=>{const r=RULES.find(x=>x.id===id); if(!r)return;
+    r.pass=pass;r.st='';r.chg=chg; if(issue!==undefined)r.issue=issue;};
+  set('I33',1,'cleared','');
+  set('A155',1,'cleared','');
+  set('A156',0,'newfail','Hirer name on the replaced agreement reads TAN WEI MIN, NRIC reads TAN WEI MING');
+  set('EB-SIG-1',0,'still','Eyeball check required on page 6 - still outstanding on the replacement');
+  set('S52',0,'cross','Balance payable no longer reconciles against the replaced HP Agreement (98,000.00 vs 96,500.00)');
+  S.round=2; S.pullAt=new Date().toTimeString().slice(0,5);
+}
+// A rule earns a place in the focused view if this round moved it, or if it reads a
+// document that was replaced. Everything else keeps its previous conclusion.
+const inFocus=r=>!!r.chg || S.replaced.includes(r.file) || S.replaced.includes(r.xfile);
+const CHGLB={cleared:'Cleared this round',newfail:'Newly failing',still:'Still failing',cross:'Flipped - cross-document'};
 
 const rTotal=()=>RULES.length;
 const rPass=()=>RULES.filter(r=>r.pass).length;
@@ -485,7 +513,18 @@ const rFail=()=>RULES.filter(r=>!r.pass&&r.st!=='pending');
 const rSettled=()=>rTotal()-rPend().length;
 const usedJust=()=>RULES.filter(r=>r.act==='just').length;
 const rulesOK=()=>rFail().length===0&&rPend().length===0;
-const hasDefect=r=>DEFECTS.some(d=>d.rule===r.id);
+/* The defect is anchored to the document, not to the rule. One document with five
+   failing rules is one defect carrying five types - which is what CRA already does
+   by hand today, writing the rest into the remark because type is single-select. */
+const defForFile=fn=>DEFECTS.find(d=>d.file===fn);
+const hasDefect=r=>DEFECTS.some(d=>(d.rules||[]).includes(r.id));
+/* Which document does a cross-document rule's defect hang on? On the one that was
+   replaced. It is the source of the change, and in the next round it is the only
+   document Sales is allowed to touch - a defect naming the untouched file would ask
+   for a replacement the flow will not permit. */
+const defTarget=r=>(r.xfile&&S.replaced.includes(r.xfile)&&!S.replaced.includes(r.file))?r.xfile:r.file;
+const failFiles=()=>[...new Set(rFail().map(defTarget))];
+const unlinkedFiles=()=>failFiles().filter(fn=>!defForFile(fn));
 // FSD 3.11.3 Step 3 - a defect counts as resolved only once rectified and verified
 const openDefects=()=>DEFECTS.filter(d=>!(d.rect&&d.ver)).length;
 const unlinked=()=>rFail().filter(r=>!hasDefect(r));
@@ -507,20 +546,53 @@ function pullRules(){
   S.pullAt=new Date().toTimeString().slice(0,5);
   return n?`${n} rule(s) re-extracted, conclusion updated`:'No change in rule conclusions';
 }
-// FSD 3.9.7 method 3: aligns System-source defects with the latest rule results.
-// Creates the missing ones, drops System ones whose rule now passes, never touches User ones.
+// FSD 3.9.7 method 3, on the file dimension: creates a defect for every document
+// that has failing rules and no defect yet, refreshes the ones that already exist,
+// and drops System ones whose document is now clean. User-source rows are never touched.
 function syncSystemDefects(){
-  const gone=DEFECTS.filter(d=>d.src==='System'&&d.rule&&!rFail().some(r=>r.id===d.rule));
+  const gone=DEFECTS.filter(d=>d.src==='System'&&d.file&&d.file!=='—'&&!failFiles().includes(d.file));
   gone.forEach(d=>DEFECTS.splice(DEFECTS.indexOf(d),1));
-  const made=unlinked().map(r=>mkDefect(r,'System')).filter(Boolean);
-  return {added:made.length,removed:gone.length,changed:made.length>0||gone.length>0};
+  const made=unlinkedFiles().map(fn=>mkDefect(fn,'System')).filter(Boolean);
+  const upd=failFiles().map(fn=>updDefect(fn)).filter(Boolean).length;
+  return {added:made.length,removed:gone.length,updated:upd,
+          changed:made.length>0||gone.length>0||upd>0};
 }
-function mkDefect(r,src){
-  if(hasDefect(r))return null;
+// Round 1 creates. The defect takes every failing rule on that document at once.
+function mkDefect(fn,src){
+  const rs=rFail().filter(r=>defTarget(r)===fn); if(!rs.length||defForFile(fn))return null;
   S.dseq++;
-  DEFECTS.push({no:String(S.dseq),rule:r.id,code:r.dc,cat:r.dcat,type:r.dty,file:r.file,
-    sr:'',cr:r.issue||r.nm,src:src||'System',rect:0,ver:0,cd:'30-08-2026 09:02:31'});
+  DEFECTS.push({no:String(S.dseq),file:fn,
+    rules:rs.map(r=>r.id),codes:[...new Set(rs.map(r=>r.dc))],
+    cat:rs[0].dcat,types:[...new Set(rs.map(r=>r.dty))],
+    sr:'',cr:rs.map(r=>r.issue||r.nm).join(' · '),
+    src:src||'System',rect:0,ver:0,cd:'30-08-2026 09:02:31',hist:[]});
   return S.dseq;
+}
+/* Round 2 updates in place rather than closing one row and opening another. The
+   category never moves, the type set is rewritten from the latest rules, and the
+   remark is only ever appended to - whatever CRA typed by hand has to survive. */
+function updDefect(fn){
+  const d=defForFile(fn); if(!d||d.src!=='System')return null;
+  const rs=rFail().filter(r=>defTarget(r)===fn);
+  const now=rs.map(r=>r.id).sort().join(','), was=(d.rules||[]).slice().sort().join(',');
+  if(!rs.length||now===was)return null;
+  const dropped=(d.rules||[]).filter(id=>!rs.some(r=>r.id===id));
+  d.hist=(d.hist||[]).concat([{was:d.rules.slice(),at:S.pullAt||'now'}]);
+  d.rules=rs.map(r=>r.id);
+  d.codes=[...new Set(rs.map(r=>r.dc))];
+  d.types=[...new Set(rs.map(r=>r.dty))];
+  d.cr=(d.cr?d.cr+' | ':'')+`Updated after revalidation: ${dropped.length?'cleared '+dropped.join(', ')+'; ':''}now ${d.rules.join(', ')}`;
+  d.rect=0;d.ver=0;
+  return d.no;
+}
+// Scenario b. The document came back clean, so its defect is verified on submission -
+// CRA has already reviewed it in the File Center, there is nothing left to click.
+function autoVerify(){
+  const done=DEFECTS.filter(d=>d.src==='System'&&d.file&&d.file!=='—'
+    &&!failFiles().includes(d.file)&&!(d.rect&&d.ver));
+  done.forEach(d=>{d.rect=1;d.ver=1;
+    d.cr=(d.cr?d.cr+' | ':'')+'Rules cleared on the replacement - verified on CRA submission';});
+  return done.length;
 }
 // FSD 4.1.2 - four ordered gates. Gate 1 routes to manual maintenance;
 // gates 2-4 route to the Authorizer. The distinction matters: they are not
@@ -562,6 +634,7 @@ function eligibility(){
 function render(){
   document.querySelectorAll('#scnSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===S.scn));
   document.querySelectorAll('#swSeg button').forEach(b=>b.setAttribute('aria-pressed',(b.dataset.sw==='1')===!!S.stpSwitch));
+  document.querySelectorAll('#rdSeg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.rd===S.round));
   renderRail();renderMain();renderSide();renderFoot();
 }
 
@@ -620,19 +693,55 @@ function vsumBody(){
       ${kpi(fl.length,'Not Passed',fl.length?'err':'',ul?`${ul} without defect`:'')}
     </div>
     <button class="btn btn-sm" data-act="expand">${S.expand?'Collapse detail':'View detail'}</button>
-    ${S.expand?`<div style="margin-top:14px">
-      ${[...fl,...pd].length?[...fl,...pd].map(r=>{
-        const p=r.st==='pending',d=DEFECTS.find(x=>x.rule===r.id);
-        return `<div class="rrow"><span class="n"><b class="mono">${r.id}</b> ${esc(r.nm)}
-          <span class="s">${esc(r.file)}${r.issue?' · '+esc(r.issue):''}</span></span>
-          <span class="r"><span class="tag ${p?'tag-blue':'tag-err'}">${p?'In progress':'Not passed'}</span>
-          ${p?'':(d?`<span class="tag tag-warn mono">Defect #${d.no}</span><button class="btn btn-sm" data-go="def">View</button>`
-                  :`<button class="btn btn-sm" data-mkdef="${r.id}">Create Defect</button>`)}
-          <button class="btn btn-sm" data-fix="${r.id}" ${p?'disabled':''}>Handle rule</button></span></div>`;
-      }).join(''):`<div class="muted">All ${rTotal()} rules passed.</div>`}
-      ${ul>1?`<div class="batchbar"><span>${ul} rule(s) not passed without a defect record</span>
-        <button class="btn btn-sm" data-act="defall">Create All (${ul})</button></div>`:''}
-    </div>`:''}`;
+    ${S.expand?`<div style="margin-top:14px">${ruleDetail(fl,pd,ul)}</div>`:''}`;
+}
+
+// One rule row. Defect state is read from the document the rule sits on, because
+// that is where the defect hangs - several rules on one file share one row's worth.
+function rrow(r){
+  const p=r.st==='pending', d=defForFile(defTarget(r));
+  const covered=d&&(d.rules||[]).includes(r.id);
+  return `<div class="rrow"><span class="n"><b class="mono">${r.id}</b> ${esc(r.nm)}
+      ${r.chg?`<span class="tag ${r.chg==='cleared'?'tag-ok':(r.chg==='cross'?'tag-warn':'tag-err')}"
+        style="margin-left:6px;font-size:10px">${CHGLB[r.chg]}</span>`:''}
+      <span class="s">${esc(r.file)}${r.xfile?` + ${esc(r.xfile)}`:''}${r.issue?' · '+esc(r.issue):''}</span></span>
+    <span class="r">
+      <span class="tag ${r.pass?'tag-ok':(p?'tag-blue':'tag-err')}">${r.pass?'Passed':(p?'In progress':'Not passed')}</span>
+      ${r.pass||p?'':(covered
+        ?`<span class="tag tag-warn mono">Defect #${d.no}</span><button class="btn btn-sm" data-go="def">View</button>`
+        :(d?`<button class="btn btn-sm" data-mkdef="${esc(defTarget(r))}">Update Defect #${d.no}</button>`
+           :`<button class="btn btn-sm" data-mkdef="${esc(defTarget(r))}">Create Defect</button>`))}
+      <button class="btn btn-sm" data-fix="${r.id}" ${p||r.pass?'disabled':''}>Handle rule</button></span></div>`;
+}
+
+/* Round 1 lists what is not passed. Round 2 cannot: revalidation reruns all 25 rules,
+   and asking CRA to re-read all 25 after every replacement is the cost that sinks the
+   whole loop. So the rerun stays complete and the reading is narrowed - what moved,
+   and what sits on a document that came back. The rest keeps its earlier conclusion
+   and stays one click away. */
+function ruleDetail(fl,pd,ul){
+  const open=[...fl,...pd];
+  if(S.round===1)
+    return (open.length?open.map(rrow).join(''):`<div class="muted">All ${rTotal()} rules passed.</div>`)
+      +(ul>1?`<div class="batchbar"><span>${ul} rule(s) not passed without a defect record</span>
+        <button class="btn btn-sm" data-act="defall">Create All (${unlinkedFiles().length} document(s))</button></div>`:'');
+
+  const foc=RULES.filter(inFocus), rest=RULES.filter(r=>!inFocus(r));
+  const grp=(t,sub,rs)=>rs.length?`<div class="sync-g">${t}
+      <span style="font-weight:400;color:var(--t3)"> · ${sub}</span></div>${rs.map(rrow).join('')}`:'';
+  const cross=foc.filter(r=>r.chg==='cross');
+  return `<div class="pre" style="margin-bottom:12px"><span class="lb">REVALIDATION</span>
+      All <b>${rTotal()}</b> rules were rerun after ${S.replaced.length} document(s) came back.
+      <b>${foc.length}</b> need reading; the other <b>${rest.length}</b> keep their earlier conclusion.
+      ${cross.length?`<div style="color:var(--err);margin-top:4px">${cross.length} rule(s) moved on a document nobody replaced —
+        they read a replaced document too.</div>`:''}</div>
+    ${grp('Moved this round','the reason the rerun covers the whole Case',foc.filter(r=>r.chg))}
+    ${grp('On a replaced document','unchanged, but worth re-reading',foc.filter(r=>!r.chg))}
+    ${ul?`<div class="batchbar"><span>${ul} rule(s) not passed without a defect record</span>
+      <button class="btn btn-sm" data-act="defall">Sync (${unlinkedFiles().length} document(s))</button></div>`:''}
+    <div class="batchbar"><span>${rest.length} rule(s) unchanged this round</span>
+      <button class="btn btn-sm" data-act="showall">${S.showAll?'Hide':'Show'}</button></div>
+    ${S.showAll?rest.map(rrow).join(''):''}`;
 }
 
 function defBody(){
@@ -644,27 +753,32 @@ function defBody(){
       <th style="width:80px">VERIFIED</th><th style="width:170px">DOCUMENT</th>
       <th>SALES REMARK</th><th style="width:110px">ACTION</th></tr></thead>
       <tbody><tr><td colspan="9"><div class="nodata">${I('inbox')}No data</div></td></tr></tbody></table></div>`;
-  return `<div class="tot"><span class="t">Total: <b>${DEFECTS.length}</b> defect(s)${unlinked().length?` · ${unlinked().length} rule(s) still unlinked`:''}${openDefects()?` · ${openDefects()} unresolved`:''}</span>
+  return `<div class="tot"><span class="t">Total: <b>${DEFECTS.length}</b> defect(s)${unlinkedFiles().length?` · ${unlinkedFiles().length} document(s) still unlinked`:''}${openDefects()?` · ${openDefects()} unresolved`:''}</span>
     <span class="r"><button class="btn btn-sm" data-act="syncdef">Sync System Defects</button>
       <button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button></span></div>
-  <div class="tw"><table style="min-width:1180px"><thead><tr><th style="width:56px">NO.</th><th style="width:80px">SOURCE</th>
-    <th style="width:76px">RULE</th><th style="width:110px">DEFECT CODE</th><th style="width:180px">CATEGORY</th>
-    <th style="width:190px">TYPE</th><th style="width:170px">DOCUMENT</th>
+  <div class="tw"><table style="min-width:1240px"><thead><tr><th style="width:56px">NO.</th><th style="width:80px">SOURCE</th>
+    <th style="width:190px">DOCUMENT</th><th style="width:120px">RULES</th><th style="width:110px">DEFECT CODE</th>
+    <th style="width:180px">CATEGORY</th><th style="width:200px">TYPE</th>
     <th style="width:90px">RECTIFIED</th><th style="width:80px">VERIFIED</th>
-    <th style="width:150px">CRA REMARK</th><th style="width:120px">ACTION</th></tr></thead>
-  <tbody>${DEFECTS.map(d=>`<tr><td class="mono">${d.no}</td>
+    <th style="width:180px">CRA REMARK</th><th style="width:120px">ACTION</th></tr></thead>
+  <tbody>${DEFECTS.map(d=>{
+    const rs=d.rules||[], ts=d.types||[];
+    return `<tr><td class="mono">${d.no}</td>
     <td><span class="tag ${d.src==='System'?'tag-blue':''}" style="font-size:11px">${d.src}</span></td>
-    <td class="mono">${esc(d.rule||'—')}</td><td class="mono">${esc(d.code||'—')}</td>
-    <td style="font-size:12px">${esc(d.cat)}</td><td style="font-size:12px">${esc(d.type)}</td>
     <td style="font-size:12px">${d.file&&d.file!=='—'
       ? `${esc(d.file)}<span class="sub-row" style="display:block">Sales replaces it in the File Center</span>`
-      : '<span class="muted">Not document-bound</span>'}</td>
+      : '<span class="muted">No document yet<span class="sub-row" style="display:block">Sales uploads to the file list, not to AI</span></span>'}</td>
+    <td class="mono" style="font-size:11px">${rs.length?rs.map(esc).join('<br>'):'—'}</td>
+    <td class="mono" style="font-size:11px">${(d.codes||[]).length?d.codes.map(esc).join('<br>'):'—'}</td>
+    <td style="font-size:12px">${esc(d.cat)}</td>
+    <td style="font-size:12px">${ts.length?ts.map(t=>`<span class="tag" style="font-size:10px;margin:0 3px 3px 0">${esc(t)}</span>`).join(''):'—'}
+      ${(d.hist||[]).length?`<span class="sub-row" style="display:block">rewritten ${d.hist.length}× by revalidation</span>`:''}</td>
     <td>${d.rect?'<span class="tag tag-ok">Y</span>':'<span class="tag tag-err">N</span>'}</td>
     <td>${d.ver?'<span class="tag tag-ok">Y</span>':'<span class="tag">N</span>'}</td>
-    <td style="font-size:12px">${esc(d.cr)}</td>
+    <td style="font-size:11px">${esc(d.cr)}</td>
     <td>${d.rect&&d.ver?'<span class="muted">Closed</span>'
       :d.rect?`<button class="btn btn-sm" data-ver="${d.no}">Verify</button>`
-      :`<button class="btn btn-sm" data-rect="${d.no}">Rectify</button>`}</td></tr>`).join('')}
+      :`<button class="btn btn-sm" data-rect="${d.no}">Rectify</button>`}</td></tr>`;}).join('')}
   </tbody></table></div>`;
 }
 
@@ -765,12 +879,21 @@ function openM(cls,title,sub,warn){
 }
 function closeM(){$('mask').classList.add('hidden');S.dlg=null;}
 
-/* OCR Data Sync */
-const syncable=f=>fState(f)!=='noocr';
+/* OCR Data Sync. A field may be pulled only from a document that is the latest
+   version and carries no open defect. If either fails the field is not written
+   back at all - it is never quietly filled from the superseded copy. The block
+   names the defect, because closing it is what brings the value back. */
+const blockedBy=f=>{ if(!f.doc)return null;
+  const d=defForFile(f.doc); return d&&!(d.rect&&d.ver)?d:null; };
+const syncable=f=>fState(f)!=='noocr'&&!blockedBy(f);
+const blockedFields=()=>FIELDS.filter(f=>fState(f)!=='noocr'&&blockedBy(f));
 function openSync(){
   FIELDS.forEach(f=>{if(S.sync.sel[f.k]===undefined){const st=fState(f);S.sync.sel[f.k]=(st==='same'||st==='fill')?1:0;}});
+  FIELDS.forEach(f=>{if(blockedBy(f))S.sync.sel[f.k]=0;});
+  const nb=blockedFields().length;
   S.dlg='sync'; openM('','OCR Data Sync','Comparing manual entry with detected document data.',
-    'Selecting a checkbox means applying the OCR value to replace the current manual value.');
+    nb?`${nb} field(s) are held back: their document still has an open defect, so nothing is written back for it.`
+      :'Selecting a checkbox means applying the OCR value to replace the current manual value.');
   drawSync();
 }
 function drawSync(){
@@ -784,11 +907,17 @@ function drawSync(){
         <th style="width:210px">Field Name</th><th style="width:200px">Current (Manual)</th>
         <th>OCR Value</th><th style="width:100px;text-align:right">Status</th></tr></thead><tbody>`;
     FIELDS.filter(f=>f.g===g).forEach(f=>{
-      const st=fState(f),on=!!S.sync.sel[f.k];
+      const st=fState(f),on=!!S.sync.sel[f.k],bl=blockedBy(f);
       if(st==='noocr'){
         h+=`<tr class="na"><td><span class="bx dis"></span></td><td>${esc(f.k)}</td>
           <td>${(f.sys||'').trim()?esc(f.sys):'<span class="emptyv">(Empty)</span>'}</td>
           <td><span class="emptyv">—</span></td><td style="text-align:right"><span class="st">NO OCR</span></td></tr>`;
+      }else if(bl){
+        h+=`<tr class="na"><td><span class="bx dis"></span></td>
+          <td>${esc(f.k)}<span class="sub-row" style="display:block">${esc(f.doc)}</span></td>
+          <td>${(f.sys||'').trim()?esc(f.sys):'<span class="emptyv">(Empty)</span>'}</td>
+          <td><span class="emptyv">Held back — defect #${bl.no} is open on this document</span></td>
+          <td style="text-align:right"><span class="st cf">BLOCKED</span></td></tr>`;
       }else{
         h+=`<tr class="${on?'sel':''}"><td><span class="bx ${on?'on':''}" data-sel="${esc(f.k)}">${on?'✓':''}</span></td>
           <td>${esc(f.k)}</td>
@@ -799,9 +928,9 @@ function drawSync(){
     });
     h+='</tbody></table></div>';
   });
-  const n=FIELDS.filter(f=>syncable(f)&&S.sync.sel[f.k]).length;
+  const n=FIELDS.filter(f=>syncable(f)&&S.sync.sel[f.k]).length, nb=blockedFields().length;
   $('mB').innerHTML=h;
-  $('mF').innerHTML=`<span class="lf">${n} field(s) selected</span>
+  $('mF').innerHTML=`<span class="lf">${n} field(s) selected${nb?` · ${nb} held back by an open defect`:''}</span>
     <button class="btn" data-act="mx">Cancel</button>
     <button class="btn btn-pri" data-act="dosync">Apply</button>`;
 }
@@ -810,21 +939,30 @@ function doSync(){
   closeM();render();toast(`${n} field(s) updated from OCR`);
 }
 
-/* Add Defect */
+/* Add Defect. The mirror image of the rule-driven flow: the defect comes first and
+   the document follows. Nothing here is rule-bound, so nothing here goes through AI
+   extraction - Sales uploads straight to the file list, or a wrong read pollutes
+   the write-back for a document no rule ever checked. */
 function openAdd(){
-  S.dlg='add'; S.addDef={cat:'',ty:'',rect:0,ver:0,sr:'',cr:''};
+  S.dlg='add'; S.addDef={cat:'',types:[],rect:0,ver:0,sr:'',cr:''};
   openM('sm','Add Defect'); drawAdd();
 }
 function drawAdd(){
   const a=S.addDef;
   $('modal').className='modal';
-  $('mB').innerHTML=`<div class="dgrid">
+  $('mB').innerHTML=`<div class="pre" style="margin-bottom:14px"><span class="lb">NO DOCUMENT YET</span>
+      Sales attaches the evidence after this defect is raised.
+      <b>AI Scanning is not offered for it</b> — the defect names no document type, so extraction
+      has nothing to check it against. The file lands in the file list and you read it by eye.</div>
+    <div class="dgrid">
     <div class="dfield"><label>Defect Category <span class="req">*</span></label>
       <select class="dsel" id="aCat"><option value=""></option>
         ${DCATS.map(c=>`<option ${a.cat===c?'selected':''}>${c}</option>`).join('')}</select></div>
-    <div class="dfield"><label>Defect Type <span class="req">*</span></label>
-      <select class="dsel" id="aTy"><option value=""></option>
-        ${[...new Set(R0.map(r=>r.dty))].map(t=>`<option ${a.ty===t?'selected':''}>${esc(t)}</option>`).join('')}</select></div>
+    <div class="dfield dfull"><label>Defect Type <span class="req">*</span>
+        <span class="muted" style="font-weight:400"> · multi-select, one defect carries every problem on the document</span></label>
+      <div class="tysel">${[...new Set(R0.map(r=>r.dty))].map(t=>
+        `<span class="tychip ${a.types.includes(t)?'on':''}" data-aty="${esc(t)}">${esc(t)}</span>`).join('')}</div>
+      <div class="dcount">${a.types.length} selected</div></div>
     <div class="dfield"><label>Rectified</label>
       <label class="dchk" data-atg="rect"><span class="bx ${a.rect?'on':''}">${a.rect?'✓':''}</span>Mark as Rectified</label></div>
     <div class="dfield"><label>Verified</label>
@@ -846,13 +984,14 @@ function drawAdd(){
     <button class="btn btn-pri" data-act="doadd">OK</button>`;
 }
 function doAdd(){
-  const cat=$('aCat').value, ty=$('aTy').value;
-  if(!cat||!ty){toast('Defect Category and Type are required');return;}
+  const cat=$('aCat').value, types=S.addDef.types.slice();
+  if(!cat||!types.length){toast('Defect Category and at least one Type are required');return;}
   S.dseq++;
-  DEFECTS.push({no:String(S.dseq),rule:'',code:'—',cat,type:ty,file:'—',
+  DEFECTS.push({no:String(S.dseq),rules:[],codes:[],cat,types,file:'—',noAI:1,
     sr:$('aSr').value.trim(),cr:$('aCr').value.trim(),src:'User',
-    rect:S.addDef.rect?1:0,ver:S.addDef.ver?1:0,cd:'30-08-2026 09:02:31'});
-  closeM();S.open.def=1;render();toast('Defect #'+S.dseq+' created (Source: User)');
+    rect:S.addDef.rect?1:0,ver:S.addDef.ver?1:0,cd:'30-08-2026 09:02:31',hist:[]});
+  closeM();S.open.def=1;render();
+  toast('Defect #'+S.dseq+' created (Source: User) · Sales uploads to the file list, not to AI');
 }
 
 /* File Center rule handling */
@@ -899,8 +1038,8 @@ function doFix(){
   else{r.st='pending';r.act='file';
     toast(d.who==='self'?'Document replaced — re-extraction in progress':'Returned to Sales for replacement');}
   closeM();render();
-  if(r.pass&&DEFECTS.some(x=>x.rule===r.id&&x.src==='System'))
-    setTimeout(()=>toast('Its System defect can now be cleared via Sync System Defects'),1500);
+  if(r.pass&&DEFECTS.some(x=>(x.rules||[]).includes(r.id)&&x.src==='System'))
+    setTimeout(()=>toast('Its document defect can now be refreshed via Sync System Defects'),1500);
 }
 
 /* Next */
@@ -985,11 +1124,26 @@ document.addEventListener('change',e=>{
   }
 });
 document.addEventListener('click',e=>{
-  const t=e.target.closest('button,a,label,[data-sel],[data-gsel],[data-who],[data-pick],[data-tog]');
+  const t=e.target.closest('button,a,label,[data-sel],[data-gsel],[data-who],[data-pick],[data-tog],[data-aty]');
   if(!t) return;
   if(t.dataset.who){S.dlg.who=t.dataset.who;S.dlg.bad=0;drawFix();return;}
   if(t.dataset.sw!==undefined){S.stpSwitch=t.dataset.sw==='1';render();return;}
   if(t.dataset.scn){S.scn=t.dataset.scn;reset(t.dataset.scn);render();return;}
+  /* Round 2 replays the whole loop so it can be read end to end: the first-check
+     defects are raised, the replacements come back, the Case is revalidated, and
+     each defect lands where the four agreed outcomes say it should. */
+  if(t.dataset.rd){
+    const rd=+t.dataset.rd; if(rd===S.round)return;
+    reset(S.scn);
+    failFiles().forEach(fn=>mkDefect(fn,'System'));
+    if(rd===1){S.expand=1;S.open.vsum=1;render();toast('Back to the first check');return;}
+    applyRound2();
+    failFiles().forEach(fn=>{ mkDefect(fn,'System')||updDefect(fn); });
+    const v=autoVerify(), moved=RULES.filter(r=>r.chg).length;
+    S.expand=1;S.open.vsum=1;S.open.def=1;render();
+    toast(`All ${rTotal()} rules rerun · ${moved} moved · ${v} defect(s) auto-verified`);
+    return;
+  }
   if(t.dataset.go){const k=t.dataset.go;S.nav=k;S.open[k]=1;render();
     const el=$('m-'+k); if(el)el.scrollIntoView({block:'start'}); return;}
   if(t.dataset.tog){const k=t.dataset.tog;S.open[k]=!S.open[k];S.nav=k;render();return;}
@@ -1003,17 +1157,27 @@ document.addEventListener('click',e=>{
     if(S.busy)return; S.busy=1;renderMain();
     setTimeout(()=>{S.busy=0;const m=pullRules();render();toast(m);},800); return;
   }
-  if(t.dataset.mkdef){const r=RULES.find(x=>x.id===t.dataset.mkdef);const n=mkDefect(r,'System');
-    render();toast(n?'Defect #'+n+' created':'This rule already has a defect');return;}
-  if(t.dataset.act==='defall'){const m=unlinked().map(r=>mkDefect(r,'System')).filter(Boolean);
-    render();toast(m.length+' defect(s) created');return;}
+  // One document, one defect: creating and updating are the same button.
+  if(t.dataset.mkdef){const fn=t.dataset.mkdef;
+    const n=mkDefect(fn,'System')||updDefect(fn);
+    render();toast(n?`Defect #${n} ${defForFile(fn)&&(defForFile(fn).hist||[]).length?'updated':'created'} for ${fn}`
+                    :'Already aligned with the latest rules');return;}
+  if(t.dataset.act==='defall'){
+    const m=unlinkedFiles().map(fn=>mkDefect(fn,'System')).filter(Boolean);
+    const u=failFiles().map(fn=>updDefect(fn)).filter(Boolean);
+    render();toast(`${m.length} created, ${u.length} updated · one per document`);return;}
+  if(t.dataset.act==='showall'){S.showAll=!S.showAll;render();return;}
   if(t.dataset.act==='syncdef'){const r=syncSystemDefects();render();
-    toast(r.changed?`${r.added} created, ${r.removed} removed · User-source defects untouched`
+    toast(r.changed?`${r.added} created, ${r.updated} updated, ${r.removed} removed · User-source defects untouched`
                    :'System defects already aligned');return;}
   if(t.dataset.act==='adddef'){openAdd();return;}
+  if(t.dataset.aty){const v=t.dataset.aty,i=S.addDef.types.indexOf(v);
+    i>-1?S.addDef.types.splice(i,1):S.addDef.types.push(v);
+    S.addDef.sr=$('aSr').value;S.addDef.cr=$('aCr').value;S.addDef.cat=$('aCat').value;
+    drawAdd();return;}
   if(t.dataset.atg){S.addDef[t.dataset.atg]=S.addDef[t.dataset.atg]?0:1;
     S.addDef.sr=$('aSr').value;S.addDef.cr=$('aCr').value;
-    S.addDef.cat=$('aCat').value;S.addDef.ty=$('aTy').value;drawAdd();return;}
+    S.addDef.cat=$('aCat').value;drawAdd();return;}
   if(t.dataset.act==='doadd'){doAdd();return;}
   if(t.dataset.rect){DEFECTS.find(x=>x.no===t.dataset.rect).rect=1;render();toast('Marked as rectified');return;}
   if(t.dataset.ver){DEFECTS.find(x=>x.no===t.dataset.ver).ver=1;render();toast('Verified');return;}
@@ -1032,7 +1196,9 @@ document.addEventListener('click',e=>{
   if(t.dataset.act==='next'){openNext();return;}
   if(t.dataset.act==='backfix'){closeM();S.open.vsum=1;S.expand=1;render();
     const el=$('m-vsum'); if(el)el.scrollIntoView({block:'start'}); return;}
-  if(t.dataset.act==='warndef'){S.blocks.forEach(r=>mkDefect(r,'System'));renderRail();goSave();return;}
+  if(t.dataset.act==='warndef'){
+    [...new Set(S.blocks.map(r=>r.file))].forEach(fn=>{mkDefect(fn,'System')||updDefect(fn);});
+    renderRail();goSave();return;}
   if(t.dataset.act==='anyway'){goSave();return;}
   if(t.dataset.act==='confirm'){const ok=S.route.ok;closeM();render();
     toast(ok?'Disbursement interface triggered':'Submitted to Authorizer');return;}
@@ -1047,8 +1213,27 @@ function initChrome(){
   $('iconRail').innerHTML=rail.map((n,i)=>`<i class="${i===0?'on':''}">${I(n)}</i>`).join('')
     +'<span class="sp"></span><i>'+I('list')+'</i>';
 }
+/* Defects are raised in front of the document, in the File Center, and read here.
+   One ledger seen from two screens - so when the two prototypes run side by side,
+   what the File Center registers arrives here rather than being registered twice.
+   Standalone, nothing ever fires this. */
+document.addEventListener('defect:import',e=>{
+  const p=e.detail||{}; if(!p.no) return;
+  let d=DEFECTS.find(x=>x.no===String(p.no))||defForFile(p.file);
+  if(d){
+    d.hist=(d.hist||[]).concat([{was:(d.types||[]).slice(),at:'File Center'}]);
+    d.types=(p.types||[]).slice(); d.rules=(p.rules||[]).slice(); d.cat=p.cat||d.cat;
+    d.cr=p.cr||d.cr; d.rect=0; d.ver=0;
+  }else{
+    DEFECTS.push({no:String(p.no),file:p.file||'—',rules:(p.rules||[]).slice(),
+      codes:[],cat:p.cat||'OTHERS',types:(p.types||[]).slice(),
+      sr:'',cr:p.cr||'',src:'System',rect:0,ver:0,cd:'30-08-2026 09:02:31',hist:[]});
+    S.dseq=Math.max(S.dseq,+p.no||0);
+  }
+  S.open.def=1; render();
+  toast(`Defect #${p.no} ${p.update?'updated':'registered'} from the File Center`);
+});
+
 initChrome(); reset('manual'); render();
 })();
 </script>
-</body>
-</html>

@@ -54,67 +54,120 @@ switch in the demo toolbar also jumps between the two at any time.
 THE MAIN PATHS
 --------------
 
-Four walkthroughs. Each takes a couple of minutes and they follow the order
+Five walkthroughs. Each takes a couple of minutes and they follow the order
 of the real process.
 
 
 Path 1 · Sales uploads the documents
-Document Center, with the role set to Sales.
+Document Center, with the role set to Sales and the case state Sales Drafting.
 
   1. Choose who the documents belong to on the left — Main Applicant,
      Guarantor 1 or Seller.
-  2. The upload entries appear above the list, one per document category —
-     for the main applicant, Personal Identity, Applicant Income and Other
-     Application & Vehicle. Each is read and classified automatically.
-     Which categories appear depends on who the documents belong to and on
-     the stage: a guarantor has identity and income only, and in
-     Disbursement the CRA set is shown instead.
-  3. Anything the categories do not cover goes to the strip below them,
-     Non-AI Scanning / Other Files. It is stored as-is and checked by hand.
-  4. Not sure which entry a document belongs to? Click "Which entry does a
-     document go to?" beside the heading and search for it. The list says
-     which entry each type goes to.
-  5. The File List below shows everything uploaded, with its classification
-     and status.
-  6. When the documents are complete, click Submit for Verification at the
+  2. Two upload entries appear above the list:
+
+       AI Scanning       read and classified automatically. The chips below
+                         it name a few of the types it handles.
+       Non AI Scanning   stored as-is and checked by hand. Anything outside
+                         the AI list goes here.
+
+  3. Not sure which entry a document belongs to? Click "+N more" beside the
+     AI chips and search for it. The list says which entry each type takes.
+  4. After upload, set the Category yourself in the File List — the entry
+     does not have to guess it, and you can change it at any time while the
+     case is still yours.
+  5. When the documents are complete, click Submit for Verification at the
      bottom right to trigger rule validation.
 
 
-Path 2 · CRA checks the expert rules
-Document Center, with the role set to CRA. Pick a subject on the left to
-reveal the two rule tabs.
+Path 2 · CRA checks the rules and raises defects
+Document Center, role CRA, case state CRA Review. Pick a subject on the left
+to reveal the two rule tabs.
 
   1. Cross-Validation Results holds the rules the engine concluded on its
-     own. Open a document to review an alert and settle it.
-  2. Manual Check Results holds documents OCR cannot read. The rules for the
-     whole case sit on the left, the document image on the right; mark each
-     rule Pass or Fail against what you see.
-  3. The bar at the bottom always shows both tracks — for example
-     "OCR 13/19" and "Manual 0/6" — no matter which tab you are on. The two
-     together decide whether the case is complete.
-  4. Revalidate reruns the engine across every document in the case. Manual
-     marking stays available while it runs.
-  5. Submit Rule Results submits both tracks at once. If rules are still
-     open it says how many and lets you continue anyway — your work so far
-     is kept.
+     own. Open a document to see its alerts.
+  2. Every failing rule offers Create Defect. The dialog opens with the
+     category and the defect types already filled in from the rules that
+     failed on that document — Defect Type is multi-select, because one
+     document rarely breaks one rule at a time.
+  3. One defect per document. If the document already has one, the button
+     says Update Defect: the type set is rewritten from the latest rules,
+     the CRA remark is appended to, and the defect number stays.
+  4. The alert stays on the file after the defect is saved. The two answer
+     different questions — is this document readable, and who owes what —
+     so clearing one must not clear the other.
+  5. There is no defect list here. Defects are raised in front of the
+     document and read in the Workbench; one ledger, not two.
+  6. Manual Check Results holds documents OCR cannot read. The rules sit on
+     the left, the document on the right; mark each Pass or Fail. Pass All
+     concludes the page in one action, and a failing rule offers the same
+     Create Defect.
+  7. The bar at the bottom always shows both tracks — for example
+     "OCR 13/19" and "Manual 0/6" — no matter which tab you are on.
 
 
-Path 3 · CRA works the case
-CRA Workbench.
+Path 3 · Sales fixes what the defects name
+Document Center, role Sales, case state Returned.
+
+  1. The File List is a record now, not a work surface. To Fix lists the
+     defects and what each one needs.
+  2. Replace Document opens a narrowed view: this document only, and the
+     File Type fixed by the defect — you are replacing a document, not
+     adding one. Both upload entries stay open.
+  3. If AI reads a different type than the one the defect names, it returns
+     others and extracts nothing. Simulate Wrong File shows what that looks
+     like: nothing changes and the file waits in the list. Swap it and
+     upload again.
+  4. Simulate Upload supersedes the file rather than modifying it. The old
+     version stays retrievable with the alerts CRA saw still on it, and the
+     old file is never removed automatically — deleting is manual and the
+     consequence is yours.
+  5. Replacing a document reruns every rule in the case, not just the ones
+     on that file. Use "Replacement result" in the demo toolbar to see the
+     four outcomes:
+
+       a  the rule is still not solved — the defect stands as it is
+       b  the rule is solved — the defect is verified on CRA submission
+       c  solved, but a different rule now fails — the defect is rewritten,
+          keeping its number and its remark
+       d  partly solved and a new rule appears — handled the same as c
+
+  6. In c and d a cross-document rule also moves: it reads the replaced
+     agreement as well as the second schedule, so replacing one file changes
+     a rule sitting on a file nobody touched. Its defect hangs on the
+     replaced document — that is the one that changed, and the only one
+     Sales can act on next round.
+
+
+Path 4 · CRA works the case
+CRA Workbench. Use Round in the demo toolbar to switch between the first
+check and the state after Sales has replaced the documents.
 
   1. Verification Summary shows how many rules the case has, how many are
      concluded, and how many did not pass.
-  2. View detail lists the rules that did not pass. For each one you can
-     Create Defect, or Handle rule to settle it — amend the extracted value,
-     apply a justification, or replace the document.
-  3. Defect List is where defects are closed: Rectify, then Verify. Once a
-     rule has been settled, Sync System Defects clears the defect it raised.
-     Defects you added by hand are never touched.
-  4. Sync from OCR in the top bar pulls the latest extracted values in for
-     comparison, so you can choose which to apply.
+  2. View detail lists them. Round 1 is the whole set of failures; each one
+     offers Create Defect, or Handle rule to settle it — amend the extracted
+     value, apply a justification, or replace the document.
+  3. Round 2 reads differently. All rules were rerun, but only what moved
+     and what sits on a replaced document is put in front of you; the rest
+     keep their earlier conclusion and fold away behind Show. A rule that
+     flipped on a document nobody replaced is called out separately — it is
+     the reason the rerun covers the case rather than one file.
+  4. Defect List carries one row per document, with the rules it covers and
+     every defect type on it. A row rewritten by revalidation says so.
+     Rectify, then Verify. Sync System Defects realigns the system-raised
+     rows with the latest rules; rows added by hand are never touched.
+  5. Add Defect is the other direction — the defect comes first and the
+     document follows. It names no document type, so AI Scanning is not
+     offered for it: Sales uploads straight to the file list and you read it
+     by eye.
+  6. Sync from OCR pulls extracted values in for comparison. A field is only
+     written back from a document that is the latest version and carries no
+     open defect. If either fails, the field is held back and the block says
+     which defect to close — the previous version is never used as a
+     fallback.
 
 
-Path 4 · Submit and route
+Path 5 · Submit and route
 CRA Workbench. This is where the case is decided.
 
   1. Tick CRA Completed in the panel on the right. This is the only thing
@@ -132,8 +185,12 @@ CRA Workbench. This is where the case is decided.
 WORTH KNOWING
 -------------
 
-  - The demo toolbar, including the role and scenario switches, exists only
-    so one file can show several situations. It will not be in the product.
+  - The demo toolbar, including the role, case state, replacement result and
+    round switches, exists only so one file can show several situations. It
+    will not be in the product.
+  - A defect raised in the Document Center appears in the Workbench defect
+    list. That is one ledger seen from two screens, not two ledgers kept in
+    step.
   - Figures, names and document lists are illustrative. They are there to
     make the screens readable, not to be checked for accuracy.
   - A few areas are shown as headings without content. Those are existing

@@ -54,6 +54,18 @@ button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit
 
   function go(to){ if (to !== HERE) parent.postMessage({ nav: to }, '*'); }
 
+  /* The two screens share one defect ledger: it is raised in the File Center, in
+     front of the document, and read in the Workbench. Isolation keeps the styles
+     and globals apart but must not split the ledger in two, or the demo shows the
+     one thing the design says never happens. */
+  document.addEventListener('defect:raised', function(e){
+    parent.postMessage({ defect: e.detail }, '*');
+  });
+  window.addEventListener('message', function(e){
+    var d = e.data && e.data.defect;
+    if (d) document.dispatchEvent(new CustomEvent('defect:import', { detail: d }));
+  });
+
   /* Capture phase, so the prototype's own handler never runs for these -
      otherwise the workbench would toast "Opening File Center" and stay put. */
   document.addEventListener('click', function(e){
@@ -118,9 +130,22 @@ html,body{height:100%%;margin:0;background:#0d1424}
     setTimeout(function(){ try { f.contentWindow.focus(); } catch (e) {} }, 0);
   }
 
+  /* Defects raised in the File Center are relayed to the Workbench. The Workbench
+     frame may not be loaded yet - the host boots whichever screen the URL asks for -
+     so anything raised before it exists is held and replayed once it is. */
+  var pending = [];
+  function relayDefect(d){
+    if (!loaded.wb) { pending.push(d); return; }
+    try { frames.wb.contentWindow.postMessage({ defect: d }, '*'); } catch (e) {}
+  }
   window.addEventListener('message', function(e){
     var to = e.data && e.data.nav;
     if (to === 'wb' || to === 'fc') show(to);
+    if (e.data && e.data.defect) relayDefect(e.data.defect);
+  });
+  frames.wb.addEventListener('load', function(){
+    // one tick, so the workbench has finished wiring its own listeners
+    setTimeout(function(){ pending.splice(0).forEach(relayDefect); }, 0);
   });
 
   var start = (location.hash || '').replace('#', '');
