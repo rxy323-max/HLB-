@@ -314,25 +314,56 @@ footer{
 .hang li:last-child{margin-bottom:0}
 .hang li::before{content:"·";position:absolute;left:6px;top:-2px;font-size:20px;color:var(--accent)}
 .hang li b{color:var(--ink);font-weight:600}
+
+/* settled decisions */
+.dec{padding:20px 0;border-bottom:1px solid var(--rule-2);display:grid;
+  grid-template-columns:30px 1fr;gap:16px}
+.dec:last-child{border-bottom:0}
+.dec .m{font-family:var(--mono);font-size:12px;color:var(--good);padding-top:3px}
+.dec .t{margin:0;font-weight:600;color:var(--ink);font-size:15.5px}
+.dec .v{margin:6px 0 0;font-size:15px;color:var(--ink);line-height:1.66}
+.dec .v b{color:var(--accent-2);font-weight:600}
+.dec .r{margin:8px 0 0;font-size:14px;color:var(--ink-2);line-height:1.62}
+.dec .r b{color:var(--ink);font-weight:500}
+.dec .dep{display:inline-block;margin-top:9px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.09em;text-transform:uppercase;padding:2px 8px;border-radius:2px;
+  background:var(--warn-soft);color:var(--warn);
+  border:1px solid color-mix(in srgb,var(--warn) 35%,transparent)}
+
+/* screen blocks */
+.screen{margin-top:34px;padding-top:26px;border-top:1px solid var(--rule)}
+.screen:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.screen .role{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink-3);margin:0 0 4px}
+.screen h3{margin:0 0 14px;font-family:var(--serif);font-size:20px;font-weight:600;
+  letter-spacing:-.005em;color:var(--ink)}
+.new{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;padding:1px 6px;border-radius:2px;margin-left:8px;vertical-align:3px;
+  background:var(--accent-soft);color:var(--accent-2);
+  border:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+.ui{display:block;margin-top:6px;font-family:var(--mono);font-size:12.5px;
+  color:var(--ink-2);background:var(--surface-2);border:1px solid var(--rule-2);
+  border-radius:3px;padding:8px 11px;line-height:1.55}
 </style>
 
 <div class="wrap">
 
 <header class="mast col">
-  <p class="eyebrow">HLB LOAD$ · 放款 Batch 3 · 三次会议对齐</p>
+  <p class="eyebrow">HLB LOAD$ · 放款 Batch 3 · 方案定稿</p>
   <h1>缺陷与文件的对齐</h1>
   <p class="thesis">三场会真正在争的只有一件事：<b>defect 到底挂在什么东西上</b>。
     维度定错，后面每一步——重传、重跑、复核、反显——都要靠特例去圆。
-    第三场末尾把它定在了<b>文件 ID</b>上，绝大多数争议随即消解。</p>
+    锚点定在<b>文件 ID</b>上之后，七条待定口径已全部拍板，本文即按定稿口径重写。</p>
   <div class="meta">
     <span>09-03 17:11 · 09-04 09:59 · 09-04 14:15</span>
-    <span>现有流程 / 核心挑战 / 解决方案</span>
-    <span>待定 7 项</span>
+    <span>现有流程 / 核心挑战 / 方案 / 交互要点</span>
+    <span>七条口径已定</span>
   </div>
   <p class="src" style="margin-left:0;margin-top:24px">
-    本文依据三份会议逐字稿整理。<b>逐字稿中同一麦克风下有多位发言人</b>，
-    因此除张骏本人的独立声道外，文中不按人归属观点，只按“会上出现过的意见”记录；
-    凡两种意见并存而未收敛的，一律进第 09 节的待定清单，不替各位做判断。
+    本文依据三份会议逐字稿整理，并按会后确认的七条口径更新（见第 09 节）。
+    <b>逐字稿中同一麦克风下有多位发言人</b>，因此除张骏本人的独立声道外，
+    文中不按人归属观点，只按“会上出现过的意见”记录。
+    凡由定稿口径新推导出、会上未讨论过的细节，均在正文中显式标注。
   </p>
 </header>
 
@@ -431,8 +462,8 @@ footer{
       而不是“一条规则的一个问题”。我们要做的不是发明新维度，是把这个既成事实变成系统里的显式结构。</p>
   </div>
 
-  <p class="src">口径来源：与张浩确认 defect rules 表（字段定义、defect category number、defect id number 均由 ye 方提供）；
-    <b>defect type 改多选</b>张浩认为是“万一想要”的能力，需 ye 侧最终确认。</p>
+  <p class="src">口径来源：与张浩确认 defect rules 表（字段定义、defect category number、defect id number 均由 ye 方提供）。
+    <b>defect type 改多选已定为本方案的做法</b>，表结构支持性仍需 ye 侧确认。</p>
 </section>
 
 <section>
@@ -486,11 +517,12 @@ footer{
       结论是不成立——log 只记录“哪一条被替换掉了”，
       但“新文件到底有没有解掉 a 规则、谁来判”这个问题它一个字都没回答。
       缺陷之所以贵，正是因为它承载了责任人和结论，这部分不能省。</p>
+    <p>这七条在第 03–08 节逐一被回答；对应的口径结论汇总在第 09 节。</p>
   </div>
 </section>
 
 <section>
-  <div class="sh col"><span class="sn">03</span><h2>解决方案 · 第一步：把维度定死</h2></div>
+  <div class="sh col"><span class="sn">03</span><h2>方案 · 第一步：把维度定死</h2></div>
   <p class="sub">这是第三场会最重要的产出，也是后面所有交互的地基。</p>
 
   <div class="inv wide">
@@ -564,11 +596,15 @@ footer{
     <p><strong>一个主文件里的两个 file type 都有问题，就是两条 defect。</strong>
       对应地，Sales 退回后要传两次、rectify 两次——这不是设计的粗糙，
       而是因为第二轮必须按 file type 锁定重传，两个类型无法合并成一次上传。</p>
+    <p>“一条 defect 对应一份文件的一组问题”这件事，
+      落到字段上就是 <strong>defect type 多选</strong>（口径 6）。
+      没有多选，这条锚点就只能靠 remark 里的自由文本承载，
+      场景 c / d 的自动更新也就无处可落。</p>
   </div>
 </section>
 
 <section>
-  <div class="sh col"><span class="sn">04</span><h2>解决方案 · 第一轮：在文件中心创建，告警不清</h2></div>
+  <div class="sh col"><span class="sn">04</span><h2>方案 · 第一轮：在文件中心创建，告警不清</h2></div>
   <p class="sub">缺陷的唯一发源地是文件中心；缺陷的唯一查询地是 CRA 工作台。两者不重叠。</p>
 
   <div class="body col">
@@ -592,7 +628,7 @@ footer{
 </section>
 
 <section>
-  <div class="sh col"><span class="sn">05</span><h2>解决方案 · 第二轮：锁定文件类型的定向重传</h2></div>
+  <div class="sh col"><span class="sn">05</span><h2>方案 · 第二轮：锁定文件类型的定向重传</h2></div>
   <p class="sub">Sales 从 defect 进入文件中心，看到的是一个被收窄过的世界。</p>
 
   <div class="split wide">
@@ -622,18 +658,52 @@ footer{
       代价是必须限制文件类型。为此单独设置提示词：只能选目标 file type；
       若分类识别与目标文件冲突，<em>OCR 统一输出为 others，不识别、不提取</em>。
       传错文件、目标文件缺失，同样输出 others。Sales 通过更换文件自行解决。</p>
-    <p><strong>Manual Check 侧的展示口径。</strong>左侧只展示这条 defect 所关联 file type 的规则，
+    <p><strong>Manual Check 侧的展示口径（口径 2 已定）。</strong>
+      左侧<em>只展示这条 defect 所关联 file type 的规则</em>，
       屏蔽掉其他已经通过的规则；右侧看新上传文件的原文。
-      同一次进入若牵涉两条 defect，可以两条一起 rectify。
-      （左侧究竟只展示该 file type 的规则、还是通栏展示全部——见第 09 节待定第 2 条。）</p>
+      同一次进入若牵涉两条 defect，可以两条一起 rectify。</p>
+    <p>注意这里和第 06 节的重跑范围并不矛盾：
+      <strong>系统在后台按全案重跑，Sales 在前台只看被收窄的这一段。</strong>
+      Sales 只对自己能动的那份文件负责，全案影响由 CRA 侧承接。</p>
   </div>
 </section>
 
 <section>
-  <div class="sh col"><span class="sn">06</span><h2>解决方案 · CRA 复核与四种结果</h2></div>
-  <p class="sub">第一轮 create，第二轮 update；verify 是自动的，因为 CRA 已经在文件中心看过了。</p>
+  <div class="sh col"><span class="sn">06</span><h2>方案 · 重跑范围、CRA 复核与四种结果</h2></div>
+  <p class="sub">重跑是全量的，复核是聚焦的——这两件事必须分开说，否则 CRA 的工作量会失控。</p>
 
-  <div class="body col">
+  <div class="inv wide">
+    <p class="k">口径 3 · 已定</p>
+    <p class="v">替换任何一份文件，<strong>全量重跑该 case 的所有专家规则</strong>。</p>
+    <p class="n">原口径“只重跑被替换文件的规则”在存在跨文件规则时不成立——
+      例如 booking fee 日期与 HP agreement 上 hirer 日期的比对，它同时引用两份文件。
+      按局部重跑会漏判，这是合规风险，不是体验问题。</p>
+  </div>
+
+  <div class="body col" style="margin-top:30px">
+    <p><strong>但重跑全量，不等于让 CRA 把所有规则重勾一遍。</strong>
+      两者是两个概念，落到界面上要拆开：</p>
+    <ul class="hang">
+      <li><b>系统动作 · 全量、异步。</b>
+        任一文件版本变更即触发整案专家规则重跑，结果回来前页面显示重算中。</li>
+      <li><b>CRA 复核范围 · 默认聚焦。</b>
+        默认只呈现两类：<b>本轮结论发生变化的规则</b>，以及<b>与新文件关联的规则</b>。
+        其余保持既有结论，折叠展示、可展开查看。</li>
+      <li><b>被跨文件规则牵动的“意外失败”，必须进 CRA 视野。</b>
+        一条原本已通过的规则，因为另一份文件被替换而在重跑后转为 fail——
+        这正是全量重跑的价值所在，它不能被折叠掉。</li>
+    </ul>
+  </div>
+
+  <div class="verdict">
+    <p><strong>由口径 3 新推导出的一处细节（会上未讨论）。</strong>
+      跨文件规则重跑后失败时，defect 挂哪份文件？建议挂<em>本轮被替换的那份文件</em>：
+      它是变化的来源，也是 Sales 在下一轮唯一能动的东西。
+      若挂到另一份未被替换的文件上，Sales 会收到一条“文件没动却出了问题”的缺陷，
+      而系统并不允许他在这条 defect 里替换那份文件。此处需你确认。</p>
+  </div>
+
+  <div class="body col" style="margin-top:34px">
     <p>两个页面在两轮里的动作是对称的：</p>
   </div>
 
@@ -648,8 +718,11 @@ footer{
         <tr><td>Manual Check 结果页</td>
           <td>一键通过（全局）+ <b>创建</b> defect（文件级别）</td>
           <td>一键通过（全局）+ <b>更新</b> defect</td></tr>
+        <tr><td>左侧规则栏</td>
+          <td>通栏展示本 case 全部专家规则</td>
+          <td>只展示该 defect 关联 file type 的规则</td></tr>
         <tr><td>重新上传之后</td>
-          <td colspan="2">源文件与规则状态<b>保留</b>；CRA 只复核与新文件相关的规则</td></tr>
+          <td colspan="2">源文件与规则状态<b>保留</b>；全量重跑，复核聚焦于变化项</td></tr>
       </tbody>
     </table>
   </figure>
@@ -661,7 +734,8 @@ footer{
 
   <div class="body col" style="margin-top:30px">
     <p>“a 规则解掉了”有一个明确的判据：<strong>新文件上没有 alert、没有 fail</strong>。
-      在这个判据下，四种场景是这样收敛的：</p>
+      在这个判据下，四种场景是这样收敛的——
+      <strong>c 与 d 一律走“原 defect 更新”，不做失效 + 新建</strong>（口径 1）：</p>
   </div>
 
   <figure class="wide" style="margin-top:20px">
@@ -684,21 +758,21 @@ footer{
           <td>defect <b>自动 verify</b></td></tr>
         <tr><td>c</td>
           <td>a <span class="yes">已解</span>，但<span class="no">命中 b 规则</span></td>
-          <td>按最新规则集合重写该 defect：追加 / 替换 defect type，关联新文件 ID</td>
+          <td>按最新规则集合重写该 defect：type 多选集合改为 {b}，关联新文件 ID</td>
           <td>原 defect <b>更新</b></td></tr>
         <tr><td>d</td>
           <td>defect 含 a、b；a <span class="yes">解</span>、b <span class="no">未解</span>，另<span class="no">命中 c</span></td>
-          <td>同 c，不区分场景，一律按最新规则一次性写回</td>
+          <td>同 c，不区分场景：type 集合改为 {b, c}，一律按最新规则一次性写回</td>
           <td>原 defect <b>更新</b></td></tr>
       </tbody>
     </table>
-    <figcaption>c、d 的另一种实现是“原 defect 自动失效 + 依据最新规则生成新 defect”，
-      工作量略小，但会牵出一条 defect 关联多个文件 ID 的一对多关系。两种口径见第 09 节待定第 1 条。</figcaption>
+    <figcaption>“失效 + 自动新建”方案已排除：它会引入一条 defect 关联多个文件 ID 的一对多关系，
+      而 defect 现有状态机里只有 rectify / verify，没有“失效”这个态，留痕只能被迫标成 verify，语义不对。</figcaption>
   </figure>
 
   <div class="body col" style="margin-top:34px">
     <p><strong>更新时只动 type，不覆盖 remark。</strong>category 一定不变；
-      defect type 若改为多选，则由系统自动更新 type 集合；
+      defect type 集合由系统按最新规则自动改写；
       CR remark 里有客户自己写的内容，<em>只能追加，不能覆盖</em>。
       这是保住人工判断留痕的唯一办法——也正是“删旧建新”方案最大的代价。</p>
   </div>
@@ -720,8 +794,8 @@ footer{
         <span class="who">SALES</span>
         <span class="act">上传文件</span>
         <p><strong>不限制 file type</strong>（因为没有规则可限）；
-          <strong>禁止上传到 OCR，只能进 file list</strong>。
-          原因是这类文件不在专家规则范围内，走 OCR 会让反显出问题——这一点要向客户讲清楚。</p>
+          <strong>禁止上传到 OCR，只能进 file list</strong>（口径 7）。
+          这类文件不在专家规则范围内，走 OCR 会污染反显字段。</p>
       </li>
       <li>
         <span class="who">CRA</span>
@@ -729,6 +803,13 @@ footer{
         <p>没有自动刷新、没有自动更新。整条线纯人工。</p>
       </li>
     </ol>
+
+    <p style="margin-top:26px"><strong>界面上怎么讲这条限制。</strong>
+      对 Sales 来说这是一个“同样是上传，为什么这次不能用 AI”的差异，
+      必须在入口处就说清楚，而不是等他点了才报错。AI 入口置灰并附一句：</p>
+    <span class="ui">This defect is not linked to a document type, so AI extraction cannot evaluate it.
+      Upload the file directly to the file list.</span>
+
     <p style="margin-top:24px">因此 <strong>defect list 必须同时容纳两种来源</strong>：
       系统创建的（可被系统自动修改）与人工创建的（只由人改）。
       两者在列表里并存，来源需要可区分。</p>
@@ -742,138 +823,237 @@ footer{
   <figure class="wide">
     <table class="tbl">
       <caption>改动清单 · 按系统</caption>
-      <thead><tr><th style="width:150px">系统</th><th>改动</th><th style="width:96px">是否必需</th></tr></thead>
+      <thead><tr><th style="width:150px">系统</th><th>改动</th><th style="width:88px">来源</th></tr></thead>
       <tbody>
         <tr><td>OCR</td>
           <td><b>允许带告警保存</b>，否则创建 defect 后 CDM 不落库；
             第二轮按 defect 锁定的 file type 提取，分类冲突或目标缺失一律输出 others；
-            子文件 ID 对外稳定暴露</td>
-          <td class="no">必需</td></tr>
+            子文件 ID 对外稳定暴露；<b>提供全案重跑接口</b>（任一文件版本变更触发，异步返回）</td>
+          <td class="frz">口径 3</td></tr>
         <tr><td>CDM</td>
-          <td>反显放行条件从“告警全部清零”改为<b>“该文件没有关联未关闭的 defect”</b>；
+          <td>反显取<b>该 file type 下的最新版本，且该文件无未关闭 defect</b>；
+            两个条件有一个不满足，<b>这组字段就不反显</b>，不回退到旧版本；
             补主文件 / 子文件映射；Sync from OCR 每次点击时重新校验一遍关联关系</td>
-          <td class="no">必需</td></tr>
+          <td class="frz">口径 4</td></tr>
+        <tr><td>删除同步</td>
+          <td>CDM 删除主文件时，<b>OCR 侧拆出的子文件级联删除</b>；
+            级联范围要覆盖挂在这些子文件上的规则结论与 defect 关联，避免悬挂引用</td>
+          <td class="frz">口径 5</td></tr>
         <tr><td>Defect 模块</td>
           <td>新增 <b>关联文件 ID</b> 字段；defect type 由单选改<b>多选</b>；
-            支持系统自动更新（改 type、换关联文件）；remark 只追加不覆盖；
-            兼容无文件的人工 defect</td>
-          <td class="no">必需</td></tr>
+            支持系统按最新规则自动改写 type 集合与关联文件；remark 只追加不覆盖；
+            兼容无文件的人工 defect，并标记来源</td>
+          <td class="frz">口径 1 · 6</td></tr>
         <tr><td>文件中心</td>
           <td>Cross Validation 详情页与 Manual Check 结果页的创建 / 更新 defect 入口；
             从 defect 进入时收窄为“仅关联文件 + 该 file type 的规则”；
-            非 OCR 文件生成虚拟子文件 ID；旧文件保留不做自动处理</td>
-          <td class="no">必需</td></tr>
+            非 OCR 文件生成虚拟子文件 ID；旧文件保留不做自动处理；
+            Add Defect 场景下 AI 入口置灰并给出说明</td>
+          <td class="frz">口径 2 · 7</td></tr>
         <tr><td>CRA 工作台</td>
           <td>defect list 区分系统 / 人工两种来源；
-            复核提交时对已人工确认的 defect 自动 verify</td>
-          <td class="no">必需</td></tr>
-        <tr><td>删除同步</td>
-          <td>CDM 删除主文件时，OCR 侧拆出的子文件是否级联删除</td>
-          <td>待定</td></tr>
+            复核提交时对已人工确认的 defect 自动 verify；
+            <b>复核视图默认聚焦“变化项 + 新文件相关项”</b>，其余折叠</td>
+          <td class="frz">口径 3</td></tr>
       </tbody>
     </table>
   </figure>
 </section>
 
 <section>
-  <div class="sh col"><span class="sn">09</span><h2>待定：七个问号</h2></div>
-  <p class="sub">下面每一条，会上都出现过两种或以上的说法，且没有收敛。写需求前需要各定一个。</p>
+  <div class="sh col"><span class="sn">09</span><h2>七条口径 · 已定稿</h2></div>
+  <p class="sub">这七条原为待定项，现已全部拍板。以下是结论及其对方案的影响。</p>
 
   <div class="body col">
-    <div class="q">
-      <span class="m">1</span>
+    <div class="dec">
+      <span class="m">01</span>
       <div>
-        <p class="t">场景 c / d：原 defect 更新，还是原 defect 失效 + 自动新建？</p>
-        <p class="r">会上最后倾向<b>直接更新</b>（“不会删一个旧的、创建一个新的”），
-          理由是 remark 不丢；但也说过<b>失效 + 新增</b>工作量更小。
-          失效方案会引入“一条 defect 关联多个文件 ID”的一对多关系，
-          且 defect 现有状态机里只有 rectify / verify，没有“失效”这个态——
-          若要留痕就只能标成 verify，语义不对。<b>建议取更新。</b></p>
+        <p class="t">场景 c / d 的 defect 处置</p>
+        <p class="v">取<b>更新</b>——原 defect 更新，不做失效 + 自动新建。</p>
+        <p class="r">影响：CR remark 全程保住；不引入“一条 defect 关联多个文件 ID”的一对多关系；
+          defect 状态机不需要新增“失效”态。第 06 节场景表按此重写。</p>
       </div>
     </div>
 
-    <div class="q">
-      <span class="m">2</span>
+    <div class="dec">
+      <span class="m">02</span>
       <div>
-        <p class="t">第二轮 Manual Check 左侧：只展示该 file type 的规则，还是通栏展示全部？</p>
-        <p class="r">张骏明确表态“只展示 file type 比较好”；
-          但也提过一种更省事的处理——从任一 defect 进去都展示相关的全部规则，右边只切文件。
-          <b>本文暂按“只展示该 file type”撰写</b>，若改口径，第 05 节要跟着改。</p>
+        <p class="t">第二轮 Manual Check 左侧规则栏</p>
+        <p class="v"><b>只展示该 file type 的规则</b>，不通栏。</p>
+        <p class="r">影响：Sales 与 CRA 在第二轮看到的是被收窄的视图；
+          全案影响由第 06 节的复核视图承接，不在这里展开。第 05、06 节按此定稿。</p>
       </div>
     </div>
 
-    <div class="q">
-      <span class="m">3</span>
+    <div class="dec">
+      <span class="m">03</span>
       <div>
-        <p class="t">跨文件的专家规则，替换一份文件时要重跑哪些？</p>
-        <p class="r">当前口径是“只重跑被替换文件的规则，其他文件的规则不动”，
-          这在<b>存在跨文件规则时不成立</b>——例如 booking fee 日期与 HP agreement 上 hirer 日期的比对，
-          它同时引用两份文件。需要明确：替换一份文件时，是否重跑所有<b>引用了该文件</b>的规则。
-          这是会上被简化假设掉、但真实存在的一类。</p>
+        <p class="t">跨文件专家规则的重跑范围</p>
+        <p class="v">替换一份文件时，<b>重跑所有文件的规则</b>。</p>
+        <p class="r">影响最大的一条。它推翻了原口径“CRA 只复核与新文件相关的规则”，
+          需要 OCR 提供全案重跑接口，也要求复核视图区分“全量重跑”与“聚焦复核”。
+          <b>并新带出一个待确认细节</b>：跨文件规则失败时 defect 挂哪份文件（见第 06 节）。</p>
       </div>
     </div>
 
-    <div class="q">
-      <span class="m">4</span>
+    <div class="dec">
+      <span class="m">04</span>
       <div>
-        <p class="t">旧文件保留不动，反显取哪一份？</p>
-        <p class="r">“系统不做自动处理、旧文件原样留着”与“反显必须有唯一数据源”是冲突的。
-          同一 file type 下会同时存在新旧两份文件，
-          需要定：反显固定取<b>最新版本</b>，还是取<b>没有关联未关闭 defect 的那一份</b>。</p>
+        <p class="t">反显取哪一份文件</p>
+        <p class="v">取<b>最新版本，且无未关闭 defect</b>；否则<b>不提供反显</b>。</p>
+        <p class="r">影响：不回退到旧版本，宁可不反显——数据宁缺毋滥。
+          交互上要有明确提示，告诉用户这组字段为什么是空的、需要先关掉哪条 defect。</p>
       </div>
     </div>
 
-    <div class="q">
-      <span class="m">5</span>
+    <div class="dec">
+      <span class="m">05</span>
       <div>
-        <p class="t">CDM 删除主文件时，OCR 的子文件是否级联删除？</p>
-        <p class="r">会上提出但未答。两边不同步会直接造成“规则挂在一个已不存在的文件上”。
-          需要与 OCR 侧确认接口是否支持。</p>
+        <p class="t">删除的级联范围</p>
+        <p class="v">CDM 删除主文件时，<b>OCR 的子文件关联删除</b>。</p>
+        <p class="r">影响：避免“规则挂在一个已不存在的文件上”。
+          级联要一路清到规则结论与 defect 关联，否则会留下悬挂引用。
+          删除仍是客户手动动作、结果自负，系统只保证两侧一致。</p>
       </div>
     </div>
 
-    <div class="q">
-      <span class="m">6</span>
+    <div class="dec">
+      <span class="m">06</span>
       <div>
-        <p class="t">defect type 改多选，ye 侧是否接受？</p>
-        <p class="r">张浩认为是“万一想要”的能力，但 defect category / type / code 表由 ye 提供。
-          多选是本方案“一条 defect = 一份文件的一组问题”的前提，
-          <b>若不能多选，就只能退回“选一个 type + remark 写其余”的现状做法</b>，
-          场景 c / d 的自动更新也就无处落。这条优先级最高。</p>
+        <p class="t">defect type 的选择方式</p>
+        <p class="v">改为<b>多选</b>。</p>
+        <p class="r">影响：这是“一条 defect = 一份文件的一组问题”这条锚点的落地字段，
+          也是场景 c / d 自动更新的前提。生产上“选一个 type + remark 写其余”的将就做法可以退休。</p>
+        <span class="dep">外部依赖 · defect code 表由 ye 提供，需确认支持多选</span>
       </div>
     </div>
 
-    <div class="q">
-      <span class="m">7</span>
+    <div class="dec">
+      <span class="m">07</span>
       <div>
-        <p class="t">Add Defect 线禁止走 OCR，如何向客户交代？</p>
-        <p class="r">技术理由是避免反显出错，但对 Sales 来说这是一个“同样是上传，为什么这次不能用 AI”的差异。
-          需要一句能对外讲的说明，以及在界面上如何呈现这条限制。</p>
+        <p class="t">Add Defect 线的上传方式</p>
+        <p class="v"><b>禁止走 OCR</b>，只能进 file list。</p>
+        <p class="r">影响：这条线上不跑专家规则、不反显、不自动更新，全人工。
+          界面上 AI 入口置灰并给出说明文案（见第 07 节），不能等用户点了才报错。</p>
       </div>
     </div>
   </div>
 </section>
 
+<section>
+  <div class="sh col"><span class="sn">10</span><h2>交互要点 · 按界面</h2></div>
+  <p class="sub">上面的口径落到具体页面上是什么样。这一节是改原型时的清单。</p>
+
+  <div class="body col">
+
+    <div class="screen">
+      <p class="role">CRA · 文件中心</p>
+      <h3>Cross Validation 详情页</h3>
+      <ul class="hang">
+        <li><b>每条失败规则后面一个创建按钮</b>，点开是 defect 弹框，
+          规则编号、category、type、命中说明全部带入，CRA 确认即可。</li>
+        <li><b>创建后告警不消失。</b>该行同时显示“告警”与“已登记 defect”两个标记，
+          但<b>不显示 defect 号、不可点进 defect 明细</b>——查询只在工作台。</li>
+        <li><b>第二轮进入时按钮变为“更新”</b><span class="new">变更</span>，
+          动作是把该文件最新一轮的规则结论一次性写回原 defect，不新建。</li>
+        <li>同一份文件命中多条规则时，<b>合并进同一条 defect</b>，
+          type 为多选集合，而不是生成多条。</li>
+      </ul>
+    </div>
+
+    <div class="screen">
+      <p class="role">CRA · 文件中心</p>
+      <h3>Manual Check 结果页</h3>
+      <ul class="hang">
+        <li><b>第一轮：</b>左侧通栏展示本 case 全部专家规则，右侧切换文件，逐条勾选；
+          顶部一个<b>一键通过（全局）</b>，文件级别可创建 defect。</li>
+        <li><b>第二轮：</b>左侧<b>只展示该 defect 关联 file type 的规则</b><span class="new">口径 2</span>，
+          已通过的其他规则不展示；右侧看新上传文件的原文；顶部按钮为一键通过 + 更新 defect。</li>
+        <li>一次进入若牵涉两条 defect，<b>允许两条一起 rectify</b>。</li>
+        <li>系统文档（system-generated）走同一条人工判定路径，不做特例。</li>
+      </ul>
+    </div>
+
+    <div class="screen">
+      <p class="role">SALES · 文件中心（从 defect 进入）</p>
+      <h3>收窄视图 · 定向重传</h3>
+      <ul class="hang">
+        <li>只展示<b>这条 defect 关联的文件</b>，不是全量文件中心。</li>
+        <li>上传区<b>两个入口都开放</b>（AI / 非 AI），
+          但<b>文件类型固定为 defect 关联的 file type，置灰不可改</b>。</li>
+        <li>上传成功后新文件生效，defect <b>一键关联到新文件</b>，
+          旧文件与旧子文件<b>原样留在页面上</b>，不置灰、不隐藏、不自动删除。</li>
+        <li>提示语要写明后果：删除是手动动作、结果自负。</li>
+        <li>OCR 分类与目标类型冲突时返回 others，页面上要能看出<b>“这次没识别成功”</b>，
+          并引导更换文件，而不是让他以为传成功了。</li>
+        <li>两个 file type 有问题就是两条 defect，<b>各自传一次</b>，界面上不要试图合并。</li>
+      </ul>
+    </div>
+
+    <div class="screen">
+      <p class="role">CRA · 工作台</p>
+      <h3>复核视图与 Defect List</h3>
+      <ul class="hang">
+        <li><b>重跑是全量的，展示是聚焦的</b><span class="new">口径 3</span>：
+          默认呈现“本轮结论发生变化的规则”与“新文件关联的规则”，其余折叠可展开。</li>
+        <li><b>被跨文件规则牵动而转为失败的规则，必须单独提示</b>，
+          不能混在折叠区里——它是全量重跑唯一的价值来源。</li>
+        <li>重跑期间显示重算中状态，结果异步回来后刷新。</li>
+        <li>Defect List <b>区分系统来源与人工来源</b>；系统来源可被自动改写，人工来源只由人改。</li>
+        <li>CRA 在文件中心确认过之后，提交时<b>对应 defect 自动 verify</b>，
+          不需要回到列表再点一遍。</li>
+        <li>defect 行上带<b>关联文件</b>信息，指向文件中心里那份文件。</li>
+      </ul>
+    </div>
+
+    <div class="screen">
+      <p class="role">CRA / SALES</p>
+      <h3>Add Defect 独立线</h3>
+      <ul class="hang">
+        <li>CRA 手工新增时<b>不带任何文件信息</b>，category / type / remark 纯手填。</li>
+        <li>Sales 处理时<b>不限制 file type</b>，但 <b>AI 入口置灰</b><span class="new">口径 7</span>，
+          附说明文案，只能上传到 file list。</li>
+        <li>这条线上<b>没有规则、没有自动更新、没有反显</b>，CRA 人眼复核后手工勾选状态。</li>
+      </ul>
+    </div>
+
+    <div class="screen">
+      <p class="role">CDM · 数据维护</p>
+      <h3>Sync from OCR</h3>
+      <ul class="hang">
+        <li>反显取<b>该 file type 下最新版本、且无未关闭 defect</b> 的文件<span class="new">口径 4</span>。</li>
+        <li>两个条件任一不满足，<b>这组字段不反显</b>，也不回退到旧版本取值。</li>
+        <li>不反显时要给出可执行的原因，而不是留一片空白：
+          <b>指明是哪条 defect 挡住了</b>，关掉它字段就会回来。</li>
+        <li>每次点击 Sync 时重新校验一遍文件与 defect 的关联关系，不用缓存结论。</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
 <section class="col">
-  <div class="sh"><span class="sn">10</span><h2>下一步</h2></div>
+  <div class="sh"><span class="sn">11</span><h2>下一步</h2></div>
   <div class="body">
-    <p>本文只做<strong>思路对齐</strong>，不含界面细节。你确认口径后，我按这个顺序推进：</p>
+    <p>口径已定，接下来按这个顺序推进：</p>
     <ol class="loop" style="margin-top:20px">
-      <li><span class="act">补齐第 09 节的七个口径</span>
-        <p>其中第 6 条（type 多选）需要外部确认，其余可内部拍板。</p></li>
+      <li><span class="act">确认第 06 节那处新细节</span>
+        <p>跨文件规则重跑后失败时，defect 挂本轮被替换的文件（建议做法）还是挂规则命中的另一份文件。
+          这是口径 3 新带出来的，会上没讨论过。</p></li>
       <li><span class="act">写需求</span>
-        <p>按第 03–08 节的结构展开为可开发的条目，含字段、状态机与接口改动。</p></li>
+        <p>按第 03–08 节的结构展开为可开发条目，含字段、状态机与接口改动；
+          第 10 节的交互要点直接作为验收点。</p></li>
       <li><span class="act">改原型</span>
         <p>文件中心与 CRA 工作台两侧同步改，覆盖第一轮创建、第二轮定向重传、
-          四种结果的复核，以及 Add Defect 这条独立线。</p></li>
+          全量重跑下的聚焦复核、四种结果，以及 Add Defect 这条独立线。</p></li>
     </ol>
   </div>
 </section>
 
 <footer class="col">
   <span>HLB LOAD$ · 放款 Batch 3</span>
-  <span>依据 09-03 / 09-04 三场会议逐字稿</span>
-  <span>思路对齐稿 · 未含界面细节</span>
+  <span>依据 09-03 / 09-04 三场会议逐字稿 · 按七条定稿口径更新</span>
+  <span>方案与交互要点 · 界面细节见原型</span>
 </footer>
 
 </div>
