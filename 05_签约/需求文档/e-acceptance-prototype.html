@@ -474,8 +474,11 @@ tr:hover td{background:#fafafa;}
         <!-- Mode Gate — one-time entry, hidden after mode is selected -->
         <div id="modeGate" style="display:none;">
           <div class="mode-gate-wrap">
-            <div class="mode-gate-title">Select Signing Mode</div>
-            <div class="mode-gate-sub">Choose how the customer will sign the documents.<br>This cannot be changed once the process has started.</div>
+            <!-- CILT context: after the initial acceptance, re-entering the Contract
+                 page shows these two cards again (FSD 7.3.1) -->
+            <div id="gateCiltNote" style="display:none;background:#f6f9fe;border:1px solid #dbe6f8;border-radius:6px;padding:12px 16px;margin-bottom:18px;font-size:12px;color:#3c4043;line-height:1.7;"></div>
+            <div class="mode-gate-title" id="gateTitle">Select Signing Mode</div>
+            <div class="mode-gate-sub" id="gateSub">Choose how the customer will sign the documents.<br>This cannot be changed once the process has started.</div>
             <div class="mode-gate-cards">
               <div class="mgc" id="mgcEA">
                 <div class="mgc-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1967d2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M7 10H4M7 14H4M20 10h-3M20 14h-3M10 7V4M14 7V4M10 20v-3M14 20v-3"/></svg></div>
@@ -549,6 +552,13 @@ tr:hover td{background:#fafafa;}
                   <div class="ux-tstep"><span class="ux-tmark">✓</span><span class="ux-tlabel" id="trackStep3Label">E-Acceptance Confirmation</span></div>
                 </div>
                 <div style="font-size:12px;color:#5f6368;line-height:1.7;" id="eaCompleteSub">Customer GGBOUND completed E-Acceptance. Signed documents archived to Document Centre.</div>
+
+                <!-- Auto-archived documents (FSD Step 7 — 5 types; status per FSD 11.7) -->
+                <div class="ux-sub">Automatically archived</div>
+                <div id="archList"></div>
+                <div style="font-size:11px;color:#9aa0a6;line-height:1.7;margin-top:10px;">
+                  Signed versions do not overwrite the pre-signing previews. Acceptance Completed does not submit to CRA — Sales completes the disbursement documents and runs <strong>Proceed to CRA</strong> manually.
+                </div>
               </div>
             </div>
 
@@ -623,20 +633,40 @@ tr:hover td{background:#fafafa;}
   </div>
 </div>
 
-<!-- ═══ MODAL: History ═══ -->
-<div class="modal-overlay" id="modalHistory">
-  <div class="modal" style="width:560px;">
-    <div class="modal-hdr"><h3 id="historyTitle">Document History</h3><button class="modal-x" onclick="closeModal('modalHistory')">✕</button></div>
+<!-- ═══ MODAL: Biometric Report (FSD 9.3 / 11.1) ═══
+     One summary table per applicant; every scan attempt is one row,
+     including Error rows. Auto-generated and archived by CrediOS —
+     Sales never uploads it manually. ═══ -->
+<div class="modal-overlay" id="modalBioReport">
+  <div class="modal modal-lg">
+    <div class="modal-hdr"><h3 id="bioRptTitle">Biometric Report</h3><button class="modal-x" onclick="closeModal('modalBioReport')">✕</button></div>
     <div class="modal-body">
-      <table style="width:100%;border-collapse:collapse;"><thead><tr>
-        <th style="text-align:left;font-size:11px;color:#5f6368;padding:7px 10px;border-bottom:2px solid #e8eaed;">Version</th>
-        <th style="text-align:left;font-size:11px;color:#5f6368;padding:7px 10px;border-bottom:2px solid #e8eaed;">Generated</th>
-        <th style="text-align:left;font-size:11px;color:#5f6368;padding:7px 10px;border-bottom:2px solid #e8eaed;">By</th>
-        <th style="text-align:left;font-size:11px;color:#5f6368;padding:7px 10px;border-bottom:2px solid #e8eaed;">Type</th>
-        <th style="text-align:left;font-size:11px;color:#5f6368;padding:7px 10px;border-bottom:2px solid #e8eaed;">Action</th>
-      </tr></thead><tbody id="historyBody"></tbody></table>
+      <div class="modal-info-grid">
+        <div class="mig-item"><label>App. Ref. No.</label><span>375/HP/2026/Y0010922</span></div>
+        <div class="mig-item"><label>Name</label><span id="bioRptName">GGBOUND</span></div>
+        <div class="mig-item"><label>ID No.</label><span id="bioRptId">60-12-2308243</span></div>
+        <div class="mig-item"><label>Staff ID</label><span>001</span></div>
+        <div class="mig-item"><label>Total Triggers</label><span id="bioRptCount">0</span></div>
+        <div class="mig-item"><label>Archiving Status</label><span id="bioRptArch">Success</span></div>
+      </div>
+      <table class="log-table" style="width:100%;border-collapse:collapse;">
+        <thead><tr>
+          <th style="border-bottom:2px solid #e8eaed;">#</th>
+          <th style="border-bottom:2px solid #e8eaed;">Date &amp; Time Request</th>
+          <th style="border-bottom:2px solid #e8eaed;">Date &amp; Time Response</th>
+          <th style="border-bottom:2px solid #e8eaed;">Biometric Status</th>
+          <th style="border-bottom:2px solid #e8eaed;">Verification Type</th>
+          <th style="border-bottom:2px solid #e8eaed;">Triggering Point</th>
+          <th style="border-bottom:2px solid #e8eaed;">Remarks</th>
+        </tr></thead>
+        <tbody id="bioRptBody"></tbody>
+      </table>
+      <div id="bioRptEmpty" style="display:none;font-size:12px;color:#9aa0a6;padding:18px 2px;">No biometric attempt has been recorded for this applicant yet.</div>
     </div>
-    <div class="modal-ftr"><button class="btn btn-secondary btn-sm" onclick="closeModal('modalHistory')">Close</button></div>
+    <div class="modal-ftr">
+      <button class="btn btn-secondary btn-sm" onclick="alert('Downloading Biometric Report PDF — auto-archived to Document Centre.')">Download PDF</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modalBioReport')">Close</button>
+    </div>
   </div>
 </div>
 
@@ -731,15 +761,29 @@ tr:hover td{background:#fafafa;}
     </div>
 
     <div class="dev-acc" id="devAcc-eaexc">
-      <button class="dev-acc-hdr" onclick="devToggleAcc('eaexc')"><span>EA · Exceptions <span class="dev-caret">▶</span></span><span class="dev-cnt">6</span></button>
+      <button class="dev-acc-hdr" onclick="devToggleAcc('eaexc')"><span>EA · Exceptions <span class="dev-caret">▶</span></span><span class="dev-cnt">13</span></button>
       <div class="dev-acc-body">
+        <div class="dev-group">Biometric — Unmatched</div>
         <button class="dev-btn" data-sc="ea-s1-fail1" onclick="applyScenario('ea-s1-fail1',this)">S1 · ✗ Failed 1/3</button>
         <button class="dev-btn" data-sc="ea-s1-fail2" onclick="applyScenario('ea-s1-fail2',this)">S1 · ✗ Failed 2/3</button>
         <button class="dev-btn" data-sc="ea-s1-fail3" onclick="applyScenario('ea-s1-fail3',this)">S1 · ✗ 3/3 → force Manual</button>
         <button class="dev-btn" data-sc="ea-s3-fail1" onclick="applyScenario('ea-s3-fail1',this)">S3 · ✗ Failed 1/3</button>
         <button class="dev-btn" data-sc="ea-s3-fail2" onclick="applyScenario('ea-s3-fail2',this)">S3 · ✗ Failed 2/3</button>
+        <div class="dev-group">Biometric — Error (no retry consumed)</div>
+        <button class="dev-btn" data-sc="ea-s1-err-mykad" onclick="applyScenario('ea-s1-err-mykad',this)">S1 · ⚠ No MyKad</button>
+        <button class="dev-btn" data-sc="ea-s1-err-timeout" onclick="applyScenario('ea-s1-err-timeout',this)">S1 · ⚠ Error - Time Out</button>
+        <button class="dev-btn" data-sc="ea-s1-err-persist" onclick="applyScenario('ea-s1-err-persist',this)">S1 · ⚠ Device down → force Manual</button>
+        <button class="dev-btn" data-sc="ea-s3-err" onclick="applyScenario('ea-s3-err',this)">S3 · ⚠ Error fetching listing</button>
+        <div class="dev-group">RIB / OTP</div>
+        <button class="dev-btn" data-sc="ea-s2-submitted" onclick="applyScenario('ea-s2-submitted',this)">S2 · Customer submitted (press Refresh)</button>
+        <button class="dev-btn" data-sc="ea-s2-rib-down" onclick="applyScenario('ea-s2-rib-down',this)">S2 · ✗ No RIB account → force Manual</button>
+        <button class="dev-btn" data-sc="ea-s3-timeout" onclick="applyScenario('ea-s3-timeout',this)">S3 · ⏱ 15-min timeout → OTP</button>
         <button class="dev-btn" data-sc="ea-s3-otp" onclick="applyScenario('ea-s3-otp',this)">S3 · ✗ 3/3 → OTP at RIB</button>
         <button class="dev-btn" data-sc="ea-s3-otp-ok" onclick="applyScenario('ea-s3-otp-ok',this)">S3 · OTP verified at RIB (then Refresh)</button>
+        <button class="dev-btn" data-sc="ea-s3-otp-limit" onclick="applyScenario('ea-s3-otp-limit',this)">S3 · ✗ OTP 3/3 → force Manual</button>
+        <div class="dev-group">Completion</div>
+        <button class="dev-btn" data-sc="ea-complete-usedcar" onclick="applyScenario('ea-complete-usedcar',this)">✓ Completed · used car (4 docs)</button>
+        <button class="dev-btn" data-sc="ea-complete-archfail" onclick="applyScenario('ea-complete-archfail',this)">✓ Completed · ✗ archiving failed</button>
       </div>
     </div>
 
@@ -757,13 +801,18 @@ tr:hover td{background:#fafafa;}
         <button class="dev-btn" data-sc="m-g-p-matched" onclick="applyScenario('m-g-p-matched',this)">Primary ✓ · Guarantor active</button>
         <button class="dev-btn" data-sc="m-g-both-matched" onclick="applyScenario('m-g-both-matched',this)">Both ✓ Matched</button>
         <button class="dev-btn" data-sc="m-g-skip" onclick="applyScenario('m-g-skip',this)">Both: Proceed Offline</button>
+        <div class="dev-group">Completion &amp; Reset</div>
+        <button class="dev-btn" data-sc="m-complete" onclick="applyScenario('m-complete',this)">✓ Completed (CRA HPA uploaded)</button>
+        <button class="dev-btn" data-sc="m-complete-disbursed" onclick="applyScenario('m-complete-disbursed',this)">✓ Completed · disbursement submitted</button>
       </div>
     </div>
 
     <div class="dev-acc" id="devAcc-amd">
-      <button class="dev-acc-hdr" onclick="devToggleAcc('amd')"><span>Amendment (CILT) <span class="dev-caret">▶</span></span><span class="dev-cnt">6</span></button>
+      <button class="dev-acc-hdr" onclick="devToggleAcc('amd')"><span>Amendment (CILT) <span class="dev-caret">▶</span></span><span class="dev-cnt">8</span></button>
       <div class="dev-acc-body">
         <div class="dev-group">First signing = E-Acceptance</div>
+        <button class="dev-btn" data-sc="cilt-entry" onclick="applyScenario('cilt-entry',this)">⓪ CILT re-entry — select mode again</button>
+        <button class="dev-btn" data-sc="ea-cilt-noresign" onclick="applyScenario('ea-cilt-noresign',this)">⓪ CILT — no signing fields touched</button>
         <button class="dev-btn" data-sc="ea-amendment" onclick="applyScenario('ea-amendment',this)">① CILT approved — Step 1</button>
         <button class="dev-btn" data-sc="ea-amendment-fail" onclick="applyScenario('ea-amendment-fail',this)">① ✗ e-Tracker sync failed</button>
         <button class="dev-btn" data-sc="ea-amendment-sent" onclick="applyScenario('ea-amendment-sent',this)">② SMS sent — awaiting customer</button>
@@ -802,6 +851,32 @@ const AMD_CHANGES=[
   {field:'Monthly Instalment',old:'RM 850',    new:'RM 905'},
   {field:'Loan Duration',     old:'60 months', new:'63 months'},
 ];
+// CILT that touches no signing-document field — no re-signing required (FSD 7.2 / 8.5)
+const AMD_CHANGES_NONSIGN=[
+  {field:'Insurance Provider',   old:'Etiqa',              new:'Allianz'},
+  {field:'Correspondence Email', old:'gg@old-mail.com',    new:'gg@new-mail.com'},
+];
+
+// Documents auto-archived once E-Acceptance completes (FSD Step 7 — 5 types).
+// Archiving status per FSD 11.7: Pending / Archiving / Success / Failed.
+const ARCHIVED_DOCS=[
+  {name:'HP Agreement & T&C',                 note:'e-signing version'},
+  {name:'HP Agreement Second Schedule Part 1',note:'e-signing version'},
+  {name:'Product Disclosure Sheet',           note:'e-signing version'},
+  {name:'Customer Biometric Scanning Result', note:'auto-attached, no manual upload'},
+  {name:'Appendix 4',                         note:'used / reconditioned vehicles only',usedCarOnly:true},
+];
+
+// Device reason codes mapped from the vendor drivers (FSD 9.2.2).
+// Error is a status in its own right — it is NOT an Unmatched, so it does not
+// consume a match attempt (FSD 9.1.3, BIOMETRIC_SUCCESSFUL_COUNTER excludes Error).
+const BIO_ERRORS={
+  READ_MYKAD_FAILED:          {title:'No MyKad',              sub:'The reader could not read the MyKad. Reseat the card and read again.'},
+  DEVICE_TIMEOUT:             {title:'Error - Time Out',      sub:'The device did not respond within the expected time.'},
+  DEVICE_COMMUNICATION_ERROR: {title:'Error fetching listing',sub:'Cannot reach the biometric service. Restart the service, then retry.'},
+  INVALID_DEVICE_SERIAL_NO:   {title:'Error fetching listing',sub:'Device serial number is not registered. Contact IT support.'},
+};
+
 const EA_LOG={
   initial:{type:'Hirer Initial Acceptance',pds:'Y',ss:'Y',hpa:'Y',app4:'—',status:'Completed',dt:'20/05/2026 04:50 PM',remark:'Biometric Acceptance'},
   amendment:{type:'Hirer Amendment Acceptance (1st)',pds:'Y',ss:'Y',hpa:'Y',app4:'—',status:'Completed',dt:'20/05/2026 05:02 PM',remark:'e-Tracker Remote Acceptance'},
@@ -832,6 +907,19 @@ let S={
   s1Dev:'disconnected', s1Attempts:0,
   s2RibStatus:'waiting',          // 'waiting' | 'submitted'
   s3Dev:'disconnected', s3Attempts:0, s3Remarks:'',
+  // Device error codes (FSD 9.2.2). Set when sXDev==='error'.
+  s1Err:'', s3Err:'',
+  s3Timeout:false,                // 2nd biometric ran past the 15-minute window
+  otpFailures:0,                  // RIB-side OTP failure count; 3 → fall back to Manual
+  // Trigger counter counts EVERY trigger incl. Error; attempts count matches only.
+  s1Triggers:0, s3Triggers:0,
+  s2CustSubmitted:false,          // RIB-side fact; officer only learns it via Refresh
+  usedCar:false,                  // drives Appendix 4 (4 signing docs instead of 3)
+  forceReason:'',                 // why EA was force-switched to Manual (FSD 8.3)
+  manualComplete:false,           // signed CRA HP Agreement uploaded to File Centre
+  disbursementSubmitted:false,    // hard boundary — no switching after this (FSD 8.2)
+  archiveFail:false,              // simulate an EDMS archiving failure (FSD 11.7 / AUX-1)
+  bioLog:[],                      // every biometric trigger, for the Biometric Report
   eaComplete:false, amendmentRequired:false, amendmentStep:'none', smsSent:false,
   smsStatus:'', smsSentAt:'', custConfirmed:false, amdSyncFail:false,
   eaLocked:false,                 // true once EA hit max failures — cannot pick EA again this cycle
@@ -840,8 +928,8 @@ let S={
   eaViaOTP:false,
   s1Remarks:'',                    // officer remarks on Step 1 failure (required to retry)
   // Manual flow
-  mBioPrimary:{dev:'disconnected',done:false,attempts:0,remarks:''},
-  mBioGuarantor:{dev:'disconnected',done:false,attempts:0,remarks:''},
+  mBioPrimary:{dev:'disconnected',done:false,attempts:0,remarks:'',triggers:0,err:''},
+  mBioGuarantor:{dev:'disconnected',done:false,attempts:0,remarks:'',triggers:0,err:''},
 };
 
 // ═══════════════════════════════════════════════
@@ -852,27 +940,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   applyScenario('gate', null);
 });
 
-// History modal — 4th param: whether this doc has amendment versions
-function openHistory(name,ver,date,multiVer){
-  document.getElementById('historyTitle').textContent='History — '+name;
-  const s='padding:7px 10px;font-size:12px;border-bottom:1px solid #f1f3f4;';
-  let rows=`<tr>
-    <td style="${s}">${ver}</td>
-    <td style="${s}">${date}</td>
-    <td style="${s}">System</td>
-    <td style="${s}">${multiVer?'Amendment — Field changes detected':'Initial Generation'}</td>
-    <td style="${s}"><span class="lnk">View</span> · <span class="lnk">Download</span></td>
-  </tr>`;
-  if(multiVer) rows+=`<tr>
-    <td style="${s}">v1</td>
-    <td style="${s}">2026-05-18 22:12:14</td>
-    <td style="${s}">System</td>
-    <td style="${s}">Initial Generation</td>
-    <td style="${s}"><span class="lnk">View</span> · <span class="lnk">Download</span></td>
-  </tr>`;
-  document.getElementById('historyBody').innerHTML=rows;
-  openModal('modalHistory');
-}
+// Document version history lives in the Document Centre (FSD 11.8.1), not here —
+// the acceptance screen only states that v1 is retained.
 
 // ═══════════════════════════════════════════════
 //  MODE SWITCH
@@ -899,11 +968,19 @@ function confirmSwitchToManual(){
   S.s2RibStatus='waiting';S.s3Dev='disconnected';S.s3Attempts=0;
   applyMode('manual');
 }
-// Auto-forced switch after max biometric failures — locks EA for this cycle.
-function forceManualSwitch(){
-  S.eaStep=1;S.s1Dev='disconnected';S.s1Attempts=0;
-  S.s2RibStatus='waiting';S.s3Dev='disconnected';S.s3Attempts=0;
-  S.eaLocked=true;   // persisted server-side in the real system; refreshing must not bypass it
+// Forced switch — one of the four scenarios in FSD 8.3. EA is locked for this
+// accept cycle; the lock lives server-side so a page refresh cannot bypass it.
+const FORCE_REASONS={
+  'bio-limit':      'maximum biometric attempts were reached',
+  'device-error':   'the biometric device remained unavailable after troubleshooting',
+  'rib-unavailable':'the customer could not be served on RIB (not registered / account frozen / RIB unavailable)',
+  'otp-limit':      'OTP verification failed the maximum number of times',
+};
+function forceManualSwitch(reason){
+  S.eaStep=1;S.s1Dev='disconnected';S.s1Attempts=0;S.s1Err='';
+  S.s2RibStatus='waiting';S.s3Dev='disconnected';S.s3Attempts=0;S.s3Err='';
+  S.eaLocked=true;
+  S.forceReason=reason||'bio-limit';
   applyMode('manual');
 }
 
@@ -942,11 +1019,28 @@ function renderGate(){
   if(gateNote){
     gateNote.style.display=ok?'none':'block';
     gateNote.textContent=S.eaLocked
-      ? 'E-Acceptance is no longer available for this case — maximum biometric attempts were reached. Proceed with Manual Acceptance.'
+      ? 'E-Acceptance is locked for this acceptance cycle — '+(FORCE_REASONS[S.forceReason]||FORCE_REASONS['bio-limit'])+'. Proceed with Manual Acceptance.'
       : S.firstAcceptMode==='manual'
         ? 'First signing was completed via Manual Acceptance, so E-Acceptance cannot be selected for subsequent rounds.'
         : 'This application is not eligible for E-Acceptance. Proceed with Manual Acceptance.';
   }
+  // CILT re-entry: the same two cards are shown again, but framed as
+  // "how will the customer confirm the amendment" (FSD 7.3.1).
+  const cilt=S.amendmentRequired&&S.eaComplete;
+  const ciltNote=document.getElementById('gateCiltNote');
+  if(ciltNote){
+    ciltNote.style.display=cilt?'block':'none';
+    if(cilt)ciltNote.innerHTML='<strong>CILT-2026-001 approved.</strong> The initial acceptance was completed on 20-05-2026 via '
+      +(S.eaViaOTP?'OTP':'Biometric')
+      +'. The changed terms touch fields on the signing documents, so the acceptance status has been reset to '
+      +'<strong>Pending</strong> and the customer must confirm again before disbursement.';
+  }
+  const gt=document.getElementById('gateTitle'), gs=document.getElementById('gateSub');
+  if(gt)gt.textContent=cilt?'Select Amendment Confirmation Mode':'Select Signing Mode';
+  if(gs)gs.innerHTML=cilt
+    ?'Choose how the customer will confirm the amended documents.<br>E-Acceptance uses e-Tracker remote confirmation; Manual is re-processed offline.'
+    :'Choose how the customer will sign the documents.<br>This cannot be changed once the process has started.';
+
   document.getElementById('modeGate').style.display='block';
   document.getElementById('panelEA').style.display='none';
   document.getElementById('panelManual').style.display='none';
@@ -992,10 +1086,34 @@ function renderEAPanel(){
       S.eaViaOTP?'Confirmation via OTP':'E-Acceptance Confirmation';
     document.getElementById('eaCompleteSub').textContent=
       'Customer GGBOUND completed E-Acceptance. Signed documents archived to Document Centre.';
+    renderArchiveList();
     document.getElementById('amendmentSection').style.display=showAmd?'block':'none';
     if(showAmd)renderAmendment();
   }
 }
+
+// Archived-document list on the completion card.
+// Appendix 4 only applies to used / reconditioned vehicles; it is listed as N/A
+// rather than hidden so the officer can see the rule was evaluated.
+function renderArchiveList(){
+  const el=document.getElementById('archList');
+  if(!el)return;
+  const pill=(st)=>{
+    const cls=st==='Success'?'bd-green':st==='Failed'?'bd-red':st==='Archiving'?'bd-blue':'bd-gray';
+    return `<span class="badge ${cls}" style="font-size:10px;">${st}</span>`;
+  };
+  el.innerHTML=ARCHIVED_DOCS.map((d,i)=>{
+    const na=d.usedCarOnly&&!S.usedCar;
+    const st=na?'N/A':(S.archiveFail&&i===0?'Failed':'Success');
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f6f7f8;font-size:13px;">
+      <span style="flex:1;color:${na?'#9aa0a6':'#202124'};">${d.name}
+        <span style="font-size:11px;color:#9aa0a6;margin-left:6px;">${na?'not applicable — new vehicle':d.note}</span></span>
+      ${na?`<span class="badge bd-gray" style="font-size:10px;">N/A</span>`:pill(st)}
+      ${st==='Failed'?`<button class="lnk" style="font-size:11px;" onclick="retryArchive()">Retry archiving</button>`:''}
+    </div>`;
+  }).join('');
+}
+function retryArchive(){S.archiveFail=false;renderArchiveList();}
 
 // ── Shared left panel builder ──
 function leftPanel(step,overrides={}){
@@ -1009,10 +1127,15 @@ function leftPanel(step,overrides={}){
   const remark=overrides.remark||'';
   const name=overrides.name||'GGBOUND';
   const nric=overrides.nric||'60-12-2308243';
+  // Verification Type per FSD 9.1.1 — the report and the log key off this value
+  const vType=overrides.vType||(step===1?'Identity Verification'
+    :step===3?'E-Acceptance Confirmation':'Manual Acceptance Verification');
+  const rptKey=overrides.rptKey||(step==='manual'?name:'GGBOUND');
   return `<div class="info-sec">
     <div class="info-sec-title">Customer</div>
     <div class="bio-row"><span class="bio-lbl">Name</span><span class="bio-val">${name}</span></div>
     <div class="bio-row"><span class="bio-lbl">NRIC</span><span class="bio-val">${nric}</span></div>
+    <div class="bio-row"><span class="bio-lbl">App. Ref. No.</span><span class="bio-val" style="font-size:10px;">375/HP/2026/Y0010922</span></div>
   </div>
   <div class="info-sec">
     <div class="info-sec-title">Sales</div>
@@ -1021,6 +1144,7 @@ function leftPanel(step,overrides={}){
   </div>
   <div class="info-sec">
     <div class="info-sec-title">Transaction Details</div>
+    <div class="bio-row"><span class="bio-lbl">Verification Type</span><span class="bio-val" style="font-size:10px;">${vType}</span></div>
     <div class="bio-row"><span class="bio-lbl">Biometric Status</span><span class="bio-val ${bioClass}">${bio}</span></div>
     <div class="bio-row"><span class="bio-lbl">Request Time</span><span class="bio-val">${req}</span></div>
     <div class="bio-row"><span class="bio-lbl">Response Time</span><span class="bio-val">${res}</span></div>
@@ -1028,13 +1152,49 @@ function leftPanel(step,overrides={}){
     <div class="bio-row"><span class="bio-lbl">Trigger Counter</span><span class="bio-val">${trig}</span></div>
     <div class="bio-row"><span class="bio-lbl">Retry Attempts</span><span class="bio-val">${retry}</span></div>
     ${remark?`<div class="bio-row"><span class="bio-lbl">Remarks</span><span class="bio-val failed" style="font-size:10px;">${remark}</span></div>`:''}
+  </div>
+  <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e8eaed;">
+    <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="openBioReport('${rptKey}')">Report</button>
   </div>`;
+}
+
+// ── Biometric Report (FSD 9.3) ──
+// Every trigger is appended here, Error rows included, so the report is a true
+// audit trail of the scanning attempts rather than just the final outcome.
+function logBio(status,vType,trigPoint,remarks,person){
+  S.bioLog.push({
+    person:person||'GGBOUND',
+    req:fmtNow(), res:fmtNow(2),
+    status:status, vType:vType, trigPoint:trigPoint, remarks:remarks||''
+  });
+}
+function openBioReport(person){
+  const rows=S.bioLog.filter(r=>r.person===person);
+  const p=MANUAL_PERSONS.find(x=>x.name===person);
+  document.getElementById('bioRptTitle').textContent='Biometric Report — '+person;
+  document.getElementById('bioRptName').textContent=person;
+  document.getElementById('bioRptId').textContent=p?p.id:'60-12-2308243';
+  document.getElementById('bioRptCount').textContent=rows.length;
+  document.getElementById('bioRptArch').textContent=rows.length?'Success':'Pending';
+  const td='padding:7px 10px;border-bottom:1px solid #f1f3f4;';
+  document.getElementById('bioRptBody').innerHTML=rows.map((r,i)=>`<tr>
+    <td style="${td}">${i+1}</td>
+    <td style="${td}white-space:nowrap;">${r.req}</td>
+    <td style="${td}white-space:nowrap;">${r.res}</td>
+    <td style="${td}"><span class="badge ${r.status==='Matched'?'bd-green':r.status==='Error'?'bd-orange':'bd-red'}" style="font-size:10px;">${r.status}</span></td>
+    <td style="${td}">${r.vType}</td>
+    <td style="${td}">${r.trigPoint}</td>
+    <td style="${td}">${r.remarks||'—'}</td>
+  </tr>`).join('');
+  document.getElementById('bioRptEmpty').style.display=rows.length?'none':'block';
+  openModal('modalBioReport');
 }
 
 // ── Device SVG ──
 function devViz(st){
-  const bg={disconnected:'#fce8e6',scanning:'#fef7e0',connected:'#e8f0fe'};
+  const bg={disconnected:'#fce8e6',scanning:'#fef7e0',connected:'#e8f0fe',error:'#fef7e0'};
   const icon={
+    error:'<span style="color:#b45309;font-size:14px;font-weight:700;">!</span>',
     disconnected:'<span style="color:#c5221f;font-size:14px;">✕</span>',
     scanning:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" class="spin"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>',
     connected:'<span style="color:#174ea6;font-size:14px;">✓</span>'
@@ -1042,7 +1202,7 @@ function devViz(st){
   const dots=(on)=>[1,2,3].map(()=>`<div class="conn-dot ${on?'on':''}"></div>`).join('');
   return `<div class="device-vis">
     <div class="device-box"><svg class="device-icon" viewBox="0 0 58 72"><rect x="4" y="2" width="50" height="68" rx="8" fill="#f0f4ff" stroke="#4f5bd5" stroke-width="2"/><rect x="12" y="12" width="34" height="22" rx="3" fill="#4f5bd5" opacity=".22"/><rect x="18" y="46" width="22" height="3" rx="1.5" fill="#4f5bd5" opacity=".35"/><rect x="18" y="52" width="22" height="3" rx="1.5" fill="#4f5bd5" opacity=".35"/><rect x="18" y="58" width="22" height="3" rx="1.5" fill="#4f5bd5" opacity=".35"/></svg><span class="device-name">Biometric Reader</span></div>
-    <div class="conn-indicator"><div class="conn-dots">${dots(st!=='disconnected')}</div><div class="conn-icon ${st==='disconnected'?'ci-off':st==='scanning'?'ci-scan':'ci-on'}" style="background:${bg[st]||bg.connected}">${icon[st]||icon.connected}</div><div class="conn-dots">${dots(st!=='disconnected')}</div></div>
+    <div class="conn-indicator"><div class="conn-dots">${dots(st!=='disconnected'&&st!=='error')}</div><div class="conn-icon ${st==='disconnected'?'ci-off':(st==='scanning'||st==='error')?'ci-scan':'ci-on'}" style="background:${bg[st]||bg.connected}">${icon[st]||icon.connected}</div><div class="conn-dots">${dots(st!=='disconnected'&&st!=='error')}</div></div>
     <div class="device-box"><svg class="device-icon" viewBox="0 0 78 62"><rect x="4" y="2" width="70" height="46" rx="5" fill="#f0f4ff" stroke="#4f5bd5" stroke-width="2"/><rect x="10" y="8" width="58" height="34" rx="2" fill="#4f5bd5" opacity=".14"/><path d="M0 52 Q39 48 78 52 L78 60 Q39 56 0 60 Z" fill="#e8eaed"/><rect x="28" y="48" width="22" height="4" rx="2" fill="#dadce0"/></svg><span class="device-name">Computer</span></div>
   </div>`;
 }
@@ -1072,8 +1232,8 @@ function renderStep1(){
     setTimeout(()=>{if(S.s1Dev==='scanning'){S.s1Dev='ready';renderStep1();}},2000);
   } else if(dev==='ready'){
     right=devViz('connected')+`
-      <div class="state-title">MyKad Read — Scan Fingerprint</div>
-      <div class="state-sub">MyKad identity confirmed. Ask the customer to place their thumb firmly on the scanner.${att>0?' <strong>'+att+'/3 previous attempt(s) failed.</strong>':''}</div>
+      <div class="state-title">Reader is ready</div>
+      <div class="state-sub">Please place your thumb on the scanner when light is On.${att>0?' <strong>'+att+'/3 previous attempt(s) failed.</strong>':''}</div>
       ${att>0?attBadge(att,3):''}
       <div style="display:flex;gap:8px;margin-top:12px;">
         <button class="btn btn-primary btn-sm" onclick="s1StartFP('matched')">Scan Fingerprint</button>
@@ -1082,8 +1242,15 @@ function renderStep1(){
     right=devViz('scanning')+`
       <div class="state-title">Scanning Fingerprint...</div>
       <div class="state-sub">Hold thumb firmly on the scanner. Do not remove until the light changes.</div>`;
+  } else if(dev==='error'){
+    // Error is not Unmatched: it does not burn a match attempt, and Restart Service
+    // is offered here and ONLY here (FSD p13 — not a persistent button).
+    leftOpts={bioStatus:'Error',bioClass:'warn',reqTime:now,resTime:now2,
+              trigCount:String(S.s1Triggers),retry:att+' / 3',
+              remark:'Device error — '+(S.s1Err||'DEVICE_COMMUNICATION_ERROR')};
+    right=bioErrorPanel(S.s1Err,'s1');
   } else if(dev==='matched'){
-    leftOpts={bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3',remark:S.s1Remarks||undefined};
+    leftOpts={bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:String(S.s1Triggers||1),retry:att+' / 3',remark:S.s1Remarks||undefined};
     right=`<div class="bio-result">
       ${ICO_OK}
       <div class="bio-result-title brt-matched">Verified OK. Thumbprint matched.</div>
@@ -1096,7 +1263,7 @@ function renderStep1(){
     </div>`;
   } else if(dev==='unmatched'){
     const rmkText=S.s1Remarks?'Biometric not matched. '+S.s1Remarks:'Biometric not matched.';
-    leftOpts={bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3',remark:rmkText};
+    leftOpts={bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:String(S.s1Triggers||att),retry:att+' / 3',remark:rmkText};
     if(att>=3){
       right=`
         <div class="auto-switch-banner">
@@ -1107,7 +1274,7 @@ function renderStep1(){
           ${ICO_FAIL}
           <div class="bio-result-title brt-failed">Biometric Verification Failed</div>
           <p style="font-size:12px;color:#5f6368;margin:5px 0 14px;">E-Acceptance is no longer available for this session.</p>
-          <button class="btn btn-danger" onclick="forceManualSwitch()">Proceed with Manual Acceptance</button>
+          <button class="btn btn-danger" onclick="forceManualSwitch('bio-limit')">Proceed with Manual Acceptance</button>
         </div>`;
     } else {
       const rem=3-att;
@@ -1131,14 +1298,46 @@ function renderStep1(){
   document.getElementById('s1Right').innerHTML=right;
 }
 
+// Shared Error panel for both EA steps and the Manual person cards.
+// Restart Service appears only while the device is in Error, per FSD p13.
+function bioErrorPanel(code,which){
+  const e=BIO_ERRORS[code]||BIO_ERRORS.DEVICE_COMMUNICATION_ERROR;
+  const persistent=which==='s1'&&S.forceReason==='device-error';
+  return devViz('error')+`
+    <div class="state-title" style="color:#b45309;">${e.title}</div>
+    <div class="state-sub">${e.sub}<br><span style="font-size:11px;color:#9aa0a6;">Reason code: ${code||'DEVICE_COMMUNICATION_ERROR'} · This attempt is logged as <strong>Error</strong> and does not consume a retry.</span></div>
+    ${persistent?`<div class="auto-switch-banner" style="max-width:400px;">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div><strong>Device still unavailable after troubleshooting.</strong><br>E-Acceptance cannot continue — proceed via Manual Acceptance.</div>
+    </div>
+    <button class="btn btn-danger" onclick="forceManualSwitch('device-error')">Proceed with Manual Acceptance</button>`
+    :`<div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn btn-secondary btn-sm" onclick="restartBioService('${which}')">Restart Service</button>
+      <button class="btn btn-primary btn-sm" onclick="bioErrRetry('${which}')">Read MyKad</button>
+    </div>`}`;
+}
+// Restart the biometric service, then drop back to the un-read state.
+function restartBioService(which){
+  if(which==='s1'){S.s1Dev='scanning';S.s1Err='';renderStep1();}
+  else if(which==='s3'){S.s3Dev='scanning';S.s3Err='';renderStep3();}
+  else{S[which].dev='scanning';S[which].err='';renderManualPanel();}
+}
+function bioErrRetry(which){
+  if(which==='s1'){S.s1Dev='scanning';S.s1Err='';renderStep1();}
+  else if(which==='s3'){S.s3Dev='scanning';S.s3Err='';renderStep3();}
+  else{S[which].dev='scanning';S[which].err='';renderManualPanel();}
+}
+
 // Trigger fingerprint scan with pending outcome; scanning-fp state auto-advances in 1.5s
 function s1StartFP(outcome){
   S.s1Dev='scanning-fp';
   renderStep1();
   setTimeout(()=>{
     if(S.s1Dev==='scanning-fp'){
+      S.s1Triggers++;
       if(outcome==='fail'){S.s1Attempts++;S.s1Dev='unmatched';}
       else{S.s1Dev='matched';}
+      logBio(S.s1Dev==='matched'?'Matched':'Unmatched','Identity Verification','Letter Printing E-Acceptance',S.s1Remarks,'GGBOUND');
       renderStep1();
     }
   },1500);
@@ -1185,7 +1384,24 @@ function renderStep2(){
   const docSvg=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1967d2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
   const chkSvg=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1967d2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`;
 
-  if(S.s2RibStatus==='waiting'){
+  if(S.s2RibStatus==='unavailable'){
+    // FSD 8.3 / Exception D — customer not registered on RIB, account frozen,
+    // or RIB itself is down. All three force the round over to Manual.
+    el.innerHTML=`<div class="rib-panel">
+      <div class="auto-switch-banner">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div><strong>Customer cannot be served on RIB.</strong><br>Not registered with RIB / account frozen / RIB portal unavailable. E-Acceptance cannot continue for this round.</div>
+      </div>
+      <div style="font-size:12px;color:#5f6368;line-height:1.7;margin-bottom:14px;">
+        The first biometric result is retained in the Acceptance Log. Switching to Manual locks E-Acceptance for this acceptance cycle.
+      </div>
+      <div style="text-align:center;">
+        <button class="btn btn-danger" onclick="forceManualSwitch('rib-unavailable')">Proceed with Manual Acceptance</button>
+      </div>
+    </div>`;
+  } else if(S.s2RibStatus==='waiting'){
+    // The officer has no live feed from RIB — the only way to learn the customer
+    // has submitted is to press Refresh (FSD p15 / p16 / p37).
     el.innerHTML=`<div class="rib-panel">
       <div class="rib-header" style="display:flex;align-items:center;gap:7px;justify-content:center;">${globeSvg} Customer Reviewing at RIB Portal</div>
       <div style="font-size:11px;color:#80868b;text-align:center;margin-bottom:10px;">Customer reviews and accepts each document before submitting</div>
@@ -1195,8 +1411,9 @@ function renderStep2(){
       <div class="rib-waiting"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" class="spin"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> Waiting for customer to review and submit all documents...</div>
       <div style="display:flex;gap:8px;justify-content:center;">
         <button class="btn btn-secondary btn-sm">Resend RIB Link</button>
-        <button class="btn btn-primary btn-sm" onclick="s2CustomerSubmit()">Customer Submitted ✓</button>
+        <button class="btn btn-primary btn-sm" id="s2RefreshBtn" onclick="s2Refresh()">Refresh</button>
       </div>
+      <div id="s2RefreshResult" style="margin-top:10px;text-align:center;font-size:12px;color:#5f6368;"></div>
     </div>`;
   } else {
     el.innerHTML=`<div class="rib-panel">
@@ -1232,12 +1449,16 @@ function renderStep3(){
   // OTP is owned end-to-end by RIB: RIB triggers, sends, collects and verifies the code.
   // CrediOS only notifies RIB that the 2nd biometric failed, then waits for the result.
   if(dev==='otp-sent'){
-    leftOpts={...leftOpts,bioStatus:'Handed to RIB',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:'3 / 3',remark:'2nd biometric failed. RIB notified — OTP fallback handled at RIB.'};
+    const timedOut=S.s3Timeout;
+    const otpDead=S.otpFailures>=3;
+    leftOpts={...leftOpts,bioStatus:'Handed to RIB',bioClass:'failed',reqTime:now,resTime:now2,
+      trigCount:String(S.s3Triggers),retry:S.s3Attempts+' / 3',
+      remark:(timedOut?'2nd biometric timed out (15 min).':'2nd biometric failed.')+' RIB notified — OTP fallback handled at RIB.'};
     right=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;padding:8px 0;">
       <div class="otp-panel" style="width:100%;max-width:400px;">
         <div class="otp-title">OTP Verification in Progress at RIB</div>
         <div class="otp-sub" style="text-align:left;line-height:1.85;">
-          CrediOS has notified RIB that the 2nd biometric failed.<br>
+          CrediOS has notified RIB that the 2nd biometric ${timedOut?'timed out after 15 minutes':'failed'}.<br>
           The customer completes OTP verification <strong>on the RIB portal</strong>:
         </div>
         <div style="font-size:12px;color:#3c4043;line-height:2;margin:10px 0 4px;text-align:left;">
@@ -1249,10 +1470,18 @@ function renderStep3(){
         <div style="background:#fff4e5;border:1px solid #ffd8a8;border-radius:5px;padding:8px 11px;font-size:11px;color:#9a5b00;line-height:1.6;margin:8px 0 12px;">
           <strong>Pending confirmation:</strong> the interface for RIB to return the OTP result to CrediOS has not been identified yet. Awaiting client IT.
         </div>
-        <div style="display:flex;gap:8px;justify-content:center;">
-          <button class="btn btn-primary btn-sm" id="s3OtpRefresh" onclick="s3RefreshOtp()">Refresh</button>
-          <button class="btn btn-danger btn-sm" onclick="openModal('modalSwitchConfirm')">Switch to Manual Acceptance</button>
-        </div>
+        ${otpDead
+          ? `<div class="auto-switch-banner" style="margin-bottom:10px;">
+               <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+               <div><strong>OTP failed 3/3 times.</strong><br>RIB has exhausted the OTP fallback. E-Acceptance cannot be completed for this round.</div>
+             </div>
+             <div style="text-align:center;"><button class="btn btn-danger btn-sm" onclick="forceManualSwitch('otp-limit')">Proceed with Manual Acceptance</button></div>`
+          : `<div style="display:flex;gap:8px;justify-content:center;">
+               <button class="btn btn-primary btn-sm" id="s3OtpRefresh" onclick="s3RefreshOtp()">Refresh</button>
+             </div>
+             <div style="font-size:11px;color:#9a5b00;text-align:center;margin-top:8px;line-height:1.6;">
+               OTP is valid for 10 minutes and may be resent by the customer on RIB.<br>After 3 failed OTP attempts the case falls back to Manual Acceptance.
+             </div>`}
         <div id="otpResult" style="margin-top:8px;text-align:center;font-size:12px;"></div>
       </div>
     </div>`;
@@ -1271,8 +1500,9 @@ function renderStep3(){
     setTimeout(()=>{if(S.s3Dev==='scanning'){S.s3Dev='ready';renderStep3();}},2000);
   } else if(dev==='ready'){
     right=devViz('connected')+`
-      <div class="state-title">MyKad Read — Scan Fingerprint</div>
-      <div class="state-sub">MyKad identity confirmed. Ask the customer to place their thumb firmly on the scanner to complete E-Acceptance.${att>0?' <strong>'+att+'/3 previous attempt(s) failed.</strong>':''}</div>
+      <div class="state-title">Reader is ready</div>
+      <div class="state-sub">Please place your thumb on the scanner when light is On.${att>0?' <strong>'+att+'/3 previous attempt(s) failed.</strong>':''}
+        <br><span style="font-size:11px;color:#b45309;">The confirmation must be completed within 15 minutes of triggering, otherwise the case falls back to OTP.</span></div>
       ${att>0?attBadge(att,3):''}
       <div style="display:flex;gap:8px;margin-top:12px;">
         <button class="btn btn-primary btn-sm" onclick="s3StartFP('matched')">Scan Fingerprint</button>
@@ -1281,8 +1511,30 @@ function renderStep3(){
     right=devViz('scanning')+`
       <div class="state-title">Scanning Fingerprint...</div>
       <div class="state-sub">Hold thumb firmly on the scanner. Do not remove until the light changes.</div>`;
+  } else if(dev==='error'){
+    leftOpts={...leftOpts,bioStatus:'Error',bioClass:'warn',reqTime:now,resTime:now2,
+              trigCount:String(S.s3Triggers),retry:att+' / 3',
+              remark:'Device error — '+(S.s3Err||'DEVICE_COMMUNICATION_ERROR')};
+    right=bioErrorPanel(S.s3Err,'s3');
+  } else if(dev==='timeout'){
+    // FSD p16 — the 15-minute window is counted from when the 2nd biometric was
+    // triggered. Expiry is not a failed match; it hands straight over to OTP.
+    leftOpts={...leftOpts,bioStatus:'Pending',bioClass:'warn',reqTime:now,resTime:'—',
+              trigCount:String(S.s3Triggers),retry:att+' / 3',
+              remark:'E-Acceptance Confirmation not completed within 15 minutes.'};
+    right=`<div class="bio-result">
+      ${ICO_WARN}
+      <div class="bio-result-title brt-warn">Confirmation Window Expired</div>
+      <p style="font-size:12px;color:#5f6368;margin:8px 0 6px;max-width:340px;">
+        The 15-minute window for the E-Acceptance Confirmation has elapsed without a matched fingerprint.
+      </p>
+      <p style="font-size:11px;color:#9aa0a6;margin:0 0 14px;max-width:340px;">
+        Recorded as <strong>Pending</strong>, not as a failed attempt — the retry counter stays at ${att} / 3.
+      </p>
+      <button class="btn btn-primary btn-sm" onclick="s3Handover(true)">Notify RIB — OTP Fallback →</button>
+    </div>`;
   } else if(dev==='matched'){
-    leftOpts={...leftOpts,bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3',remark:S.s3Remarks||undefined};
+    leftOpts={...leftOpts,bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:String(S.s3Triggers||1),retry:att+' / 3',remark:S.s3Remarks||undefined};
     right=`<div class="bio-result">
       ${ICO_OK}
       <div class="bio-result-title brt-matched">Verified OK. Thumbprint matched.</div>
@@ -1294,7 +1546,7 @@ function renderStep3(){
       <button class="btn btn-primary" onclick="completeEA(false)">Complete E-Acceptance →</button>
     </div>`;
   } else if(dev==='unmatched'){
-    leftOpts={...leftOpts,bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:att+' / 3'};
+    leftOpts={...leftOpts,bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:String(S.s3Triggers||att),retry:att+' / 3'};
     if(att>=3){
       leftOpts={...leftOpts,remark:S.s3Remarks?'3 attempts exhausted. '+S.s3Remarks:'3 biometric attempts exhausted. OTP fallback available.'};
       right=`<div class="bio-result">
@@ -1324,8 +1576,9 @@ function renderStep3(){
   document.getElementById('s3Left').innerHTML=leftPanel(3,leftOpts);
   document.getElementById('s3Right').innerHTML=right;
 }
-// Notify RIB that the 2nd biometric failed; RIB then owns the OTP fallback.
-function sendOTP(){S.s3Dev='otp-sent';renderStep3();}
+// Notify RIB that the 2nd biometric failed or timed out; RIB then owns the OTP fallback.
+function sendOTP(){s3Handover(false);}
+function s3Handover(viaTimeout){S.s3Timeout=!!viaTimeout;S.s3Dev='otp-sent';renderStep3();}
 // Officer refreshes to pick up the OTP outcome returned by RIB.
 function s3RefreshOtp(){
   const b=document.getElementById('s3OtpRefresh');
@@ -1344,14 +1597,28 @@ function s3StartFP(outcome){
   renderStep3();
   setTimeout(()=>{
     if(S.s3Dev==='scanning-fp'){
+      S.s3Triggers++;
       if(outcome==='fail'){S.s3Attempts++;S.s3Dev='unmatched';}
       else{S.s3Dev='matched';}
+      logBio(S.s3Dev==='matched'?'Matched':'Unmatched','E-Acceptance Confirmation','E-Acceptance Confirmation',S.s3Remarks,'GGBOUND');
       renderStep3();
     }
   },1500);
 }
 function retryS3(){S.s3Dev='ready';S.s3Remarks='';renderStep3();}
-function s2CustomerSubmit(){S.s2RibStatus='submitted';renderStep2();}
+// Refresh pulls the acceptance flag from RIB. Nothing advances without it.
+function s2Refresh(){
+  const b=document.getElementById('s2RefreshBtn');
+  if(b){b.disabled=true;b.textContent='Refreshing…';}
+  setTimeout(()=>{
+    if(S.s2CustSubmitted){S.s2RibStatus='submitted';renderStep2();return;}
+    const r=document.getElementById('s2RefreshResult');
+    if(r)r.textContent='No acceptance flag from RIB yet. The customer has not submitted all documents.';
+    const b2=document.getElementById('s2RefreshBtn');
+    if(b2){b2.disabled=false;b2.textContent='Refresh';}
+  },700);
+}
+function s2CustomerSubmit(){S.s2CustSubmitted=true;S.s2RibStatus='submitted';renderStep2();}
 
 function goStep2(){S.eaStep=2;renderEAPanel();}
 function goStep3(){S.eaStep=3;S.s3Dev='disconnected';renderEAPanel();}
@@ -1366,8 +1633,12 @@ function updateHeaderStatus(){
   const el=document.getElementById('eaStatusHeader');
   if(S.amendmentRequired&&S.amendmentStep!=='none'){
     if(S.amendmentStep==='confirmed'){el.textContent='Amendment Confirmed';el.style.color='#174ea6';}
+    // A CILT that misses the signing documents never resets the status (FSD 7.2)
+    else if(S.amendmentStep==='no-resign'){el.textContent='Completed';el.style.color='#174ea6';}
     else{el.textContent='Amendment Pending';el.style.color='#b45309';}
-  } else if(S.eaComplete){el.textContent='Completed';el.style.color='#174ea6';}
+  } else if(S.eaComplete||S.manualComplete){el.textContent='Completed';el.style.color='#174ea6';}
+  // FSD 3.2 — once a mode is picked the sub-status is Pending until it completes
+  else if(S.modeConfirmed){el.textContent='Pending';el.style.color='#b45309';}
   else{el.textContent='—';el.style.color='';}
   document.getElementById('amendmentVal').textContent=(S.amendmentRequired&&S.amendmentStep!=='none')?'Yes':'--';
 }
@@ -1377,8 +1648,8 @@ function updateHeaderStatus(){
 // ═══════════════════════════════════════════════
 function renderAmendmentSectionHTML(){
   const step=S.amendmentStep;
-  const dots={'cilt-approved':'ux-dot-warn','sent':'ux-dot-wait','confirmed':'ux-dot-done'};
-  const badges={'cilt-approved':['bd-orange','Action Required'],'sent':['bd-blue','Awaiting Customer'],'confirmed':['bd-green','Confirmed']};
+  const dots={'cilt-approved':'ux-dot-warn','sent':'ux-dot-wait','confirmed':'ux-dot-done','no-resign':'ux-dot-done'};
+  const badges={'cilt-approved':['bd-orange','Action Required'],'sent':['bd-blue','Awaiting Customer'],'confirmed':['bd-green','Confirmed'],'no-resign':['bd-green','No Re-signing Required']};
   const [badgeClass,badgeLabel]=badges[step]||['bd-orange',''];
 
   // ── shared primitives ───────────────────────────────────────────
@@ -1404,7 +1675,27 @@ function renderAmendmentSectionHTML(){
 
   let body='',foot='';
 
-  if(step==='cilt-approved'){
+  if(step==='no-resign'){
+    // FSD 7.2 / 8.5 — the deciding test is whether the CILT touched any field on
+    // the signing documents (3 for a new car, 4 with Appendix 4 for used/recond).
+    // It did not, so the acceptance status is left at Completed.
+    const nDocs=S.usedCar?4:3;
+    body=`<div class="ux-action">
+        <div class="ux-action-main">
+          <div class="ux-action-top"><span class="ux-action-title">No customer action required</span></div>
+          <div class="ux-action-desc">None of the changed fields appears on the ${nDocs} signing documents, so the customer does not sign again. Acceptance status remains <strong>Completed</strong> and the case can proceed to disbursement.</div>
+        </div>
+        <div class="ux-action-btns"><button class="btn btn-secondary" onclick="openEALog()">Acceptance Log</button></div>
+      </div>`
+      +defs
+      +`<div class="ux-sub">Changed fields · none on the signing documents</div>`
+      +AMD_CHANGES_NONSIGN.map(c=>`<div class="ux-chg"><span class="f">${c.field}</span><span class="o">${c.old}</span><span class="a">→</span><span class="n">${c.new}</span></div>`).join('')
+      +`<div class="ux-sub">Signing documents checked (${nDocs})</div>
+        <div style="font-size:12px;color:#5f6368;line-height:1.9;">
+          HP Agreement &amp; T&amp;C · HP Agreement Second Schedule · Product Disclosure Sheet${S.usedCar?' · Appendix 4':''}
+        </div>
+        <div style="font-size:12px;color:#9aa0a6;line-height:1.6;margin-top:12px;">Updated documents are still regenerated and archived as a new version; the originally signed contract is retained.</div>`;
+  } else if(step==='cilt-approved'){
     const err=S.amdSyncFail
       ? `<div class="ux-alert ux-alert-err"><strong>Sync to e-Tracker failed.</strong>&nbsp;SMS was not sent. Please try again later.</div>` : '';
     body=action(1,'Sync &amp; Notify Customer',
@@ -1434,8 +1725,7 @@ function renderAmendmentSectionHTML(){
   } else if(step==='confirmed'){
     body=action(2,'Amendment Confirmed',
         'Customer re-confirmed the amended terms on e-Tracker on 20-05-2026 17:02:41.',
-        `<button class="btn btn-secondary" onclick="openAmdHistory()">Version History</button>
-         <button class="btn btn-secondary" onclick="openEALog()">Acceptance Log</button>`)
+        `<button class="btn btn-secondary" onclick="openEALog()">Acceptance Log</button>`)
       +defs+changes
       +`<div style="font-size:12px;color:#9aa0a6;line-height:1.6;margin-top:12px;">Contract v2 is now active. The original signed contract (v1) is permanently retained — all versions remain available in the Document Library.</div>`;
   }
@@ -1493,10 +1783,6 @@ function refreshAmendmentPanel(){
   updateHeaderStatus();
 }
 function triggerSMS(){amdSyncAndNotify();}
-// Version history for the amended contract (v1 retained + v2 active)
-function openAmdHistory(){
-  openHistory('HP Agreement with T&C','v2','20-05-2026 17:02:41',true);
-}
 
 // ── e-Tracker customer preview (3-screen phone simulation) ──
 let etScreen=1, etAgreed=false;
@@ -1615,13 +1901,20 @@ function renderETracker(){
 
 // ── EA Log ──
 function openEALog(){
-  let keys;
-  if(S.amendmentRequired&&S.amendmentStep==='confirmed')keys=['initial','amendment'];
-  else if(S.amendmentRequired)keys=['initial'];
-  else keys=['initial','bank'];
+  // FSD 10.1 — three record types. Bank Acceptance is stamped by the bank when the
+  // acceptance is confirmed and the financing is disbursed, so it is only ever the
+  // last row and only once nothing is still awaiting the customer.
+  let keys=['initial'];
+  if(S.amendmentRequired&&S.amendmentStep==='confirmed')keys.push('amendment');
+  const awaitingCustomer=S.amendmentRequired
+    && S.amendmentStep!=='none' && S.amendmentStep!=='confirmed' && S.amendmentStep!=='no-resign';
+  if(!awaitingCustomer)keys.push('bank');
   document.getElementById('eaLogBody').innerHTML=keys.map(k=>{
-    const r=EA_LOG[k];
-    return `<tr>${[r.type,r.pds,r.ss,r.hpa,r.app4].map((v,i)=>`<td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;${i>0?'text-align:center;':''}" class="${v==='Y'?'flag-y':v==='—'&&i>0?'flag-n':''}">${v}</td>`).join('')}<td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;text-align:center;"><span class="badge bd-green" style="font-size:10px;">${r.status}</span></td><td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;white-space:nowrap;">${r.dt}</td><td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;">${r.remark}</td></tr>`;
+    let r=EA_LOG[k];
+    // The bank stamp only exists once financing is disbursed
+    if(k==='bank'&&!S.disbursementSubmitted)
+      r={...r,status:'Pending',dt:'—',remark:'Awaiting disbursement'};
+    return `<tr>${[r.type,r.pds,r.ss,r.hpa,r.app4].map((v,i)=>`<td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;${i>0?'text-align:center;':''}" class="${v==='Y'?'flag-y':v==='—'&&i>0?'flag-n':''}">${v}</td>`).join('')}<td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;text-align:center;"><span class="badge ${r.status==='Completed'?'bd-green':'bd-gray'}" style="font-size:10px;">${r.status}</span></td><td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;white-space:nowrap;">${r.dt}</td><td style="padding:7px 10px;border-bottom:1px solid #f1f3f4;">${r.remark}</td></tr>`;
   }).join('');
   // Sync SMS fields in log modal
   const smsStep=S.amendmentStep;
@@ -1639,6 +1932,22 @@ function openEALog(){
 function renderManualPanel(){
   const persons=S.hasGuarantor?MANUAL_PERSONS:[MANUAL_PERSONS[0]];
   const allDone=persons.every(p=>S[p.key].done);
+
+  // ── Manual completed (FSD 5.3 Step 5 / 8.4) ──
+  // Completion is owned by the File Centre: uploading the signed CRA HP Agreement
+  // flips the sub-status to Complete, deleting it flips it back to Pending.
+  // That reset is the only way back into E-Acceptance, and it closes once
+  // disbursement has been submitted.
+  if(S.manualComplete){
+    document.getElementById('manualPersonCards').innerHTML=manualCompleteCardHTML();
+    const t=document.querySelector('.mp-top-row');
+    if(t)t.style.display='none';
+    const amd0=document.getElementById('manualAmendmentSection');
+    if(amd0)amd0.style.display='none';
+    return;
+  }
+  const topRow=document.querySelector('.mp-top-row');
+  if(topRow)topRow.style.display='';
   // Amendment section.
   // When the first signing was Manual, a CILT needs no re-signing — show the
   // no-action notice instead of the sync/notify flow.
@@ -1663,6 +1972,29 @@ function renderManualPanel(){
           </div>
           <div style="font-size:12px;color:#9aa0a6;line-height:1.6;margin-top:14px;">Updated documents are regenerated and archived. All versions remain available in the Document Library.</div>
         </div></div>`;
+    } else if(S.amendmentRequired&&S.amendmentStep==='cilt-approved'){
+      // First signing was E-Acceptance but the officer picked Manual for the
+      // amendment. e-Tracker exists only in the E flow (FSD 7.3.2 / 8.1), so this
+      // round is re-processed entirely offline — no SMS, no remote confirmation.
+      amdEl.style.display='block';
+      amdEl.innerHTML=`<div class="ux-card">
+        <div class="ux-hd">
+          <span class="ux-dot ux-dot-warn"></span>
+          <span class="ttl">Current Amendment</span>
+          <span class="meta">CILT-2026-001</span>
+          <div class="right"><span class="badge bd-orange">Offline Re-signing</span></div>
+        </div>
+        <div class="ux-bd">
+          <div class="ux-action">
+            <div class="ux-action-main">
+              <div class="ux-action-top"><span class="ux-action-title">Re-process this amendment offline</span></div>
+              <div class="ux-action-desc">Manual Acceptance has no e-Tracker leg — no SMS is sent and the customer does not confirm remotely. Print the regenerated documents, have the customer sign again, then upload the signed copies to the File Centre.</div>
+            </div>
+            <div class="ux-action-btns"><button class="btn btn-secondary" onclick="openEALog()">Acceptance Log</button></div>
+          </div>
+          <div class="ux-sub">Changed terms · contract v2</div>
+          ${AMD_CHANGES.map(c=>`<div class="ux-chg"><span class="f">${c.field}</span><span class="o">${c.old}</span><span class="a">→</span><span class="n">${c.new}</span></div>`).join('')}
+        </div></div>`;
     } else {
       const showAmd=S.amendmentRequired&&S.amendmentStep!=='none';
       amdEl.style.display=showAmd?'block':'none';
@@ -1680,6 +2012,51 @@ function renderManualPanel(){
 
   // Render person cards
   document.getElementById('manualPersonCards').innerHTML=persons.map(p=>renderPersonCard(p)).join('');
+}
+
+function manualCompleteCardHTML(){
+  const locked=S.disbursementSubmitted;
+  return `<div class="ux-card">
+    <div class="ux-hd">
+      <span class="ux-dot ux-dot-done"></span>
+      <span class="ttl">Manual Acceptance Completed</span>
+      <span class="meta">20-05-2026 16:50:29 · signed CRA HP Agreement uploaded</span>
+      <div class="right"><button class="btn btn-secondary btn-sm" onclick="openEALog()">Acceptance Log</button></div>
+    </div>
+    <div class="ux-bd">
+      <div class="ux-defs">
+        <div class="ux-def"><div class="k">Acceptance Mode</div><div class="v">Manual Acceptance</div></div>
+        <div class="ux-def"><div class="k">Acceptance Status</div><div class="v">Completed</div></div>
+        <div class="ux-def"><div class="k">Application Status</div><div class="v">Approved</div></div>
+      </div>
+      <div style="font-size:12px;color:#5f6368;line-height:1.7;padding:14px 0;">
+        The signed CRA HP Agreement is archived in the File Centre. Biometric results, where captured, were archived automatically as the Biometric Report.
+      </div>
+      ${locked
+        ? `<div class="ux-alert" style="background:#f8f9fa;color:#5f6368;">Disbursement has been submitted — the signing method can no longer be changed and the signed documents cannot be deleted.</div>`
+        : `<div class="ux-action">
+             <div class="ux-action-main">
+               <div class="ux-action-top"><span class="ux-action-title">Re-open for re-signing</span></div>
+               <div class="ux-action-desc">Deleting the signed CRA HP Agreement in the File Centre flips the acceptance sub-status back to <strong>Pending</strong>. The case then returns to the mode entry, where E-Acceptance can be selected again${eaSelectable()?'':' (not available for this case)'}. Only possible before disbursement is submitted.</div>
+             </div>
+             <div class="ux-action-btns"><button class="btn btn-secondary" onclick="deleteSignedAttachment()">Delete Signed Attachment</button></div>
+           </div>`}
+    </div>
+  </div>`;
+}
+// File Centre deletion — the sub-status reset described in FSD 8.2 / 8.4.
+function deleteSignedAttachment(){
+  if(S.disbursementSubmitted)return;
+  S.manualComplete=false;
+  S.modeConfirmed=false;
+  // The round is un-completed, so it no longer counts as "first signing = Manual";
+  // that cross-round rule (FSD 8.5) only applies to a completed acceptance.
+  S.firstAcceptMode='';
+  S.mBioPrimary={dev:'disconnected',done:false,attempts:0,remarks:''};
+  S.mBioGuarantor={dev:'disconnected',done:false,attempts:0,remarks:''};
+  updateHeaderStatus();
+  renderGate();
+  updateFooter();
 }
 
 function renderPersonCard(p){
@@ -1709,7 +2086,8 @@ function renderPersonCard(p){
       </div>`;
   } else {
     const k=`'${p.key}'`;
-    const leftOpts={trigPoint:'Manual Acceptance',name:p.name,nric:p.id};
+    const leftOpts={trigPoint:'Manual Acceptance',name:p.name,nric:p.id,
+                    vType:'Manual Acceptance Verification',rptKey:p.name};
     if(dev==='matched') Object.assign(leftOpts,{bioStatus:'Matched',bioClass:'matched',reqTime:now,resTime:now2,trigCount:'1',retry:(bio.attempts||1)+' / 3',remark:bio.remarks||undefined});
     else if(dev==='unmatched') Object.assign(leftOpts,{bioStatus:'Unmatched',bioClass:'failed',reqTime:now,resTime:now2,trigCount:'1',retry:bio.attempts+' / 3',remark:bio.remarks?'Biometric not matched. '+bio.remarks:'Biometric not matched.'});
     let right='';
@@ -1736,6 +2114,11 @@ function renderPersonCard(p){
       right=devViz('scanning')+`
         <div class="state-title">Scanning Fingerprint...</div>
         <div class="state-sub">Hold thumb firmly on the scanner. Do not remove until the light changes.</div>`;
+    } else if(dev==='error'){
+      Object.assign(leftOpts,{bioStatus:'Error',bioClass:'warn',reqTime:now,resTime:now2,
+        trigCount:String(bio.triggers||0),retry:(bio.attempts||0)+' / 3',
+        remark:'Device error — '+(bio.err||'DEVICE_COMMUNICATION_ERROR')});
+      right=bioErrorPanel(bio.err,p.key);
     } else if(dev==='matched'){
       right=`<div class="bio-result">
         ${ICO_OK}
@@ -1813,8 +2196,11 @@ function mBioStartFP(key,outcome){
   renderManualPanel();
   setTimeout(()=>{
     if(S[key].dev==='scanning-fp'){
+      S[key].triggers=(S[key].triggers||0)+1;
       if(outcome==='fail'){S[key].attempts=(S[key].attempts||0)+1;S[key].dev='unmatched';}
       else{S[key].dev='matched';}
+      const person=MANUAL_PERSONS.find(x=>x.key===key);
+      logBio(S[key].dev==='matched'?'Matched':'Unmatched','Manual Acceptance Verification','Manual Acceptance',S[key].remarks,person?person.name:'');
       renderManualPanel();
     }
   },1500);
@@ -1840,7 +2226,7 @@ function updateFooter(){
   const cancelBtn=document.getElementById('btnCancel');
   const backBtn=document.getElementById('btnBackEntry');
   const inAmendment=S.amendmentRequired&&(S.amendmentStep!=='none'||S.firstAcceptMode==='manual');
-  const signedOff=S.eaComplete||inAmendment;
+  const signedOff=S.eaComplete||S.manualComplete||inAmendment;
 
   if(signedOff){
     // Completed / amendment screens: no bottom actions, just Back to entry
@@ -1930,8 +2316,12 @@ function applyScenario(key,btn,keepOpen){
     smsStatus:'', smsSentAt:'', custConfirmed:false, amdSyncFail:false,
     eaLocked:false, firstAcceptMode:'', otpVerified:false,
     s1Remarks:'',
-    mBioPrimary:{dev:'disconnected',done:false,attempts:0,remarks:''},
-    mBioGuarantor:{dev:'disconnected',done:false,attempts:0,remarks:''},
+    s1Err:'', s3Err:'', s1Triggers:0, s3Triggers:0,
+    s3Timeout:false, otpFailures:0, s2CustSubmitted:false,
+    usedCar:false, forceReason:'', manualComplete:false,
+    disbursementSubmitted:false, bioLog:[], archiveFail:false,
+    mBioPrimary:{dev:'disconnected',done:false,attempts:0,remarks:'',triggers:0,err:''},
+    mBioGuarantor:{dev:'disconnected',done:false,attempts:0,remarks:'',triggers:0,err:''},
   };
   S=Object.assign({},fresh);
 
@@ -1946,21 +2336,38 @@ function applyScenario(key,btn,keepOpen){
     'ea-s1-fail1':  {s1Dev:'unmatched',s1Attempts:1},
     'ea-s1-fail2':  {s1Dev:'unmatched',s1Attempts:2},
     'ea-s1-fail3':  {s1Dev:'unmatched',s1Attempts:3},
+    // Device errors — Error is not Unmatched, so s1Attempts stays put
+    'ea-s1-err-mykad':  {s1Dev:'error',s1Err:'READ_MYKAD_FAILED',s1Triggers:1},
+    'ea-s1-err-timeout':{s1Dev:'error',s1Err:'DEVICE_TIMEOUT',s1Triggers:2,s1Attempts:1},
+    'ea-s1-err-persist':{s1Dev:'error',s1Err:'DEVICE_COMMUNICATION_ERROR',s1Triggers:4,forceReason:'device-error'},
+    'ea-s3-err':    {eaStep:3,s1Dev:'matched',s1Attempts:1,s2CustSubmitted:true,s2RibStatus:'submitted',
+                     s3Dev:'error',s3Err:'DEVICE_COMMUNICATION_ERROR',s3Triggers:1},
     // Step 2
     'ea-s2-wait':   {eaStep:2,s1Dev:'matched',s1Attempts:1},
-    'ea-s2-done':   {eaStep:2,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted'},
+    'ea-s2-submitted':{eaStep:2,s1Dev:'matched',s1Attempts:1,s2CustSubmitted:true},
+    'ea-s2-done':   {eaStep:2,s1Dev:'matched',s1Attempts:1,s2CustSubmitted:true,s2RibStatus:'submitted'},
+    'ea-s2-rib-down':{eaStep:2,s1Dev:'matched',s1Attempts:1,s2RibStatus:'unavailable'},
     // Step 3
     'ea-s3-ready':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'ready'},
     'ea-s3-fail1':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'unmatched',s3Attempts:1},
     'ea-s3-fail2':  {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'unmatched',s3Attempts:2},
     'ea-s3-otp':    {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'unmatched',s3Attempts:3},
     'ea-s3-otp-ok': {eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'otp-sent',s3Attempts:3,otpVerified:true},
+    'ea-s3-otp-limit':{eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'otp-sent',s3Attempts:3,otpFailures:3},
+    'ea-s3-timeout':{eaStep:3,s1Dev:'matched',s1Attempts:1,s2RibStatus:'submitted',s3Dev:'timeout',s3Attempts:1,s3Triggers:1},
     'ea-complete':        {eaComplete:true},
+    'ea-complete-usedcar':{eaComplete:true,usedCar:true},
+    'ea-complete-archfail':{eaComplete:true,archiveFail:true},
     'ea-amendment':       {eaComplete:true,firstAcceptMode:'ea',amendmentRequired:true,amendmentStep:'cilt-approved'},
     'ea-amendment-fail':  {eaComplete:true,firstAcceptMode:'ea',amendmentRequired:true,amendmentStep:'cilt-approved',amdSyncFail:true},
     'ea-amendment-sent':  {eaComplete:true,firstAcceptMode:'ea',amendmentRequired:true,amendmentStep:'sent',smsSent:true,smsStatus:'success'},
     'ea-amendment-smsfail':{eaComplete:true,firstAcceptMode:'ea',amendmentRequired:true,amendmentStep:'sent',smsSent:true,smsStatus:'failed'},
     'ea-amendment-done':  {eaComplete:true,firstAcceptMode:'ea',amendmentRequired:true,amendmentStep:'confirmed',smsSent:true,smsStatus:'success',custConfirmed:true},
+    // CILT re-entry: the two mode cards are shown again before the CILT screen (FSD 7.3.1)
+    'cilt-entry':         {eaComplete:true,firstAcceptMode:'ea',amendmentRequired:true,
+                           amendmentStep:'cilt-approved',modeConfirmed:false},
+    // CILT that touched no signing-document field — status stays Completed (FSD 7.2)
+    'ea-cilt-noresign':   {eaComplete:true,firstAcceptMode:'ea',amendmentRequired:true,amendmentStep:'no-resign'},
     // Manual no guarantor
     'm-ng-disc':    {mode:'manual'},
     'm-ng-ready':   {mode:'manual',mBioPrimary:{dev:'ready',done:false,attempts:0}},
@@ -1978,6 +2385,13 @@ function applyScenario(key,btn,keepOpen){
     'm-g-skip':     {mode:'manual',hasGuarantor:true,
                      mBioPrimary:{dev:'skipped',done:true,attempts:0},
                      mBioGuarantor:{dev:'skipped',done:true,attempts:0}},
+    // Manual completed — signed CRA HP Agreement uploaded to the File Centre
+    'm-complete':   {mode:'manual',manualComplete:true,firstAcceptMode:'manual',
+                     mBioPrimary:{dev:'matched',done:true,attempts:1}},
+    // Same, but disbursement already submitted — the reset path is closed (FSD 8.2)
+    'm-complete-disbursed':{mode:'manual',manualComplete:true,firstAcceptMode:'manual',
+                     disbursementSubmitted:true,
+                     mBioPrimary:{dev:'matched',done:true,attempts:1}},
     // Manual CILT — first signing was Manual, so NO re-signing is required.
     // Acceptance status stays Completed and EA can no longer be selected.
     'm-cilt-nosign':     {mode:'manual',firstAcceptMode:'manual',amendmentRequired:true,
