@@ -165,6 +165,21 @@ tbody tr:hover td{background:var(--alt)}
 .batchbar{display:flex;align-items:center;gap:12px;padding:9px 12px;margin-top:12px;background:var(--warn-bg);
   border:1px solid var(--warn-line);border-radius:var(--r-md);font-size:12.5px;color:var(--warn)}
 .batchbar button{margin-left:auto}
+/* one card per document: the unit a defect is made on */
+.dcard{border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:10px;overflow:hidden}
+.dcard.ok{opacity:.86}
+.dcard-h{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--alt);
+  border-bottom:1px solid var(--line-2)}
+.dcard-h .dc-n{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--ink);flex:none}
+.dcard-h .dc-n .i{color:var(--ink-3)}
+.dcard-h .dc-s{font-size:11.5px;color:var(--ink-3);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dcard-h .dc-lb{font-size:10.5px;font-family:var(--mono);color:var(--primary-deep);
+  background:var(--primary-bg);border:1px solid var(--primary-border);border-radius:3px;padding:0 6px}
+.dcard-h .dc-a{display:flex;gap:8px;align-items:center;flex:none}
+.dcard-b{padding:8px 12px 2px}
+.dcard-b .rrow{border:0;border-top:1px solid var(--line-2);border-radius:0;margin:0;padding:9px 0}
+.dcard-b .rrow:first-child{border-top:0}
 
 /* File Check List */
 .chk-h{font-size:14px;color:var(--ink-2);margin-bottom:14px}
@@ -811,10 +826,7 @@ function rrow(r){
       <span class="s">${esc(r.file)}${r.xfile?` + ${esc(r.xfile)}`:''}${r.issue?' · '+esc(r.issue):''}</span></span>
     <span class="r">
       <span class="tag ${r.pass?'tag-ok':(p?'tag-blue':'tag-err')}">${r.pass?'Passed':(p?'In progress':'Not passed')}</span>
-      ${r.pass||p?'':(covered
-        ?`<span class="tag tag-warn mono">Defect #${d.no}</span><button class="btn btn-sm" data-go="def">View</button>`
-        :(d?`<button class="btn btn-sm" data-mkdef="${esc(defTarget(r))}">Update Defect #${d.no}</button>`
-           :`<button class="btn btn-sm" data-mkdef="${esc(defTarget(r))}">Create Defect</button>`))}
+      ${r.pass||p||!covered?'':`<span class="tag tag-warn mono">on defect #${d.no}</span>`}
       <button class="btn btn-sm" data-fix="${r.id}" ${p||r.pass?'disabled':''}>Handle rule</button></span></div>`;
 }
 
@@ -823,29 +835,63 @@ function rrow(r){
    whole loop. So the rerun stays complete and the reading is narrowed - what moved,
    and what sits on a document that came back. The rest keeps its earlier conclusion
    and stays one click away. */
+/* A defect is created on a document, never on a rule - so the detail is read by
+   document too. A file with three failing rules is one piece of work carrying one
+   action, not three rows each offering to create something of its own. Handling a
+   rule stays on the rule: amend, justify or replace are per-rule judgements. */
+function byDoc(rs){
+  const m=new Map();
+  rs.forEach(r=>{const k=defTarget(r); if(!m.has(k))m.set(k,[]); m.get(k).push(r);});
+  return [...m];
+}
+function docCard(fn,rs,lb){
+  const d=defForFile(fn);
+  const out=rs.filter(r=>!r.pass&&r.st!=='pending').length;
+  const moved=rs.filter(r=>r.chg==='cross').length;
+  const act=out
+    ? (d?`<span class="tag tag-warn mono">Defect #${d.no}</span>
+          <button class="btn btn-sm" data-mkdef="${esc(fn)}">Update</button>
+          <button class="btn btn-sm" data-go="def">View</button>`
+       :`<button class="btn btn-sm btn-pri" data-mkdef="${esc(fn)}">Create Defect</button>`)
+    : (d?`<span class="tag tag-warn mono">Defect #${d.no}</span>`
+       :`<span class="tag tag-ok">Nothing outstanding</span>`);
+  return `<div class="dcard ${out?'':'ok'}">
+    <div class="dcard-h"><span class="dc-n">${I('file')}${esc(fn)}</span>
+      ${lb?`<span class="dc-lb">${esc(lb)}</span>`:''}
+      <span class="dc-s">${out?`${out} rule(s) not passed`:'no rule outstanding'}${
+        rs.length>out?` \u00b7 ${rs.length-out} other rule(s) here`:''}${
+        moved?` \u00b7 ${moved} moved because a document it reads was replaced`:''}</span>
+      <span class="dc-a">${act}</span></div>
+    <div class="dcard-b">${rs.map(rrow).join('')}</div></div>`;
+}
 function ruleDetail(fl,pd,ul){
   const open=[...fl,...pd];
   if(S.round===1)
-    return (open.length?open.map(rrow).join(''):`<div class="muted">All ${rTotal()} rules passed.</div>`)
-      +(ul>1?`<div class="batchbar"><span>${ul} rule(s) not passed without a defect record</span>
+    return (open.length?byDoc(open).map(([fn,rs])=>docCard(fn,rs)).join('')
+                       :`<div class="muted">All ${rTotal()} rules passed.</div>`)
+      +(ul>1?`<div class="batchbar"><span>${ul} rule(s) not passed across ${unlinkedFiles().length} document(s) with no defect record</span>
         <button class="btn btn-sm" data-act="defall">Create All (${unlinkedFiles().length} document(s))</button></div>`:'');
 
   const foc=RULES.filter(inFocus), rest=RULES.filter(r=>!inFocus(r));
-  const grp=(t,sub,rs)=>rs.length?`<div class="sync-g">${t}
-      <span style="font-weight:400;color:var(--t3)"> · ${sub}</span></div>${rs.map(rrow).join('')}`:'';
+  /* Still one card per document in round 2 - a document cannot appear twice just
+     because some of its rules moved and others did not. The cards that moved sort
+     first and say so; the rest carry the quieter label. */
+  const docs=byDoc(foc).sort((x,y)=>
+    (y[1].some(r=>r.chg)?1:0)-(x[1].some(r=>r.chg)?1:0));
   const cross=foc.filter(r=>r.chg==='cross');
   return `<div class="pre" style="margin-bottom:12px"><span class="lb">REVALIDATION</span>
       All <b>${rTotal()}</b> rules were rerun after ${S.replaced.length} document(s) came back.
       <b>${foc.length}</b> need reading; the other <b>${rest.length}</b> keep their earlier conclusion.
       ${cross.length?`<div style="color:var(--err);margin-top:4px">${cross.length} rule(s) moved on a document nobody replaced —
         they read a replaced document too.</div>`:''}</div>
-    ${grp('Moved this round','the reason the rerun covers the whole Case',foc.filter(r=>r.chg))}
-    ${grp('On a replaced document','unchanged, but worth re-reading',foc.filter(r=>!r.chg))}
+    ${docs.map(([fn,g])=>docCard(fn,g,g.some(r=>r.chg)
+      ?'Moved this round'
+      :'On a replaced document \u00b7 unchanged, worth re-reading')).join('')}
     ${ul?`<div class="batchbar"><span>${ul} rule(s) not passed without a defect record</span>
       <button class="btn btn-sm" data-act="defall">Sync (${unlinkedFiles().length} document(s))</button></div>`:''}
     <div class="batchbar"><span>${rest.length} rule(s) unchanged this round</span>
       <button class="btn btn-sm" data-act="showall">${S.showAll?'Hide':'Show'}</button></div>
-    ${S.showAll?rest.map(rrow).join(''):''}`;
+    ${S.showAll?byDoc(rest).map(([fn,g])=>docCard(fn,g)).join(''):''}`;
 }
 
 function defBody(){
