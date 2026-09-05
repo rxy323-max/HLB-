@@ -233,6 +233,27 @@ tbody tr:hover td{background:var(--alt)}
   cursor:pointer;background:#fff;color:var(--ink-2);user-select:none}
 .tychip:hover{border-color:var(--pri);color:var(--pri)}
 .tychip.on{background:var(--pri);border-color:var(--pri);color:#fff}
+
+/* The defect ledger is wide by nature - the accounting columns all have to be
+   there. The action stays pinned to the right edge so it never scrolls out of
+   reach, which is how the production screen behaves. */
+.deftbl{min-width:2040px}
+.deftbl th,.deftbl td{white-space:normal}
+/* A pinned column reads as a column only if it is opaque and edged. Without the
+   rule down its left side it looks like two cells accidentally on top of each
+   other, which is exactly what it is doing - deliberately. */
+.deftbl .act-col{position:sticky;right:0;z-index:2;background:#fff;
+  border-left:1px solid var(--line);box-shadow:-14px 0 14px -10px rgba(16,24,40,.34)}
+.deftbl th.act-col{background:var(--alt);z-index:3}
+.deftbl tbody tr:hover td.act-col{background:var(--alt)}
+.deftbl td.act-col{white-space:nowrap;text-align:right}
+.deftbl td.act-col .btn+.btn{margin-left:6px}
+/* the ledger is wider than any screen, so say so rather than hiding the fact */
+.tw.scrolls{overflow-x:scroll}
+.tw.scrolls::-webkit-scrollbar{height:10px}
+.tw.scrolls::-webkit-scrollbar-thumb{background:#c9ced6;border-radius:5px}
+.tw.scrolls::-webkit-scrollbar-track{background:var(--alt)}
+.scrollnote{font-size:11.5px;color:var(--ink-3);margin:6px 2px 0}
 .dfull{grid-column:1/-1}
 
 /* File Center rule modal */
@@ -298,11 +319,11 @@ tbody tr:hover td{background:var(--alt)}
 <div class="app">
   <div class="topbar">
     <span class="brand" id="brand"></span>
-    <span class="tbtn">CRA To Do List</span>
+    <span class="tbtn" id="tb1">CRA To Do List</span>
     <span class="tbtn on">Disbursement:BKI/HP/2026/Y0063327</span>
     <span class="who">
-      <button class="btn btn-sm btn-pri tb-sync" data-act="sync"><span id="syncIc"></span> Sync from OCR</button>
-      <span>crediosadmin</span><span>|</span><span class="clk" id="clk">59:29</span>
+      <button class="btn btn-sm btn-pri tb-sync" data-act="sync" id="syncBtn"><span id="syncIc"></span> Sync from OCR</button>
+      <span id="whoNm">crediosadmin</span><span>|</span><span class="clk" id="clk">59:29</span>
       <button class="rf" id="rfBtn"></button></span>
   </div>
   <div class="body">
@@ -467,7 +488,17 @@ const S={scn:'manual',stpSwitch:1,noGtee:0,open:{vsum:1,def:1,chk:0},expand:0,dl
   // been revalidated end to end. replaced lists what came back; showAll unfolds
   // the rules the focused view keeps out of the way.
   round:1,replaced:[],showAll:0,
+  /* Two desks, one workbench. Sales and CRA read the same defect ledger - that is
+     the point of it - so they run the same code rather than two lookalike screens
+     that can drift apart. What differs is what each desk may do: CRA concludes
+     rules and closes defects, Sales supplies the document and nothing else. */
+  who:'cra',
   custDel:'No',fullMt:'Yes',nav:'vsum'};
+const isSales=()=>S.who==='sales';
+// Rules are CRA's judgement; Sales works from the defect list alone.
+const NAVFOR=()=>isSales()
+  ?[['Checking & Modification',[['def','Defect List','d']]]]
+  :NAV;
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -489,10 +520,13 @@ function reset(scn){
      2nd Schedule Part I  - S52 flips to failing   -> the cross-file consequence
    S52 reads the HP Agreement as well, so replacing that document moves a rule on a
    file nobody touched. It is why the rerun covers the Case rather than one file. */
-function applyRound2(){
-  S.replaced=['Insurance Cover Note.pdf','HP Agreement.pdf'];
+function applyRound2(files){
+  const only=files&&files.length?files:['Insurance Cover Note.pdf','HP Agreement.pdf'];
+  S.replaced=[...new Set((S.replaced||[]).concat(only))];
   RULES.forEach(r=>{ r.chg=''; r.prev=r.pass?'pass':'fail'; });
-  const set=(id,pass,chg,issue)=>{const r=RULES.find(x=>x.id===id); if(!r)return;
+  const touches=r=>S.replaced.includes(r.file)||S.replaced.includes(r.xfile);
+  // only rules that read one of the returned documents may move
+  const set=(id,pass,chg,issue)=>{const r=RULES.find(x=>x.id===id); if(!r||!touches(r))return;
     r.pass=pass;r.st='';r.chg=chg; if(issue!==undefined)r.issue=issue;};
   set('I33',1,'cleared','');
   set('A155',1,'cleared','');
@@ -632,6 +666,7 @@ function eligibility(){
 
 /* ═══ RENDER ═══ */
 function render(){
+  applyDesk();
   document.querySelectorAll('#scnSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===S.scn));
   document.querySelectorAll('#swSeg button').forEach(b=>b.setAttribute('aria-pressed',(b.dataset.sw==='1')===!!S.stpSwitch));
   document.querySelectorAll('#rdSeg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.rd===S.round));
@@ -648,7 +683,7 @@ const NAV=[
 
 function renderRail(){
   let h=`<div class="navcard"><div class="nh">${I('list')}Navigation</div>`;
-  NAV.forEach(([g,items])=>{
+  NAVFOR().forEach(([g,items])=>{
     h+=`<h6>${g}</h6>`;
     items.forEach(([k,nm,kind])=>{
       let c='';
@@ -753,33 +788,64 @@ function defBody(){
       <th style="width:80px">VERIFIED</th><th style="width:170px">DOCUMENT</th>
       <th>SALES REMARK</th><th style="width:110px">ACTION</th></tr></thead>
       <tbody><tr><td colspan="9"><div class="nodata">${I('inbox')}No data</div></td></tr></tbody></table></div>`;
-  return `<div class="tot"><span class="t">Total: <b>${DEFECTS.length}</b> defect(s)${unlinkedFiles().length?` · ${unlinkedFiles().length} document(s) still unlinked`:''}${openDefects()?` · ${openDefects()} unresolved`:''}</span>
-    <span class="r"><button class="btn btn-sm" data-act="syncdef">Sync System Defects</button>
-      <button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button></span></div>
-  <div class="tw"><table style="min-width:1240px"><thead><tr><th style="width:56px">NO.</th><th style="width:80px">SOURCE</th>
-    <th style="width:190px">DOCUMENT</th><th style="width:120px">RULES</th><th style="width:110px">DEFECT CODE</th>
-    <th style="width:180px">CATEGORY</th><th style="width:200px">TYPE</th>
-    <th style="width:90px">RECTIFIED</th><th style="width:80px">VERIFIED</th>
-    <th style="width:180px">CRA REMARK</th><th style="width:120px">ACTION</th></tr></thead>
+  return `<div class="tot"><span class="t">Total: <b>${DEFECTS.length}</b> defect(s)${
+      isSales()?` · ${DEFECTS.filter(d=>!d.rect).length} to fix`
+      :`${unlinkedFiles().length?` · ${unlinkedFiles().length} document(s) still unlinked`:''}${openDefects()?` · ${openDefects()} unresolved`:''}`}</span>
+    <span class="r">${isSales()
+      ? '<span class="muted">Answer each one with a document — CRA verifies and closes them</span>'
+      : `<button class="btn btn-sm" data-act="syncdef">Sync System Defects</button>
+         <button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button>`}</span></div>
+  <div class="tw scrolls"><table class="deftbl"><thead><tr>
+    <th style="width:52px">NO.</th><th style="width:76px">SOURCE</th>
+    <th style="width:172px">CATEGORY</th><th style="width:190px">TYPE</th>
+    <th style="width:180px">DOCUMENT</th><th style="width:104px">RULES</th>
+    <th style="width:104px">DEFECT CODE</th>
+    <th style="width:84px">RECTIFIED</th><th style="width:76px">VERIFIED</th>
+    <th style="width:150px">SALES REMARK</th><th style="width:160px">CRA REMARK</th>
+    <th style="width:96px">RECTIFIED BY</th><th style="width:92px">VERIFIED BY</th>
+    <th style="width:132px">CREATE DATE</th><th style="width:132px">RECTIFIED DATE</th>
+    <th style="width:132px">VERIFIED DATE</th>
+    <th class="act-col" style="width:178px">ACTION</th></tr></thead>
   <tbody>${DEFECTS.map(d=>{
-    const rs=d.rules||[], ts=d.types||[];
+    const rs=d.rules||[], ts=d.types||[], bound=d.file&&d.file!=='—';
     return `<tr><td class="mono">${d.no}</td>
     <td><span class="tag ${d.src==='System'?'tag-blue':''}" style="font-size:11px">${d.src}</span></td>
-    <td style="font-size:12px">${d.file&&d.file!=='—'
-      ? `${esc(d.file)}<span class="sub-row" style="display:block">Sales replaces it in the File Center</span>`
-      : '<span class="muted">No document yet<span class="sub-row" style="display:block">Sales uploads to the file list, not to AI</span></span>'}</td>
-    <td class="mono" style="font-size:11px">${rs.length?rs.map(esc).join('<br>'):'—'}</td>
-    <td class="mono" style="font-size:11px">${(d.codes||[]).length?d.codes.map(esc).join('<br>'):'—'}</td>
     <td style="font-size:12px">${esc(d.cat)}</td>
     <td style="font-size:12px">${ts.length?ts.map(t=>`<span class="tag" style="font-size:10px;margin:0 3px 3px 0">${esc(t)}</span>`).join(''):'—'}
       ${(d.hist||[]).length?`<span class="sub-row" style="display:block">rewritten ${d.hist.length}× by revalidation</span>`:''}</td>
+    <td style="font-size:12px">${bound
+      ? `${esc(d.file)}<span class="sub-row" style="display:block">${isSales()?'you replace this one':'Sales replaces it in the File Center'}</span>`
+      : `<span class="muted">No document yet<span class="sub-row" style="display:block">${isSales()?'upload straight to the file list':'Sales uploads to the file list, not to AI'}</span></span>`}</td>
+    <td class="mono" style="font-size:11px">${rs.length?rs.map(esc).join('<br>'):'—'}</td>
+    <td class="mono" style="font-size:11px">${(d.codes||[]).length?d.codes.map(esc).join('<br>'):'—'}</td>
     <td>${d.rect?'<span class="tag tag-ok">Y</span>':'<span class="tag tag-err">N</span>'}</td>
     <td>${d.ver?'<span class="tag tag-ok">Y</span>':'<span class="tag">N</span>'}</td>
+    <td style="font-size:11px">${esc(d.sr)||'<span class="muted">—</span>'}</td>
     <td style="font-size:11px">${esc(d.cr)}</td>
-    <td>${d.rect&&d.ver?'<span class="muted">Closed</span>'
+    <td style="font-size:11.5px">${d.rect?'salsup2':'<span class="muted">—</span>'}</td>
+    <td style="font-size:11.5px">${d.ver?'pensoyao':'<span class="muted">—</span>'}</td>
+    <td class="mono" style="font-size:11px">${esc(d.cd)}</td>
+    <td class="mono" style="font-size:11px">${d.rect?esc(d.rd||'09-07-2026 14:18:01'):'<span class="muted">—</span>'}</td>
+    <td class="mono" style="font-size:11px">${d.ver?esc(d.vd||'09-07-2026 16:41:06'):'<span class="muted">—</span>'}</td>
+    <td class="act-col">${defAction(d,bound)}</td></tr>`;}).join('')}
+  </tbody></table></div>
+  <div class="scrollnote">Scroll sideways for the rectification and verification
+    columns — the action stays pinned on the right.</div>`;
+}
+/* The one column that differs by desk. CRA closes the defect; Sales answers it,
+   and the only answer is a document - so the action is the way into the File
+   Center, scoped to this defect, rather than a status Sales could set alone. */
+function defAction(d,bound){
+  if(isSales()){
+    if(d.rect&&d.ver) return '<span class="muted">Closed</span>';
+    if(d.rect) return '<span class="muted">Sent to CRA</span>';
+    return `<button class="btn btn-sm btn-pri" data-updoc="${d.no}">
+      ${bound?'Replace Document':'Upload Document'}</button>`;
+  }
+  return `${bound?`<button class="btn btn-sm" data-viewdoc="${d.no}">View Docs</button>`:''}
+    ${d.rect&&d.ver?'<span class="muted">Closed</span>'
       :d.rect?`<button class="btn btn-sm" data-ver="${d.no}">Verify</button>`
-      :`<button class="btn btn-sm" data-rect="${d.no}">Rectify</button>`}</td></tr>`;}).join('')}
-  </tbody></table></div>`;
+      :`<button class="btn btn-sm" data-rect="${d.no}">Rectify</button>`}`;
 }
 
 function chkBody(){
@@ -809,7 +875,7 @@ function dmBody(grp){
 
 function renderMain(){
   let h='';
-  NAV.forEach(([g,items])=>{
+  NAVFOR().forEach(([g,items])=>{
     h+=`<div class="seclabel">${g}</div>`;
     items.forEach(([k,nm])=>{
       if(k==='vsum'){
@@ -835,7 +901,11 @@ function renderMain(){
 }
 
 function renderSide(){
-  let h=`<div class="sc"><div class="sh"><span>LOU Renewal</span><span class="cnt">16</span></div>`;
+  let h='';
+  // The case flags and the STP indicators are CRA's to set. Sales sees the case,
+  // not the levers on it.
+  if(!isSales()){
+  h+=`<div class="sc"><div class="sh"><span>LOU Renewal</span><span class="cnt">16</span></div>`;
   FLAGS.forEach((f,i)=>{h+=`<label class="fl ${f.on?'on':''}" data-flag="${i}"><span class="bx">${f.on?'✓':''}</span><span>${f.k}</span></label>`;});
   h+=`<div class="sdiv"></div>
     <div class="yn"><span>Customer Deleted</span><span class="ynseg">
@@ -846,9 +916,11 @@ function renderSide(){
       <button data-yn="fullMt|No" aria-pressed="${S.fullMt==='No'}">No</button></span></div>
     <div class="yn"><span>CRA Remark</span><span class="btn btn-txt">Edit</span></div>
     <div class="muted">—</div></div>`;
-  h+=`<div class="sc">
+  }
+  h+=`<div class="sc"><div class="sh"><span>Application Summary</span></div>
     ${[['App. Ref. No.','BKI/HP/2026/Y0063327'],['Product Code','FINP'],
-       ['Status','Pending Checking and Maintenance'],['Applicant Name','TAN WEI MING'],
+       ['Status',isSales()?'Defect Pending Rectification':'Pending Checking and Maintenance'],
+       ['Applicant Name','TAN WEI MING'],
        ['Guarantor',S.noGtee?'—':'LIM AH KOW'],['Case Age',AGE_DAYS+' days']]
       .map(([k,v])=>`<div class="kv"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('')}
     <div style="text-align:center;color:var(--ink-4);margin-top:8px">⌄</div></div>`;
@@ -856,6 +928,18 @@ function renderSide(){
 }
 
 function renderFoot(){
+  /* Sales has one thing to do here and one way to be done with it: answer every
+     defect with a document, then hand the case back. No rule counters, no gates -
+     those belong to the desk that raised them. */
+  if(isSales()){
+    const left=DEFECTS.filter(d=>!d.rect).length;
+    $('foot').innerHTML=`<span class="fn">${left?`${left} defect(s) still to answer`
+        :'Every defect answered — hand it back for verification'}</span>
+      <span class="r"><button class="btn">Save</button><button class="btn">Exit Application</button>
+        <button class="btn btn-pri" data-act="tocra" ${left?'disabled':''}
+          title="${left?'Answer every defect first':'Return the case to CRA'}">Return To CRA</button></span>`;
+    return;
+  }
   const ok=canNext(),left=[];
   if(fMissing().length) left.push(`${fMissing().length} required field(s) empty`);
   if(ckMandOn()<ckMand().length) left.push(`${ckMand().length-ckMandOn()} mandatory doc(s) unchecked`);
@@ -1147,7 +1231,10 @@ document.addEventListener('click',e=>{
   if(t.dataset.go){const k=t.dataset.go;S.nav=k;S.open[k]=1;render();
     const el=$('m-'+k); if(el)el.scrollIntoView({block:'start'}); return;}
   if(t.dataset.tog){const k=t.dataset.tog;S.open[k]=!S.open[k];S.nav=k;render();return;}
-  if(t.dataset.link==='fc'){toast('Opening File Center');return;}
+  if(t.dataset.link==='fc'){
+    if(window.parent!==window) parent.postMessage({fcOpen:{view:isSales()?'sales':'cra'}},'*');
+    else toast('Opening File Center');
+    return;}
   if(t.dataset.act==='expand'){S.expand=!S.expand;render();return;}
   if(t.dataset.flag!==undefined){FLAGS[+t.dataset.flag].on=FLAGS[+t.dataset.flag].on?0:1;renderSide();renderFoot();return;}
   if(t.dataset.yn){const[k,v]=t.dataset.yn.split('|');S[k]=v;renderSide();return;}
@@ -1171,6 +1258,24 @@ document.addEventListener('click',e=>{
     toast(r.changed?`${r.added} created, ${r.updated} updated, ${r.removed} removed · User-source defects untouched`
                    :'System defects already aligned');return;}
   if(t.dataset.act==='adddef'){openAdd();return;}
+  if(t.dataset.desk){setDesk(t.dataset.desk);return;}
+  /* Sales answering a defect, and CRA looking at what came back, are the same
+     journey into the File Center - the difference is only what it opens onto,
+     so both hand the destination to the host rather than deciding it here. */
+  if(t.dataset.updoc||t.dataset.viewdoc){
+    const no=t.dataset.updoc||t.dataset.viewdoc, d=DEFECTS.find(x=>x.no===no);
+    const msg={fcOpen:{view:isSales()?'sales':'cra',defect:no,
+      file:d?d.file:'',types:d?(d.types||[]):[],cat:d?d.cat:'',cr:d?d.cr:''}};
+    if(window.parent!==window){ parent.postMessage(msg,'*'); }
+    else toast('Opens the File Center'+(d&&d.file!=='—'?' at '+d.file:''));
+    return;
+  }
+  if(t.dataset.act==='tocra'){
+    DEFECTS.forEach(d=>{if(d.rect&&!d.ver)d.sr=d.sr||'Replacement uploaded';});
+    toast('Case returned to CRA · they verify and close the defects');
+    if(window.parent!==window) parent.postMessage({handBack:1},'*');
+    return;
+  }
   if(t.dataset.aty){const v=t.dataset.aty,i=S.addDef.types.indexOf(v);
     i>-1?S.addDef.types.splice(i,1):S.addDef.types.push(v);
     S.addDef.sr=$('aSr').value;S.addDef.cr=$('aCr').value;S.addDef.cat=$('aCat').value;
@@ -1205,6 +1310,36 @@ document.addEventListener('click',e=>{
   if(t.dataset.act==='mx'){closeM();renderFoot();return;}
 });
 
+/* Which desk you are at should be legible without reading the buttons, so the
+   chrome says it: the operator, the to-do list, and whether the OCR write-back
+   control is even offered. */
+function applyDesk(){
+  const sales=isSales();
+  document.body.dataset.desk=S.who;
+  const t1=$('tb1'); if(t1) t1.textContent=sales?'Sales To Do List':'CRA To Do List';
+  const w=$('whoNm'); if(w) w.textContent=sales?'salsup2':'crediosadmin';
+  const sy=$('syncBtn'); if(sy) sy.style.display=sales?'none':'';
+  const wy=document.querySelector('.demo .why');
+  if(wy) wy.textContent=sales?'Sales Workbench Prototype':'CRA Workbench Prototype';
+  const hide=(el,yes)=>{ if(!el)return; el.style.display=yes?'none':'';
+    const lb=el.previousElementSibling;
+    if(lb&&lb.tagName==='SPAN'&&!lb.className) lb.style.display=yes?'none':''; };
+  hide($('scnSeg'),sales); hide($('swSeg'),sales);
+  /* Round is a shortcut past the loop. Inside the combined build the loop is real -
+     Sales replaces a document and the rerun arrives here on its own - so the
+     shortcut would be a second, contradictory source of the same state. */
+  hide($('rdSeg'),sales||window.parent!==window);
+}
+function setDesk(w){
+  if(w===S.who)return;
+  S.who=w; S.open.def=1; closeM();
+  // Coming back to CRA after a replacement, the thing worth reading is what moved,
+  // so land on the rule detail rather than making them go and open it.
+  if(w==='sales'){ S.nav='def'; }
+  else { S.nav=S.round===2?'vsum':'def'; S.open.vsum=1; if(S.round===2) S.expand=1; }
+  render();
+}
+
 function initChrome(){
   $('brand').innerHTML=I('diamond');
   $('syncIc').innerHTML=I('sync');
@@ -1217,6 +1352,21 @@ function initChrome(){
    One ledger seen from two screens - so when the two prototypes run side by side,
    what the File Center registers arrives here rather than being registered twice.
    Standalone, nothing ever fires this. */
+// The host owns which desk is on screen, since one document serves both.
+window.addEventListener('message',e=>{
+  const d=e.data||{};
+  if(d.setDesk) setDesk(d.setDesk);
+  /* Sales replaced a document in the File Center and the Case was rerun. The
+     workbench does not re-derive that - it is told, and then shows what moved. */
+  if(d.revalidated){
+    applyRound2([d.revalidated.file]);
+    failFiles().forEach(fn=>{ mkDefect(fn,'System')||updDefect(fn); });
+    const v=autoVerify();
+    S.expand=1;S.open.vsum=1;S.open.def=1;render();
+    toast(`${d.revalidated.file} came back · all ${rTotal()} rules rerun · `+
+      `${RULES.filter(r=>r.chg).length} moved${v?` · ${v} defect(s) auto-verified`:''}`);
+  }
+});
 document.addEventListener('defect:import',e=>{
   const p=e.detail||{}; if(!p.no) return;
   let d=DEFECTS.find(x=>x.no===String(p.no))||defForFile(p.file);

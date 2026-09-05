@@ -29,26 +29,34 @@ BEFORE YOU START
 WHAT IS IN IT
 -------------
 
-Two screens, connected the way they will be in the product:
+Three entries, connected the way they will be in the product:
 
-  CRA Workbench     where CRA reviews the case summary, works the defect
-                    list, maintains disbursement information, and submits
-                    the case.
+  CRA Workbench     where CRA reviews the case summary, checks the rules,
+                    works the defect list, maintains disbursement information
+                    and submits the case.
 
-  Document Center   where documents are uploaded and classified, and where
-                    expert rules are checked against them.
+  Sales Workbench   the same defect list, seen from the other desk. Sales
+                    cannot conclude rules or close defects; each row offers
+                    the one thing Sales can do — send a document.
 
-Moving between the two
+  File Center       where documents live. It opens in the view of whoever
+                    came through: CRA sees the whole case, Sales sees the one
+                    defect they clicked.
 
-The workbench opens the Document Center from three places, all of which lead
-to the same screen:
+Moving between them
 
-  - Attachment — in the top bar
-  - Attachment — in the Navigation card on the left
-  - Open File Center — in the Verification Summary module
+The three buttons in the demo toolbar switch entries at any time. In normal
+use you arrive by the work rather than by the switch:
 
-To come back, use the ✕ at the top right or Back To List at the bottom. The
-switch in the demo toolbar also jumps between the two at any time.
+  - CRA opens it from Attachment in the top bar, from Attachment in the
+    Navigation card, or from Open File Center in the Verification Summary.
+  - Sales opens it from the action on a defect row.
+  - Back To List, or the ✕ at the top right, returns to whichever desk
+    opened it.
+
+Which view the File Center is in is decided by that door — there is no
+role or case-state switch sitting above the screen. The strip at the top
+left says where you are, for example "Sales · answering defect #2".
 
 
 THE MAIN PATHS
@@ -105,25 +113,25 @@ to reveal the two rule tabs.
      "OCR 13/19" and "Manual 0/6" — no matter which tab you are on.
 
 
-Path 3 · Sales fixes what the defects name
-Document Center, role Sales, case state Returned.
+Path 3 · Sales answers the defects
+Sales Workbench.
 
-  1. The File List is a record now, not a work surface. To Fix lists the
-     defects and what each one needs.
-  2. Replace Document opens a narrowed view: this document only, and the
-     File Type fixed by the defect — you are replacing a document, not
-     adding one. Both upload entries stay open.
-  3. If AI reads a different type than the one the defect names, it returns
-     others and extracts nothing. Simulate Wrong File shows what that looks
-     like: nothing changes and the file waits in the list. Swap it and
-     upload again.
-  4. Simulate Upload supersedes the file rather than modifying it. The old
-     version stays retrievable with the alerts CRA saw still on it, and the
-     old file is never removed automatically — deleting is manual and the
-     consequence is yours.
-  5. Replacing a document reruns every rule in the case, not just the ones
-     on that file. Use "Replacement result" in the demo toolbar to see the
-     four outcomes:
+  1. The defect list is the same list CRA sees — same rows, same columns,
+     same numbers. What differs is the action: Replace Document, or Upload
+     Document where the defect names no file yet.
+  2. That opens the File Center on that defect alone. The strip at the top
+     says which one, and the list is narrowed to it; Show all defects widens
+     it again.
+  3. The File Type is fixed by the defect — you are replacing a document,
+     not adding one. Both upload entries stay open.
+  4. If AI reads a different type than the one the defect names, it returns
+     others and extracts nothing. Simulate Wrong File shows it: nothing
+     changes and the file waits in the list. Swap it and upload again.
+  5. Simulate Upload supersedes the file rather than modifying it. The old
+     version stays retrievable with the alerts CRA saw still on it, and it
+     is never removed automatically — deleting is manual and the consequence
+     is yours.
+  6. Choose what the re-check finds beside the upload it describes:
 
        a  the rule is still not solved — the defect stands as it is
        b  the rule is solved — the defect is verified on CRA submission
@@ -131,23 +139,27 @@ Document Center, role Sales, case state Returned.
           keeping its number and its remark
        d  partly solved and a new rule appears — handled the same as c
 
-  6. In c and d a cross-document rule also moves: it reads the replaced
+  7. Replacing a document reruns every rule in the case, not just the ones
+     on that file, and the result is carried back to the workbench on its
+     own. In c and d a cross-document rule also moves: it reads the replaced
      agreement as well as the second schedule, so replacing one file changes
      a rule sitting on a file nobody touched. Its defect hangs on the
-     replaced document — that is the one that changed, and the only one
-     Sales can act on next round.
+     replaced document — the one that changed, and the only one Sales can
+     act on next round.
+  8. Return To CRA hands the case back once every defect has an answer.
 
 
 Path 4 · CRA works the case
-CRA Workbench. Use Round in the demo toolbar to switch between the first
-check and the state after Sales has replaced the documents.
+CRA Workbench. Walk Path 3 first — the state after a replacement arrives
+here on its own, rather than from a switch.
 
   1. Verification Summary shows how many rules the case has, how many are
      concluded, and how many did not pass.
-  2. View detail lists them. Round 1 is the whole set of failures; each one
-     offers Create Defect, or Handle rule to settle it — amend the extracted
-     value, apply a justification, or replace the document.
-  3. Round 2 reads differently. All rules were rerun, but only what moved
+  2. View detail lists them. On the first check that is the whole set of
+     failures; each one offers Create Defect, or Handle rule to settle it —
+     amend the extracted value, apply a justification, or replace the
+     document.
+  3. After Sales sends a document back it reads differently. All rules were rerun, but only what moved
      and what sits on a replaced document is put in front of you; the rest
      keep their earlier conclusion and fold away behind Show. A rule that
      flipped on a document nobody replaced is called out separately — it is
@@ -185,9 +197,11 @@ CRA Workbench. This is where the case is decided.
 WORTH KNOWING
 -------------
 
-  - The demo toolbar, including the role, case state, replacement result and
-    round switches, exists only so one file can show several situations. It
-    will not be in the product.
+  - The demo toolbar exists only so one file can show several situations. It
+    will not be in the product. What it still carries is the entry switch,
+    the STP scenario, and — inside the upload dialog — what the re-check
+    finds. Role and case state are not switches any more: they follow from
+    the door you came through.
   - A defect raised in the Document Center appears in the Workbench defect
     list. That is one ledger seen from two screens, not two ledgers kept in
     step.

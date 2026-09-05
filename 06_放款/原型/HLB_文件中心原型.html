@@ -321,6 +321,21 @@ button:disabled{cursor:not-allowed}
 .lockrow .lk{color:var(--text-2);flex:none;width:66px}
 .lockrow select{width:220px}
 .lockrow .lkn{color:var(--text-3);font-size:11px}
+/* Picking what the re-check finds belongs next to the upload it describes, not in
+   a global switch that silently changes what the next click does. */
+.ocpick{margin-top:14px;padding:11px 12px;border:1px dashed var(--border);
+  border-radius:var(--r);background:var(--fill-q)}
+.ocp-h{font-size:11px;font-family:var(--mono);letter-spacing:.06em;color:var(--text-3);
+  text-transform:uppercase}
+.ocp-row{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.ocp{border:1px solid var(--border);border-radius:var(--r-sm);background:#fff;
+  padding:3px 9px;font-size:12px;color:var(--text-2);cursor:pointer}
+.ocp:hover{border-color:var(--primary);color:var(--primary)}
+.ocp.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.ocp-d{font-size:12px;color:var(--text-2);margin-top:8px;line-height:1.55}
+.ocp-n{font-size:11px;color:var(--text-3);margin-top:5px}
+.demo .ctx{font-size:12px;color:#fff;background:rgba(255,255,255,.14);
+  border-radius:var(--r-sm);padding:2px 10px}
 .field-row{display:flex;justify-content:space-between;gap:10px;padding:7px 8px;border-bottom:1px solid var(--border-2);font-size:12px}
 .field-row:last-child{border-bottom:0}
 .field-row .k{color:var(--text-2)}
@@ -375,18 +390,11 @@ button:disabled{cursor:not-allowed}
 
 <div class="demo">
   <span class="lb">Demo</span>
-  <span class="seg" id="roleSeg">
-    <button data-role="sales">Sales</button><button data-role="cra">CRA</button>
-  </span>
-  <span>Case</span>
-  <span class="seg" id="csSeg">
-    <button data-cs="draft">Sales Drafting</button><button data-cs="review">CRA Review</button
-    ><button data-cs="returned">Returned</button><button data-cs="recheck">CRA Re-check</button>
-  </span>
-  <span>Replacement result</span>
-  <span class="seg" id="ocSeg">
-    <button data-oc="a" title="Rule still not solved">a</button><button data-oc="b" title="Rule solved"
-    >b</button><button data-oc="c" title="Solved, new rule hit">c</button><button data-oc="d" title="Partly solved, new rule hit">d</button>
+  <span class="ctx" id="viewCtx"></span>
+  <span class="seg" id="viewSeg" hidden>
+    <button data-view="cra">CRA review</button
+    ><button data-view="draft">Sales · new upload</button
+    ><button data-view="sales">Sales · fixing a defect</button>
   </span>
   <span class="hint" id="permHint"></span>
   <span class="why">Demo toolbar · not part of the product</span>
@@ -677,8 +685,11 @@ const CATS=s=>ZONES[s].map(z=>z[0]).concat(['Other Documents']);
 const S={role:'cra',cs:'review',stage:'dis',tab:'fl',subj:'all',sel:new Set(),dt:null,
   fType:'',fStatus:'',railCollapsed:false,reval:0,
   // oc picks which of the four agreed round-2 outcomes a replacement produces.
-  // In production the rules decide; here it is a demo switch so all four can be seen.
-  oc:'b',xhit:null};
+  // In production the rules decide; here it is picked in the upload dialog itself,
+  // where it reads as "what came back" rather than as a global mode.
+  oc:'b',xhit:null,
+  // set when Sales walks in from a defect row: this screen is about that one file
+  focus:null};
 // vehicle category is folded into the main applicant
 Object.values(DATA).forEach(a=>a.forEach(f=>{if(f.sj==='vehicle'||f.sj==='case')f.sj='primary';}));
 
@@ -757,6 +768,27 @@ function scopedFor(subj){
   const ids=scopedIds();
   return DATA.dis.filter(f=>ids.has(f.id)&&(subj==null||f.sj===subj));
 }
+const curFocusName=()=>{const d=DEFECTS.find(x=>x.no===S.focus); const f=d&&defFile(d);
+  return f?f.nm:(d?'no document yet':'—');};
+/* The host calls this when a desk opens the File Center. CRA arrives at the whole
+   case; Sales arrives at one defect, and the screen narrows to it. Nothing about
+   the view is chosen here - it is inherited from where the click came from. */
+function setView(view,def){
+  if(view==='draft'){
+    // before submission the case is still Sales's own; nothing is scoped yet
+    S.role='sales'; S.cs='draft'; S.focus=null; S.tab='fl'; S.subj='primary';
+  }else if(view==='sales'){
+    S.role='sales'; S.cs='returned'; S.focus=def&&def.defect||null;
+    S.tab='df'; S.subj='all';
+  }else{
+    S.role='cra'; S.focus=null;
+    S.cs=DEFECTS.some(d=>d.st==='responded')?'recheck':'review';
+    S.tab='fl'; S.subj='all';
+  }
+  S.sel.clear(); S.dt=null; $('detail').classList.add('hidden'); smClose(); render();
+  // Sales came in to answer one defect, so open that document straight away.
+  if(view==='sales'&&S.focus&&DEFECTS.some(d=>d.no===S.focus&&d.st==='open')) askReplace(S.focus);
+}
 const all=()=>DATA[S.stage];
 const live=()=>all().filter(f=>!f.del);
 const byId=i=>all().find(f=>f.id===i);
@@ -803,10 +835,17 @@ const $=i=>document.getElementById(i);
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function render(){
-  [...$('roleSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.role===S.role));
-  [...$('csSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.cs===S.cs));
-  [...$('ocSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.oc===S.oc));
-  $('permHint').textContent=P().l+' · Replacement result '+(OUTCOMES[S.oc]||{}).nm;
+  /* Which view you are in is decided by the door you came through - the CRA
+     workbench or a defect on the Sales one - not by a switch up here. Two desks
+     with two jobs; showing both sets of controls at once is what made the state
+     hard to read. */
+  $('viewCtx').textContent=S.focus
+    ? `Sales · answering defect #${S.focus} — ${curFocusName()}`
+    : S.cs==='draft' ? 'Sales · uploading before submission'
+    : (S.role==='sales'?'Sales · returned case':'CRA · reviewing the case');
+  const door=S.cs==='draft'?'draft':(S.role==='sales'?'sales':'cra');
+  [...$('viewSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===door));
+  $('permHint').textContent=P().l;
   [...$('stageTabs').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.stage===S.stage));
   renderRail(); renderUpload(); renderTabs(); renderFilter(); renderTable(); renderFooter();
 }
@@ -914,8 +953,14 @@ function renderTabs(){
 
 function renderFilter(){
   if(S.tab==='df'){
-    $('filterBar').innerHTML=`<span class="foot-note">Sent back by CRA. Replacing a document re-runs
-      every rule in the Case, not just this one \u2014 CRA then verifies and closes it in the Workbench.</span>`;
+    /* Walking in from one defect narrows the list to it. Saying so - and offering
+       the way back out - is what keeps a short list from reading like a wrong one. */
+    $('filterBar').innerHTML=S.focus
+      ? `<span class="foot-note"><b>Showing defect #${esc(S.focus)} only</b> \u2014 you opened it from the
+           Sales workbench. Replacing a document re-runs every rule in the Case, not just this one.</span>
+         <span class="filter-actions"><button class="ant-btn" data-allfiles="1">Show all ${myDefects().length} defects</button></span>`
+      : `<span class="foot-note">Sent back by CRA. Replacing a document re-runs
+           every rule in the Case, not just this one \u2014 CRA then verifies and closes it in the Workbench.</span>`;
     return;
   }
   if(S.subj==='deleted'){ $('filterBar').innerHTML=`<span class="foot-note">Deleted files are kept as records only. They cannot be previewed or restored.</span>`; return; }
@@ -956,7 +1001,7 @@ function statusCell(f){
    rectified/verified. What reaches Sales is only the part Sales can act on:
    which document, what is wrong with it, and a way to send a new one. */
 function renderDefects(){
-  const D=myDefects();
+  const D=S.focus?myDefects().filter(d=>d.no===S.focus):myDefects();
   $('emptyState').textContent='Nothing to fix. The case is with CRA.';
   $('emptyState').style.display=D.length?'none':'block';
   $('thead').innerHTML=`<tr><th style="width:56px">Ref</th><th style="width:250px">Document</th>
@@ -1381,6 +1426,11 @@ function replaceDoc(no){
       d.cr+=` | Cross-document: ${XRULE.id} moved on ${S.xhit.on} because this file changed`;
     }
     render();
+    /* The rerun happened in front of this document, but its consequences are read
+       on the workbench. Telling it which file came back is what turns the demo
+       into one loop instead of two screens that each claim a different round. */
+    document.dispatchEvent(new CustomEvent('case:revalidated',{detail:{
+      file:f.nm,defect:d.no,outcome:oc,cross:S.xhit?S.xhit.on:''}}));
     msg(`All rules re-run across the Case \u00b7 ${f.nm} v${f.ver}`+
         (S.xhit?` \u00b7 ${XRULE.id} also moved on ${S.xhit.on}`:''));
   },1600);
@@ -1389,8 +1439,9 @@ function replaceDoc(no){
 }
 /* Sales enters through the defect and sees a narrowed world: this document, this
    file type, nothing else. The type is not a choice - it is what the defect names. */
-function askReplace(no){
-  const d=DEFECTS.find(x=>x.no===no), f=d&&defFile(d); if(!f) return;
+function askReplace(no){ S.repl=no; drawReplace(); }
+function drawReplace(){
+  const d=DEFECTS.find(x=>x.no===S.repl), f=d&&defFile(d); if(!f) return;
   sm('Replace Document',
     `<div class="pnote info">Defect <b>#${esc(d.no)}</b> \u00b7 ${esc(defTypes(d))}<br>${esc(d.cr)}</div>
      <div class="lockrow"><span class="lk">File Type</span>
@@ -1413,7 +1464,15 @@ function askReplace(no){
      </div>
      <div class="description-text" style="margin-top:8px">
        If AI reads a different document type than <b>${esc(f.ty)}</b>, it returns
-       <b>others</b> and extracts nothing \u2014 swap the file rather than expecting a fix.</div>`,
+       <b>others</b> and extracts nothing \u2014 swap the file rather than expecting a fix.</div>
+     <div class="ocpick">
+       <span class="ocp-h">Simulated result of the re-check</span>
+       <div class="ocp-row">${['a','b','c','d'].map(k=>
+         `<button class="ocp ${S.oc===k?'on':''}" data-ocpick="${k}">${esc(OUTCOMES[k].nm)}</button>`).join('')}</div>
+       <div class="ocp-d">${esc(OUTCOMES[S.oc].d)}</div>
+       <div class="ocp-n">In production the rules decide this. It sits here so all four
+         agreed outcomes can be walked through.</div>
+     </div>`,
     `<button class="ant-btn" data-cl="1">Cancel</button>
      <button class="ant-btn" data-wrongf="${esc(d.no)}">Simulate Wrong File</button>
      <button class="ant-btn ant-btn-primary" data-dorepl="${esc(d.no)}">Simulate Upload</button>`);
@@ -1534,10 +1593,10 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('button,input[type=checkbox],[data-dty]'); if(!t) return;
 
   if(t.dataset.railtoggle){S.railCollapsed=!S.railCollapsed;render();return;}
-  if(t.dataset.role){S.role=t.dataset.role;S.sel.clear();render();if(S.dt)renderDt();return;}
-  if(t.dataset.cs){S.cs=t.dataset.cs;S.sel.clear();render();if(S.dt)renderDt();return;}
-  if(t.dataset.oc){S.oc=t.dataset.oc;render();
-    msg(`Replacement result set to ${OUTCOMES[S.oc].nm} — ${OUTCOMES[S.oc].d}`);return;}
+  if(t.dataset.view){setView(t.dataset.view);return;}
+  if(t.dataset.ocpick){S.oc=t.dataset.ocpick;drawReplace();return;}
+  if(t.dataset.allfiles){S.focus=null;S.tab='fl';render();
+    msg('Showing every document on the case');return;}
   if(t.dataset.repl){askReplace(t.dataset.repl);return;}
   if(t.dataset.dorepl){replaceDoc(t.dataset.dorepl);return;}
   if(t.dataset.wrongf){wrongFile(t.dataset.wrongf);return;}
@@ -1682,6 +1741,13 @@ document.addEventListener('keydown',e=>{
 });
 
 $('mClose').innerHTML=I('close');
+/* Standalone the file can still be driven by hand; inside the combined build the
+   host owns the view, so the switch stays out of the way. */
+if(window.parent===window) $('viewSeg').hidden=false;
+window.addEventListener('message',e=>{
+  const d=e.data||{};
+  if(d.fcView) setView(d.fcView.view,d.fcView);
+});
 render();
 })();
 </script>

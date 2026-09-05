@@ -44,15 +44,17 @@ button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit
     var nav = document.createElement('span');
     nav.className = 'xnav';
     nav.innerHTML =
-      '<button data-xnav="wb"' + (HERE === 'wb' ? ' aria-current="true"' : '') + '>CRA Workbench</button>' +
-      '<button data-xnav="fc"' + (HERE === 'fc' ? ' aria-current="true"' : '') + '>Document Center</button>';
+      '<button data-xnav="cra">CRA Workbench</button>' +
+      '<button data-xnav="sales">Sales Workbench</button>' +
+      '<button data-xnav="fc">File Center</button>';
     var why = bar.querySelector('.why');
     if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
   }
   if (why0()) why0().textContent = 'Prototype build ' + %s;
   function why0(){ return bar && bar.querySelector('.why'); }
 
-  function go(to){ if (to !== HERE) parent.postMessage({ nav: to }, '*'); }
+  function go(to){ parent.postMessage({ nav: to }, '*'); }
+
 
   /* The two screens share one defect ledger: it is raised in the File Center, in
      front of the document, and read in the Workbench. Isolation keeps the styles
@@ -61,6 +63,11 @@ button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit
   document.addEventListener('defect:raised', function(e){
     parent.postMessage({ defect: e.detail }, '*');
   });
+  document.addEventListener('case:revalidated', function(e){
+    parent.postMessage({ revalidated: e.detail }, '*');
+  });
+  // marks which prototype this frame is, so the host can address it
+  parent.postMessage({ hello: HERE }, '*');
   window.addEventListener('message', function(e){
     var d = e.data && e.data.defect;
     if (d) document.dispatchEvent(new CustomEvent('defect:import', { detail: d }));
@@ -74,15 +81,22 @@ button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit
     var t = e.target.closest(%s);
     if (t) { e.preventDefault(); e.stopPropagation(); go(%s); }
   }, true);
+  window.addEventListener('message', function(e){
+    if (e.data && e.data.here) {
+      var b = nav && nav.querySelectorAll('[data-xnav]');
+      if (b) for (var i=0;i<b.length;i++)
+        b[i].setAttribute('aria-current', b[i].dataset.xnav === e.data.here ? 'true' : 'false');
+    }
+  });
 }());
 <\\/script>
 </body></html>'''
 
 # the workbench's three routes into the file center
-WB_DOC = SHELL % (WB, "'wb'", "'" + STAMP + "'", "'[data-link=\"fc\"]'", "'fc'")
+WB_DOC = SHELL % (WB, "'wb'", "'" + STAMP + "'", "'[data-shim-none]'", "'fc'")
 # the file centre's ways out: the modal close, and Back To List in the footer.
 # #dtBack is excluded - that closes the document detail, it does not leave.
-FC_DOC = SHELL % (FC, "'fc'", "'" + STAMP + "'", "'#mClose, .file-list-footer-actions .back-btn'", "'wb'")
+FC_DOC = SHELL % (FC, "'fc'", "'" + STAMP + "'", "'#mClose, .file-list-footer-actions .back-btn'", "'back'")
 
 
 def embed(doc):
@@ -102,8 +116,8 @@ html,body{height:100%%;margin:0;background:#0d1424}
 </style>
 
 <div id="stage">
-  <iframe id="fr-wb" title="CRA Workbench"></iframe>
-  <iframe id="fr-fc" title="Document Center" hidden></iframe>
+  <iframe id="fr-wb" title="Workbench"></iframe>
+  <iframe id="fr-fc" title="File Center" hidden></iframe>
 </div>
 <div id="boot">Loading prototype…</div>
 
@@ -113,43 +127,76 @@ html,body{height:100%%;margin:0;background:#0d1424}
 <script>
 (function(){
   "use strict";
+  /* Three entries, two documents. CRA and Sales are the same workbench seen from
+     two desks - the whole point of the defect list is that both read one ledger -
+     so they share a frame and the host tells it which desk is on screen. */
   var frames = { wb: document.getElementById('fr-wb'), fc: document.getElementById('fr-fc') };
   var loaded = {};
+  var DEST = { cra: 'wb', sales: 'wb', fc: 'fc' };
+  var here = 'cra';        // which entry is on screen
+  var desk = 'cra';        // which desk the workbench is showing
+  var cameFrom = 'cra';    // the desk that opened the File Center
 
   function source(k){
     // undo the closing-tag escaping applied at build time
     return document.getElementById('src-' + k).textContent.replace(/<\\\\\\/script>/g, '<\\/script>');
   }
 
-  function show(k){
-    if (!loaded[k]) { frames[k].srcdoc = source(k); loaded[k] = 1; }
-    Object.keys(frames).forEach(function(n){ frames[n].hidden = (n !== k); });
-    try { history.replaceState(null, '', '#' + k); } catch (e) {}
-    var f = frames[k];
-    // focus the visible frame so keyboard shortcuts land in the right document
-    setTimeout(function(){ try { f.contentWindow.focus(); } catch (e) {} }, 0);
+  /* loaded means the source has been handed to the frame; ready means the frame
+     has parsed it and wired its listeners. Posting between the two is silent data
+     loss - the message reaches a document that is about to be replaced. */
+  var ready = {};
+  function post(k, msg){
+    if (!ready[k]) return false;
+    try { frames[k].contentWindow.postMessage(msg, '*'); return true; } catch (e) { return false; }
   }
 
-  /* Defects raised in the File Center are relayed to the Workbench. The Workbench
-     frame may not be loaded yet - the host boots whichever screen the URL asks for -
-     so anything raised before it exists is held and replayed once it is. */
-  var pending = [];
-  function relayDefect(d){
-    if (!loaded.wb) { pending.push(d); return; }
-    try { frames.wb.contentWindow.postMessage({ defect: d }, '*'); } catch (e) {}
+  function show(dest){
+    var k = DEST[dest]; if (!k) return;
+    if (!loaded[k]) { frames[k].srcdoc = source(k); loaded[k] = 1; }
+    Object.keys(frames).forEach(function(n){ frames[n].hidden = (n !== k); });
+    here = dest;
+    try { history.replaceState(null, '', '#' + dest); } catch (e) {}
+    if (k === 'wb' && dest !== desk) { desk = dest; post('wb', { setDesk: desk }); }
+    post('wb', { here: here }); post('fc', { here: here });
+    setTimeout(function(){ try { frames[k].contentWindow.focus(); } catch (e) {} }, 0);
   }
-  window.addEventListener('message', function(e){
-    var to = e.data && e.data.nav;
-    if (to === 'wb' || to === 'fc') show(to);
-    if (e.data && e.data.defect) relayDefect(e.data.defect);
+
+  /* Anything raised in one document that the other has to know about is relayed
+     here. A frame may not exist yet - the host boots whichever entry the URL asks
+     for - so messages for a sleeping frame are held and replayed on load. */
+  var pending = { wb: [], fc: [] };
+  function relay(k, msg){ if (!post(k, msg)) pending[k].push(msg); }
+  Object.keys(frames).forEach(function(k){
+    frames[k].addEventListener('load', function(){
+      // one tick, so the document has finished wiring its own listeners
+      setTimeout(function(){
+        ready[k] = 1;
+        if (k === 'wb' && desk !== 'cra') post('wb', { setDesk: desk });
+        post(k, { here: here });
+        pending[k].splice(0).forEach(function(m){ post(k, m); });
+      }, 0);
+    });
   });
-  frames.wb.addEventListener('load', function(){
-    // one tick, so the workbench has finished wiring its own listeners
-    setTimeout(function(){ pending.splice(0).forEach(relayDefect); }, 0);
+
+  window.addEventListener('message', function(e){
+    var d = e.data || {};
+    if (d.nav === 'back') { show(cameFrom); return; }
+    if (DEST[d.nav]) { show(d.nav); return; }
+    if (d.defect) { relay('wb', { defect: d.defect }); return; }
+    if (d.revalidated) { relay('wb', { revalidated: d.revalidated }); return; }
+    /* A desk opened the File Center on a defect. Remember the door so Back returns
+       through it, and hand the view across rather than letting the File Center
+       guess who is looking. */
+    if (d.fcOpen) {
+      cameFrom = d.fcOpen.view === 'sales' ? 'sales' : 'cra';
+      show('fc'); relay('fc', { fcView: d.fcOpen }); return;
+    }
+    if (d.handBack) { desk = 'x'; show('cra'); return; }
   });
 
   var start = (location.hash || '').replace('#', '');
-  show(start === 'fc' ? 'fc' : 'wb');
+  show(DEST[start] ? start : 'cra');
   frames.wb.addEventListener('load', function(){
     var b = document.getElementById('boot'); if (b) b.remove();
   });

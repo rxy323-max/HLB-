@@ -10,8 +10,8 @@ html,body{height:100%;margin:0;background:#0d1424}
 </style>
 
 <div id="stage">
-  <iframe id="fr-wb" title="CRA Workbench"></iframe>
-  <iframe id="fr-fc" title="Document Center" hidden></iframe>
+  <iframe id="fr-wb" title="Workbench"></iframe>
+  <iframe id="fr-fc" title="File Center" hidden></iframe>
 </div>
 <div id="boot">Loading prototype…</div>
 
@@ -262,6 +262,27 @@ tbody tr:hover td{background:var(--alt)}
   cursor:pointer;background:#fff;color:var(--ink-2);user-select:none}
 .tychip:hover{border-color:var(--pri);color:var(--pri)}
 .tychip.on{background:var(--pri);border-color:var(--pri);color:#fff}
+
+/* The defect ledger is wide by nature - the accounting columns all have to be
+   there. The action stays pinned to the right edge so it never scrolls out of
+   reach, which is how the production screen behaves. */
+.deftbl{min-width:2040px}
+.deftbl th,.deftbl td{white-space:normal}
+/* A pinned column reads as a column only if it is opaque and edged. Without the
+   rule down its left side it looks like two cells accidentally on top of each
+   other, which is exactly what it is doing - deliberately. */
+.deftbl .act-col{position:sticky;right:0;z-index:2;background:#fff;
+  border-left:1px solid var(--line);box-shadow:-14px 0 14px -10px rgba(16,24,40,.34)}
+.deftbl th.act-col{background:var(--alt);z-index:3}
+.deftbl tbody tr:hover td.act-col{background:var(--alt)}
+.deftbl td.act-col{white-space:nowrap;text-align:right}
+.deftbl td.act-col .btn+.btn{margin-left:6px}
+/* the ledger is wider than any screen, so say so rather than hiding the fact */
+.tw.scrolls{overflow-x:scroll}
+.tw.scrolls::-webkit-scrollbar{height:10px}
+.tw.scrolls::-webkit-scrollbar-thumb{background:#c9ced6;border-radius:5px}
+.tw.scrolls::-webkit-scrollbar-track{background:var(--alt)}
+.scrollnote{font-size:11.5px;color:var(--ink-3);margin:6px 2px 0}
 .dfull{grid-column:1/-1}
 
 /* File Center rule modal */
@@ -327,11 +348,11 @@ tbody tr:hover td{background:var(--alt)}
 <div class="app">
   <div class="topbar">
     <span class="brand" id="brand"></span>
-    <span class="tbtn">CRA To Do List</span>
+    <span class="tbtn" id="tb1">CRA To Do List</span>
     <span class="tbtn on">Disbursement:BKI/HP/2026/Y0063327</span>
     <span class="who">
-      <button class="btn btn-sm btn-pri tb-sync" data-act="sync"><span id="syncIc"></span> Sync from OCR</button>
-      <span>crediosadmin</span><span>|</span><span class="clk" id="clk">59:29</span>
+      <button class="btn btn-sm btn-pri tb-sync" data-act="sync" id="syncBtn"><span id="syncIc"></span> Sync from OCR</button>
+      <span id="whoNm">crediosadmin</span><span>|</span><span class="clk" id="clk">59:29</span>
       <button class="rf" id="rfBtn"></button></span>
   </div>
   <div class="body">
@@ -496,7 +517,17 @@ const S={scn:'manual',stpSwitch:1,noGtee:0,open:{vsum:1,def:1,chk:0},expand:0,dl
   // been revalidated end to end. replaced lists what came back; showAll unfolds
   // the rules the focused view keeps out of the way.
   round:1,replaced:[],showAll:0,
+  /* Two desks, one workbench. Sales and CRA read the same defect ledger - that is
+     the point of it - so they run the same code rather than two lookalike screens
+     that can drift apart. What differs is what each desk may do: CRA concludes
+     rules and closes defects, Sales supplies the document and nothing else. */
+  who:'cra',
   custDel:'No',fullMt:'Yes',nav:'vsum'};
+const isSales=()=>S.who==='sales';
+// Rules are CRA's judgement; Sales works from the defect list alone.
+const NAVFOR=()=>isSales()
+  ?[['Checking & Modification',[['def','Defect List','d']]]]
+  :NAV;
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -518,10 +549,13 @@ function reset(scn){
      2nd Schedule Part I  - S52 flips to failing   -> the cross-file consequence
    S52 reads the HP Agreement as well, so replacing that document moves a rule on a
    file nobody touched. It is why the rerun covers the Case rather than one file. */
-function applyRound2(){
-  S.replaced=['Insurance Cover Note.pdf','HP Agreement.pdf'];
+function applyRound2(files){
+  const only=files&&files.length?files:['Insurance Cover Note.pdf','HP Agreement.pdf'];
+  S.replaced=[...new Set((S.replaced||[]).concat(only))];
   RULES.forEach(r=>{ r.chg=''; r.prev=r.pass?'pass':'fail'; });
-  const set=(id,pass,chg,issue)=>{const r=RULES.find(x=>x.id===id); if(!r)return;
+  const touches=r=>S.replaced.includes(r.file)||S.replaced.includes(r.xfile);
+  // only rules that read one of the returned documents may move
+  const set=(id,pass,chg,issue)=>{const r=RULES.find(x=>x.id===id); if(!r||!touches(r))return;
     r.pass=pass;r.st='';r.chg=chg; if(issue!==undefined)r.issue=issue;};
   set('I33',1,'cleared','');
   set('A155',1,'cleared','');
@@ -661,6 +695,7 @@ function eligibility(){
 
 /* ═══ RENDER ═══ */
 function render(){
+  applyDesk();
   document.querySelectorAll('#scnSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===S.scn));
   document.querySelectorAll('#swSeg button').forEach(b=>b.setAttribute('aria-pressed',(b.dataset.sw==='1')===!!S.stpSwitch));
   document.querySelectorAll('#rdSeg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.rd===S.round));
@@ -677,7 +712,7 @@ const NAV=[
 
 function renderRail(){
   let h=`<div class="navcard"><div class="nh">${I('list')}Navigation</div>`;
-  NAV.forEach(([g,items])=>{
+  NAVFOR().forEach(([g,items])=>{
     h+=`<h6>${g}</h6>`;
     items.forEach(([k,nm,kind])=>{
       let c='';
@@ -782,33 +817,64 @@ function defBody(){
       <th style="width:80px">VERIFIED</th><th style="width:170px">DOCUMENT</th>
       <th>SALES REMARK</th><th style="width:110px">ACTION</th></tr></thead>
       <tbody><tr><td colspan="9"><div class="nodata">${I('inbox')}No data</div></td></tr></tbody></table></div>`;
-  return `<div class="tot"><span class="t">Total: <b>${DEFECTS.length}</b> defect(s)${unlinkedFiles().length?` · ${unlinkedFiles().length} document(s) still unlinked`:''}${openDefects()?` · ${openDefects()} unresolved`:''}</span>
-    <span class="r"><button class="btn btn-sm" data-act="syncdef">Sync System Defects</button>
-      <button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button></span></div>
-  <div class="tw"><table style="min-width:1240px"><thead><tr><th style="width:56px">NO.</th><th style="width:80px">SOURCE</th>
-    <th style="width:190px">DOCUMENT</th><th style="width:120px">RULES</th><th style="width:110px">DEFECT CODE</th>
-    <th style="width:180px">CATEGORY</th><th style="width:200px">TYPE</th>
-    <th style="width:90px">RECTIFIED</th><th style="width:80px">VERIFIED</th>
-    <th style="width:180px">CRA REMARK</th><th style="width:120px">ACTION</th></tr></thead>
+  return `<div class="tot"><span class="t">Total: <b>${DEFECTS.length}</b> defect(s)${
+      isSales()?` · ${DEFECTS.filter(d=>!d.rect).length} to fix`
+      :`${unlinkedFiles().length?` · ${unlinkedFiles().length} document(s) still unlinked`:''}${openDefects()?` · ${openDefects()} unresolved`:''}`}</span>
+    <span class="r">${isSales()
+      ? '<span class="muted">Answer each one with a document — CRA verifies and closes them</span>'
+      : `<button class="btn btn-sm" data-act="syncdef">Sync System Defects</button>
+         <button class="btn btn-pri btn-sm" data-act="adddef">Add Defect</button>`}</span></div>
+  <div class="tw scrolls"><table class="deftbl"><thead><tr>
+    <th style="width:52px">NO.</th><th style="width:76px">SOURCE</th>
+    <th style="width:172px">CATEGORY</th><th style="width:190px">TYPE</th>
+    <th style="width:180px">DOCUMENT</th><th style="width:104px">RULES</th>
+    <th style="width:104px">DEFECT CODE</th>
+    <th style="width:84px">RECTIFIED</th><th style="width:76px">VERIFIED</th>
+    <th style="width:150px">SALES REMARK</th><th style="width:160px">CRA REMARK</th>
+    <th style="width:96px">RECTIFIED BY</th><th style="width:92px">VERIFIED BY</th>
+    <th style="width:132px">CREATE DATE</th><th style="width:132px">RECTIFIED DATE</th>
+    <th style="width:132px">VERIFIED DATE</th>
+    <th class="act-col" style="width:178px">ACTION</th></tr></thead>
   <tbody>${DEFECTS.map(d=>{
-    const rs=d.rules||[], ts=d.types||[];
+    const rs=d.rules||[], ts=d.types||[], bound=d.file&&d.file!=='—';
     return `<tr><td class="mono">${d.no}</td>
     <td><span class="tag ${d.src==='System'?'tag-blue':''}" style="font-size:11px">${d.src}</span></td>
-    <td style="font-size:12px">${d.file&&d.file!=='—'
-      ? `${esc(d.file)}<span class="sub-row" style="display:block">Sales replaces it in the File Center</span>`
-      : '<span class="muted">No document yet<span class="sub-row" style="display:block">Sales uploads to the file list, not to AI</span></span>'}</td>
-    <td class="mono" style="font-size:11px">${rs.length?rs.map(esc).join('<br>'):'—'}</td>
-    <td class="mono" style="font-size:11px">${(d.codes||[]).length?d.codes.map(esc).join('<br>'):'—'}</td>
     <td style="font-size:12px">${esc(d.cat)}</td>
     <td style="font-size:12px">${ts.length?ts.map(t=>`<span class="tag" style="font-size:10px;margin:0 3px 3px 0">${esc(t)}</span>`).join(''):'—'}
       ${(d.hist||[]).length?`<span class="sub-row" style="display:block">rewritten ${d.hist.length}× by revalidation</span>`:''}</td>
+    <td style="font-size:12px">${bound
+      ? `${esc(d.file)}<span class="sub-row" style="display:block">${isSales()?'you replace this one':'Sales replaces it in the File Center'}</span>`
+      : `<span class="muted">No document yet<span class="sub-row" style="display:block">${isSales()?'upload straight to the file list':'Sales uploads to the file list, not to AI'}</span></span>`}</td>
+    <td class="mono" style="font-size:11px">${rs.length?rs.map(esc).join('<br>'):'—'}</td>
+    <td class="mono" style="font-size:11px">${(d.codes||[]).length?d.codes.map(esc).join('<br>'):'—'}</td>
     <td>${d.rect?'<span class="tag tag-ok">Y</span>':'<span class="tag tag-err">N</span>'}</td>
     <td>${d.ver?'<span class="tag tag-ok">Y</span>':'<span class="tag">N</span>'}</td>
+    <td style="font-size:11px">${esc(d.sr)||'<span class="muted">—</span>'}</td>
     <td style="font-size:11px">${esc(d.cr)}</td>
-    <td>${d.rect&&d.ver?'<span class="muted">Closed</span>'
+    <td style="font-size:11.5px">${d.rect?'salsup2':'<span class="muted">—</span>'}</td>
+    <td style="font-size:11.5px">${d.ver?'pensoyao':'<span class="muted">—</span>'}</td>
+    <td class="mono" style="font-size:11px">${esc(d.cd)}</td>
+    <td class="mono" style="font-size:11px">${d.rect?esc(d.rd||'09-07-2026 14:18:01'):'<span class="muted">—</span>'}</td>
+    <td class="mono" style="font-size:11px">${d.ver?esc(d.vd||'09-07-2026 16:41:06'):'<span class="muted">—</span>'}</td>
+    <td class="act-col">${defAction(d,bound)}</td></tr>`;}).join('')}
+  </tbody></table></div>
+  <div class="scrollnote">Scroll sideways for the rectification and verification
+    columns — the action stays pinned on the right.</div>`;
+}
+/* The one column that differs by desk. CRA closes the defect; Sales answers it,
+   and the only answer is a document - so the action is the way into the File
+   Center, scoped to this defect, rather than a status Sales could set alone. */
+function defAction(d,bound){
+  if(isSales()){
+    if(d.rect&&d.ver) return '<span class="muted">Closed</span>';
+    if(d.rect) return '<span class="muted">Sent to CRA</span>';
+    return `<button class="btn btn-sm btn-pri" data-updoc="${d.no}">
+      ${bound?'Replace Document':'Upload Document'}</button>`;
+  }
+  return `${bound?`<button class="btn btn-sm" data-viewdoc="${d.no}">View Docs</button>`:''}
+    ${d.rect&&d.ver?'<span class="muted">Closed</span>'
       :d.rect?`<button class="btn btn-sm" data-ver="${d.no}">Verify</button>`
-      :`<button class="btn btn-sm" data-rect="${d.no}">Rectify</button>`}</td></tr>`;}).join('')}
-  </tbody></table></div>`;
+      :`<button class="btn btn-sm" data-rect="${d.no}">Rectify</button>`}`;
 }
 
 function chkBody(){
@@ -838,7 +904,7 @@ function dmBody(grp){
 
 function renderMain(){
   let h='';
-  NAV.forEach(([g,items])=>{
+  NAVFOR().forEach(([g,items])=>{
     h+=`<div class="seclabel">${g}</div>`;
     items.forEach(([k,nm])=>{
       if(k==='vsum'){
@@ -864,7 +930,11 @@ function renderMain(){
 }
 
 function renderSide(){
-  let h=`<div class="sc"><div class="sh"><span>LOU Renewal</span><span class="cnt">16</span></div>`;
+  let h='';
+  // The case flags and the STP indicators are CRA's to set. Sales sees the case,
+  // not the levers on it.
+  if(!isSales()){
+  h+=`<div class="sc"><div class="sh"><span>LOU Renewal</span><span class="cnt">16</span></div>`;
   FLAGS.forEach((f,i)=>{h+=`<label class="fl ${f.on?'on':''}" data-flag="${i}"><span class="bx">${f.on?'✓':''}</span><span>${f.k}</span></label>`;});
   h+=`<div class="sdiv"></div>
     <div class="yn"><span>Customer Deleted</span><span class="ynseg">
@@ -875,9 +945,11 @@ function renderSide(){
       <button data-yn="fullMt|No" aria-pressed="${S.fullMt==='No'}">No</button></span></div>
     <div class="yn"><span>CRA Remark</span><span class="btn btn-txt">Edit</span></div>
     <div class="muted">—</div></div>`;
-  h+=`<div class="sc">
+  }
+  h+=`<div class="sc"><div class="sh"><span>Application Summary</span></div>
     ${[['App. Ref. No.','BKI/HP/2026/Y0063327'],['Product Code','FINP'],
-       ['Status','Pending Checking and Maintenance'],['Applicant Name','TAN WEI MING'],
+       ['Status',isSales()?'Defect Pending Rectification':'Pending Checking and Maintenance'],
+       ['Applicant Name','TAN WEI MING'],
        ['Guarantor',S.noGtee?'—':'LIM AH KOW'],['Case Age',AGE_DAYS+' days']]
       .map(([k,v])=>`<div class="kv"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('')}
     <div style="text-align:center;color:var(--ink-4);margin-top:8px">⌄</div></div>`;
@@ -885,6 +957,18 @@ function renderSide(){
 }
 
 function renderFoot(){
+  /* Sales has one thing to do here and one way to be done with it: answer every
+     defect with a document, then hand the case back. No rule counters, no gates -
+     those belong to the desk that raised them. */
+  if(isSales()){
+    const left=DEFECTS.filter(d=>!d.rect).length;
+    $('foot').innerHTML=`<span class="fn">${left?`${left} defect(s) still to answer`
+        :'Every defect answered — hand it back for verification'}</span>
+      <span class="r"><button class="btn">Save</button><button class="btn">Exit Application</button>
+        <button class="btn btn-pri" data-act="tocra" ${left?'disabled':''}
+          title="${left?'Answer every defect first':'Return the case to CRA'}">Return To CRA</button></span>`;
+    return;
+  }
   const ok=canNext(),left=[];
   if(fMissing().length) left.push(`${fMissing().length} required field(s) empty`);
   if(ckMandOn()<ckMand().length) left.push(`${ckMand().length-ckMandOn()} mandatory doc(s) unchecked`);
@@ -1176,7 +1260,10 @@ document.addEventListener('click',e=>{
   if(t.dataset.go){const k=t.dataset.go;S.nav=k;S.open[k]=1;render();
     const el=$('m-'+k); if(el)el.scrollIntoView({block:'start'}); return;}
   if(t.dataset.tog){const k=t.dataset.tog;S.open[k]=!S.open[k];S.nav=k;render();return;}
-  if(t.dataset.link==='fc'){toast('Opening File Center');return;}
+  if(t.dataset.link==='fc'){
+    if(window.parent!==window) parent.postMessage({fcOpen:{view:isSales()?'sales':'cra'}},'*');
+    else toast('Opening File Center');
+    return;}
   if(t.dataset.act==='expand'){S.expand=!S.expand;render();return;}
   if(t.dataset.flag!==undefined){FLAGS[+t.dataset.flag].on=FLAGS[+t.dataset.flag].on?0:1;renderSide();renderFoot();return;}
   if(t.dataset.yn){const[k,v]=t.dataset.yn.split('|');S[k]=v;renderSide();return;}
@@ -1200,6 +1287,24 @@ document.addEventListener('click',e=>{
     toast(r.changed?`${r.added} created, ${r.updated} updated, ${r.removed} removed · User-source defects untouched`
                    :'System defects already aligned');return;}
   if(t.dataset.act==='adddef'){openAdd();return;}
+  if(t.dataset.desk){setDesk(t.dataset.desk);return;}
+  /* Sales answering a defect, and CRA looking at what came back, are the same
+     journey into the File Center - the difference is only what it opens onto,
+     so both hand the destination to the host rather than deciding it here. */
+  if(t.dataset.updoc||t.dataset.viewdoc){
+    const no=t.dataset.updoc||t.dataset.viewdoc, d=DEFECTS.find(x=>x.no===no);
+    const msg={fcOpen:{view:isSales()?'sales':'cra',defect:no,
+      file:d?d.file:'',types:d?(d.types||[]):[],cat:d?d.cat:'',cr:d?d.cr:''}};
+    if(window.parent!==window){ parent.postMessage(msg,'*'); }
+    else toast('Opens the File Center'+(d&&d.file!=='—'?' at '+d.file:''));
+    return;
+  }
+  if(t.dataset.act==='tocra'){
+    DEFECTS.forEach(d=>{if(d.rect&&!d.ver)d.sr=d.sr||'Replacement uploaded';});
+    toast('Case returned to CRA · they verify and close the defects');
+    if(window.parent!==window) parent.postMessage({handBack:1},'*');
+    return;
+  }
   if(t.dataset.aty){const v=t.dataset.aty,i=S.addDef.types.indexOf(v);
     i>-1?S.addDef.types.splice(i,1):S.addDef.types.push(v);
     S.addDef.sr=$('aSr').value;S.addDef.cr=$('aCr').value;S.addDef.cat=$('aCat').value;
@@ -1234,6 +1339,36 @@ document.addEventListener('click',e=>{
   if(t.dataset.act==='mx'){closeM();renderFoot();return;}
 });
 
+/* Which desk you are at should be legible without reading the buttons, so the
+   chrome says it: the operator, the to-do list, and whether the OCR write-back
+   control is even offered. */
+function applyDesk(){
+  const sales=isSales();
+  document.body.dataset.desk=S.who;
+  const t1=$('tb1'); if(t1) t1.textContent=sales?'Sales To Do List':'CRA To Do List';
+  const w=$('whoNm'); if(w) w.textContent=sales?'salsup2':'crediosadmin';
+  const sy=$('syncBtn'); if(sy) sy.style.display=sales?'none':'';
+  const wy=document.querySelector('.demo .why');
+  if(wy) wy.textContent=sales?'Sales Workbench Prototype':'CRA Workbench Prototype';
+  const hide=(el,yes)=>{ if(!el)return; el.style.display=yes?'none':'';
+    const lb=el.previousElementSibling;
+    if(lb&&lb.tagName==='SPAN'&&!lb.className) lb.style.display=yes?'none':''; };
+  hide($('scnSeg'),sales); hide($('swSeg'),sales);
+  /* Round is a shortcut past the loop. Inside the combined build the loop is real -
+     Sales replaces a document and the rerun arrives here on its own - so the
+     shortcut would be a second, contradictory source of the same state. */
+  hide($('rdSeg'),sales||window.parent!==window);
+}
+function setDesk(w){
+  if(w===S.who)return;
+  S.who=w; S.open.def=1; closeM();
+  // Coming back to CRA after a replacement, the thing worth reading is what moved,
+  // so land on the rule detail rather than making them go and open it.
+  if(w==='sales'){ S.nav='def'; }
+  else { S.nav=S.round===2?'vsum':'def'; S.open.vsum=1; if(S.round===2) S.expand=1; }
+  render();
+}
+
 function initChrome(){
   $('brand').innerHTML=I('diamond');
   $('syncIc').innerHTML=I('sync');
@@ -1246,6 +1381,21 @@ function initChrome(){
    One ledger seen from two screens - so when the two prototypes run side by side,
    what the File Center registers arrives here rather than being registered twice.
    Standalone, nothing ever fires this. */
+// The host owns which desk is on screen, since one document serves both.
+window.addEventListener('message',e=>{
+  const d=e.data||{};
+  if(d.setDesk) setDesk(d.setDesk);
+  /* Sales replaced a document in the File Center and the Case was rerun. The
+     workbench does not re-derive that - it is told, and then shows what moved. */
+  if(d.revalidated){
+    applyRound2([d.revalidated.file]);
+    failFiles().forEach(fn=>{ mkDefect(fn,'System')||updDefect(fn); });
+    const v=autoVerify();
+    S.expand=1;S.open.vsum=1;S.open.def=1;render();
+    toast(`${d.revalidated.file} came back · all ${rTotal()} rules rerun · `+
+      `${RULES.filter(r=>r.chg).length} moved${v?` · ${v} defect(s) auto-verified`:''}`);
+  }
+});
 document.addEventListener('defect:import',e=>{
   const p=e.detail||{}; if(!p.no) return;
   let d=DEFECTS.find(x=>x.no===String(p.no))||defForFile(p.file);
@@ -1279,15 +1429,17 @@ initChrome(); reset('manual'); render();
     var nav = document.createElement('span');
     nav.className = 'xnav';
     nav.innerHTML =
-      '<button data-xnav="wb"' + (HERE === 'wb' ? ' aria-current="true"' : '') + '>CRA Workbench</button>' +
-      '<button data-xnav="fc"' + (HERE === 'fc' ? ' aria-current="true"' : '') + '>Document Center</button>';
+      '<button data-xnav="cra">CRA Workbench</button>' +
+      '<button data-xnav="sales">Sales Workbench</button>' +
+      '<button data-xnav="fc">File Center</button>';
     var why = bar.querySelector('.why');
     if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
   }
-  if (why0()) why0().textContent = 'Prototype build ' + '2026-09-04';
+  if (why0()) why0().textContent = 'Prototype build ' + '2026-09-05';
   function why0(){ return bar && bar.querySelector('.why'); }
 
-  function go(to){ if (to !== HERE) parent.postMessage({ nav: to }, '*'); }
+  function go(to){ parent.postMessage({ nav: to }, '*'); }
+
 
   /* The two screens share one defect ledger: it is raised in the File Center, in
      front of the document, and read in the Workbench. Isolation keeps the styles
@@ -1296,6 +1448,11 @@ initChrome(); reset('manual'); render();
   document.addEventListener('defect:raised', function(e){
     parent.postMessage({ defect: e.detail }, '*');
   });
+  document.addEventListener('case:revalidated', function(e){
+    parent.postMessage({ revalidated: e.detail }, '*');
+  });
+  // marks which prototype this frame is, so the host can address it
+  parent.postMessage({ hello: HERE }, '*');
   window.addEventListener('message', function(e){
     var d = e.data && e.data.defect;
     if (d) document.dispatchEvent(new CustomEvent('defect:import', { detail: d }));
@@ -1306,9 +1463,16 @@ initChrome(); reset('manual'); render();
   document.addEventListener('click', function(e){
     var x = e.target.closest('[data-xnav]');
     if (x) { e.preventDefault(); e.stopPropagation(); go(x.dataset.xnav); return; }
-    var t = e.target.closest('[data-link="fc"]');
+    var t = e.target.closest('[data-shim-none]');
     if (t) { e.preventDefault(); e.stopPropagation(); go('fc'); }
   }, true);
+  window.addEventListener('message', function(e){
+    if (e.data && e.data.here) {
+      var b = nav && nav.querySelectorAll('[data-xnav]');
+      if (b) for (var i=0;i<b.length;i++)
+        b[i].setAttribute('aria-current', b[i].dataset.xnav === e.data.here ? 'true' : 'false');
+    }
+  });
 }());
 <\/script>
 </body></html></script>
@@ -1647,6 +1811,21 @@ button:disabled{cursor:not-allowed}
 .lockrow .lk{color:var(--text-2);flex:none;width:66px}
 .lockrow select{width:220px}
 .lockrow .lkn{color:var(--text-3);font-size:11px}
+/* Picking what the re-check finds belongs next to the upload it describes, not in
+   a global switch that silently changes what the next click does. */
+.ocpick{margin-top:14px;padding:11px 12px;border:1px dashed var(--border);
+  border-radius:var(--r);background:var(--fill-q)}
+.ocp-h{font-size:11px;font-family:var(--mono);letter-spacing:.06em;color:var(--text-3);
+  text-transform:uppercase}
+.ocp-row{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.ocp{border:1px solid var(--border);border-radius:var(--r-sm);background:#fff;
+  padding:3px 9px;font-size:12px;color:var(--text-2);cursor:pointer}
+.ocp:hover{border-color:var(--primary);color:var(--primary)}
+.ocp.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.ocp-d{font-size:12px;color:var(--text-2);margin-top:8px;line-height:1.55}
+.ocp-n{font-size:11px;color:var(--text-3);margin-top:5px}
+.demo .ctx{font-size:12px;color:#fff;background:rgba(255,255,255,.14);
+  border-radius:var(--r-sm);padding:2px 10px}
 .field-row{display:flex;justify-content:space-between;gap:10px;padding:7px 8px;border-bottom:1px solid var(--border-2);font-size:12px}
 .field-row:last-child{border-bottom:0}
 .field-row .k{color:var(--text-2)}
@@ -1701,18 +1880,11 @@ button:disabled{cursor:not-allowed}
 
 <div class="demo">
   <span class="lb">Demo</span>
-  <span class="seg" id="roleSeg">
-    <button data-role="sales">Sales</button><button data-role="cra">CRA</button>
-  </span>
-  <span>Case</span>
-  <span class="seg" id="csSeg">
-    <button data-cs="draft">Sales Drafting</button><button data-cs="review">CRA Review</button
-    ><button data-cs="returned">Returned</button><button data-cs="recheck">CRA Re-check</button>
-  </span>
-  <span>Replacement result</span>
-  <span class="seg" id="ocSeg">
-    <button data-oc="a" title="Rule still not solved">a</button><button data-oc="b" title="Rule solved"
-    >b</button><button data-oc="c" title="Solved, new rule hit">c</button><button data-oc="d" title="Partly solved, new rule hit">d</button>
+  <span class="ctx" id="viewCtx"></span>
+  <span class="seg" id="viewSeg" hidden>
+    <button data-view="cra">CRA review</button
+    ><button data-view="draft">Sales · new upload</button
+    ><button data-view="sales">Sales · fixing a defect</button>
   </span>
   <span class="hint" id="permHint"></span>
   <span class="why">Demo toolbar · not part of the product</span>
@@ -2003,8 +2175,11 @@ const CATS=s=>ZONES[s].map(z=>z[0]).concat(['Other Documents']);
 const S={role:'cra',cs:'review',stage:'dis',tab:'fl',subj:'all',sel:new Set(),dt:null,
   fType:'',fStatus:'',railCollapsed:false,reval:0,
   // oc picks which of the four agreed round-2 outcomes a replacement produces.
-  // In production the rules decide; here it is a demo switch so all four can be seen.
-  oc:'b',xhit:null};
+  // In production the rules decide; here it is picked in the upload dialog itself,
+  // where it reads as "what came back" rather than as a global mode.
+  oc:'b',xhit:null,
+  // set when Sales walks in from a defect row: this screen is about that one file
+  focus:null};
 // vehicle category is folded into the main applicant
 Object.values(DATA).forEach(a=>a.forEach(f=>{if(f.sj==='vehicle'||f.sj==='case')f.sj='primary';}));
 
@@ -2083,6 +2258,27 @@ function scopedFor(subj){
   const ids=scopedIds();
   return DATA.dis.filter(f=>ids.has(f.id)&&(subj==null||f.sj===subj));
 }
+const curFocusName=()=>{const d=DEFECTS.find(x=>x.no===S.focus); const f=d&&defFile(d);
+  return f?f.nm:(d?'no document yet':'—');};
+/* The host calls this when a desk opens the File Center. CRA arrives at the whole
+   case; Sales arrives at one defect, and the screen narrows to it. Nothing about
+   the view is chosen here - it is inherited from where the click came from. */
+function setView(view,def){
+  if(view==='draft'){
+    // before submission the case is still Sales's own; nothing is scoped yet
+    S.role='sales'; S.cs='draft'; S.focus=null; S.tab='fl'; S.subj='primary';
+  }else if(view==='sales'){
+    S.role='sales'; S.cs='returned'; S.focus=def&&def.defect||null;
+    S.tab='df'; S.subj='all';
+  }else{
+    S.role='cra'; S.focus=null;
+    S.cs=DEFECTS.some(d=>d.st==='responded')?'recheck':'review';
+    S.tab='fl'; S.subj='all';
+  }
+  S.sel.clear(); S.dt=null; $('detail').classList.add('hidden'); smClose(); render();
+  // Sales came in to answer one defect, so open that document straight away.
+  if(view==='sales'&&S.focus&&DEFECTS.some(d=>d.no===S.focus&&d.st==='open')) askReplace(S.focus);
+}
 const all=()=>DATA[S.stage];
 const live=()=>all().filter(f=>!f.del);
 const byId=i=>all().find(f=>f.id===i);
@@ -2129,10 +2325,17 @@ const $=i=>document.getElementById(i);
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function render(){
-  [...$('roleSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.role===S.role));
-  [...$('csSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.cs===S.cs));
-  [...$('ocSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.oc===S.oc));
-  $('permHint').textContent=P().l+' · Replacement result '+(OUTCOMES[S.oc]||{}).nm;
+  /* Which view you are in is decided by the door you came through - the CRA
+     workbench or a defect on the Sales one - not by a switch up here. Two desks
+     with two jobs; showing both sets of controls at once is what made the state
+     hard to read. */
+  $('viewCtx').textContent=S.focus
+    ? `Sales · answering defect #${S.focus} — ${curFocusName()}`
+    : S.cs==='draft' ? 'Sales · uploading before submission'
+    : (S.role==='sales'?'Sales · returned case':'CRA · reviewing the case');
+  const door=S.cs==='draft'?'draft':(S.role==='sales'?'sales':'cra');
+  [...$('viewSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===door));
+  $('permHint').textContent=P().l;
   [...$('stageTabs').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.stage===S.stage));
   renderRail(); renderUpload(); renderTabs(); renderFilter(); renderTable(); renderFooter();
 }
@@ -2240,8 +2443,14 @@ function renderTabs(){
 
 function renderFilter(){
   if(S.tab==='df'){
-    $('filterBar').innerHTML=`<span class="foot-note">Sent back by CRA. Replacing a document re-runs
-      every rule in the Case, not just this one \u2014 CRA then verifies and closes it in the Workbench.</span>`;
+    /* Walking in from one defect narrows the list to it. Saying so - and offering
+       the way back out - is what keeps a short list from reading like a wrong one. */
+    $('filterBar').innerHTML=S.focus
+      ? `<span class="foot-note"><b>Showing defect #${esc(S.focus)} only</b> \u2014 you opened it from the
+           Sales workbench. Replacing a document re-runs every rule in the Case, not just this one.</span>
+         <span class="filter-actions"><button class="ant-btn" data-allfiles="1">Show all ${myDefects().length} defects</button></span>`
+      : `<span class="foot-note">Sent back by CRA. Replacing a document re-runs
+           every rule in the Case, not just this one \u2014 CRA then verifies and closes it in the Workbench.</span>`;
     return;
   }
   if(S.subj==='deleted'){ $('filterBar').innerHTML=`<span class="foot-note">Deleted files are kept as records only. They cannot be previewed or restored.</span>`; return; }
@@ -2282,7 +2491,7 @@ function statusCell(f){
    rectified/verified. What reaches Sales is only the part Sales can act on:
    which document, what is wrong with it, and a way to send a new one. */
 function renderDefects(){
-  const D=myDefects();
+  const D=S.focus?myDefects().filter(d=>d.no===S.focus):myDefects();
   $('emptyState').textContent='Nothing to fix. The case is with CRA.';
   $('emptyState').style.display=D.length?'none':'block';
   $('thead').innerHTML=`<tr><th style="width:56px">Ref</th><th style="width:250px">Document</th>
@@ -2707,6 +2916,11 @@ function replaceDoc(no){
       d.cr+=` | Cross-document: ${XRULE.id} moved on ${S.xhit.on} because this file changed`;
     }
     render();
+    /* The rerun happened in front of this document, but its consequences are read
+       on the workbench. Telling it which file came back is what turns the demo
+       into one loop instead of two screens that each claim a different round. */
+    document.dispatchEvent(new CustomEvent('case:revalidated',{detail:{
+      file:f.nm,defect:d.no,outcome:oc,cross:S.xhit?S.xhit.on:''}}));
     msg(`All rules re-run across the Case \u00b7 ${f.nm} v${f.ver}`+
         (S.xhit?` \u00b7 ${XRULE.id} also moved on ${S.xhit.on}`:''));
   },1600);
@@ -2715,8 +2929,9 @@ function replaceDoc(no){
 }
 /* Sales enters through the defect and sees a narrowed world: this document, this
    file type, nothing else. The type is not a choice - it is what the defect names. */
-function askReplace(no){
-  const d=DEFECTS.find(x=>x.no===no), f=d&&defFile(d); if(!f) return;
+function askReplace(no){ S.repl=no; drawReplace(); }
+function drawReplace(){
+  const d=DEFECTS.find(x=>x.no===S.repl), f=d&&defFile(d); if(!f) return;
   sm('Replace Document',
     `<div class="pnote info">Defect <b>#${esc(d.no)}</b> \u00b7 ${esc(defTypes(d))}<br>${esc(d.cr)}</div>
      <div class="lockrow"><span class="lk">File Type</span>
@@ -2739,7 +2954,15 @@ function askReplace(no){
      </div>
      <div class="description-text" style="margin-top:8px">
        If AI reads a different document type than <b>${esc(f.ty)}</b>, it returns
-       <b>others</b> and extracts nothing \u2014 swap the file rather than expecting a fix.</div>`,
+       <b>others</b> and extracts nothing \u2014 swap the file rather than expecting a fix.</div>
+     <div class="ocpick">
+       <span class="ocp-h">Simulated result of the re-check</span>
+       <div class="ocp-row">${['a','b','c','d'].map(k=>
+         `<button class="ocp ${S.oc===k?'on':''}" data-ocpick="${k}">${esc(OUTCOMES[k].nm)}</button>`).join('')}</div>
+       <div class="ocp-d">${esc(OUTCOMES[S.oc].d)}</div>
+       <div class="ocp-n">In production the rules decide this. It sits here so all four
+         agreed outcomes can be walked through.</div>
+     </div>`,
     `<button class="ant-btn" data-cl="1">Cancel</button>
      <button class="ant-btn" data-wrongf="${esc(d.no)}">Simulate Wrong File</button>
      <button class="ant-btn ant-btn-primary" data-dorepl="${esc(d.no)}">Simulate Upload</button>`);
@@ -2860,10 +3083,10 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('button,input[type=checkbox],[data-dty]'); if(!t) return;
 
   if(t.dataset.railtoggle){S.railCollapsed=!S.railCollapsed;render();return;}
-  if(t.dataset.role){S.role=t.dataset.role;S.sel.clear();render();if(S.dt)renderDt();return;}
-  if(t.dataset.cs){S.cs=t.dataset.cs;S.sel.clear();render();if(S.dt)renderDt();return;}
-  if(t.dataset.oc){S.oc=t.dataset.oc;render();
-    msg(`Replacement result set to ${OUTCOMES[S.oc].nm} — ${OUTCOMES[S.oc].d}`);return;}
+  if(t.dataset.view){setView(t.dataset.view);return;}
+  if(t.dataset.ocpick){S.oc=t.dataset.ocpick;drawReplace();return;}
+  if(t.dataset.allfiles){S.focus=null;S.tab='fl';render();
+    msg('Showing every document on the case');return;}
   if(t.dataset.repl){askReplace(t.dataset.repl);return;}
   if(t.dataset.dorepl){replaceDoc(t.dataset.dorepl);return;}
   if(t.dataset.wrongf){wrongFile(t.dataset.wrongf);return;}
@@ -3008,6 +3231,13 @@ document.addEventListener('keydown',e=>{
 });
 
 $('mClose').innerHTML=I('close');
+/* Standalone the file can still be driven by hand; inside the combined build the
+   host owns the view, so the switch stays out of the way. */
+if(window.parent===window) $('viewSeg').hidden=false;
+window.addEventListener('message',e=>{
+  const d=e.data||{};
+  if(d.fcView) setView(d.fcView.view,d.fcView);
+});
 render();
 })();
 <\/script>
@@ -3024,15 +3254,17 @@ render();
     var nav = document.createElement('span');
     nav.className = 'xnav';
     nav.innerHTML =
-      '<button data-xnav="wb"' + (HERE === 'wb' ? ' aria-current="true"' : '') + '>CRA Workbench</button>' +
-      '<button data-xnav="fc"' + (HERE === 'fc' ? ' aria-current="true"' : '') + '>Document Center</button>';
+      '<button data-xnav="cra">CRA Workbench</button>' +
+      '<button data-xnav="sales">Sales Workbench</button>' +
+      '<button data-xnav="fc">File Center</button>';
     var why = bar.querySelector('.why');
     if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
   }
-  if (why0()) why0().textContent = 'Prototype build ' + '2026-09-04';
+  if (why0()) why0().textContent = 'Prototype build ' + '2026-09-05';
   function why0(){ return bar && bar.querySelector('.why'); }
 
-  function go(to){ if (to !== HERE) parent.postMessage({ nav: to }, '*'); }
+  function go(to){ parent.postMessage({ nav: to }, '*'); }
+
 
   /* The two screens share one defect ledger: it is raised in the File Center, in
      front of the document, and read in the Workbench. Isolation keeps the styles
@@ -3041,6 +3273,11 @@ render();
   document.addEventListener('defect:raised', function(e){
     parent.postMessage({ defect: e.detail }, '*');
   });
+  document.addEventListener('case:revalidated', function(e){
+    parent.postMessage({ revalidated: e.detail }, '*');
+  });
+  // marks which prototype this frame is, so the host can address it
+  parent.postMessage({ hello: HERE }, '*');
   window.addEventListener('message', function(e){
     var d = e.data && e.data.defect;
     if (d) document.dispatchEvent(new CustomEvent('defect:import', { detail: d }));
@@ -3052,8 +3289,15 @@ render();
     var x = e.target.closest('[data-xnav]');
     if (x) { e.preventDefault(); e.stopPropagation(); go(x.dataset.xnav); return; }
     var t = e.target.closest('#mClose, .file-list-footer-actions .back-btn');
-    if (t) { e.preventDefault(); e.stopPropagation(); go('wb'); }
+    if (t) { e.preventDefault(); e.stopPropagation(); go('back'); }
   }, true);
+  window.addEventListener('message', function(e){
+    if (e.data && e.data.here) {
+      var b = nav && nav.querySelectorAll('[data-xnav]');
+      if (b) for (var i=0;i<b.length;i++)
+        b[i].setAttribute('aria-current', b[i].dataset.xnav === e.data.here ? 'true' : 'false');
+    }
+  });
 }());
 <\/script>
 </body></html></script>
@@ -3061,43 +3305,76 @@ render();
 <script>
 (function(){
   "use strict";
+  /* Three entries, two documents. CRA and Sales are the same workbench seen from
+     two desks - the whole point of the defect list is that both read one ledger -
+     so they share a frame and the host tells it which desk is on screen. */
   var frames = { wb: document.getElementById('fr-wb'), fc: document.getElementById('fr-fc') };
   var loaded = {};
+  var DEST = { cra: 'wb', sales: 'wb', fc: 'fc' };
+  var here = 'cra';        // which entry is on screen
+  var desk = 'cra';        // which desk the workbench is showing
+  var cameFrom = 'cra';    // the desk that opened the File Center
 
   function source(k){
     // undo the closing-tag escaping applied at build time
     return document.getElementById('src-' + k).textContent.replace(/<\\\/script>/g, '<\/script>');
   }
 
-  function show(k){
-    if (!loaded[k]) { frames[k].srcdoc = source(k); loaded[k] = 1; }
-    Object.keys(frames).forEach(function(n){ frames[n].hidden = (n !== k); });
-    try { history.replaceState(null, '', '#' + k); } catch (e) {}
-    var f = frames[k];
-    // focus the visible frame so keyboard shortcuts land in the right document
-    setTimeout(function(){ try { f.contentWindow.focus(); } catch (e) {} }, 0);
+  /* loaded means the source has been handed to the frame; ready means the frame
+     has parsed it and wired its listeners. Posting between the two is silent data
+     loss - the message reaches a document that is about to be replaced. */
+  var ready = {};
+  function post(k, msg){
+    if (!ready[k]) return false;
+    try { frames[k].contentWindow.postMessage(msg, '*'); return true; } catch (e) { return false; }
   }
 
-  /* Defects raised in the File Center are relayed to the Workbench. The Workbench
-     frame may not be loaded yet - the host boots whichever screen the URL asks for -
-     so anything raised before it exists is held and replayed once it is. */
-  var pending = [];
-  function relayDefect(d){
-    if (!loaded.wb) { pending.push(d); return; }
-    try { frames.wb.contentWindow.postMessage({ defect: d }, '*'); } catch (e) {}
+  function show(dest){
+    var k = DEST[dest]; if (!k) return;
+    if (!loaded[k]) { frames[k].srcdoc = source(k); loaded[k] = 1; }
+    Object.keys(frames).forEach(function(n){ frames[n].hidden = (n !== k); });
+    here = dest;
+    try { history.replaceState(null, '', '#' + dest); } catch (e) {}
+    if (k === 'wb' && dest !== desk) { desk = dest; post('wb', { setDesk: desk }); }
+    post('wb', { here: here }); post('fc', { here: here });
+    setTimeout(function(){ try { frames[k].contentWindow.focus(); } catch (e) {} }, 0);
   }
-  window.addEventListener('message', function(e){
-    var to = e.data && e.data.nav;
-    if (to === 'wb' || to === 'fc') show(to);
-    if (e.data && e.data.defect) relayDefect(e.data.defect);
+
+  /* Anything raised in one document that the other has to know about is relayed
+     here. A frame may not exist yet - the host boots whichever entry the URL asks
+     for - so messages for a sleeping frame are held and replayed on load. */
+  var pending = { wb: [], fc: [] };
+  function relay(k, msg){ if (!post(k, msg)) pending[k].push(msg); }
+  Object.keys(frames).forEach(function(k){
+    frames[k].addEventListener('load', function(){
+      // one tick, so the document has finished wiring its own listeners
+      setTimeout(function(){
+        ready[k] = 1;
+        if (k === 'wb' && desk !== 'cra') post('wb', { setDesk: desk });
+        post(k, { here: here });
+        pending[k].splice(0).forEach(function(m){ post(k, m); });
+      }, 0);
+    });
   });
-  frames.wb.addEventListener('load', function(){
-    // one tick, so the workbench has finished wiring its own listeners
-    setTimeout(function(){ pending.splice(0).forEach(relayDefect); }, 0);
+
+  window.addEventListener('message', function(e){
+    var d = e.data || {};
+    if (d.nav === 'back') { show(cameFrom); return; }
+    if (DEST[d.nav]) { show(d.nav); return; }
+    if (d.defect) { relay('wb', { defect: d.defect }); return; }
+    if (d.revalidated) { relay('wb', { revalidated: d.revalidated }); return; }
+    /* A desk opened the File Center on a defect. Remember the door so Back returns
+       through it, and hand the view across rather than letting the File Center
+       guess who is looking. */
+    if (d.fcOpen) {
+      cameFrom = d.fcOpen.view === 'sales' ? 'sales' : 'cra';
+      show('fc'); relay('fc', { fcView: d.fcOpen }); return;
+    }
+    if (d.handBack) { desk = 'x'; show('cra'); return; }
   });
 
   var start = (location.hash || '').replace('#', '');
-  show(start === 'fc' ? 'fc' : 'wb');
+  show(DEST[start] ? start : 'cra');
   frames.wb.addEventListener('load', function(){
     var b = document.getElementById('boot'); if (b) b.remove();
   });
