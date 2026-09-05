@@ -285,6 +285,8 @@ button:disabled{cursor:not-allowed}
 .routed{font-size:10px;font-family:var(--mono);color:var(--text-3);
   border:1px solid var(--border);border-radius:2px;padding:0 4px;margin-left:6px}
 .mc-seg{margin-left:auto;font-size:11px;color:var(--text-3)}
+.mc-grp .mc-sp{flex:1}
+.mc-grp .mc-def{flex:none;height:22px;padding:0 8px;font-size:11.5px}
 .mc-doc{width:100%;max-width:720px;margin:0 auto 22px}
 .mc-doc-h{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--text-2);
   background:rgba(255,255,255,.75);border:1px solid var(--border-2);border-radius:var(--r-sm);
@@ -1227,7 +1229,14 @@ function panel(f,p){
          <p class="panel-sect ${o?'err':''}">EXPERT RULES \u00b7 ${o?o+' pending':'all reviewed'}</p>`;
     MCF(f).forEach(fn=>{
       const cur=fn===f.nm;
-      h+=`<div class="mc-grp ${cur?'cur':''}">${fn}${cur?'<span class="mc-cur">Previewing</span>':''}</div>`;
+      /* The defect hangs on the document, so the way to raise it belongs on the
+         document, not only on a rule inside it. A file with three failing eye checks
+         is still one defect, and CRA can raise it here before working through them. */
+      const gf=live().find(x=>x.nm===fn), gd=gf&&defForFile(gf.id);
+      h+=`<div class="mc-grp ${cur?'cur':''}">${fn}<span class="mc-sp"></span>
+        ${cur?'<span class="mc-cur">Previewing</span>':''}
+        ${gf&&p.rule?`<button class="ant-btn ant-btn-sm ${gd?'':'ant-btn-primary'} mc-def"
+          data-mkdef="${esc(gf.id)}">${gd?`Update Defect #${esc(gd.no)}`:'Create Defect'}</button>`:''}</div>`;
       mcRules(f).filter(r=>r.file===fn).forEach(r=>{
         const res=MC.res[r.id], d=defForFile(f.id);
         h+=`<div class="alert-item ${res==='fail'?'machine':(res?'resolved':'eyeball')}">
@@ -1270,12 +1279,10 @@ function panel(f,p){
         :a.k==='e'
           ?`<div class="acts"><button class="ant-btn ant-btn-sm" data-al="pass" data-i="${i}" ${p.rule?'':'disabled'}>Pass</button>
             <button class="ant-btn ant-btn-sm ant-btn-dangerous" data-al="fail" data-i="${i}" ${p.rule?'':'disabled'}>Fail</button>
-            ${a.q?'':defBtn(f,i,p)}
-            <button class="ant-btn ant-btn-link ant-btn-sm" data-al="loc" data-i="${i}">Check image \u2192</button></div>`
+            ${a.q?'':defBtn(f,i,p)}</div>`
           :`<div class="acts">${a.q?'':defBtn(f,i,p)}
             <button class="ant-btn ant-btn-sm" data-al="just" data-i="${i}" ${p.rule?'':'disabled'}>Justification</button>
-            <button class="ant-btn ant-btn-sm" data-al="repl" data-i="${i}" ${p.rule?'':'disabled'}>Replace Document</button>
-            <button class="ant-btn ant-btn-link ant-btn-sm" data-al="loc" data-i="${i}">Check image \u2192</button></div>`;
+            <button class="ant-btn ant-btn-sm" data-al="repl" data-i="${i}" ${p.rule?'':'disabled'}>Replace Document</button></div>`;
       h+=`</div>`;
     });
     });
@@ -1414,7 +1421,7 @@ function saveDef(){
   }else{
     no=String(++DSEQ);
     DEFECTS.push({no,fid:DD.fid,cat,rules:DD.rules.slice(),types:DD.types.slice(),
-      cr:cr||f.nm,src:'System',st:'open',hist:[]});
+      cr:cr||f.nm,src:DD.rules.length?'System':'User',st:'open',hist:[]});
   }
   // The alert is marked as evidenced, never as resolved.
   if(DD.man) MC.rules.forEach(r=>{if(DD.rules.includes(r.id))r.def=no;});
@@ -1838,7 +1845,6 @@ document.addEventListener('click',e=>{
   }
   if(t.dataset.al){
     const f=byId(S.dt),a=f.alerts[+t.dataset.i],k=t.dataset.al;
-    if(k==='loc'){msg('Image scrolled to the location defined by this rule');return;}
     a.res={pass:'Passed',fail:'Failed \u00b7 returned to Sales',just:'Justification recorded',repl:'Replace Document requested'}[k]+' \u00b7 '+roleNm();
     renderDt();render();return;
   }
