@@ -409,6 +409,12 @@ const R0=[
   issue:'Signed 12-08-2026, 14 days ago, exceeds 5-day limit',dc:'AGR-011',dcat:'AGREEMENT - MASTER',dty:'Hirer and/or Witnessed Wrongly Dated'},
  {id:'EB-SIG-1',nm:'Hirer signature & witness completeness',file:'HP Agreement Signed.pdf',pass:0,
   issue:'Eyeball check required on page 6',dc:'AGR-023',dcat:'AGREEMENT - MASTER',dty:'Signature incomplete / not witnessed'},
+ /* One upload OCR split into two file types. Each split file carries its own rules,
+    so each gets its own defect and each is answered by its own upload. */
+ {id:'N02',nm:'MyKad expiry',file:'Combined Scan_1.pdf',pass:0,
+  issue:'MyKad expired 03-2026',dc:'CUS-004',dcat:'CUSTOMER INFO',dty:'MyKad expired'},
+ {id:'V15',nm:'Road tax validity',file:'Combined Scan_2.pdf',pass:0,
+  issue:'Road tax ran out 12-07-2026',dc:'COL-009',dcat:'COLLATERAL',dty:'Road tax expired'},
  // Surfaces only when the replacement clears A155 - scenario c, a rule the old file never hit.
  {id:'A156',nm:'Hirer name matches the NRIC',file:'HP Agreement.pdf',pass:1,dc:'AGR-014',dcat:'AGREEMENT - MASTER',dty:'Hirer name mismatch'},
  // xfile marks a rule that reads two documents. Replacing either one can flip it,
@@ -525,7 +531,21 @@ function reset(scn){
   DEFECTS=[];S.sync={sel:{}};S.route=null;S.busy=0;S.pullAt='';S.dseq=0;S.expand=0;
   S.round=1;S.replaced=[];S.showAll=0;
   S.noGtee = scn==='stp'?1:0;
+  /* One defect CRA raised by hand, carried from the start: no rule, no document.
+     It is the line that never touches OCR, and Sales answers it by uploading
+     straight into the file list. Sync never touches User-source rows. */
+  seedManual();
   FLAGS.forEach(f=>{f.on=(scn==='manual'&&f.k==='FBR')?1:0;});
+}
+
+/* A defect with no rule and no document behind it. CRA judged it, typed it, and
+   there is nothing for OCR to read against - so Sales answers it by uploading into
+   the file list, and the AI entry is closed on that upload. */
+function seedManual(){
+  DEFECTS.push({no:'9',rules:[],codes:[],cat:'OTHERS',
+    types:['Supporting document missing'],file:'—',noAI:1,
+    sr:'',cr:'CED conditional approval letter is not in the case — upload it to the file list',
+    src:'User',rect:0,ver:0,cd:'30-08-2026 09:02:31',hist:[]});
 }
 
 /* Round 2. Sales replaced the two documents the System defects named; the Case was
@@ -549,6 +569,9 @@ function applyRound2(files){
   set('A156',0,'newfail','Hirer name on the replaced agreement reads TAN WEI MIN, NRIC reads TAN WEI MING');
   set('EB-SIG-1',0,'still','Eyeball check required on page 6 - still outstanding on the replacement');
   set('S52',0,'cross','Balance payable no longer reconciles against the replaced HP Agreement (98,000.00 vs 96,500.00)');
+  // each half of the split scan clears on its own upload, never on the other's
+  set('N02',1,'cleared','');
+  set('V15',1,'cleared','');
   S.round=2; S.pullAt=new Date().toTimeString().slice(0,5);
 }
 // A rule earns a place in the focused view if this round moved it, or if it reads a
@@ -611,6 +634,7 @@ function syncSystemDefects(){
 function mkDefect(fn,src){
   const rs=rFail().filter(r=>defTarget(r)===fn); if(!rs.length||defForFile(fn))return null;
   S.dseq++;
+  while(DEFECTS.some(d=>d.no===String(S.dseq))) S.dseq++;
   DEFECTS.push({no:String(S.dseq),file:fn,
     rules:rs.map(r=>r.id),codes:[...new Set(rs.map(r=>r.dc))],
     cat:rs[0].dcat,types:[...new Set(rs.map(r=>r.dty))],
@@ -1100,6 +1124,7 @@ function doAdd(){
   const cat=$('aCat').value, types=S.addDef.types.slice();
   if(!cat||!types.length){toast('Defect Category and at least one Type are required');return;}
   S.dseq++;
+  while(DEFECTS.some(d=>d.no===String(S.dseq))) S.dseq++;   // the hand-raised seed holds a number
   DEFECTS.push({no:String(S.dseq),rules:[],codes:[],cat,types,file:'—',noAI:1,
     sr:$('aSr').value.trim(),cr:$('aCr').value.trim(),src:'User',
     rect:S.addDef.rect?1:0,ver:S.addDef.ver?1:0,cd:'30-08-2026 09:02:31',hist:[]});
@@ -1392,6 +1417,16 @@ window.addEventListener('message',e=>{
   if(d.setDesk) setDesk(d.setDesk);
   /* Sales replaced a document in the File Center and the Case was rerun. The
      workbench does not re-derive that - it is told, and then shows what moved. */
+  /* A defect with no document behind it was answered by a direct upload. Nothing
+     was revalidated because no rule was ever broken - the document simply arrived,
+     and CRA verifies it by eye. */
+  if(d.uploaded){
+    const x=DEFECTS.find(y=>y.no===String(d.uploaded.defect));
+    if(x){ x.file=d.uploaded.file; x.rect=1; x.ver=0;
+      x.sr=x.sr||'Document uploaded to the file list'; }
+    S.open.def=1; render();
+    toast(`Defect #${d.uploaded.defect} answered · ${d.uploaded.file} uploaded without AI`);
+  }
   if(d.revalidated){
     applyRound2([d.revalidated.file]);
     failFiles().forEach(fn=>{ mkDefect(fn,'System')||updDefect(fn); });

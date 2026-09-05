@@ -100,16 +100,21 @@ to reveal the two rule tabs.
   3. One defect per document. If the document already has one, the button
      says Update Defect: the type set is rewritten from the latest rules,
      the CRA remark is appended to, and the defect number stays.
-  4. The alert stays on the file after the defect is saved. The two answer
+  4. The alerts are split into two groups. Expert rule alerts say whether the
+     case is in order and are the only ones that can become a defect. OCR
+     self-check alerts say how the document scanned — they carry no Create
+     Defect, because a read problem is not something Sales can fix by
+     sending the document again.
+  5. The alert stays on the file after the defect is saved. The two answer
      different questions — is this document readable, and who owes what —
      so clearing one must not clear the other.
-  5. There is no defect list here. Defects are raised in front of the
+  6. There is no defect list here. Defects are raised in front of the
      document and read in the Workbench; one ledger, not two.
-  6. Manual Check Results holds documents OCR cannot read. The rules sit on
+  7. Manual Check Results holds documents OCR cannot read. The rules sit on
      the left, the document on the right; mark each Pass or Fail. Pass All
      concludes the page in one action, and a failing rule offers the same
      Create Defect.
-  7. The bar at the bottom always shows both tracks — for example
+  8. The bar at the bottom always shows both tracks — for example
      "OCR 13/19" and "Manual 0/6" — no matter which tab you are on.
 
 
@@ -146,7 +151,15 @@ Sales Workbench.
      a rule sitting on a file nobody touched. Its defect hangs on the
      replaced document — the one that changed, and the only one Sales can
      act on next round.
-  8. Return To CRA hands the case back once every defect has an answer.
+  8. One upload can carry two file types. OCR splits it into a subfile per
+     type, each subfile carries its own rules, and each becomes its own
+     defect — so it is answered by two uploads, one per row. The file list
+     says which main file each half was split from.
+  9. A defect CRA raised by hand names no document at all. It opens Upload
+     Document instead of Replace: the AI entry is shown but closed, because
+     the defect names no file type for AI to read against. The document
+     lands in the file list, no rule is rerun, and CRA verifies it by eye.
+ 10. Return To CRA hands the case back once every defect has an answer.
 
 
 Path 4 · CRA works the case

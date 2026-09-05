@@ -66,6 +66,9 @@ button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit
   document.addEventListener('case:revalidated', function(e){
     parent.postMessage({ revalidated: e.detail }, '*');
   });
+  document.addEventListener('case:uploaded', function(e){
+    parent.postMessage({ uploaded: e.detail }, '*');
+  });
   // marks which prototype this frame is, so the host can address it
   parent.postMessage({ hello: HERE }, '*');
   window.addEventListener('message', function(e){
@@ -185,6 +188,7 @@ html,body{height:100%%;margin:0;background:#0d1424}
     if (DEST[d.nav]) { show(d.nav); return; }
     if (d.defect) { relay('wb', { defect: d.defect }); return; }
     if (d.revalidated) { relay('wb', { revalidated: d.revalidated }); return; }
+    if (d.uploaded) { relay('wb', { uploaded: d.uploaded }); return; }
     /* A desk opened the File Center on a defect. Remember the door so Back returns
        through it, and hand the view across rather than letting the File Center
        guess who is looking. */

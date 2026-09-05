@@ -438,6 +438,12 @@ const R0=[
   issue:'Signed 12-08-2026, 14 days ago, exceeds 5-day limit',dc:'AGR-011',dcat:'AGREEMENT - MASTER',dty:'Hirer and/or Witnessed Wrongly Dated'},
  {id:'EB-SIG-1',nm:'Hirer signature & witness completeness',file:'HP Agreement Signed.pdf',pass:0,
   issue:'Eyeball check required on page 6',dc:'AGR-023',dcat:'AGREEMENT - MASTER',dty:'Signature incomplete / not witnessed'},
+ /* One upload OCR split into two file types. Each split file carries its own rules,
+    so each gets its own defect and each is answered by its own upload. */
+ {id:'N02',nm:'MyKad expiry',file:'Combined Scan_1.pdf',pass:0,
+  issue:'MyKad expired 03-2026',dc:'CUS-004',dcat:'CUSTOMER INFO',dty:'MyKad expired'},
+ {id:'V15',nm:'Road tax validity',file:'Combined Scan_2.pdf',pass:0,
+  issue:'Road tax ran out 12-07-2026',dc:'COL-009',dcat:'COLLATERAL',dty:'Road tax expired'},
  // Surfaces only when the replacement clears A155 - scenario c, a rule the old file never hit.
  {id:'A156',nm:'Hirer name matches the NRIC',file:'HP Agreement.pdf',pass:1,dc:'AGR-014',dcat:'AGREEMENT - MASTER',dty:'Hirer name mismatch'},
  // xfile marks a rule that reads two documents. Replacing either one can flip it,
@@ -554,7 +560,21 @@ function reset(scn){
   DEFECTS=[];S.sync={sel:{}};S.route=null;S.busy=0;S.pullAt='';S.dseq=0;S.expand=0;
   S.round=1;S.replaced=[];S.showAll=0;
   S.noGtee = scn==='stp'?1:0;
+  /* One defect CRA raised by hand, carried from the start: no rule, no document.
+     It is the line that never touches OCR, and Sales answers it by uploading
+     straight into the file list. Sync never touches User-source rows. */
+  seedManual();
   FLAGS.forEach(f=>{f.on=(scn==='manual'&&f.k==='FBR')?1:0;});
+}
+
+/* A defect with no rule and no document behind it. CRA judged it, typed it, and
+   there is nothing for OCR to read against - so Sales answers it by uploading into
+   the file list, and the AI entry is closed on that upload. */
+function seedManual(){
+  DEFECTS.push({no:'9',rules:[],codes:[],cat:'OTHERS',
+    types:['Supporting document missing'],file:'—',noAI:1,
+    sr:'',cr:'CED conditional approval letter is not in the case — upload it to the file list',
+    src:'User',rect:0,ver:0,cd:'30-08-2026 09:02:31',hist:[]});
 }
 
 /* Round 2. Sales replaced the two documents the System defects named; the Case was
@@ -578,6 +598,9 @@ function applyRound2(files){
   set('A156',0,'newfail','Hirer name on the replaced agreement reads TAN WEI MIN, NRIC reads TAN WEI MING');
   set('EB-SIG-1',0,'still','Eyeball check required on page 6 - still outstanding on the replacement');
   set('S52',0,'cross','Balance payable no longer reconciles against the replaced HP Agreement (98,000.00 vs 96,500.00)');
+  // each half of the split scan clears on its own upload, never on the other's
+  set('N02',1,'cleared','');
+  set('V15',1,'cleared','');
   S.round=2; S.pullAt=new Date().toTimeString().slice(0,5);
 }
 // A rule earns a place in the focused view if this round moved it, or if it reads a
@@ -640,6 +663,7 @@ function syncSystemDefects(){
 function mkDefect(fn,src){
   const rs=rFail().filter(r=>defTarget(r)===fn); if(!rs.length||defForFile(fn))return null;
   S.dseq++;
+  while(DEFECTS.some(d=>d.no===String(S.dseq))) S.dseq++;
   DEFECTS.push({no:String(S.dseq),file:fn,
     rules:rs.map(r=>r.id),codes:[...new Set(rs.map(r=>r.dc))],
     cat:rs[0].dcat,types:[...new Set(rs.map(r=>r.dty))],
@@ -1129,6 +1153,7 @@ function doAdd(){
   const cat=$('aCat').value, types=S.addDef.types.slice();
   if(!cat||!types.length){toast('Defect Category and at least one Type are required');return;}
   S.dseq++;
+  while(DEFECTS.some(d=>d.no===String(S.dseq))) S.dseq++;   // the hand-raised seed holds a number
   DEFECTS.push({no:String(S.dseq),rules:[],codes:[],cat,types,file:'—',noAI:1,
     sr:$('aSr').value.trim(),cr:$('aCr').value.trim(),src:'User',
     rect:S.addDef.rect?1:0,ver:S.addDef.ver?1:0,cd:'30-08-2026 09:02:31',hist:[]});
@@ -1421,6 +1446,16 @@ window.addEventListener('message',e=>{
   if(d.setDesk) setDesk(d.setDesk);
   /* Sales replaced a document in the File Center and the Case was rerun. The
      workbench does not re-derive that - it is told, and then shows what moved. */
+  /* A defect with no document behind it was answered by a direct upload. Nothing
+     was revalidated because no rule was ever broken - the document simply arrived,
+     and CRA verifies it by eye. */
+  if(d.uploaded){
+    const x=DEFECTS.find(y=>y.no===String(d.uploaded.defect));
+    if(x){ x.file=d.uploaded.file; x.rect=1; x.ver=0;
+      x.sr=x.sr||'Document uploaded to the file list'; }
+    S.open.def=1; render();
+    toast(`Defect #${d.uploaded.defect} answered · ${d.uploaded.file} uploaded without AI`);
+  }
   if(d.revalidated){
     applyRound2([d.revalidated.file]);
     failFiles().forEach(fn=>{ mkDefect(fn,'System')||updDefect(fn); });
@@ -1484,6 +1519,9 @@ initChrome(); reset('manual'); render();
   });
   document.addEventListener('case:revalidated', function(e){
     parent.postMessage({ revalidated: e.detail }, '*');
+  });
+  document.addEventListener('case:uploaded', function(e){
+    parent.postMessage({ uploaded: e.detail }, '*');
   });
   // marks which prototype this frame is, so the host can address it
   parent.postMessage({ hello: HERE }, '*');
@@ -1693,6 +1731,11 @@ button:disabled{cursor:not-allowed}
 .uploader-box{border:1px dashed var(--border);border-radius:var(--r);background:var(--fill-alter);padding:14px 10px;text-align:center;transition:border-color .2s;min-height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .uploader-box:hover{border-color:var(--primary)}
 .uploader-box.non-ai{border-color:var(--border);background:var(--fill-q)}
+/* The AI entry closed off: still shown, so it is clear it was considered and ruled out */
+.upload-card.disabled{opacity:.55;background:var(--fill-q);border-color:var(--border-2)}
+.upload-card.disabled.ai{background:var(--fill-q)}
+.uploader-box.dis{border-style:dashed;background:transparent;cursor:not-allowed}
+.uploader-box.dis:hover{border-color:var(--border)}
 .upload-icon{color:var(--text-3);display:block;margin-bottom:6px;line-height:0}
 .upload-icon .i{width:22px;height:22px;stroke-width:1.2}
 .info-icon .i{width:13px;height:13px}
@@ -1823,6 +1866,7 @@ button:disabled{cursor:not-allowed}
 .alert-item .rd{font-size:12px;color:var(--text-2);margin-bottom:10px;line-height:1.6}
 .alert-item .acts{display:flex;gap:6px;flex-wrap:wrap}
 .alert-item .res{font-size:12px;color:var(--success-text);font-family:var(--mono)}
+.ro-note{font-size:11px;color:var(--text-3);align-self:center}
 .alert-item .acts .mc-on{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text);font-weight:600}
 .alert-item .acts .mc-off{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text);font-weight:600}
 /* A defect was raised and the alert stays. Two separate facts, shown as two. */
@@ -2065,7 +2109,7 @@ const DATA={
 app:[
  F({id:'a1',sj:'primary',nm:'Form BE.pdf',cat:'Applicant Income',ty:'Form BE',tyc:'(1-12)',pages:12,doc:'statement',sz:'0.69 MB',up:'19/08/26 14:33',
    desc:'Pending manual action',
-   alerts:[{id:'Form BE - annual_records.bill_number Exist',k:'m',nm:'bill_number missing in annual records',d:'No value extracted for bill_number in the annual_records group'},
+   alerts:[{id:'Form BE - annual_records.bill_number Exist',k:'m',q:1,nm:'bill_number missing in annual records',d:'No value extracted for bill_number in the annual_records group'},
            {id:'Form BE - id_no Consistency',k:'m',nm:'ID number differs from application form',d:'Document 780819015623 \u2260 Application form 750126145233'}],
    fields:[{g:'basic'},{n:'serial_number',v:'BE 1139715',c:99},{n:'name',v:'LAI HOO WENG',c:97},{n:'id_no',v:'780819015623',c:96},
            {g:'annual_records'},{n:'total_income',v:'RM 237,152',c:99},{n:'bill_number',v:'—',c:0}]}),
@@ -2106,7 +2150,8 @@ dis:[
    desc:'DocType classification failed',fields:[{n:'—',v:'Pending classification',c:0}]}),
  F({id:'d5',sj:'primary',nm:'HP Agreement.pdf',cat:'CRA HP Agreement',ty:'HP Agreement',tyc:'(1-8)',pages:8,sz:'1.47 MB',
    alerts:[{id:'A155',k:'m',nm:'More than 5 days since the signing date',d:'Hirer date 12-08-2026, today 19-08-2026, exceeds the 5-day parameter'},
-           {id:'A157',k:'m',nm:'Witness date missing on the last page',d:'No witness date extracted from page 8'}],
+           {id:'A157',k:'m',nm:'Witness date missing on the last page',d:'No witness date extracted from page 8'},
+           {id:'OCR-Q17',k:'m',q:1,nm:'Page 3 was skewed before extraction',d:'Page 3 was de-skewed by 6°; field confidence on that page stays below 90%'}],
    fields:[{n:'hirer_date',v:'12-08-2026',c:99},{n:'witness_date',v:'12-08-2026',c:98},{n:'moa_date',v:'12-08-2026',c:97}]}),
  F({id:'d6',sj:'primary',nm:'Biometric Result.pdf',cat:'CRA Applicant Identity',ty:'Biometric Result',src:'system',ao:'external',sz:'9.47 MB',
    fields:[{n:'match_result',v:'MATCHED',c:100},{n:'verified_at',v:'12-08-2026 14:22',c:100}]}),
@@ -2139,7 +2184,18 @@ dis:[
    del:{by:'CRA · v_kangyi',at:'19/08/26 15:02',rs:'Sales re-uploaded the renewed road tax'}}),
  F({id:'d25',sj:'primary',nm:'Company Resolution.docx',cat:'Other Documents',ty:'Company Resolution',ch:'manual',sz:'0.21 MB'}),
  F({id:'d26',sj:'vehicle',nm:'Road Tax (Manual).jpg',cat:'CRA Vehicle Related',ty:'Road Tax Disc',ch:'manual',doc:'card',sz:'0.31 MB',
-   desc:'Uploaded via the non-AI entry'})
+   desc:'Uploaded via the non-AI entry'}),
+ /* One upload, two file types. OCR split the scan into a subfile per type and each
+    subfile carries its own rules, so each becomes its own defect and each is
+    answered by its own upload - two rounds of Replace on what Sales sent as one file. */
+ F({id:'d27',sj:'primary',nm:'Combined Scan_1.pdf',pf:'Combined Scan.pdf',pn:'1 of 2',
+   cat:'CRA Applicant Identity',ty:'MyKad',doc:'card',sz:'0.42 MB',
+   alerts:[{id:'N02',k:'m',nm:'MyKad expired',d:'Expiry 03-2026 has passed; a valid MyKad is required at disbursement'}],
+   fields:[{n:'id_no',v:'750126145233',c:98},{n:'expiry',v:'03-2026',c:95}]}),
+ F({id:'d28',sj:'vehicle',nm:'Combined Scan_2.pdf',pf:'Combined Scan.pdf',pn:'2 of 2',
+   cat:'CRA Vehicle Related',ty:'Road Tax Disc',doc:'card',sz:'0.35 MB',
+   alerts:[{id:'V15',k:'m',nm:'Road tax expired',d:'Road tax ran out on 12-07-2026, before the disbursement date'}],
+   fields:[{n:'roadtax_start',v:'13-07-2025',c:97},{n:'roadtax_end',v:'12-07-2026',c:96}]})
 ]};
 
 /* A.11 Manual Check - case-level manual rule set.
@@ -2241,15 +2297,18 @@ Object.values(DATA).forEach(a=>a.forEach(f=>{if(f.sj==='vehicle'||f.sj==='case')
 /* Permission follows the case state, not just the role. The freeze rule is the
    whole design in one table: what CRA has reviewed is frozen to Sales, and a
    returned case reopens only the slots that an open defect names. */
+/* see = the rule pages are on screen; rule = their conclusions may be set.
+   Everyone who opens a document gets the same three pages - File List,
+   Cross-Validation, Manual Check. What the desk may do on them differs. */
 const PERM={
- 'sales|draft':   {up:1,cls:1,rule:0,del:1,def:0,     l:'Sales \u00b7 Drafting: upload, set category, delete'},
- 'cra|draft':     {up:0,cls:0,rule:0,del:0,def:0,     l:'CRA \u00b7 Drafting: read-only until Sales submits'},
- 'sales|review':  {up:0,cls:0,rule:0,del:0,def:0,     l:'Sales \u00b7 CRA Review: read-only, files frozen'},
- 'cra|review':    {up:1,cls:1,rule:1,del:1,def:0,l:'CRA \u00b7 Review: check rules here, raise and close defects in the Workbench'},
- 'sales|returned':{up:'scoped',cls:1,rule:0,del:0,def:'respond',l:'Sales \u00b7 Returned: replace only the documents your defects name'},
- 'cra|returned':  {up:0,cls:0,rule:0,del:0,def:0,     l:'CRA \u00b7 Returned: waiting on Sales'},
- 'sales|recheck': {up:0,cls:0,rule:0,del:0,def:0,     l:'Sales \u00b7 CRA Re-check: read-only, files frozen'},
- 'cra|recheck':   {up:1,cls:1,rule:1,del:1,def:0,l:'CRA \u00b7 Re-check: review the replaced documents, then verify in the Workbench'}
+ 'sales|draft':   {up:1,cls:1,see:1,rule:0,del:1,l:'Sales \u00b7 Drafting: upload, set category, delete'},
+ 'cra|draft':     {up:0,cls:0,see:1,rule:0,del:0,l:'CRA \u00b7 Drafting: read-only until Sales submits'},
+ 'sales|review':  {up:0,cls:0,see:1,rule:0,del:0,l:'Sales \u00b7 CRA Review: read-only while CRA checks the rules'},
+ 'cra|review':    {up:1,cls:1,see:1,rule:1,del:1,l:'CRA \u00b7 Review: conclude the rules here, read the defects in the Workbench'},
+ 'sales|returned':{up:'scoped',cls:1,see:1,rule:0,del:0,l:'Sales \u00b7 Returned: replace the documents your defects name; rules are CRA\u2019s to conclude'},
+ 'cra|returned':  {up:0,cls:0,see:1,rule:0,del:0,l:'CRA \u00b7 Returned: waiting on Sales'},
+ 'sales|recheck': {up:0,cls:0,see:1,rule:0,del:0,l:'Sales \u00b7 CRA Re-check: read-only, files frozen'},
+ 'cra|recheck':   {up:1,cls:1,see:1,rule:1,del:1,l:'CRA \u00b7 Re-check: review the replaced documents, then verify in the Workbench'}
 };
 const P=()=>PERM[S.role+'|'+S.cs];
 
@@ -2271,7 +2330,17 @@ const DEF0=[
  // A defect on a manually checked document, so the round-2 narrowing of the rule
  // panel can be walked through as well - it behaves the same on both tracks.
  {no:'5',fid:'d7',cat:'OTHERS',rules:['M-12'],types:['Signature incomplete / not witnessed'],
-  cr:'Page 10 carries no HLBB staff witness signature',src:'System',st:'open',hist:[]}
+  cr:'Page 10 carries no HLBB staff witness signature',src:'System',st:'open',hist:[]},
+ // The two halves of one upload. Two documents, two defects, two uploads - the file
+ // is the unit, so a scan holding two file types is never answered in one go.
+ {no:'6',fid:'d27',cat:'CUSTOMER INFO',rules:['N02'],types:['MyKad expired'],
+  cr:'MyKad in the combined scan expired 03-2026',src:'System',st:'open',hist:[]},
+ {no:'7',fid:'d28',cat:'COLLATERAL',rules:['V15'],types:['Road tax expired'],
+  cr:'Road tax in the combined scan ran out on 12-07-2026',src:'System',st:'open',hist:[]},
+ // Raised by CRA by hand: no rule, no document. Answered by a direct upload.
+ {no:'9',fid:null,cat:'OTHERS',rules:[],types:['Supporting document missing'],
+  cr:'CED conditional approval letter is not in the case \u2014 upload it to the file list',
+  src:'User',st:'open',hist:[]}
 ];
 let DEFECTS=DEF0.map(d=>Object.assign({},d,{rules:d.rules.slice(),types:d.types.slice(),hist:[]}));
 let DSEQ=DEF0.length;
@@ -2285,6 +2354,7 @@ const defTypes=d=>(d.types||[]).join(' \u00b7 ');
 /* Defect types available in the dialog. The engine pre-fills them from the failed
    rule; CRA can tick more, because one document usually has more than one problem. */
 const DTYPES=['Insurance sum insured insufficient','Policy period insufficient',
+ 'MyKad expired','Road tax expired','Supporting document missing',
  'Hirer and/or witnessed wrongly dated','Hirer name mismatch','Signature incomplete / not witnessed',
  'Vehicle invoice outside the delivery window','Loan amount is wrong','Chassis no. mismatch',
  'Scan quality insufficient','Document out of validity period','Wrong document uploaded'];
@@ -2297,7 +2367,9 @@ const RULEMAP={
  I67:{cat:'INVOICE - VEHICLE',ty:'Vehicle invoice outside the delivery window'},
  S52:{cat:'SECOND SCHEDULE PART I',ty:'Loan amount is wrong'},
  S53:{cat:'SECOND SCHEDULE PART I',ty:'Loan amount is wrong'},
- A157:{cat:'AGREEMENT - MASTER',ty:'Signature incomplete / not witnessed'}
+ A157:{cat:'AGREEMENT - MASTER',ty:'Signature incomplete / not witnessed'},
+ N02:{cat:'CUSTOMER INFO',ty:'MyKad expired'},
+ V15:{cat:'COLLATERAL',ty:'Road tax expired'}
 };
 const DCATS=['AGREEMENT - MASTER','AGREEMENT - GUARANTOR','INSURANCE','INVOICE - VEHICLE',
  'SECOND SCHEDULE PART I','COLLATERAL','CUSTOMER INFO','FACILITY','GUARANTOR','OTHERS'];
@@ -2307,7 +2379,9 @@ function scopedFor(subj){
   const ids=scopedIds();
   return DATA.dis.filter(f=>ids.has(f.id)&&(subj==null||f.sj===subj));
 }
-const curFocusName=()=>{const d=DEFECTS.find(x=>x.no===S.focus); const f=d&&defFile(d);
+const focusDef=()=>DEFECTS.find(x=>x.no===S.focus)||null;
+const focusFile=()=>{const d=focusDef(); return d?defFile(d):null;};
+const curFocusName=()=>{const d=focusDef(); const f=d&&defFile(d);
   return f?f.nm:(d?'no document yet':'—');};
 /* The host calls this when a desk opens the File Center. CRA arrives at the whole
    case; Sales arrives at one defect, and the screen narrows to it. Nothing about
@@ -2318,7 +2392,23 @@ function setView(view,def){
     S.role='sales'; S.cs='draft'; S.focus=null; S.tab='fl'; S.subj='primary';
   }else if(view==='sales'){
     S.role='sales'; S.cs='returned'; S.focus=def&&def.defect||null;
-    S.tab='df'; S.subj='all';
+    /* A defect CRA raised by hand has no rule and no document behind it, so it is
+       not in this ledger yet. Adopt what the desk handed over rather than showing
+       Sales an empty screen for a defect they were just told to answer. */
+    // The desk also names the document. Trust that over the number - the two ledgers
+    // are seeded separately and the document is what Sales came here to fix.
+    if(def&&def.file&&def.file!=='\u2014'){
+      const bn=DATA.dis.find(f=>f.nm===def.file), dl=bn&&defForFile(bn.id);
+      if(dl) S.focus=dl.no;
+    }
+    // opened standalone, with no door to inherit from: stand on the first open
+    // defect, because "Sales fixing a defect" is not a state without one
+    if(!S.focus&&S.stage==='dis'){const d0=DEFECTS.find(x=>x.st==='open'&&x.fid); if(d0)S.focus=d0.no;}
+    if(S.focus&&!DEFECTS.some(x=>x.no===S.focus))
+      DEFECTS.push({no:S.focus,fid:null,cat:def.cat||'OTHERS',rules:[],
+        types:(def.types||[]).slice(),cr:def.cr||'',src:'User',st:'open',hist:[]});
+    const ff=focusFile();
+    S.tab='fl'; S.subj=ff?ff.sj:'all';
   }else{
     S.role='cra'; S.focus=null;
     S.cs=DEFECTS.some(d=>d.st==='responded')?'recheck':'review';
@@ -2361,6 +2451,9 @@ function statusKey(f){
 function rows(){
   if(S.subj==='deleted') return all().filter(f=>f.del);
   let r=live().filter(f=>inTab(f,S.tab));
+  // Walked in from a defect: every page is about the document it names.
+  const ff=S.focus?focusFile():null;
+  if(ff) return r.filter(f=>f.id===ff.id);
   if(S.subj!=='all') r=r.filter(f=>f.sj===S.subj);
   if(S.fType) r=r.filter(f=>f.ty===S.fType);
   if(S.fStatus) r=r.filter(f=>statusKey(f)===S.fStatus);
@@ -2398,7 +2491,7 @@ const monogram=nm=>nm.replace('Guarantor ','G').replace('Main Applicant','MA')
   .replace('Seller','SL').replace('Case Level','CL');
 
 function renderRail(){
-  const col=S.railCollapsed, ct=S.tab==='df'?'fl':S.tab;
+  const col=S.railCollapsed, ct=S.tab;
   let h=`<div class="rail-h">
       <button class="rail-toggle" data-railtoggle="1" title="${col?'Expand':'Collapse'}">${col?'\u00bb':'\u00ab'}</button></div>`;
   h+=`<button class="subj-item scope" data-subj="all" aria-pressed="${S.subj==='all'}" title="All Files">
@@ -2428,7 +2521,7 @@ function renderRail(){
 
 function renderUpload(){
   const ok=canUpload(), sj=curSubj(), sec=$('uploadSection');
-  if(!ok || S.tab==='df'){ sec.className='upload-section empty'; sec.innerHTML=''; return; }
+  if(!ok){ sec.className='upload-section empty'; sec.innerHTML=''; return; }
   const locked=uploadLocked(), mine=locked?scopedFor(sj.id):[];
   sec.className='upload-section'+(locked?' disabled':'');
   const lock=locked?`<div class="upload-lock">Free upload is closed while the case is returned.
@@ -2467,23 +2560,21 @@ function renderUpload(){
     </div>`;
 }
 
+/* The File Center is one screen with three pages, whichever door you came
+   through. Scoping and permissions change; the structure does not, or the same
+   place looks like a different product depending on how you got there.
+   The rule pages still need a subject picked - under All Files they would have
+   to reconcile every entity's rules in one view. */
 function renderTabs(){
   const T=[{k:'fl',n:'File List'}];
-  // Alerts and rules are evidence-level and case-level judgements - CRA's work.
-  // Sales never sees them; Sales works from the defect list alone.
-  // Rule verification is also always scoped to one subject: offering it under
-  // All Files would mean reconciling every entity's rules in one view.
-  if(P().rule && S.subj!=='all' && S.subj!=='deleted'){
+  if(P().see && S.subj!=='all' && S.subj!=='deleted'){
     T.push({k:'cv',n:'Cross-Validation Results'});
     if(tabs3()) T.push({k:'mc',n:'Manual Check Results'});
   }
-  // Defects are case-level, so unlike the rule tabs they show under any subject.
-  if(P().def) T.push({k:'df',n:'To Fix'});
   if(!T.some(t=>t.k===S.tab)) S.tab='fl';
   $('listTabs').innerHTML=T.map(t=>{
     let n=0,err=0;
-    if(t.k==='df'){ n=myDefects().length; err=defOpen(); }
-    else if(t.k!=='fl'){ n=tabCount(t.k); err=tabIssues(t.k); }
+    if(t.k!=='fl'){ n=tabCount(t.k); err=tabIssues(t.k); }
     else n=tabCount(t.k);
     return `<button data-tab="${t.k}" aria-pressed="${S.tab===t.k}">${t.n}
       <span class="ant-badge-count ${err?'err':(S.tab===t.k?'on':'')}">${err||n}</span></button>`;
@@ -2491,15 +2582,19 @@ function renderTabs(){
 }
 
 function renderFilter(){
-  if(S.tab==='df'){
-    /* Walking in from one defect narrows the list to it. Saying so - and offering
-       the way back out - is what keeps a short list from reading like a wrong one. */
-    $('filterBar').innerHTML=S.focus
-      ? `<span class="foot-note"><b>Showing defect #${esc(S.focus)} only</b> \u2014 you opened it from the
-           Sales workbench. Replacing a document re-runs every rule in the Case, not just this one.</span>
-         <span class="filter-actions"><button class="ant-btn" data-allfiles="1">Show all ${myDefects().length} defects</button></span>`
-      : `<span class="foot-note">Sent back by CRA. Replacing a document re-runs
-           every rule in the Case, not just this one \u2014 CRA then verifies and closes it in the Workbench.</span>`;
+  /* Walking in from a defect narrows every page to the document it names.
+     Saying so - and offering the way back out - is what keeps a short list from
+     reading like a wrong one. */
+  if(S.focus){
+    const f=focusFile();
+    $('filterBar').innerHTML=`<span class="foot-note"><b>Defect #${esc(S.focus)}
+        \u00b7 ${f?esc(f.nm):'no document yet'}</b> \u2014 opened from the Sales Workbench. ${f
+          ?`This screen is scoped to that document. Replacing it re-runs every rule in the
+            Case, not just this one.`
+          :`It names no document, so nothing is scoped: the upload adds a document to the
+            file list and no rule is rerun.`}</span>
+      <span class="filter-actions">
+        ${f?'<button class="ant-btn" data-allfiles="1">Show the whole case</button>':''}</span>`;
     return;
   }
   if(S.subj==='deleted'){ $('filterBar').innerHTML=`<span class="foot-note">Deleted files are kept as records only. They cannot be previewed or restored.</span>`; return; }
@@ -2535,36 +2630,17 @@ function statusCell(f){
   return `<span class="ant-tag ${e?'ant-tag-gold':'ant-tag-red'}">${e?'Manual Check ':'Alert '}${o}</span>`;
 }
 
-/* Sales's to-do list, not a second defect ledger. The ledger lives in the CRA
-   Workbench and keeps the accounting dimensions - defect code, category, source,
-   rectified/verified. What reaches Sales is only the part Sales can act on:
-   which document, what is wrong with it, and a way to send a new one. */
-function renderDefects(){
-  const D=S.focus?myDefects().filter(d=>d.no===S.focus):myDefects();
-  $('emptyState').textContent='Nothing to fix. The case is with CRA.';
-  $('emptyState').style.display=D.length?'none':'block';
-  $('thead').innerHTML=`<tr><th style="width:56px">Ref</th><th style="width:250px">Document</th>
-    <th>What needs fixing</th><th style="width:104px">Status</th><th style="width:180px">Action</th></tr>`;
-  $('tbody').innerHTML=D.map(d=>{
-    const f=defFile(d);
-    const st=d.st==='open'?'To fix':d.st==='responded'?'Sent to CRA':'Closed';
-    const act = d.st==='open'&&f
-      ? `<button class="ant-btn ant-btn-primary ant-btn-sm" data-repl="${d.no}">Replace Document</button>`
-      : d.st==='responded' ? '<span class="description-text">Awaiting CRA verification</span>'
-      : '<span class="description-text">\u2014</span>';
-    return `<tr><td class="time-cell">${esc(d.no)}</td>
-      <td>${f?`<div class="filename-text">${esc(f.nm)}${f.ver>1?`<span class="ver-chip new">v${f.ver}</span>`:''}</div>
-              <div class="description-text">${esc(subjNm(f))}</div>`
-             :'<span class="description-text">No document named</span>'}</td>
-      <td><div>${esc(defTypes(d))}</div><div class="d-why">${esc(d.cr)}</div>
-        ${(d.hist||[]).length?`<div class="d-why">Rewritten ${d.hist.length}× after revalidation</div>`:''}</td>
-      <td><span class="d-st ${d.st}">${st}</span></td>
-      <td class="actions-cell">${act}</td></tr>`;
-  }).join('');
+/* The way to answer a defect sits on the document it names, in the list where
+   that document lives - not on a separate to-do page that would be a second
+   defect ledger by another name. */
+function replBtn(f){
+  if(P().up!=='scoped') return '';
+  const d=DEFECTS.find(x=>x.fid===f.id&&x.st==='open');
+  return d?`<button class="ant-btn ant-btn-primary ant-btn-sm" data-repl="${esc(d.no)}"
+    title="Defect #${esc(d.no)}">Replace</button>`:'';
 }
 
 function renderTable(){
-  if(S.tab==='df') return renderDefects();
   const r=rows();
   $('emptyState').textContent='No files match the current filters.';
   $('emptyState').style.display=r.length?'none':'block';
@@ -2596,7 +2672,8 @@ function renderTable(){
       <td><input type="checkbox" data-chk="${f.id}" ${S.sel.has(f.id)?'checked':''}></td>
       <td class="filename-cell"><div class="filename-text">${f.nm}${f.ver>1
           ?`<span class="ver-chip new" title="Superseded ${f.ver-1} time(s)">v${f.ver}</span>`:''}</div>
-        <div class="description-text">${f.pages} page${f.pages>1?'s':''}</div></td>
+        <div class="description-text">${f.pages} page${f.pages>1?'s':''}${f.pf
+          ?` · split from ${esc(f.pf)} (${esc(f.pn||'')})`:''}</div></td>
       <td class="subject-cell">${subjNm(f)}</td>
       <td class="category-cell"><select class="cat-sel" data-cat="${f.id}"
         ${P().cls?'':'disabled'} title="${P().cls?'Change category':'Read-only in this case state'}">
@@ -2611,6 +2688,7 @@ function renderTable(){
       <td class="time-cell">${f.sz}</td>
       <td class="description-text">${sys?'System':'SalesOfficer1'}</td>
       <td class="actions-cell">
+        ${replBtn(f)}
         <button class="action-btn edit-btn" data-open="${f.id}" title="Edit">${I('edit')}</button>
         <button class="action-btn" title="Download">${I('download')}</button>
         <button class="action-btn delete-btn" data-del1="${f.id}" title="Delete" ${P().del?'':'disabled'}>${I('trash')}</button>
@@ -2620,21 +2698,17 @@ function renderTable(){
 
 function renderFooter(){
   const p=P(), can=p.cls||p.rule||p.up;
-  if(S.tab==='df'){
-    const o=defOpen(), rd=defResponded();
-    $('footer').innerHTML=`<span class="foot-note">${o} to fix \u00b7 ${rd} sent back to CRA</span>
-      <span class="file-list-footer-actions">
-        <button class="ant-btn back-btn">Back To List</button>
-        <button class="ant-btn ant-btn-primary" data-act="toCRA">Return To CRA${o?` (${o} still to fix)`:''}</button></span>`;
-    return;
-  }
   if(S.tab==='fl'){
-    // While the case is out with Sales the file list is a record, not a work
-    // surface - the work lives on the defect tab, so send them there.
-    const act = p.def==='respond'
-      ? `<button class="ant-btn ant-btn-primary" data-tab="df">Go To \u201cTo Fix\u201d (${defOpen()})</button>`
+    /* Sales answering a defect has one way to be finished with this screen: send
+       the document back. The defect ledger itself lives on the Sales Workbench,
+       which is where the case is handed over. */
+    const act = S.focus
+      ? `<button class="ant-btn ant-btn-primary" data-repl="${esc(S.focus)}">${
+          focusFile()?'Replace The Named Document':'Upload The Missing Document'}</button>`
       : `<button class="ant-btn ant-btn-primary submit-btn" id="btnSubmit" ${can?'':'disabled'}>Submit for Verification (${S.stage==='app'?'Application':'Disbursement'})</button>`;
-    $('footer').innerHTML=`<span class="foot-note">File List \u00b7 Full ledger and classification confirmation</span>
+    $('footer').innerHTML=`<span class="foot-note">${S.focus
+        ? `Answering defect #${esc(S.focus)} \u00b7 the rest of the case is read-only`
+        : 'File List \u00b7 Full ledger and classification confirmation'}</span>
       <span class="file-list-footer-actions"><button class="ant-btn back-btn">Back To List</button>${act}</span>`;
     return;
   }
@@ -2725,6 +2799,7 @@ function panel(f,p){
         h+=`<div class="acts">
             <button class="ant-btn ant-btn-sm ${res==='pass'?'mc-on':''}" data-mc="pass" data-r="${r.id}" ${p.rule?'':'disabled'}>Pass</button>
             <button class="ant-btn ant-btn-sm ${res==='fail'?'mc-off':''}" data-mc="fail" data-r="${r.id}" ${p.rule?'':'disabled'}>Fail</button>
+            ${p.rule?'':'<span class="ro-note">CRA concludes this</span>'}
             ${res==='fail'&&p.rule?`<button class="ant-btn ant-btn-sm ant-btn-primary" data-mkdef="${esc(f.id)}" data-mr="${esc(r.id)}">
               ${d?`Update Defect #${esc(d.no)}`:'Create Defect'}</button>`:''}</div>`;
         h+=`</div>`;
@@ -2732,9 +2807,22 @@ function panel(f,p){
     });
   }
   if(f.cls&&f.ch==='ocr'&&f.alerts.length){
-    const o=f.alerts.filter(a=>!a.res).length;
-    h+=`<p class="panel-sect ${o?'err':''}">VALIDATION ALERTS \u00b7 ${o?o+' pending':'all handled'}</p>`;
-    f.alerts.forEach((a,i)=>{
+    /* Two kinds of rule live in the same engine and only one of them may become a
+       defect. OCR's self-checks say whether the document could be read; expert rules
+       say whether the case is in order. Splitting them here is what stops a read
+       problem from being sent to Sales as a document problem. */
+    const grps=[
+      {q:0,t:'EXPERT RULE ALERTS',n:''},
+      {q:1,t:'OCR SELF-CHECK \u00b7 DOCUMENT QUALITY',
+       n:'OCR\u2019s own read checks. They report how the document scanned, not what the case owes, so no defect is raised from here.'}];
+    grps.forEach(g=>{
+    const idx=f.alerts.map((a,i)=>i).filter(i=>!!f.alerts[i].q===!!g.q);
+    if(!idx.length) return;
+    const o=idx.filter(i=>!f.alerts[i].res).length;
+    h+=`<p class="panel-sect ${o&&!g.q?'err':''}">${g.t} \u00b7 ${o?o+' pending':'all handled'}</p>`;
+    if(g.n) h+=`<div class="pnote">${g.n}</div>`;
+    idx.forEach(i=>{
+      const a=f.alerts[i];
       h+=`<div class="alert-item ${a.res?'resolved':(a.k==='e'?'eyeball':'machine')}"><div class="ah"><span class="rid">${a.id}</span><span class="rn">${a.nm}</span></div><div class="rd">${a.d}</div>`;
       // The defect is logged and the alert stays. They answer different questions -
       // "is this document readable" and "who owes what" - so clearing one must not
@@ -2744,13 +2832,14 @@ function panel(f,p){
         :a.k==='e'
           ?`<div class="acts"><button class="ant-btn ant-btn-sm" data-al="pass" data-i="${i}" ${p.rule?'':'disabled'}>Pass</button>
             <button class="ant-btn ant-btn-sm ant-btn-dangerous" data-al="fail" data-i="${i}" ${p.rule?'':'disabled'}>Fail</button>
-            ${defBtn(f,i,p)}
+            ${a.q?'':defBtn(f,i,p)}
             <button class="ant-btn ant-btn-link ant-btn-sm" data-al="loc" data-i="${i}">Check image \u2192</button></div>`
-          :`<div class="acts">${defBtn(f,i,p)}
+          :`<div class="acts">${a.q?'':defBtn(f,i,p)}
             <button class="ant-btn ant-btn-sm" data-al="just" data-i="${i}" ${p.rule?'':'disabled'}>Justification</button>
             <button class="ant-btn ant-btn-sm" data-al="repl" data-i="${i}" ${p.rule?'':'disabled'}>Replace Document</button>
             <button class="ant-btn ant-btn-link ant-btn-sm" data-al="loc" data-i="${i}">Check image \u2192</button></div>`;
       h+=`</div>`;
+    });
     });
   }
   if(f.cls&&f.ch==='ocr'&&!f.alerts.length&&f.src!=='system')
@@ -2830,7 +2919,7 @@ function openDefDlg(fid,ai){
   // Manual Check concludes by eye rather than by engine, but the unit is the same.
   const man=f.ch==='manual';
   const open=man?mcRules(f).filter(r=>r.file===f.nm&&MC.res[r.id]==='fail')
-                :f.alerts.filter(a=>!a.res);
+                :f.alerts.filter(a=>!a.res&&!a.q);   // OCR self-checks never become defects
   const rules=open.map(a=>a.id);
   const sug=[...new Set(rules.map(r=>(RULEMAP[r]||{}).ty).filter(Boolean))];
   const a=man?open[0]:f.alerts[+ai];
@@ -2891,7 +2980,7 @@ function saveDef(){
   }
   // The alert is marked as evidenced, never as resolved.
   if(DD.man) MC.rules.forEach(r=>{if(DD.rules.includes(r.id))r.def=no;});
-  else f.alerts.forEach(a=>{if(!a.res)a.def=no;});
+  else f.alerts.forEach(a=>{if(!a.res&&!a.q)a.def=no;});
   smClose(); renderDt(); render();
   /* The defect is raised here and read in the Workbench, so the two screens have to
      be looking at one ledger. In the combined build this event is what carries it
@@ -2991,7 +3080,58 @@ function replaceDoc(no){
 }
 /* Sales enters through the defect and sees a narrowed world: this document, this
    file type, nothing else. The type is not a choice - it is what the defect names. */
-function askReplace(no){ S.repl=no; drawReplace(); }
+function askReplace(no){
+  S.repl=no;
+  const d=DEFECTS.find(x=>x.no===no);
+  // No document behind the defect means there is nothing to replace and nothing for
+  // AI to read against - that line goes straight to the file list.
+  if(d&&!defFile(d)) drawNewUpload(); else drawReplace();
+}
+/* The Add Defect line: CRA raised it by hand, named no document and no rule, so the
+   AI entry is closed here. Classification needs a target file type to read against
+   and this defect names none. */
+function drawNewUpload(){
+  const d=DEFECTS.find(x=>x.no===S.repl); if(!d) return;
+  sm('Upload Document',
+    `<div class="pnote info">Defect <b>#${esc(d.no)}</b> · ${esc(defTypes(d))}<br>${esc(d.cr)}</div>
+     <div class="lockrow"><span class="lk">Document</span>
+       <select class="ant-select" disabled><option>Not linked to any document</option></select>
+       <span class="lkn">Raised by CRA by hand — there is no earlier version to supersede</span></div>
+     <div class="upload-grid upload-grid--two" style="margin-top:12px">
+       <div class="upload-card ai disabled"><div class="upload-card-header">
+           <span class="ent-tag ai">AI</span><span class="upload-card-title">AI Scanning</span>
+           <span class="ant-tag">Unavailable</span></div>
+         <div class="uploader-box dis"><span class="upload-icon">${I('upload')}</span>
+           <div class="upload-prompt">Not available for this defect</div>
+           <div class="upload-examples">This defect names no file type, so AI has nothing to read against</div></div></div>
+       <div class="upload-card manual"><div class="upload-card-header">
+           <span class="ent-tag manual">MANUAL</span><span class="upload-card-title">Non AI Scanning</span></div>
+         <div class="uploader-box non-ai"><span class="upload-icon">${I('fileText')}</span>
+           <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
+           <div class="upload-examples">Lands in the file list · CRA reads it by eye</div></div></div>
+     </div>
+     <div class="description-text" style="margin-top:8px">
+       The document arrives with no rule attached. CRA verifies the defect in the
+       Workbench after looking at it — no rule is rerun, because none was ever broken.</div>`,
+    `<button class="ant-btn" data-cl="1">Cancel</button>
+     <button class="ant-btn ant-btn-primary" data-donew="${esc(d.no)}">Simulate Upload</button>`);
+}
+// A direct upload adds a document; it never supersedes one. The defect is answered,
+// not revalidated - there is no rule behind it to rerun.
+function uploadNew(no){
+  const d=DEFECTS.find(x=>x.no===no); if(!d||defFile(d)) return;
+  const at=new Date().toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit',
+    hour:'2-digit',minute:'2-digit'}).replace(',','');
+  const nf=F({id:'u'+no,sj:'primary',nm:`Defect #${no} Supporting Document.pdf`,
+    cat:'Other Documents',ty:'—',ch:'manual',cls:0,sz:'0.22 MB',up:at,
+    desc:'Uploaded via the non-AI entry to answer a defect'});
+  DATA.dis.push(nf);
+  d.fid=nf.id; d.st='responded';
+  d.cr=(d.cr?d.cr+' | ':'')+'Document uploaded to the file list — awaiting CRA verification';
+  smClose(); S.tab='fl'; S.subj='primary'; render();
+  msg(`${nf.nm} uploaded · defect #${no} answered without AI`);
+  document.dispatchEvent(new CustomEvent('case:uploaded',{detail:{defect:no,file:nf.nm}}));
+}
 function drawReplace(){
   const d=DEFECTS.find(x=>x.no===S.repl), f=d&&defFile(d); if(!f) return;
   sm('Replace Document',
@@ -2999,6 +3139,9 @@ function drawReplace(){
      <div class="lockrow"><span class="lk">File Type</span>
        <select class="ant-select" disabled><option>${esc(f.ty)}</option></select>
        <span class="lkn">Fixed by the defect \u2014 you are replacing this document, not adding one</span></div>
+     ${f.pf?`<div class="pnote warn"><b>${esc(f.nm)}</b> is one of the file types OCR split out of
+       <b>${esc(f.pf)}</b>. Each split file carries its own rules and its own defect, so this upload
+       answers this one only \u2014 the other half is replaced separately.</div>`:''}
      <div class="vh"><div class="vh-h">Version chain</div>
        <div class="vh-r"><b>v${f.ver}</b><span>${esc(f.up)} \u00b7 current \u2014 will be superseded, not modified</span></div>
        <div class="vh-r cur"><b>v${f.ver+1}</b><span>your upload \u00b7 the old file stays in the list either way</span></div></div>
@@ -3150,6 +3293,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.allfiles){S.focus=null;S.tab='fl';render();
     msg('Showing every document on the case');return;}
   if(t.dataset.repl){askReplace(t.dataset.repl);return;}
+  if(t.dataset.donew){uploadNew(t.dataset.donew);return;}
   if(t.dataset.dorepl){replaceDoc(t.dataset.dorepl);return;}
   if(t.dataset.wrongf){wrongFile(t.dataset.wrongf);return;}
   if(t.dataset.mkdef){openDefDlg(t.dataset.mkdef,t.dataset.ai||0);return;}
@@ -3165,7 +3309,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.stage){S.stage=t.dataset.stage;S.tab='fl';S.subj='all';S.sel.clear();S.fType=S.fStatus='';render();return;}
   if(t.dataset.tab){S.tab=t.dataset.tab;S.sel.clear();S.fType=S.fStatus='';if(S.subj==='deleted')S.subj='all';render();return;}
   if(t.dataset.subj){S.subj=t.dataset.subj;S.sel.clear();
-    if((S.subj==='all'||S.subj==='deleted')&&S.tab!=='fl'&&S.tab!=='df'){S.tab='fl';S.fType=S.fStatus='';}
+    if((S.subj==='all'||S.subj==='deleted')&&S.tab!=='fl'){S.tab='fl';S.fType=S.fStatus='';}
     render();return;}
   if(t.dataset.chk){const i=t.dataset.chk;S.sel.has(i)?S.sel.delete(i):S.sel.add(i);render();return;}
   if(t.dataset.open){openDt(t.dataset.open);return;}
@@ -3342,6 +3486,9 @@ render();
   document.addEventListener('case:revalidated', function(e){
     parent.postMessage({ revalidated: e.detail }, '*');
   });
+  document.addEventListener('case:uploaded', function(e){
+    parent.postMessage({ uploaded: e.detail }, '*');
+  });
   // marks which prototype this frame is, so the host can address it
   parent.postMessage({ hello: HERE }, '*');
   window.addEventListener('message', function(e){
@@ -3429,6 +3576,7 @@ render();
     if (DEST[d.nav]) { show(d.nav); return; }
     if (d.defect) { relay('wb', { defect: d.defect }); return; }
     if (d.revalidated) { relay('wb', { revalidated: d.revalidated }); return; }
+    if (d.uploaded) { relay('wb', { uploaded: d.uploaded }); return; }
     /* A desk opened the File Center on a defect. Remember the door so Back returns
        through it, and hand the view across rather than letting the File Center
        guess who is looking. */
