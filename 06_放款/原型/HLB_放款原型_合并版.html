@@ -1808,6 +1808,32 @@ button:disabled{cursor:not-allowed}
 .action-btn:hover:not(:disabled){background:rgba(0,0,0,.06);color:var(--primary)}
 .action-btn.delete-btn:hover:not(:disabled){color:var(--error)}
 .action-btn:disabled{color:var(--text-4)}
+/* The two rule classes are drawn as two boxes, not two headings: what may become
+   a defect and what may not is the most consequential distinction on this page. */
+.rgrp{border:1px solid var(--border-2);border-radius:var(--r);margin:12px 0 14px;overflow:hidden}
+.rgrp-h{display:flex;align-items:center;gap:8px;padding:8px 11px;font-size:12px;font-weight:600;
+  letter-spacing:.04em;border-bottom:1px solid var(--border-2)}
+.rgrp-t{color:var(--text)}
+.rgrp-tag{font-weight:400;font-size:10px;letter-spacing:.02em;border:1px solid;border-radius:2px;padding:0 5px}
+.rgrp-n{margin-left:auto;font-weight:400;font-size:11px;font-family:var(--mono);color:var(--text-3)}
+.rgrp-n.err{color:var(--error-text)}
+.rgrp-n2{padding:7px 11px;font-size:11.5px;line-height:1.55;color:var(--text-3);border-bottom:1px solid var(--border-2)}
+.rgrp-b{padding:10px 11px 2px}
+.rgrp.expert{border-color:var(--error-border)}
+.rgrp.expert .rgrp-h{background:var(--error-bg)}
+.rgrp.expert .rgrp-tag{border-color:var(--error-border);color:var(--error-text);background:#fff}
+.rgrp.qc{background:var(--fill-q)}
+.rgrp.qc .rgrp-h{background:var(--fill-alter);color:var(--text-2)}
+.rgrp.qc .rgrp-t{color:var(--text-2)}
+.rgrp.qc .rgrp-tag{border-color:var(--border);color:var(--text-3)}
+.rgrp.qc .alert-item{background:#fff;border-left-color:var(--border)}
+.rgrp.qc .alert-item .rid{background:var(--fill-alter);color:var(--text-3)}
+.rgrp.qc .alert-item .rn{color:var(--text-2);font-weight:500}
+/* and the same distinction, smaller, wherever the file list mentions a rule */
+.qc-tag{background:var(--fill-q);color:var(--text-3);border-color:var(--border-2)}
+.rule-line.qc{color:var(--text-3)}
+.qmk{font-family:var(--mono);font-size:9.5px;border:1px solid var(--border-2);border-radius:2px;
+  padding:0 3px;color:var(--text-3);vertical-align:1px}
 .rule-line{font-size:12px;line-height:1.6}
 .rule-line.open{color:var(--error-text)} .rule-line.done{color:var(--success-text)}
 .empty-state{padding:48px;text-align:center;color:var(--text-3);font-size:14px}
@@ -2444,11 +2470,19 @@ function inTab(f,t){
   if(t==='mc') return f.ch==='manual' && MC_FILES().includes(f.nm);
   return false;
 }
-function openCount(f){ return f.ch==='manual'?MC.rules.filter(r=>r.file===f.nm&&!MC.res[r.id]).length:f.alerts.filter(a=>!a.res).length; }
+/* Two classes of rule live on an OCR file and they are never added together.
+   Expert rules say whether the case is in order - they are what a defect is made
+   of. OCR self-checks say whether the document could be read; they are the
+   engine reporting on itself, and nothing about them is Sales's to fix. */
+const expOpen=f=>f.ch==='manual'
+  ? MC.rules.filter(r=>r.file===f.nm&&!MC.res[r.id]).length
+  : f.alerts.filter(a=>!a.res&&!a.q).length;
+const qcOpen=f=>f.ch==='manual'?0:f.alerts.filter(a=>!a.res&&a.q).length;
+function openCount(f){ return expOpen(f)+qcOpen(f); }
 function statusKey(f){
   if(!f.cls) return 'pending';
   if(f.src==='system'&&f.ao==='internal') return 'skip';
-  return openCount(f)?'issue':'done';
+  return expOpen(f)?'issue':'done';
 }
 function rows(){
   if(S.subj==='deleted') return all().filter(f=>f.del);
@@ -2462,7 +2496,7 @@ function rows(){
   return r;
 }
 const tabCount=t=>live().filter(f=>inTab(f,t)&&(S.subj==='all'||S.subj==='deleted'||f.sj===S.subj)).length;
-const tabIssues=t=>live().filter(f=>inTab(f,t)&&(S.subj==='all'||S.subj==='deleted'||f.sj===S.subj)&&openCount(f)>0).length;
+const tabIssues=t=>live().filter(f=>inTab(f,t)&&(S.subj==='all'||S.subj==='deleted'||f.sj===S.subj)&&expOpen(f)>0).length;
 
 /* ═══════ RENDER ═══════ */
 const $=i=>document.getElementById(i);
@@ -2624,12 +2658,15 @@ function renderFilter(){
 function statusCell(f){
   if(!f.cls) return f.low?'<span class="ant-tag ant-tag-red">Type Not Recognised</span>':'<span class="ant-tag ant-tag-gold">Pending Classification</span>';
   if(f.src==='system'&&f.ao==='internal') return '<span class="ant-tag">No Validation</span>';
-  const o=openCount(f);
-  if(!o) return '<span class="ant-tag ant-tag-green">Passed</span>';
+  const o=expOpen(f), q=qcOpen(f);
+  // the read check is reported beside the verdict, never folded into it
+  const qt=q?`<span class="ant-tag qc-tag" title="OCR self-check \u00b7 no defect is raised from these">QC ${q}</span>`:'';
+  if(!o) return (q?'':'<span class="ant-tag ant-tag-green">Passed</span>')
+    +(q?'<span class="ant-tag ant-tag-green">Rules Passed</span> '+qt:'');
   if(S.role==='sales') return '<span class="ant-tag ant-tag-blue">In Review</span>';
   if(f.ch==='manual') return `<span class="ant-tag ant-tag-gold">Manual Check ${o}</span>`;
-  const e=f.alerts.filter(a=>!a.res).every(a=>a.k==='e');
-  return `<span class="ant-tag ${e?'ant-tag-gold':'ant-tag-red'}">${e?'Manual Check ':'Alert '}${o}</span>`;
+  const e=f.alerts.filter(a=>!a.res&&!a.q).every(a=>a.k==='e');
+  return `<span class="ant-tag ${e?'ant-tag-gold':'ant-tag-red'}">${e?'Manual Check ':'Alert '}${o}</span> `+qt;
 }
 
 /* The way to answer a defect sits on the document it names, in the list where
@@ -2668,7 +2705,8 @@ function renderTable(){
       ? MC.rules.filter(r2=>r2.file===f.nm).map(r2=>({id:r2.id,nm:r2.nm,res:MC.res[r2.id]}))
       : f.alerts;
     const mid=rule
-      ? `<td>${items.length?items.map(a=>`<div class="rule-line ${a.res?'done':'open'}">${a.res?'&#10003; ':''}${a.id||a.nm}</div>`).join(''):'<span class="description-text">—</span>'}</td>`
+      ? `<td>${items.length?items.map(a=>`<div class="rule-line ${a.q?'qc':(a.res?'done':'open')}">${
+            a.q?'<span class="qmk">QC</span> ':(a.res?'&#10003; ':'')}${a.id||a.nm}</div>`).join(''):'<span class="description-text">—</span>'}</td>`
       : `<td class="is-ai-cell">${f.ch==='ocr'?'Y':'N'}</td><td class="description-cell"><span class="description-text">${f.desc||'—'}</span></td>`;
     return `<tr class="${S.sel.has(f.id)?'selected':''}" data-id="${f.id}">
       <td><input type="checkbox" data-chk="${f.id}" ${S.sel.has(f.id)?'checked':''}></td>
@@ -2821,15 +2859,22 @@ function panel(f,p){
        say whether the case is in order. Splitting them here is what stops a read
        problem from being sent to Sales as a document problem. */
     const grps=[
-      {q:0,t:'EXPERT RULE ALERTS',n:''},
-      {q:1,t:'OCR SELF-CHECK \u00b7 DOCUMENT QUALITY',
-       n:'OCR\u2019s own read checks. They report how the document scanned, not what the case owes, so no defect is raised from here.'}];
+      {q:0,t:'EXPERT RULES',
+       tag:'Raises a defect',
+       n:'What the case owes. A failure here is Sales\u2019s to answer, so this is the only class a defect is made of.'},
+      {q:1,t:'OCR SELF-CHECK',
+       tag:'No defect',
+       n:'How the document scanned. The engine reporting on its own read \u2014 CRA settles it here and nothing is sent back to Sales.'}];
     grps.forEach(g=>{
     const idx=f.alerts.map((a,i)=>i).filter(i=>!!f.alerts[i].q===!!g.q);
     if(!idx.length) return;
     const o=idx.filter(i=>!f.alerts[i].res).length;
-    h+=`<p class="panel-sect ${o&&!g.q?'err':''}">${g.t} \u00b7 ${o?o+' pending':'all handled'}</p>`;
-    if(g.n) h+=`<div class="pnote">${g.n}</div>`;
+    h+=`<div class="rgrp ${g.q?'qc':'expert'}">
+      <div class="rgrp-h"><span class="rgrp-t">${g.t}</span>
+        <span class="rgrp-tag">${g.tag}</span>
+        <span class="rgrp-n ${o&&!g.q?'err':''}">${o?o+' pending':'all handled'}</span></div>
+      <div class="rgrp-n2">${g.n}</div>
+      <div class="rgrp-b">`;
     idx.forEach(i=>{
       const a=f.alerts[i];
       h+=`<div class="alert-item ${a.res?'resolved':(a.k==='e'?'eyeball':'machine')}"><div class="ah"><span class="rid">${a.id}</span><span class="rn">${a.nm}</span></div><div class="rd">${a.d}</div>`;
@@ -2847,6 +2892,7 @@ function panel(f,p){
             <button class="ant-btn ant-btn-sm" data-al="repl" data-i="${i}" ${p.rule?'':'disabled'}>Replace Document</button></div>`;
       h+=`</div>`;
     });
+    h+=`</div></div>`;
     });
   }
   if(f.cls&&f.ch==='ocr'&&!f.alerts.length&&f.src!=='system')
