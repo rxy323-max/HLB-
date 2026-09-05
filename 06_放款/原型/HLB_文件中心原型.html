@@ -311,11 +311,26 @@ button:disabled{cursor:not-allowed}
 /* defect dialog */
 .dlab{display:block;font-size:12px;color:var(--text-2);margin:12px 0 4px}
 .dlab .dsub{color:var(--text-3);font-weight:400}
-.tysel{display:flex;flex-wrap:wrap;gap:6px}
-.tychip{border:1px solid var(--border);border-radius:var(--r-sm);padding:3px 9px;
-  font-size:12px;cursor:pointer;background:#fff;color:var(--text-2);user-select:none}
-.tychip:hover{border-color:var(--primary);color:var(--primary)}
-.tychip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+/* Defect Type is a dropdown, as it has always been; it just takes more than one now. */
+.msel{position:relative}
+.msel-b{display:flex;align-items:center;gap:8px;width:100%;text-align:left;cursor:pointer}
+.msel-b::after{content:"\2304";margin-left:auto;color:var(--text-3);flex:none;line-height:1}
+.msel-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msel-t.ph{color:var(--text-4)}
+.msel-n{flex:none;font-family:var(--mono);font-size:11px;padding:0 6px;border-radius:9px;
+  background:var(--primary-bg);color:var(--primary-active)}
+.msel-p{display:none;position:absolute;z-index:20;top:calc(100% + 4px);left:0;right:0;
+  max-height:220px;overflow-y:auto;background:#fff;border:1px solid var(--border);
+  border-radius:var(--r);box-shadow:var(--shadow);padding:4px}
+.msel.open .msel-p{display:block}
+.msel.open .msel-b{border-color:var(--primary)}
+.msel .msel-o{display:flex;gap:9px;align-items:center;padding:6px 9px;margin:0;
+  border-radius:var(--r-sm);font-size:13px;color:var(--text-2);cursor:pointer}
+.msel .msel-o:hover{background:var(--fill-alter)}
+.msel .msel-o.on{color:var(--text)}
+.mbx{width:16px;height:16px;flex:none;border:1px solid var(--border);border-radius:3px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:11px;background:#fff}
+.mbx.on{background:var(--primary);border-color:var(--primary);color:#fff}
 /* the file type a defect fixes is not a choice */
 .lockrow{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:12px}
 .lockrow .lk{color:var(--text-2);flex:none;width:66px}
@@ -1298,8 +1313,13 @@ function openDefDlg(fid,ai){
   DD={fid,man,ex:ex?ex.no:null,
     cat:ex?ex.cat:((RULEMAP[(a||{}).id]||{}).cat||'OTHERS'),
     types:ex?ex.types.slice():(sug.length?sug:['Wrong document uploaded']),
-    rules, cr:ex?'':open.map(x=>x.d).join(' · ')};
+    rules, cr:ex?'':open.map(x=>x.d).join(' · '), pick:0};
   drawDefDlg();
+}
+// the dialog redraws on every tick, so carry the typed fields across
+function keepDef(){
+  const c=$('ddCat'), r=$('ddCr');
+  if(c)DD.cat=c.value; if(r)DD.cr=r.value;
 }
 function drawDefDlg(){
   const f=byId(DD.fid), ex=DD.ex&&DEFECTS.find(d=>d.no===DD.ex);
@@ -1313,15 +1333,23 @@ function drawDefDlg(){
     <label class="dlab">Defect Category</label>
     <select class="ant-select" id="ddCat" style="width:100%">
       ${DCATS.map(c=>`<option ${c===DD.cat?'selected':''}>${esc(c)}</option>`).join('')}</select>
-    <label class="dlab">Defect Type <span class="dsub">multi-select</span></label>
-    <div class="tysel">${DTYPES.map(t=>
-      `<span class="tychip ${DD.types.includes(t)?'on':''}" data-dty="${esc(t)}">${esc(t)}</span>`).join('')}</div>
+    <label class="dlab">Defect Type <span class="dsub">select one or more</span></label>
+    <div class="msel ${DD.pick?'open':''}">
+      <button type="button" class="ant-select msel-b" data-dtyopen="1">
+        <span class="msel-t ${DD.types.length?'':'ph'}">${DD.types.length?esc(DD.types.join(', ')):'Select one or more'}</span>
+        ${DD.types.length>1?`<span class="msel-n">${DD.types.length}</span>`:''}</button>
+      <div class="msel-p">${DTYPES.map(t=>{const on=DD.types.includes(t);
+        return `<label class="msel-o ${on?'on':''}" data-dty="${esc(t)}">
+          <span class="mbx ${on?'on':''}">${on?'\u2713':''}</span><span>${esc(t)}</span></label>`;}).join('')}</div>
+    </div>
     <label class="dlab">CRA Remark</label>
     <textarea class="ant-input" id="ddCr" style="width:100%;min-height:64px">${esc(DD.cr)}</textarea>
     <div class="description-text" style="margin-top:8px">
       The alert stays on this file after the defect is saved. Defect details are read in the CRA Workbench.</div>`,
    `<button class="ant-btn" data-cl="1">Cancel</button>
     <button class="ant-btn ant-btn-primary" data-dodef="1">${ex?'Update Defect':'Create Defect'}</button>`);
+  if(DD.pick){const el=document.querySelector('.msel-p');
+    if(el)el.scrollIntoView({block:'nearest'});}
 }
 function saveDef(){
   const f=byId(DD.fid), cat=$('ddCat').value, cr=($('ddCr').value||'').trim();
@@ -1601,9 +1629,10 @@ document.addEventListener('click',e=>{
   if(t.dataset.dorepl){replaceDoc(t.dataset.dorepl);return;}
   if(t.dataset.wrongf){wrongFile(t.dataset.wrongf);return;}
   if(t.dataset.mkdef){openDefDlg(t.dataset.mkdef,t.dataset.ai||0);return;}
+  if(t.dataset.dtyopen){keepDef();DD.pick=!DD.pick;drawDefDlg();return;}
   if(t.dataset.dty){const v=t.dataset.dty,i=DD.types.indexOf(v);
-    DD.cat=$('ddCat').value; DD.cr=$('ddCr').value;
-    i>-1?DD.types.splice(i,1):DD.types.push(v); drawDefDlg();return;}
+    keepDef(); i>-1?DD.types.splice(i,1):DD.types.push(v);
+    DD.pick=1; drawDefDlg();return;}
   if(t.dataset.dodef){saveDef();return;}
   if(t.dataset.passall){
     const f=byId(S.dt),n=mcRules(f).filter(r=>!MC.res[r.id]).length;
@@ -1735,6 +1764,9 @@ document.addEventListener('click',e=>{
   if(t.dataset.cl){if(t.dataset.tst)msg(t.dataset.tst);smClose();return;}
 });
 
+document.addEventListener('click',e=>{
+  if(DD&&DD.pick&&!e.target.closest('.msel')){keepDef();DD.pick=0;drawDefDlg();}
+},true);
 $('subMask').addEventListener('click',e=>{if(e.target===$('subMask'))smClose();});
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){if(!$('subMask').classList.contains('hidden'))smClose();else if(S.dt)closeDt();}

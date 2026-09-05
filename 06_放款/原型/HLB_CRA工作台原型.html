@@ -228,11 +228,27 @@ tbody tr:hover td{background:var(--alt)}
 .dchk{display:flex;gap:9px;align-items:center;font-size:13.5px;color:var(--ink-2);cursor:pointer;height:36px}
 .dta{width:100%;min-height:110px;border:1px solid #d6d9de;border-radius:var(--r-md);padding:10px 12px;font-size:13.5px;resize:vertical}
 .dcount{text-align:right;font-size:12px;color:var(--ink-3);margin-top:4px}
-.tysel{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
-.tychip{border:1px solid var(--line);border-radius:var(--r-sm);padding:3px 9px;font-size:12px;
-  cursor:pointer;background:#fff;color:var(--ink-2);user-select:none}
-.tychip:hover{border-color:var(--pri);color:var(--pri)}
-.tychip.on{background:var(--pri);border-color:var(--pri);color:#fff}
+/* Defect Type stays the dropdown it has always been; the only change is that it
+   now takes more than one, because one document rarely breaks one rule. */
+.msel{position:relative}
+.msel-b{display:flex;align-items:center;gap:8px;width:100%;text-align:left;cursor:pointer}
+.msel-b::after{content:"⌄";margin-left:auto;color:var(--ink-3);flex:none;line-height:1}
+.msel-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msel-t.ph{color:var(--ink-4)}
+.msel-n{flex:none;font-family:var(--mono);font-size:11px;padding:0 6px;border-radius:9px;
+  background:var(--primary-bg);color:var(--primary-deep)}
+.msel-p{display:none;position:absolute;z-index:10;top:calc(100% + 4px);left:0;right:0;
+  max-height:224px;overflow-y:auto;background:#fff;border:1px solid var(--line);
+  border-radius:var(--r-md);box-shadow:var(--sh-lg);padding:4px}
+.msel.open .msel-p{display:block}
+.msel.open .msel-b{border-color:var(--primary)}
+/* these options are <label>s inside a .dfield, and .dfield label sets display:block -
+   so they need the extra class to win, or the checkbox and its text run together */
+.msel .msel-o{display:flex;gap:9px;align-items:center;padding:6px 9px;margin:0;
+  border-radius:var(--r-sm);font-size:13px;color:var(--ink-2);cursor:pointer}
+.msel .msel-o:hover{background:var(--alt)}
+.msel .msel-o.on{color:var(--ink)}
+.msel .msel-o .bx{flex:none}
 
 /* The defect ledger is wide by nature - the accounting columns all have to be
    there. The action stays pinned to the right edge so it never scrolls out of
@@ -1028,25 +1044,26 @@ function doSync(){
    extraction - Sales uploads straight to the file list, or a wrong read pollutes
    the write-back for a document no rule ever checked. */
 function openAdd(){
-  S.dlg='add'; S.addDef={cat:'',types:[],rect:0,ver:0,sr:'',cr:''};
+  S.dlg='add'; S.addDef={cat:'',types:[],rect:0,ver:0,sr:'',cr:'',open:0};
   openM('sm','Add Defect'); drawAdd();
 }
 function drawAdd(){
   const a=S.addDef;
   $('modal').className='modal';
-  $('mB').innerHTML=`<div class="pre" style="margin-bottom:14px"><span class="lb">NO DOCUMENT YET</span>
-      Sales attaches the evidence after this defect is raised.
-      <b>AI Scanning is not offered for it</b> — the defect names no document type, so extraction
-      has nothing to check it against. The file lands in the file list and you read it by eye.</div>
-    <div class="dgrid">
+  const TY=[...new Set(R0.map(r=>r.dty))];
+  $('mB').innerHTML=`<div class="dgrid">
     <div class="dfield"><label>Defect Category <span class="req">*</span></label>
       <select class="dsel" id="aCat"><option value=""></option>
         ${DCATS.map(c=>`<option ${a.cat===c?'selected':''}>${c}</option>`).join('')}</select></div>
-    <div class="dfield dfull"><label>Defect Type <span class="req">*</span>
-        <span class="muted" style="font-weight:400"> · multi-select, one defect carries every problem on the document</span></label>
-      <div class="tysel">${[...new Set(R0.map(r=>r.dty))].map(t=>
-        `<span class="tychip ${a.types.includes(t)?'on':''}" data-aty="${esc(t)}">${esc(t)}</span>`).join('')}</div>
-      <div class="dcount">${a.types.length} selected</div></div>
+    <div class="dfield"><label>Defect Type <span class="req">*</span></label>
+      <div class="msel ${a.open?'open':''}" id="aTy">
+        <button type="button" class="dsel msel-b" data-tyopen="1">
+          <span class="msel-t ${a.types.length?'':'ph'}">${a.types.length?esc(a.types.join(', ')):'Select one or more'}</span>
+          ${a.types.length>1?`<span class="msel-n">${a.types.length}</span>`:''}</button>
+        <div class="msel-p">${TY.map(t=>{const on=a.types.includes(t);
+          return `<label class="msel-o ${on?'on':''}" data-aty="${esc(t)}">
+            <span class="bx ${on?'on':''}">${on?'✓':''}</span><span>${esc(t)}</span></label>`;}).join('')}</div>
+      </div></div>
     <div class="dfield"><label>Rectified</label>
       <label class="dchk" data-atg="rect"><span class="bx ${a.rect?'on':''}">${a.rect?'✓':''}</span>Mark as Rectified</label></div>
     <div class="dfield"><label>Verified</label>
@@ -1063,9 +1080,21 @@ function drawAdd(){
     <div class="dfield dfull"><label>CRA Remark</label>
       <textarea class="dta" id="aCr" maxlength="500" placeholder="Enter CRA Remark">${esc(a.cr)}</textarea>
       <div class="dcount"><span id="aCrN">${a.cr.length}</span> / 500</div></div>
+    <div class="dfield dfull"><span class="muted">This defect names no document type, so Sales
+      uploads the evidence straight to the file list — AI Scanning is not offered for it.</span></div>
   </div>`;
   $('mF').innerHTML=`<button class="btn" data-act="mx">Cancel</button>
     <button class="btn btn-pri" data-act="doadd">OK</button>`;
+  if(S.addDef.open){const el=document.querySelector('.msel-p');
+    if(el)el.scrollIntoView({block:'nearest'});}
+}
+// the dialog is redrawn on every tick, so carry the typed fields across
+function keepAdd(){
+  const g=i=>{const e=$(i);return e?e.value:undefined;};
+  const sr=g('aSr'),cr=g('aCr'),cat=g('aCat');
+  if(sr!==undefined)S.addDef.sr=sr;
+  if(cr!==undefined)S.addDef.cr=cr;
+  if(cat!==undefined)S.addDef.cat=cat;
 }
 function doAdd(){
   const cat=$('aCat').value, types=S.addDef.types.slice();
@@ -1276,13 +1305,13 @@ document.addEventListener('click',e=>{
     if(window.parent!==window) parent.postMessage({handBack:1},'*');
     return;
   }
+  // keep the dropdown open while several types are ticked, the way a real one behaves
+  if(t.dataset.tyopen){keepAdd();S.addDef.open=!S.addDef.open;drawAdd();return;}
   if(t.dataset.aty){const v=t.dataset.aty,i=S.addDef.types.indexOf(v);
     i>-1?S.addDef.types.splice(i,1):S.addDef.types.push(v);
-    S.addDef.sr=$('aSr').value;S.addDef.cr=$('aCr').value;S.addDef.cat=$('aCat').value;
-    drawAdd();return;}
+    keepAdd();S.addDef.open=1;drawAdd();return;}
   if(t.dataset.atg){S.addDef[t.dataset.atg]=S.addDef[t.dataset.atg]?0:1;
-    S.addDef.sr=$('aSr').value;S.addDef.cr=$('aCr').value;
-    S.addDef.cat=$('aCat').value;drawAdd();return;}
+    keepAdd();drawAdd();return;}
   if(t.dataset.act==='doadd'){doAdd();return;}
   if(t.dataset.rect){DEFECTS.find(x=>x.no===t.dataset.rect).rect=1;render();toast('Marked as rectified');return;}
   if(t.dataset.ver){DEFECTS.find(x=>x.no===t.dataset.ver).ver=1;render();toast('Verified');return;}
@@ -1309,6 +1338,11 @@ document.addEventListener('click',e=>{
     toast(ok?'Disbursement interface triggered':'Submitted to Authorizer');return;}
   if(t.dataset.act==='mx'){closeM();renderFoot();return;}
 });
+document.addEventListener('click',e=>{
+  if(S.dlg==='add'&&S.addDef.open&&!e.target.closest('.msel')){
+    keepAdd();S.addDef.open=0;drawAdd();
+  }
+},true);
 
 /* Which desk you are at should be legible without reading the buttons, so the
    chrome says it: the operator, the to-do list, and whether the OCR write-back
