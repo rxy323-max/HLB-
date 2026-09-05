@@ -1,0 +1,10 @@
+flowchart TD
+  A[文件命中专家规则失败] --> B[CRA 在文件中心创建缺陷<br/>来源 System · 锚定文件 ID]
+  B --> C[打回 Sales]
+  C --> D[Sales 上传新文件<br/>类型由缺陷锁定]
+  D --> E[Sales 标记 Rectified · 提交回 CRA]
+  E --> F[全案重跑]
+  F --> G{该文件最新结论}
+  G -- 已无失败规则 --> H[CRA 一键 Verify<br/>缺陷关闭]
+  G -- 仍有失败规则 --> I[CRA 点击 Update Defect<br/>编号与 Category 不变<br/>Type 按最新结论重写<br/>Remark 追加]
+  I --> C

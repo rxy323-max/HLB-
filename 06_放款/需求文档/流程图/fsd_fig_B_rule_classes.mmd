@@ -1,0 +1,12 @@
+flowchart TD
+  A[OCR 处理一份文件] --> B[OCR 自校验规则<br/>这份文件是否读得清楚]
+  A --> C[专家规则<br/>这笔业务是否合规]
+  B --> B1[告警]
+  B1 --> B2[CRA 处理：修改抽取值 / Justification]
+  B2 --> B3[不产生缺陷<br/>不打回 Sales]
+  C --> C1[告警]
+  C1 --> C2{CRA 判断}
+  C2 -- 可豁免 --> C3[Justification<br/>规则计为 Passed]
+  C2 -- 需修正值 --> C4[修改抽取值<br/>按新值重判]
+  C2 -- 需换文件 --> C5[创建缺陷<br/>打回 Sales]
+  C5 --> C6[告警保留<br/>同时标记已登记缺陷]
