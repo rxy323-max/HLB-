@@ -1274,19 +1274,19 @@ function panel(f,p){
       h+=`<div class="mc-grp ${cur?'cur':''}">${fn}<span class="mc-sp"></span>
         ${cur?'<span class="mc-cur">Previewing</span>':''}
         ${gf&&p.rule?`<button class="ant-btn ant-btn-sm ${gd?'':'ant-btn-primary'} mc-def"
-          data-mkdef="${esc(gf.id)}">${gd?`Update Defect #${esc(gd.no)}`:'Create Defect'}</button>`:''}</div>`;
+          data-mkdef="${esc(gf.id)}">${gd?'Update Defect':'Create Defect'}</button>`:''}</div>`;
       mcRules(f).filter(r=>r.file===fn).forEach(r=>{
         const res=MC.res[r.id], d=defForFile(f.id);
         h+=`<div class="alert-item ${res==='fail'?'machine':(res?'resolved':'eyeball')}">
           <div class="ah"><span class="rid">${r.id}</span><span class="rn">${r.nm}</span>
             ${r.routed?'<span class="routed">ROUTED</span>':''}</div><div class="rd">${r.d}</div>`;
-        if(res==='fail'&&r.def) h+=`<div class="res keep">Defect #${esc(r.def)} logged · result kept</div>`;
+        if(res==='fail'&&r.def) h+=`<div class="res keep">Defect logged · result kept</div>`;
         h+=`<div class="acts">
             <button class="ant-btn ant-btn-sm ${res==='pass'?'mc-on':''}" data-mc="pass" data-r="${r.id}" ${p.rule?'':'disabled'}>Pass</button>
             <button class="ant-btn ant-btn-sm ${res==='fail'?'mc-off':''}" data-mc="fail" data-r="${r.id}" ${p.rule?'':'disabled'}>Fail</button>
             ${p.rule?'':'<span class="ro-note">CRA concludes this</span>'}
             ${res==='fail'&&p.rule?`<button class="ant-btn ant-btn-sm ant-btn-primary" data-mkdef="${esc(f.id)}" data-mr="${esc(r.id)}">
-              ${d?`Update Defect #${esc(d.no)}`:'Create Defect'}</button>`:''}</div>`;
+              ${d?'Update Defect':'Create Defect'}</button>`:''}</div>`;
         h+=`</div>`;
       });
     });
@@ -1319,7 +1319,7 @@ function panel(f,p){
       // The defect is logged and the alert stays. They answer different questions -
       // "is this document readable" and "who owes what" - so clearing one must not
       // clear the other. It is why OCR has to be able to save while an alert stands.
-      if(a.def) h+=`<div class="res keep">Defect #${esc(a.def)} logged \u00b7 alert kept as the evidence</div>`;
+      if(a.def) h+=`<div class="res keep">Defect logged \u00b7 alert kept as the evidence</div>`;
       h+=a.res?`<div class="res">&#10003; ${a.res}</div>`
         :a.k==='e'
           ?`<div class="acts"><button class="ant-btn ant-btn-sm" data-al="pass" data-i="${i}" ${p.rule?'':'disabled'}>Pass</button>
@@ -1400,7 +1400,7 @@ function defBtn(f,i,p){
   if(!p.rule) return '';
   const d=defForFile(f.id);
   return `<button class="ant-btn ant-btn-sm ant-btn-primary" data-mkdef="${esc(f.id)}" data-ai="${i}">
-    ${d?`Update Defect #${esc(d.no)}`:'Create Defect'}</button>`;
+    ${d?'Update Defect':'Create Defect'}</button>`;
 }
 let DD=null;   // the dialog's working copy
 function openDefDlg(fid,ai){
@@ -1427,7 +1427,7 @@ function keepDef(){
 }
 function drawDefDlg(){
   const f=byId(DD.fid), ex=DD.ex&&DEFECTS.find(d=>d.no===DD.ex);
-  sm(ex?`Update Defect #${ex.no}`:'Create Defect',
+  sm(ex?'Update Defect':'Create Defect',
    `<div class="pnote info"><b>${esc(f.nm)}</b> · ${esc(f.ty)}<br>
       One defect per document. It carries every rule still failing on this file:
       <b>${DD.rules.length?DD.rules.map(esc).join(', '):'none — raised by judgement'}</b>.</div>
