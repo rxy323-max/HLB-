@@ -189,6 +189,15 @@ button:disabled{cursor:not-allowed}
 .upload-examples{font-size:12px;color:var(--text-3);margin-top:4px;line-height:1.5}
 .upload-section.disabled .uploader-box{opacity:.45;border-style:dashed;pointer-events:none}
 .upload-lock{border:1px dashed var(--warning-border);background:var(--warning-bg);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--warning-text);margin-bottom:9px;line-height:1.5}
+/* Files the engine has not returned. Without this the list looks complete. */
+.ocr-banner{display:flex;align-items:center;gap:9px;margin:0 16px 10px;padding:7px 11px;font-size:12.5px;
+  border:1px solid var(--primary-border);background:var(--primary-bg);color:var(--primary-active);border-radius:var(--r)}
+.ocr-banner.bad{border-color:var(--error-border);background:var(--error-bg);color:var(--error-text)}
+.ocr-banner.empty{display:none}
+.ocr-banner .ob-t{flex:1;min-width:0}
+.ocr-banner .i{width:14px;height:14px;flex:none}
+.ocr-acts{display:flex;gap:8px;margin:0 0 12px}
+.skip-note{font-size:11.5px;color:var(--text-3);margin-top:6px}
 
 /* ── version chain, defects, inline category ── */
 .ver-chip{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--text-3);
@@ -483,6 +492,7 @@ button:disabled{cursor:not-allowed}
         <div class="file-list-section">
           <div class="list-tabs" id="listTabs"></div>
           <div class="filter-bar" id="filterBar"></div>
+          <div class="ocr-banner empty" id="ocrBanner"></div>
           <div class="table-container">
             <table class="file-list-table"><thead id="thead"></thead><tbody id="tbody"></tbody></table>
             <div class="empty-state" id="emptyState" style="display:none">No files match the current filters.</div>
@@ -657,6 +667,15 @@ dis:[
  F({id:'d20',sj:'seller',nm:'Seller Invoice.pdf',cat:'CRA Other Funding',ty:'HP216 Seller Invoice',doc:'invoice',sz:'0.47 MB',fields:[{n:'invoice_no',v:'HP216-8841',c:99}]}),
  F({id:'d21',sj:'seller',nm:'Seller IC.jpg',cat:'CRA Applicant Identity',ty:'Seller IC',doc:'card',sz:'0.36 MB',fields:[{n:'id_no',v:'690712086611',c:98}]}),
  F({id:'d22',sj:'primary',nm:'scan_001.pdf',cat:'CRA Other Funding',ty:'—',cls:0,sz:'1.11 MB',desc:'Pending classification'}),
+ /* No OCR result yet. Until this state existed these read exactly like a file
+    that never goes to OCR at all, which is what CRA could not tell apart. */
+ F({id:'d29',sj:'primary',nm:'Bank Statement (Jul).pdf',cat:'CRA Applicant Income',ty:'\u2014',cls:0,sz:'2.14 MB',
+   up:'19/08/26 14:41',ocrSt:'running',ocrAt:'19/08/26 14:41'}),
+ F({id:'d30',sj:'vehicle',nm:'Insurance Cover Note (Rescan).pdf',cat:'CRA Vehicle Related',ty:'\u2014',cls:0,sz:'3.90 MB',
+   up:'19/08/26 14:39',ocrSt:'failed',ocrAt:'19/08/26 14:39',ocrErr:'Engine returned an error on page 2',
+   retryOk:1,okTy:'Insurance Cover Note',okCat:'CRA Vehicle Related'}),
+ F({id:'d31',sj:'vehicle',nm:'Puspakom Report.pdf',cat:'CRA Vehicle Related',ty:'\u2014',cls:0,sz:'11.80 MB',
+   up:'19/08/26 14:35',ocrSt:'timeout',ocrAt:'19/08/26 14:35',ocrErr:'No result after 15 minutes',retryOk:0}),
  F({id:'d24',sj:'vehicle',nm:'Road Tax (Superseded).jpg',cat:'CRA Vehicle Related',ty:'Road Tax Disc',doc:'card',sz:'0.27 MB',
    del:{by:'CRA · v_kangyi',at:'19/08/26 15:02',rs:'Sales re-uploaded the renewed road tax'}}),
  F({id:'d25',sj:'primary',nm:'Company Resolution.docx',cat:'Other Documents',ty:'Company Resolution',ch:'manual',sz:'0.21 MB'}),
@@ -912,8 +931,17 @@ const viaDefect=f=>!!(f&&f.ver>1&&defForFile(f.id));
 const mcRules=f=>viaDefect(f)?MC.rules.filter(r=>r.file===f.nm):MC.rules;
 const MCF=f=>[...new Set(mcRules(f).map(r=>r.file))];
 
+/* Three different silences, one appearance until now: a file that never goes to
+   OCR, a file the engine has not finished, and a file the engine gave up on. */
+const OCRST={queued:['OCR Queued','ant-tag-blue'],running:['OCR Running','ant-tag-blue'],
+  failed:['OCR Failed','ant-tag-red'],timeout:['OCR Timed Out','ant-tag-red']};
+const waiting=f=>f.ocrSt==='queued'||f.ocrSt==='running';
+const stuck=f=>f.ocrSt==='failed'||f.ocrSt==='timeout';
+const unread=f=>waiting(f)||stuck(f);
 function inTab(f,t){
   if(t==='fl') return true;
+  // a file with no OCR result belongs on the OCR page - that is where it is missed
+  if(t==='cv'&&unread(f)) return true;
   if(!f.cls) return false;
   if(t==='cv') return f.ch==='ocr';
   if(t==='mc') return f.ch==='manual' && MC_FILES().includes(f.nm);
@@ -929,6 +957,8 @@ const expOpen=f=>f.ch==='manual'
 const qcOpen=f=>f.ch==='manual'?0:f.alerts.filter(a=>!a.res&&a.q).length;
 function openCount(f){ return expOpen(f)+qcOpen(f); }
 function statusKey(f){
+  if(waiting(f)) return 'wait';
+  if(stuck(f)) return 'stuck';
   if(!f.cls) return 'pending';
   if(f.src==='system'&&f.ao==='internal') return 'skip';
   return expOpen(f)?'issue':'done';
@@ -964,7 +994,18 @@ function render(){
   [...$('viewSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===door));
   $('permHint').textContent=P().l;
   [...$('stageTabs').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.stage===S.stage));
-  renderRail(); renderUpload(); renderTabs(); renderFilter(); renderTable(); renderFooter();
+  renderRail(); renderUpload(); renderTabs(); renderFilter(); renderBanner(); renderTable(); renderFooter();
+}
+/* The list can look complete while two documents were never read. This is the
+   line that says so, on every page of the File Center. */
+function renderBanner(){
+  const el=$('ocrBanner'); if(!el) return;
+  const w=live().filter(waiting).length, st=live().filter(stuck).length;
+  if(!(w+st)||S.subj==='deleted'||S.focus){el.className='ocr-banner empty';el.innerHTML='';return;}
+  el.className='ocr-banner'+(st?' bad':'');
+  el.innerHTML=`${I(st?'alert':'clock')}
+    <span class="ob-t">${w+st} file(s) have no OCR result${st?` \u00b7 <b>${st} not returned</b>`:''}${w?` \u00b7 ${w} still running`:''}</span>
+    <button class="ant-btn ant-btn-sm" data-act="unread">Show</button>`;
 }
 
 /* The rail holds three kinds of entry, and that is the structure worth showing:
@@ -1086,7 +1127,8 @@ function renderFilter(){
   if(S.subj==='deleted'){ $('filterBar').innerHTML=`<span class="foot-note">Record only \u2014 cannot be previewed or restored.</span>`; return; }
   const p=P(),n=S.sel.size;
   const types=[...new Set(live().filter(f=>inTab(f,S.tab)).map(f=>f.ty))].filter(t=>t!=='—');
-  const sts=[['pending','Pending Classification'],['issue','Pending Action'],['done','Passed'],['skip','No Validation']];
+  const sts=[['pending','Pending Classification'],['issue','Pending Action'],['done','Passed'],
+    ['wait','Waiting For OCR'],['stuck','OCR Not Returned'],['skip','No Validation']];
   $('filterBar').innerHTML=
    `<div class="filter-inputs">
       <input class="ant-input" placeholder="Search values" style="width:180px">
@@ -1106,15 +1148,17 @@ function renderFilter(){
 }
 
 function statusCell(f){
+  if(unread(f)) return `<span class="ant-tag ${OCRST[f.ocrSt][1]}">${OCRST[f.ocrSt][0]}</span>`;
+  const sk=f.ocrSt==='skipped'?' <span class="ant-tag">OCR Skipped</span>':'';
   if(!f.cls) return f.low?'<span class="ant-tag ant-tag-red">Type Not Recognised</span>':'<span class="ant-tag ant-tag-gold">Pending Classification</span>';
   if(f.src==='system'&&f.ao==='internal') return '<span class="ant-tag">No Validation</span>';
   const o=expOpen(f), q=qcOpen(f);
   // the read check is reported beside the verdict, never folded into it
   const qt=q?`<span class="ant-tag qc-tag" title="OCR self-check \u00b7 no defect is raised from these">QC ${q}</span>`:'';
   if(!o) return (q?'':'<span class="ant-tag ant-tag-green">Passed</span>')
-    +(q?'<span class="ant-tag ant-tag-green">Rules Passed</span> '+qt:'');
-  if(S.role==='sales') return '<span class="ant-tag ant-tag-blue">In Review</span>';
-  if(f.ch==='manual') return `<span class="ant-tag ant-tag-gold">Manual Check ${o}</span>`;
+    +(q?'<span class="ant-tag ant-tag-green">Rules Passed</span> '+qt:'')+sk;
+  if(S.role==='sales') return '<span class="ant-tag ant-tag-blue">In Review</span>'+sk;
+  if(f.ch==='manual') return `<span class="ant-tag ant-tag-gold">Manual Check ${o}</span>`+sk;
   const e=f.alerts.filter(a=>!a.res&&!a.q).every(a=>a.k==='e');
   return `<span class="ant-tag ${e?'ant-tag-gold':'ant-tag-red'}">${e?'Manual Check ':'Alert '}${o}</span> `+qt;
 }
@@ -1246,6 +1290,20 @@ function panel(f,p){
       \u00b7 ${esc(v.rs)}${v.alerts.length?` \u00b7 carried ${v.alerts.length} alert(s)`:''}</span></div>`; });
     h+=`<div class="vh-r cur"><b>v${f.ver}</b><span>${esc(f.up)} \u00b7 current</span></div></div>`;
   }
+  if(unread(f)){
+    h+=`<div class="pnote ${stuck(f)?'warn':'info'}"><b>${OCRST[f.ocrSt][0]}</b><br>
+      Sent to OCR ${esc(f.ocrAt||f.up)}${f.ocrErr?` \u00b7 ${esc(f.ocrErr)}`:''}${
+      f.tries?` \u00b7 ${f.tries} retry attempt(s)`:''}</div>`;
+    if(stuck(f))
+      h+=p.cls
+        ? `<div class="ocr-acts">
+             <button class="ant-btn ant-btn-sm ant-btn-primary" data-ocr="retry" data-f="${esc(f.id)}">Retry OCR</button>
+             <button class="ant-btn ant-btn-sm" data-ocr="skip" data-f="${esc(f.id)}">Skip OCR</button></div>`
+        : `<div class="description-text">This role cannot retry or skip OCR.</div>`;
+    return h;
+  }
+  if(f.ocrSt==='skipped'&&f.skip)
+    h+=`<div class="pnote"><b>OCR skipped</b><br>${esc(f.skip.by)} \u00b7 ${esc(f.skip.at)} \u00b7 ${esc(f.skip.rs)}</div>`;
   if(f.src==='system')
     h+=f.ao==='external'
       ? `<div class="pnote info"><b>System archived \u00b7 External return</b></div>`
@@ -1678,6 +1736,57 @@ function wrongFile(no){
      <button class="ant-btn ant-btn-primary" data-repl="${esc(d.no)}">Try again</button>`);
 }
 
+/* ═══════ NO OCR RESULT ═══════
+   Retry is the cheap answer, so it is offered first. Skip is the escape hatch:
+   what is skipped is the reading, never the checking - the rules for the type
+   move to Manual Check and are concluded by eye. */
+const SKIPR={
+ 'Puspakom B7':[{id:'P71',nm:'Puspakom inspection validity',d:'Inspection date must be within 6 months of the disbursement date'},
+   {id:'P72',nm:'Chassis no. matches the VOC',d:'Read the chassis number on the report against the VOC'}],
+ 'Insurance Cover Note':[{id:'I33',nm:'Sum insured sufficiency',d:'Sum insured must cover max(OTR \u00d7 0.8, loan + interest)'},
+   {id:'I34',nm:'Policy period covers the tenure',d:'Policy expiry must be later than the disbursement date'}]};
+const skipRules=ty=>SKIPR[ty]||[{id:'EB-'+ty.replace(/[^A-Za-z]/g,'').slice(0,5).toUpperCase()+'-1',
+  nm:ty+' completeness',d:'Conclude the rules for '+ty+' by eye against the document'}];
+const ocrState=()=>({waiting:live().filter(waiting).length,stuck:live().filter(stuck).length});
+function fireOcrState(){document.dispatchEvent(new CustomEvent('ocr:state',{detail:ocrState()}));}
+let SK=null;
+function askSkipOcr(fid){
+  const f=byId(fid); if(!f) return;
+  SK={fid,ty:f.okTy||TYPES[0]};
+  sm('Skip OCR',
+   `<div class="pnote warn"><b>${esc(f.nm)}</b><br>${OCRST[f.ocrSt][0]}${f.ocrErr?` \u00b7 ${esc(f.ocrErr)}`:''}</div>
+    <label class="dlab">Document Type</label>
+    <select class="ant-select" id="skTy" style="width:100%">
+      ${TYPES.map(t=>`<option ${t===SK.ty?'selected':''}>${esc(t)}</option>`).join('')}</select>
+    <label class="dlab">Reason</label>
+    <textarea class="ant-input" id="skRs" style="width:100%;min-height:64px" placeholder="Why OCR is being skipped"></textarea>
+    <div class="skip-note">The document goes to Manual Check. No fields are extracted from it.</div>`,
+   `<button class="ant-btn" data-cl="1">Cancel</button>
+    <button class="ant-btn ant-btn-primary" data-doskip="1">Skip OCR</button>`);
+}
+function doSkip(){
+  const f=byId(SK.fid), ty=$('skTy').value, rs=($('skRs').value||'').trim();
+  if(!rs){msg('A reason is required');return;}
+  f.ocrSt='skipped'; f.ch='manual'; f.cls=1; f.ty=ty; f.ocrErr='';
+  f.desc='OCR skipped by CRA';
+  f.skip={by:'crediosadmin',at:new Date().toTimeString().slice(0,5),rs};
+  skipRules(ty).forEach(r=>{ if(!MC.rules.some(x=>x.id===r.id&&x.file===f.nm))
+    MC.rules.push(Object.assign({},r,{file:f.nm,pg:1,routed:'skip'})); });
+  smClose(); render(); if(S.dt===f.id) renderDt(); fireOcrState();
+  msg(`OCR skipped \u00b7 ${f.nm} moved to Manual Check`);
+}
+function retryOcr(fid){
+  const f=byId(fid); if(!f) return;
+  f.ocrSt='running'; render(); if(S.dt===f.id) renderDt(); fireOcrState();
+  msg('OCR retry sent');
+  setTimeout(()=>{
+    if(f.retryOk){ f.ocrSt='done'; f.cls=1; f.ty=f.okTy; f.cat=f.okCat||f.cat; f.ocrErr=''; }
+    else { f.ocrSt='timeout'; f.tries=(f.tries||0)+1; f.ocrErr='No result after a second attempt'; }
+    render(); if(S.dt===f.id) renderDt(); fireOcrState();
+    msg(f.retryOk?`OCR returned \u00b7 ${f.nm} read as ${f.ty}`:`OCR still not returned \u00b7 ${f.nm}`);
+  },1400);
+}
+
 /* ═══════ SUB-MODAL / MESSAGE ═══════ */
 function sm(t,b,f){$('smTitle').textContent=t;$('smBody').innerHTML=b;
   $('smFoot').innerHTML=f||'<button class="ant-btn" data-cl="1">Close</button>';$('subMask').classList.remove('hidden');}
@@ -1781,6 +1890,8 @@ document.addEventListener('click',e=>{
   if(t.dataset.ocpick){S.oc=t.dataset.ocpick;drawReplace();return;}
   if(t.dataset.allfiles){S.focus=null;S.tab='fl';render();
     msg('Showing every document on the case');return;}
+  if(t.dataset.ocr){t.dataset.ocr==='skip'?askSkipOcr(t.dataset.f):retryOcr(t.dataset.f);return;}
+  if(t.dataset.doskip){doSkip();return;}
   if(t.dataset.repl){askReplace(t.dataset.repl);return;}
   if(t.dataset.donew){uploadNew(t.dataset.donew);return;}
   if(t.dataset.dorepl){replaceDoc(t.dataset.dorepl);return;}
@@ -1810,6 +1921,9 @@ document.addEventListener('click',e=>{
     if(a==='toCRA'){S.cs='recheck';S.role='cra';render();
       msg('Case returned to CRA \u00b7 verify and close the defects in the Workbench');return;}
     if(a==='reset'){S.fType=S.fStatus='';render();return;}
+    if(a==='unread'){S.subj='all';S.tab='fl';S.fType='';
+      S.fStatus=live().some(stuck)?'stuck':'wait';render();
+      msg('Filtered to the files with no OCR result');return;}
     if(a==='refresh'){msg('Refreshed');return;}
     if(a==='del'){askDelete([...S.sel]);return;}
     if(a==='dl'){msg(`${n} file(s) downloaded`);return;}

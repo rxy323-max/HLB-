@@ -136,6 +136,7 @@ tbody tr:hover td{background:var(--alt)}
 .batchbar{display:flex;align-items:center;gap:12px;padding:9px 12px;margin-top:12px;background:var(--warn-bg);
   border:1px solid var(--warn-line);border-radius:var(--r-md);font-size:12.5px;color:var(--warn)}
 .batchbar button{margin-left:auto}
+.batchbar.bad{background:var(--err-bg);border-color:var(--err-line);color:var(--err)}
 /* one card per document: the unit a defect is made on */
 .dcard{border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:10px;overflow:hidden}
 .dcard.ok{opacity:.86}
@@ -525,6 +526,9 @@ const S={scn:'manual',stpSwitch:1,noGtee:0,open:{vsum:1,def:1,chk:0},expand:0,dl
   // been revalidated end to end. replaced lists what came back; showAll unfolds
   // the rules the focused view keeps out of the way.
   round:1,replaced:[],showAll:0,
+  /* Files the engine has not returned a result for. Without this the summary can
+     read "all rules passed" over documents nobody has read. */
+  unread:{waiting:1,stuck:2},
   /* Two desks, one workbench. Sales and CRA read the same defect ledger - that is
      the point of it - so they run the same code rather than two lookalike screens
      that can drift apart. What differs is what each desk may do: CRA concludes
@@ -544,7 +548,7 @@ function reset(scn){
   FIELDS=F0.map(f=>Object.assign({},f));
   CHECK=CK0.map(c=>Object.assign({},c,{on:0}));
   DEFECTS=[];S.sync={sel:{}};S.route=null;S.busy=0;S.pullAt='';S.dseq=0;S.expand=0;
-  S.round=1;S.replaced=[];S.showAll=0;
+  S.round=1;S.replaced=[];S.showAll=0;S.unread={waiting:1,stuck:2};
   S.noGtee = scn==='stp'?1:0;
   /* One defect CRA raised by hand, carried from the start: no rule, no document.
      It is the line that never touches OCR, and Sales answers it by uploading
@@ -766,14 +770,21 @@ function vsumBody(){
   const fl=rFail(),pd=rPend(),ok=rulesOK(),ul=unlinked().length;
   const kpi=(v,k,cls,sub)=>`<div class="kp"><div class="v ${cls||''}">${v}</div>
     <div class="k">${k}${sub?`<span class="ks">${sub}</span>`:''}</div></div>`;
-  const st=ok?'All rules passed':(fl.length?`${fl.length} rule(s) not passed`:`${pd.length} re-extracting`);
+  const un=S.unread.waiting+S.unread.stuck;
+  // "All rules passed" is not true while a document in the case was never read
+  const st=ok&&un?`${un} file(s) have no OCR result`
+    :(ok?'All rules passed':(fl.length?`${fl.length} rule(s) not passed`:`${pd.length} re-extracting`));
   return `<div class="vs-top">
-      <span><div class="st ${ok?'ok':(fl.length?'warn':'wait')}">${st}</div>
+      <span><div class="st ${ok&&un?'warn':(ok?'ok':(fl.length?'warn':'wait'))}">${st}</div>
         <div class="sd">Rule opinions archived at ${S.archAt} in File Center${S.pullAt?` · Last refresh ${S.pullAt}`:''}</div></span>
       <span class="r">
         <button class="btn btn-sm" data-act="refresh" ${S.busy?'disabled':''}>${S.busy?'Refreshing…':I('refresh')+' Refresh Rules'}</button>
         <button class="btn btn-sm btn-pri" data-link="fc">Open File Center</button></span>
     </div>
+    ${un?`<div class="batchbar${S.unread.stuck?' bad':''}">
+      <span>${un} file(s) have no OCR result${S.unread.stuck?` \u00b7 ${S.unread.stuck} not returned by the engine`:''}${
+        S.unread.waiting?` \u00b7 ${S.unread.waiting} still running`:''}</span>
+      <button class="btn btn-sm" data-link="fc">Open File Center</button></div>`:''}
     <div class="kpis">
       ${kpi(`${ckMandOn()}/${ckMand().length}`,'Mandatory Docs',ckMandOn()>=ckMand().length?'ok':'err')}
       ${kpi(UPLOADED,'Uploaded Files')}
@@ -1471,6 +1482,7 @@ window.addEventListener('message',e=>{
     S.open.def=1; render();
     toast(`Defect #${d.uploaded.defect} answered · ${d.uploaded.file} uploaded without AI`);
   }
+  if(d.ocr){ S.unread={waiting:d.ocr.waiting|0,stuck:d.ocr.stuck|0}; S.open.vsum=1; render(); }
   if(d.revalidated){
     applyRound2([d.revalidated.file]);
     failFiles().forEach(fn=>{ mkDefect(fn,'System')||updDefect(fn); });

@@ -69,6 +69,11 @@ button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit
   document.addEventListener('case:uploaded', function(e){
     parent.postMessage({ uploaded: e.detail }, '*');
   });
+  /* Which documents the engine has not returned. The Workbench cannot derive this
+     - it does not hold the files - so the File Center tells it. */
+  document.addEventListener('ocr:state', function(e){
+    parent.postMessage({ ocr: e.detail }, '*');
+  });
   // marks which prototype this frame is, so the host can address it
   parent.postMessage({ hello: HERE }, '*');
   window.addEventListener('message', function(e){
@@ -189,6 +194,7 @@ html,body{height:100%%;margin:0;background:#0d1424}
     if (d.defect) { relay('wb', { defect: d.defect }); return; }
     if (d.revalidated) { relay('wb', { revalidated: d.revalidated }); return; }
     if (d.uploaded) { relay('wb', { uploaded: d.uploaded }); return; }
+    if (d.ocr) { relay('wb', { ocr: d.ocr }); return; }
     /* A desk opened the File Center on a defect. Remember the door so Back returns
        through it, and hand the view across rather than letting the File Center
        guess who is looking. */
