@@ -137,6 +137,7 @@ tbody tr:hover td{background:var(--alt)}
   border:1px solid var(--warn-line);border-radius:var(--r-md);font-size:12.5px;color:var(--warn)}
 .batchbar button{margin-left:auto}
 .batchbar.bad{background:var(--err-bg);border-color:var(--err-line);color:var(--err)}
+.batchbar.top{margin-top:0;margin-bottom:14px}
 /* one card per document: the unit a defect is made on */
 .dcard{border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:10px;overflow:hidden}
 .dcard.ok{opacity:.86}
@@ -289,19 +290,6 @@ tbody tr:hover td{background:var(--alt)}
 .dfull{grid-column:1/-1}
 
 /* File Center rule modal */
-.fcx .mh{background:#f2f7ff;border-radius:10px 10px 0 0}
-.fcb{font-family:var(--mono);font-size:10px;letter-spacing:.06em;background:var(--primary);color:#fff;
-  padding:2px 7px;border-radius:3px;margin-right:10px;vertical-align:middle;font-weight:400}
-.opt{display:flex;gap:11px;align-items:flex-start;border:1px solid #d6d9de;border-radius:var(--r-md);
-  padding:13px 15px;cursor:pointer;background:#fff;margin-bottom:10px}
-.opt:hover{border-color:var(--primary)}
-.opt.on{border-color:var(--primary);background:var(--primary-bg)}
-.opt .rb{width:16px;height:16px;border:1px solid #c9ced6;border-radius:50%;flex:none;margin-top:2px;display:flex;align-items:center;justify-content:center}
-.opt.on .rb{border-color:var(--primary)}
-.opt.on .rb::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--primary)}
-.opt .on2{font-size:14px;font-weight:500;color:var(--ink)}
-.sub2{display:flex;flex-direction:column;gap:8px;margin:10px 0 0 27px;padding-left:13px;border-left:2px solid var(--line)}
-.sub2 label{display:flex;gap:9px;align-items:center;font-size:13px;color:var(--ink-2);cursor:pointer}
 .pre{background:var(--alt);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;font-size:13px;margin-bottom:10px}
 .pre .lb{font-size:10.5px;font-family:var(--mono);color:var(--ink-3);letter-spacing:.06em;display:block;margin-bottom:3px}
 
@@ -603,7 +591,6 @@ const rPass=()=>RULES.filter(r=>r.pass).length;
 const rPend=()=>RULES.filter(r=>!r.pass&&r.st==='pending');
 const rFail=()=>RULES.filter(r=>!r.pass&&r.st!=='pending');
 const rSettled=()=>rTotal()-rPend().length;
-const usedJust=()=>RULES.filter(r=>r.act==='just').length;
 const rulesOK=()=>rFail().length===0&&rPend().length===0;
 /* The defect is anchored to the document, not to the rule. One document with five
    failing rules is one defect carrying five types - which is what CRA already does
@@ -773,7 +760,7 @@ function vsumBody(){
   const un=S.unread.waiting+S.unread.stuck;
   // "All rules passed" is not true while a document in the case was never read
   const st=ok&&un?`${un} file(s) have no OCR result`
-    :(ok?'All rules passed':(fl.length?`${fl.length} rule(s) not passed`:`${pd.length} re-extracting`));
+    :(ok?'All rules passed':(fl.length?`${fl.length} rule(s) failed`:`${pd.length} re-extracting`));
   return `<div class="vs-top">
       <span><div class="st ${ok&&un?'warn':(ok?'ok':(fl.length?'warn':'wait'))}">${st}</div>
         <div class="sd">Rule opinions archived at ${S.archAt} in File Center${S.pullAt?` · Last refresh ${S.pullAt}`:''}</div></span>
@@ -781,10 +768,9 @@ function vsumBody(){
         <button class="btn btn-sm" data-act="refresh" ${S.busy?'disabled':''}>${S.busy?'Refreshing…':I('refresh')+' Refresh Rules'}</button>
         <button class="btn btn-sm btn-pri" data-link="fc">Open File Center</button></span>
     </div>
-    ${un?`<div class="batchbar${S.unread.stuck?' bad':''}">
+    ${un?`<div class="batchbar top${S.unread.stuck?' bad':''}">
       <span>${un} file(s) have no OCR result${S.unread.stuck?` \u00b7 ${S.unread.stuck} not returned by the engine`:''}${
-        S.unread.waiting?` \u00b7 ${S.unread.waiting} still running`:''}</span>
-      <button class="btn btn-sm" data-link="fc">Open File Center</button></div>`:''}
+        S.unread.waiting?` \u00b7 ${S.unread.waiting} still running`:''}</span></div>`:''}
     <div class="kpis">
       ${kpi(`${ckMandOn()}/${ckMand().length}`,'Mandatory Docs',ckMandOn()>=ckMand().length?'ok':'err')}
       ${kpi(UPLOADED,'Uploaded Files')}
@@ -797,19 +783,17 @@ function vsumBody(){
     ${S.expand?`<div style="margin-top:14px">${ruleDetail(fl,pd,ul)}</div>`:''}`;
 }
 
-// One rule row. Defect state is read from the document the rule sits on, because
-// that is where the defect hangs - several rules on one file share one row's worth.
+/* One rule, one state. The defect is made on the document above, so the row does
+   not carry a second action or a second way of saying the same thing. */
 function rrow(r){
-  const p=r.st==='pending', d=defForFile(defTarget(r));
-  const covered=d&&(d.rules||[]).includes(r.id);
+  const p=r.st==='pending';
   return `<div class="rrow"><span class="n"><b class="mono">${r.id}</b> ${esc(r.nm)}
       ${r.chg?`<span class="tag ${r.chg==='cleared'?'tag-ok':(r.chg==='cross'?'tag-warn':'tag-err')}"
         style="margin-left:6px;font-size:10px">${CHGLB[r.chg]}</span>`:''}
       <span class="s">${esc(r.file)}${r.xfile?` + ${esc(r.xfile)}`:''}${r.issue?' · '+esc(r.issue):''}</span></span>
     <span class="r">
-      <span class="tag ${r.pass?'tag-ok':(p?'tag-blue':'tag-err')}">${r.pass?'Passed':(p?'In progress':'Not passed')}</span>
-      ${r.pass||p||!covered?'':`<span class="tag tag-warn mono">on defect #${d.no}</span>`}
-      <button class="btn btn-sm" data-fix="${r.id}" ${p||r.pass?'disabled':''}>Handle rule</button></span></div>`;
+      <span class="tag ${r.pass?'tag-ok':(p?'tag-blue':'tag-err')}">${r.pass?'Passed':(p?'In progress':'Failed')}</span>
+    </span></div>`;
 }
 
 /* Round 1 lists what is not passed. Round 2 cannot: revalidation reruns all 25 rules,
@@ -831,16 +815,16 @@ function docCard(fn,rs,lb){
   const out=rs.filter(r=>!r.pass&&r.st!=='pending').length;
   const moved=rs.filter(r=>r.chg==='cross').length;
   const act=out
-    ? (d?`<span class="tag tag-warn mono">Defect #${d.no}</span>
+    ? (d?`<span class="tag tag-warn">Defect logged</span>
           <button class="btn btn-sm" data-mkdef="${esc(fn)}">Update</button>
           <button class="btn btn-sm" data-go="def">View</button>`
        :`<button class="btn btn-sm btn-pri" data-mkdef="${esc(fn)}">Create Defect</button>`)
-    : (d?`<span class="tag tag-warn mono">Defect #${d.no}</span>`
+    : (d?`<span class="tag tag-warn">Defect logged</span>`
        :`<span class="tag tag-ok">Nothing outstanding</span>`);
   return `<div class="dcard ${out?'':'ok'}">
     <div class="dcard-h"><span class="dc-n">${I('file')}${esc(fn)}</span>
       ${lb?`<span class="dc-lb">${esc(lb)}</span>`:''}
-      <span class="dc-s">${out?`${out} rule(s) not passed`:'no rule outstanding'}${
+      <span class="dc-s">${out?`${out} rule(s) failed`:'no rule outstanding'}${
         rs.length>out?` \u00b7 ${rs.length-out} other rule(s) here`:''}${
         moved?` \u00b7 ${moved} moved`:''}</span>
       <span class="dc-a">${act}</span></div>
@@ -851,7 +835,7 @@ function ruleDetail(fl,pd,ul){
   if(S.round===1)
     return (open.length?byDoc(open).map(([fn,rs])=>docCard(fn,rs)).join('')
                        :`<div class="muted">All ${rTotal()} rules passed.</div>`)
-      +(ul>1?`<div class="batchbar"><span>${ul} rule(s) not passed across ${unlinkedFiles().length} document(s) with no defect record</span>
+      +(ul>1?`<div class="batchbar"><span>${ul} rule(s) failed across ${unlinkedFiles().length} document(s) with no defect record</span>
         <button class="btn btn-sm" data-act="defall">Create All (${unlinkedFiles().length} document(s))</button></div>`:'');
 
   const foc=RULES.filter(inFocus), rest=RULES.filter(r=>!inFocus(r));
@@ -868,7 +852,7 @@ function ruleDetail(fl,pd,ul){
     ${docs.map(([fn,g])=>docCard(fn,g,g.some(r=>r.chg)
       ?'Moved this round'
       :'On a replaced document')).join('')}
-    ${ul?`<div class="batchbar"><span>${ul} rule(s) not passed without a defect record</span>
+    ${ul?`<div class="batchbar"><span>${ul} rule(s) failed without a defect record</span>
       <button class="btn btn-sm" data-act="defall">Sync (${unlinkedFiles().length} document(s))</button></div>`:''}
     <div class="batchbar"><span>${rest.length} rule(s) unchanged this round</span>
       <button class="btn btn-sm" data-act="showall">${S.showAll?'Hide':'Show'}</button></div>
@@ -1187,54 +1171,6 @@ function doAdd(){
   toast('Defect #'+S.dseq+' created (Source: User) · Sales uploads to the file list, not through OCR');
 }
 
-/* File Center rule handling */
-function openFix(id){
-  const r=RULES.find(x=>x.id===id); if(!r) return;
-  S.dlg={id,pick:null,who:'self',note:'',bad:0};
-  openM('fcx','<span class="fcb">FILE CENTER</span>Rule Handling'); drawFix();
-}
-function drawFix(){
-  const d=S.dlg,r=RULES.find(x=>x.id===d.id);
-  $('modal').className='modal fcx';
-  $('mB').innerHTML=`<div class="pre"><span class="lb">RULE</span><b class="mono">${r.id}</b> ${esc(r.nm)}
-      <div class="muted" style="margin-top:3px">${esc(r.file)}</div></div>
-    ${r.issue?`<div class="pre"><span class="lb">REASON</span>${esc(r.issue)}</div>`:''}
-    <div class="opt ${d.pick==='amend'?'on':''}" data-pick="amend"><span class="rb"></span>
-      <span><span class="on2">Amend the OCR result</span>
-        ${d.pick==='amend'?`<div class="sub2">
-          <div class="dfield"><label>Corrected value <span class="req">*</span></label>
-          <input class="fin" id="mAmend" value="${esc(d.note)}" placeholder="Enter the value read from the document"></div>
-        </div>`:''}</span></div>
-    <div class="opt ${d.pick==='file'?'on':''}" data-pick="file"><span class="rb"></span>
-      <span><span class="on2">Replace document</span>
-        ${d.pick==='file'?`<div class="sub2">
-          <label><input type="radio" name="who" ${d.who==='self'?'checked':''} data-who="self"><span>CRA replaces it now</span></label>
-          <label><input type="radio" name="who" ${d.who==='sales'?'checked':''} data-who="sales"><span>Return to Sales to replace</span></label>
-        </div>`:''}</span></div>
-    <div class="opt ${d.pick==='just'?'on':''}" data-pick="just"><span class="rb"></span>
-      <span><span class="on2">Justification</span></span></div>
-    ${(d.pick==='just'||(d.pick==='file'&&d.who==='sales'))
-      ? `<div class="dfield" style="margin-top:12px"><label>${d.pick==='just'?'Justification reason':'Note to Sales'} <span class="req">*</span></label>
-         <textarea class="dta" id="mNote" style="min-height:80px;border-color:${d.bad?'var(--err)':'#d6d9de'}">${esc(d.note)}</textarea></div>`:''}`;
-  $('mF').innerHTML=`<button class="btn" data-act="mx">Cancel</button>
-    <button class="btn btn-pri" ${d.pick?'':'disabled'} data-act="dofix">Confirm</button>`;
-}
-function doFix(){
-  const d=S.dlg,r=RULES.find(x=>x.id===d.id);
-  const ta=$('mNote'); if(ta)d.note=ta.value.trim();
-  const am=$('mAmend'); if(am)d.note=am.value.trim();
-  const needsNote = d.pick==='just' || d.pick==='amend' || (d.pick==='file'&&d.who==='sales');
-  if(needsNote&&!d.note){d.bad=1;drawFix();toast(d.pick==='amend'?'Enter the corrected value':'A note is required');return;}
-  // FSD 3.9.5 - all three methods count as rectification; the rule becomes Passed.
-  if(d.pick==='amend'){r.pass=1;r.act='amend';toast('Value amended — rule re-evaluated as passed');}
-  else if(d.pick==='just'){r.pass=1;r.act='just';toast('Justified — rule marked as passed');}
-  else{r.st='pending';r.act='file';
-    toast(d.who==='self'?'Document replaced — re-extraction in progress':'Returned to Sales for replacement');}
-  closeM();render();
-  if(r.pass&&DEFECTS.some(x=>(x.rules||[]).includes(r.id)&&x.src==='System'))
-    setTimeout(()=>toast('Its document defect can now be refreshed via Sync System Defects'),1500);
-}
-
 /* Next */
 function openNext(){
   S.dlg='next';S.phase='check';S.route=null;
@@ -1265,7 +1201,7 @@ function drawNext(){
   }
   if(S.phase==='warn'){
     $('mB').innerHTML=`<div class="route warn">${I('alert')}
-      <span><div class="t">${S.blocks.length} rule(s) not passed without a defect record</div>
+      <span><div class="t">${S.blocks.length} rule(s) failed without a defect record</div>
       <div class="d">Registering them as defects does not block submission.</div></span></div>
       <div class="rsn"><div class="l">UNLINKED RULES</div>
         ${S.blocks.map(r=>`<div class="ri"><b class="mono">${r.id}</b><span>${esc(r.nm)} — ${esc(r.dc)}</span></div>`).join('')}</div>${step(1)}`;
@@ -1317,9 +1253,8 @@ document.addEventListener('change',e=>{
   }
 });
 document.addEventListener('click',e=>{
-  const t=e.target.closest('button,a,label,[data-sel],[data-gsel],[data-who],[data-pick],[data-tog],[data-aty]');
+  const t=e.target.closest('button,a,label,[data-sel],[data-gsel],[data-tog],[data-aty]');
   if(!t) return;
-  if(t.dataset.who){S.dlg.who=t.dataset.who;S.dlg.bad=0;drawFix();return;}
   if(t.dataset.sw!==undefined){S.stpSwitch=t.dataset.sw==='1';render();return;}
   if(t.dataset.scn){S.scn=t.dataset.scn;reset(t.dataset.scn);render();return;}
   /* Round 2 replays the whole loop so it can be read end to end: the first-check
@@ -1396,10 +1331,6 @@ document.addEventListener('click',e=>{
   if(t.dataset.rect){DEFECTS.find(x=>x.no===t.dataset.rect).rect=1;render();toast('Marked as rectified');return;}
   if(t.dataset.ver){DEFECTS.find(x=>x.no===t.dataset.ver).ver=1;render();toast('Verified');return;}
 
-  if(t.dataset.fix){openFix(t.dataset.fix);return;}
-  if(t.dataset.pick){S.dlg.pick=t.dataset.pick;S.dlg.bad=0;
-    const ta=$('mNote'); if(ta)S.dlg.note=ta.value; drawFix();return;}
-  if(t.dataset.act==='dofix'){doFix();return;}
 
   if(t.dataset.act==='sync'){openSync();return;}
   if(t.dataset.sel){S.sync.sel[t.dataset.sel]=!S.sync.sel[t.dataset.sel];drawSync();return;}
