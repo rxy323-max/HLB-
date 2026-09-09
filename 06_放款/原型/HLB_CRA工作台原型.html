@@ -555,7 +555,7 @@ function reset(scn){
 
 /* A defect with no rule and no document behind it. CRA judged it, typed it, and
    there is nothing for OCR to read against - so Sales answers it by uploading into
-   the file list, and the AI entry is closed on that upload. */
+   the file list, and the OCR entry is closed on that upload. */
 function seedManual(){
   DEFECTS.push({no:'9',rules:[],codes:[],cat:'OTHERS',
     types:['Supporting document missing'],file:'—',noAI:1,
@@ -901,7 +901,7 @@ function defBody(){
       ${(d.hist||[]).length?`<span class="sub-row" style="display:block">rewritten ${d.hist.length}× by revalidation</span>`:''}</td>
     <td style="font-size:12px">${bound
       ? `${esc(d.file)}<span class="sub-row" style="display:block">${isSales()?'you replace this one':'Sales replaces it in the File Center'}</span>`
-      : `<span class="muted">No document yet<span class="sub-row" style="display:block">${isSales()?'upload straight to the file list':'Sales uploads to the file list, not to AI'}</span></span>`}</td>
+      : `<span class="muted">No document yet<span class="sub-row" style="display:block">${isSales()?'upload straight to the file list':'Sales uploads to the file list, not through OCR'}</span></span>`}</td>
     <td class="mono" style="font-size:11px">${rs.length?rs.map(esc).join('<br>'):'—'}</td>
     <td class="mono" style="font-size:11px">${(d.codes||[]).length?d.codes.map(esc).join('<br>'):'—'}</td>
     <td>${d.rect?'<span class="tag tag-ok">Y</span>':'<span class="tag tag-err">N</span>'}</td>
@@ -1151,7 +1151,7 @@ function drawAdd(){
       <textarea class="dta" id="aCr" maxlength="500" placeholder="Enter CRA Remark">${esc(a.cr)}</textarea>
       <div class="dcount"><span id="aCrN">${a.cr.length}</span> / 500</div></div>
     <div class="dfield dfull"><span class="muted">This defect names no document type, so Sales
-      uploads the evidence straight to the file list — AI Scanning is not offered for it.</span></div>
+      uploads the evidence straight to the file list — the OCR Upload entry is not offered for it.</span></div>
   </div>`;
   $('mF').innerHTML=`<button class="btn" data-act="mx">Cancel</button>
     <button class="btn btn-pri" data-act="doadd">OK</button>`;
@@ -1175,7 +1175,7 @@ function doAdd(){
     sr:$('aSr').value.trim(),cr:$('aCr').value.trim(),src:'User',
     rect:S.addDef.rect?1:0,ver:S.addDef.ver?1:0,cd:'30-08-2026 09:02:31',hist:[]});
   closeM();S.open.def=1;render();
-  toast('Defect #'+S.dseq+' created (Source: User) · Sales uploads to the file list, not to AI');
+  toast('Defect #'+S.dseq+' created (Source: User) · Sales uploads to the file list, not through OCR');
 }
 
 /* File Center rule handling */

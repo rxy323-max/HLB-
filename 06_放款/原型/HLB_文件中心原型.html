@@ -141,17 +141,18 @@ button:disabled{cursor:not-allowed}
 .upload-grid--two{grid-template-columns:1fr 1fr;align-items:stretch}
 .upload-card{display:flex;flex-direction:column;border:1px solid var(--border-2);border-radius:var(--r);
   padding:11px 12px 10px;background:var(--bg)}
-.upload-card.ai{border-color:var(--primary-border);background:linear-gradient(180deg,#f5faff,#fff 62px)}
+/* Two doors, told apart by what they are called and what they do - not by one of
+   them being dressed up. The production screen is plain, so this one is too. */
+.upload-card.ai{background:var(--bg)}
 .upload-card.manual{background:var(--fill-q)}
 .ent-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;padding:1px 5px;border-radius:3px;
   border:1px solid;flex:none}
-.ent-tag.ai{color:var(--primary-active);background:var(--primary-bg);border-color:var(--primary-border)}
+.ent-tag.ai{color:var(--text-2);background:var(--fill-alter);border-color:var(--border)}
 .ent-tag.manual{color:var(--text-3);background:var(--fill-alter);border-color:var(--border)}
 .ent-note{font-size:11.5px;color:var(--text-3);margin-left:auto;text-align:right}
 .type-hint{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:9px}
 .tchip{font-size:11px;color:var(--text-2);background:var(--fill-alter);border:1px solid var(--border-2);
   border-radius:10px;padding:1px 8px;white-space:nowrap}
-.upload-card.ai .tchip{background:#fff;border-color:var(--primary-border);color:var(--primary-active)}
 .tmore{font-size:11px;color:var(--primary);background:transparent;border:0;padding:1px 4px;cursor:pointer}
 .tmore:hover{text-decoration:underline}
 .dl-grp{font-size:11px;font-family:var(--mono);letter-spacing:.07em;color:var(--text-3);
@@ -164,12 +165,12 @@ button:disabled{cursor:not-allowed}
 .upload-card .uploader-box{flex:1;min-height:92px}
 @media(max-width:820px){.upload-grid--two{grid-template-columns:1fr}}
 .upload-card-header{margin-bottom:8px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.upload-card-title{font-size:13px;color:var(--text-2)}
+.upload-card-title{font-size:13px;font-weight:600;color:var(--text)}
 .info-icon{color:var(--text-4);font-size:12px}
 .uploader-box{border:1px dashed var(--border);border-radius:var(--r);background:var(--fill-alter);padding:14px 10px;text-align:center;transition:border-color .2s;min-height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .uploader-box:hover{border-color:var(--primary)}
 .uploader-box.non-ai{border-color:var(--border);background:var(--fill-q)}
-/* The AI entry closed off: still shown, so it is clear it was considered and ruled out */
+/* The OCR entry closed off: still shown, so it is clear it was considered and ruled out */
 .upload-card.disabled{opacity:.55;background:var(--fill-q);border-color:var(--border-2)}
 .upload-card.disabled.ai{background:var(--fill-q)}
 .uploader-box.dis{border-style:dashed;background:transparent;cursor:not-allowed}
@@ -339,6 +340,20 @@ button:disabled{cursor:not-allowed}
 .alert-item .res.keep{color:var(--warning-text);background:var(--warning-bg);
   border:1px solid var(--warning-border);border-radius:var(--r-sm);
   padding:4px 8px;margin-bottom:8px;display:inline-block;font-size:11px}
+/* Once the defect exists the primary action is spent. What is left is the record of
+   it and a quiet way back in - so a blue button never turns into a different blue
+   button under the cursor. The settled line fades in once, slowly enough to read. */
+.lnk-def{border:0;background:transparent;color:var(--primary);font-family:inherit;
+  font-size:11px;padding:0;margin-left:8px;cursor:pointer;text-decoration:underline}
+.lnk-def:hover{color:var(--primary-hover)}
+.acts .lnk-def{align-self:center;margin-left:2px}
+.mc-grp .mc-done{flex:none;font-size:11px;font-weight:400;color:var(--warning-text);
+  background:var(--warning-bg);border:1px solid var(--warning-border);
+  border-radius:var(--r-sm);padding:1px 7px}
+.mc-grp .mc-done .lnk-def{margin-left:6px}
+@keyframes defsettle{from{background:var(--primary-bg);border-color:var(--primary-border)}}
+.res.keep.just,.mc-done.just{animation:defsettle 1.6s ease-out}
+@media(prefers-reduced-motion:reduce){.res.keep.just,.mc-done.just{animation:none}}
 .passall{display:flex;align-items:center;gap:10px;justify-content:space-between;
   padding:9px 11px;margin-bottom:10px;background:var(--fill-q);
   border:1px solid var(--border-2);border-radius:var(--r);font-size:12px;color:var(--text-2)}
@@ -598,7 +613,7 @@ app:[
  F({id:'a8',sj:'vehicle',nm:'CRA Form.pdf',cat:'Other Application & Vehicle',ty:'CRA Form',sz:'0.31 MB',fields:[{n:'vehicle_model',v:'Toyota Vios 1.5E',c:99}]}),
  F({id:'a9',sj:'vehicle',nm:'VSO.pdf',cat:'Other Application & Vehicle',ty:'VSO',sz:'0.28 MB',fields:[{n:'otr_price',v:'RM 128,000',c:99}]}),
  F({id:'a10',sj:'seller',nm:'Seller Invoice.pdf',cat:'Seller Documents',ty:'Seller Invoice',doc:'invoice',sz:'0.51 MB',fields:[{n:'invoice_no',v:'INV-2026-0812',c:99}]}),
- F({id:'a11',sj:'primary',nm:'Income Proof Supplement.docx',cat:'Other Documents',ty:'—',ch:'manual',cls:0,sz:'0.09 MB',desc:'Uploaded via the non-AI entry'}),
+ F({id:'a11',sj:'primary',nm:'Income Proof Supplement.docx',cat:'Other Documents',ty:'—',ch:'manual',cls:0,sz:'0.09 MB',desc:'Uploaded via the Manual Upload entry'}),
  F({id:'a12',sj:'primary',nm:'Payslip (old).pdf',cat:'Applicant Income',ty:'Payslip',doc:'statement',sz:'0.95 MB',
    del:{by:'SalesOfficer1',at:'18/08/26 09:12',rs:'Customer resubmitted the latest month'}})
 ],
@@ -650,7 +665,7 @@ dis:[
    del:{by:'CRA · v_kangyi',at:'19/08/26 15:02',rs:'Sales re-uploaded the renewed road tax'}}),
  F({id:'d25',sj:'primary',nm:'Company Resolution.docx',cat:'Other Documents',ty:'Company Resolution',ch:'manual',sz:'0.21 MB'}),
  F({id:'d26',sj:'vehicle',nm:'Road Tax (Manual).jpg',cat:'CRA Vehicle Related',ty:'Road Tax Disc',ch:'manual',doc:'card',sz:'0.31 MB',
-   desc:'Uploaded via the non-AI entry'}),
+   desc:'Uploaded via the Manual Upload entry'}),
  /* One upload, two file types. OCR split the scan into a subfile per type and each
     subfile carries its own rules, so each becomes its own defect and each is
     answered by its own upload - two rounds of Replace on what Sales sent as one file. */
@@ -667,7 +682,7 @@ dis:[
 /* A.11 Manual Check - case-level manual rule set.
    The left panel always shows this whole set, regardless of which file is previewed.
    Count is derived: case total minus rules handled by OCR. routed=1 marks a rule that
-   OCR would normally handle, routed to manual because the file came in via the non-AI entry. */
+   OCR would normally handle, routed to manual because the file came in via the Manual Upload entry. */
 const MC={
   // The Case has 25 expert rules in total, the same number the CRA Workbench
   // header summary reports. 19 are handled by OCR, the remaining 6 by eye.
@@ -1011,9 +1026,9 @@ function renderUpload(){
     <div class="upload-grid upload-grid--two">
       <div class="upload-card ai">
         <div class="upload-card-header">
-          <span class="ent-tag ai">AI</span>
-          <span class="upload-card-title">AI Scanning</span>
-          <span class="ent-note">Classified and extracted automatically</span></div>
+          <span class="ent-tag ai">OCR</span>
+          <span class="upload-card-title">OCR Upload</span>
+          <span class="ent-note">Read by OCR — classified and extracted</span></div>
         <div class="uploader-box"><span class="upload-icon">${I('upload')}</span>
           <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
           <div class="upload-examples">PDF, JPG, JPEG, PNG</div></div>
@@ -1026,7 +1041,8 @@ function renderUpload(){
       <div class="upload-card manual">
         <div class="upload-card-header">
           <span class="ent-tag manual">MANUAL</span>
-          <span class="upload-card-title">Non AI Scanning</span></div>
+          <span class="upload-card-title">Manual Upload</span>
+          <span class="ent-note">Not read by OCR — set the Document Type yourself</span></div>
         <div class="uploader-box non-ai"><span class="upload-icon">${I('fileText')}</span>
           <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
           <div class="upload-examples">PDF, JPG, JPEG, PNG, DOCX, XLSX</div></div>
@@ -1261,7 +1277,7 @@ function panel(f,p){
          <p class="panel-sect ${o?'err':''}">EXPERT RULES \u00b7 ${esc(f.ty)} \u00b7 ${o?o+' pending':'all reviewed'}</p>`
       : `<div class="pnote"><b>${MC.rules.length} manual rule(s) for this case</b><br>
           ${MC.caseTotal} total \u2212 ${MC.ocrHandled} handled by OCR = ${MC.rules.length}
-          (${MC.rules.filter(r=>r.routed).length} routed here from the non-AI upload entry)</div>
+          (${MC.rules.filter(r=>r.routed).length} routed here from the Manual Upload entry)</div>
          <div class="passall"><span>Reviewed every rule on this page?</span>
            <button class="ant-btn ant-btn-sm" data-passall="1" ${p.rule?'':'disabled'}>Pass All (${o})</button></div>
          <p class="panel-sect ${o?'err':''}">EXPERT RULES \u00b7 ${o?o+' pending':'all reviewed'}</p>`;
@@ -1273,20 +1289,25 @@ function panel(f,p){
       const gf=live().find(x=>x.nm===fn), gd=gf&&defForFile(gf.id);
       h+=`<div class="mc-grp ${cur?'cur':''}">${fn}<span class="mc-sp"></span>
         ${cur?'<span class="mc-cur">Previewing</span>':''}
-        ${gf&&p.rule?`<button class="ant-btn ant-btn-sm ${gd?'':'ant-btn-primary'} mc-def"
-          data-mkdef="${esc(gf.id)}">${gd?'Update Defect':'Create Defect'}</button>`:''}</div>`;
+        ${gf&&p.rule
+          ?(gd?`<span class="mc-done${JUSTDEF===gf.id?' just':''}">Defect logged${updLink(gf.id,'Update')}</span>`
+              :`<button class="ant-btn ant-btn-sm ant-btn-primary mc-def"
+                  data-mkdef="${esc(gf.id)}">Create Defect</button>`)
+          :''}</div>`;
       mcRules(f).filter(r=>r.file===fn).forEach(r=>{
         const res=MC.res[r.id], d=defForFile(f.id);
         h+=`<div class="alert-item ${res==='fail'?'machine':(res?'resolved':'eyeball')}">
           <div class="ah"><span class="rid">${r.id}</span><span class="rn">${r.nm}</span>
             ${r.routed?'<span class="routed">ROUTED</span>':''}</div><div class="rd">${r.d}</div>`;
-        if(res==='fail'&&r.def) h+=`<div class="res keep">Defect logged · result kept</div>`;
+        if(res==='fail'&&r.def)
+          h+=`<div class="res keep${JUSTDEF===f.id?' just':''}">Defect logged \u00b7 result kept</div>`;
         h+=`<div class="acts">
             <button class="ant-btn ant-btn-sm ${res==='pass'?'mc-on':''}" data-mc="pass" data-r="${r.id}" ${p.rule?'':'disabled'}>Pass</button>
             <button class="ant-btn ant-btn-sm ${res==='fail'?'mc-off':''}" data-mc="fail" data-r="${r.id}" ${p.rule?'':'disabled'}>Fail</button>
             ${p.rule?'':'<span class="ro-note">CRA concludes this</span>'}
-            ${res==='fail'&&p.rule?`<button class="ant-btn ant-btn-sm ant-btn-primary" data-mkdef="${esc(f.id)}" data-mr="${esc(r.id)}">
-              ${d?'Update Defect':'Create Defect'}</button>`:''}</div>`;
+            ${res==='fail'&&p.rule&&!r.def?`<button class="ant-btn ant-btn-sm ${d?'':'ant-btn-primary'}" data-mkdef="${esc(f.id)}" data-mr="${esc(r.id)}">
+              ${d?'Update Defect':'Create Defect'}</button>`:''}
+            ${res==='fail'&&p.rule&&r.def?updLink(f.id):''}</div>`;
         h+=`</div>`;
       });
     });
@@ -1319,15 +1340,16 @@ function panel(f,p){
       // The defect is logged and the alert stays. They answer different questions -
       // "is this document readable" and "who owes what" - so clearing one must not
       // clear the other. It is why OCR has to be able to save while an alert stands.
-      if(a.def) h+=`<div class="res keep">Defect logged \u00b7 alert kept as the evidence</div>`;
+      if(a.def) h+=`<div class="res keep${JUSTDEF===f.id?' just':''}">Defect logged \u00b7 alert kept as the evidence</div>`;
       h+=a.res?`<div class="res">&#10003; ${a.res}</div>`
         :a.k==='e'
           ?`<div class="acts"><button class="ant-btn ant-btn-sm" data-al="pass" data-i="${i}" ${p.rule?'':'disabled'}>Pass</button>
             <button class="ant-btn ant-btn-sm ant-btn-dangerous" data-al="fail" data-i="${i}" ${p.rule?'':'disabled'}>Fail</button>
-            ${a.q?'':defBtn(f,i,p)}</div>`
+            ${a.q?'':defBtn(f,i,p)}${a.def&&p.rule?updLink(f.id):''}</div>`
           :`<div class="acts">${a.q?'':defBtn(f,i,p)}
             <button class="ant-btn ant-btn-sm" data-al="just" data-i="${i}" ${p.rule?'':'disabled'}>Justification</button>
-            <button class="ant-btn ant-btn-sm" data-al="repl" data-i="${i}" ${p.rule?'':'disabled'}>Replace Document</button></div>`;
+            <button class="ant-btn ant-btn-sm" data-al="repl" data-i="${i}" ${p.rule?'':'disabled'}>Replace Document</button>
+            ${a.def&&p.rule?updLink(f.id):''}</div>`;
       h+=`</div>`;
     });
     h+=`</div></div>`;
@@ -1396,12 +1418,21 @@ function docBody(f){
    Defects are raised here, in front of the document, because this is the only place
    the evidence is. They are never read here: the File Center shows no defect list,
    no defect detail, no defect tab for CRA. One ledger, in the Workbench. */
+/* Three states, not one button with two labels. A rule the defect already covers
+   shows the record of it and nothing else - the way back in is the quiet link on
+   that record. A rule it does not cover still has something to ask for, so it keeps
+   a button; it is just no longer the primary act on the page. */
 function defBtn(f,i,p){
   if(!p.rule) return '';
+  const a=f.alerts[+i]; if(a&&a.def) return '';
   const d=defForFile(f.id);
-  return `<button class="ant-btn ant-btn-sm ant-btn-primary" data-mkdef="${esc(f.id)}" data-ai="${i}">
+  return `<button class="ant-btn ant-btn-sm ${d?'':'ant-btn-primary'}" data-mkdef="${esc(f.id)}" data-ai="${i}">
     ${d?'Update Defect':'Create Defect'}</button>`;
 }
+/* The document the defect was just raised on. Set for one redraw so the settled
+   line can fade in rather than appear between two frames, then cleared. */
+let JUSTDEF=null;
+const updLink=(fid,lb)=>`<button class="lnk-def" data-mkdef="${esc(fid)}">${lb||'Update defect'}</button>`;
 let DD=null;   // the dialog's working copy
 function openDefDlg(fid,ai){
   const f=byId(fid); if(!f) return;
@@ -1431,9 +1462,9 @@ function drawDefDlg(){
    `<div class="pnote info"><b>${esc(f.nm)}</b> · ${esc(f.ty)}<br>
       One defect per document. It carries every rule still failing on this file:
       <b>${DD.rules.length?DD.rules.map(esc).join(', '):'none — raised by judgement'}</b>.</div>
-    ${ex?`<div class="pnote warn">This document already has defect <b>#${ex.no}</b>.
+    ${ex?`<div class="pnote warn">This document already has a defect.
       Updating rewrites its type set from the latest rules and <b>appends</b> to the CRA remark —
-      nothing typed by hand is overwritten, and the defect number stays.</div>`:''}
+      nothing typed by hand is overwritten, and it stays the same defect.</div>`:''}
     <label class="dlab">Defect Category</label>
     <select class="ant-select" id="ddCat" style="width:100%">
       ${DCATS.map(c=>`<option ${c===DD.cat?'selected':''}>${esc(c)}</option>`).join('')}</select>
@@ -1472,14 +1503,14 @@ function saveDef(){
   // The alert is marked as evidenced, never as resolved.
   if(DD.man) MC.rules.forEach(r=>{if(DD.rules.includes(r.id))r.def=no;});
   else f.alerts.forEach(a=>{if(!a.res&&!a.q)a.def=no;});
-  smClose(); renderDt(); render();
+  JUSTDEF=f.id; smClose(); renderDt(); render(); JUSTDEF=null;
   /* The defect is raised here and read in the Workbench, so the two screens have to
      be looking at one ledger. In the combined build this event is what carries it
      across; standalone, nothing listens and the page behaves exactly as before. */
   document.dispatchEvent(new CustomEvent('defect:raised',{detail:{
     no,file:f.nm,cat,types:d?d.types.slice():DD.types.slice(),
     rules:DD.rules.slice(),cr:(d?d.cr:cr||f.nm),update:!!DD.ex}}));
-  msg(`Defect #${no} ${DD.ex?'updated':'created'} · alert kept · read it in the CRA Workbench`);
+  msg(`Defect ${DD.ex?'updated':'logged'} \u00b7 alert kept \u00b7 read it in the CRA Workbench`);
 }
 
 /* The four agreed outcomes of a replacement. Which one fires is a demo choice, not
@@ -1575,11 +1606,11 @@ function askReplace(no){
   S.repl=no;
   const d=DEFECTS.find(x=>x.no===no);
   // No document behind the defect means there is nothing to replace and nothing for
-  // AI to read against - that line goes straight to the file list.
+  // OCR to read against - that line goes straight to the file list.
   if(d&&!defFile(d)) drawNewUpload(); else drawReplace();
 }
 /* The Add Defect line: CRA raised it by hand, named no document and no rule, so the
-   AI entry is closed here. Classification needs a target file type to read against
+   OCR entry is closed here. Classification needs a target file type to read against
    and this defect names none. */
 function drawNewUpload(){
   const d=DEFECTS.find(x=>x.no===S.repl); if(!d) return;
@@ -1590,13 +1621,13 @@ function drawNewUpload(){
        <span class="lkn">Raised by CRA by hand — there is no earlier version to supersede</span></div>
      <div class="upload-grid upload-grid--two" style="margin-top:12px">
        <div class="upload-card ai disabled"><div class="upload-card-header">
-           <span class="ent-tag ai">AI</span><span class="upload-card-title">AI Scanning</span>
+           <span class="ent-tag ai">OCR</span><span class="upload-card-title">OCR Upload</span>
            <span class="ant-tag">Unavailable</span></div>
          <div class="uploader-box dis"><span class="upload-icon">${I('upload')}</span>
            <div class="upload-prompt">Not available for this defect</div>
-           <div class="upload-examples">This defect names no file type, so AI has nothing to read against</div></div></div>
+           <div class="upload-examples">This defect names no file type, so OCR has nothing to read against</div></div></div>
        <div class="upload-card manual"><div class="upload-card-header">
-           <span class="ent-tag manual">MANUAL</span><span class="upload-card-title">Non AI Scanning</span></div>
+           <span class="ent-tag manual">MANUAL</span><span class="upload-card-title">Manual Upload</span></div>
          <div class="uploader-box non-ai"><span class="upload-icon">${I('fileText')}</span>
            <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
            <div class="upload-examples">Lands in the file list · CRA reads it by eye</div></div></div>
@@ -1615,7 +1646,7 @@ function uploadNew(no){
     hour:'2-digit',minute:'2-digit'}).replace(',','');
   const nf=F({id:'u'+no,sj:'primary',nm:`Defect #${no} Supporting Document.pdf`,
     cat:'Other Documents',ty:'—',ch:'manual',cls:0,sz:'0.22 MB',up:at,
-    desc:'Uploaded via the non-AI entry to answer a defect'});
+    desc:'Uploaded via the Manual Upload entry to answer a defect'});
   DATA.dis.push(nf);
   d.fid=nf.id; d.st='responded';
   d.cr=(d.cr?d.cr+' | ':'')+'Document uploaded to the file list — awaiting CRA verification';
@@ -1638,12 +1669,12 @@ function drawReplace(){
        <div class="vh-r cur"><b>v${f.ver+1}</b><span>your upload \u00b7 the old file stays in the list either way</span></div></div>
      <div class="upload-grid upload-grid--two" style="margin-top:12px">
        <div class="upload-card ai"><div class="upload-card-header">
-           <span class="ent-tag ai">AI</span><span class="upload-card-title">AI Scanning</span></div>
+           <span class="ent-tag ai">OCR</span><span class="upload-card-title">OCR Upload</span></div>
          <div class="uploader-box"><span class="upload-icon">${I('upload')}</span>
            <div class="upload-prompt">Drag &amp; drop <b>${esc(f.nm)}</b>, or <span class="browse-link">browse</span></div>
            <div class="upload-examples">Read as <b>${esc(f.ty)}</b> only</div></div></div>
        <div class="upload-card manual"><div class="upload-card-header">
-           <span class="ent-tag manual">MANUAL</span><span class="upload-card-title">Non AI Scanning</span></div>
+           <span class="ent-tag manual">MANUAL</span><span class="upload-card-title">Manual Upload</span></div>
          <div class="uploader-box non-ai"><span class="upload-icon">${I('fileText')}</span>
            <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
            <div class="upload-examples">Goes to Manual Check</div></div></div>
@@ -1667,7 +1698,7 @@ function drawReplace(){
 function wrongFile(no){
   const d=DEFECTS.find(x=>x.no===no), f=d&&defFile(d); if(!f) return;
   smClose();
-  sm('AI Scanning \u00b7 returned others',
+  sm('OCR Upload \u00b7 returned others',
     `<div class="pnote warn"><b>Classified as others \u2014 nothing extracted.</b><br>
       The upload was read against <b>${esc(f.ty)}</b>, the type this defect names, and it did not match.
       When classification conflicts with the target type, AI stops rather than guessing.</div>
@@ -1728,7 +1759,7 @@ function docListBody(q){
   const k=(q||'').trim().toLowerCase();
   const hit=n=>!k||n.toLowerCase().includes(k);
   const row=(n,ocr)=>`<div class="dl-row"><span class="nm">${esc(n)}</span>
-    <span class="ant-tag ${ocr?'ant-tag-blue':''}">${ocr?'AI Scanning':'Non AI Scanning'}</span></div>`;
+    <span class="ant-tag ${ocr?'ant-tag-blue':''}">${ocr?'OCR':'Manual'}</span></div>`;
   let h='',n=0;
   DOCLIST.forEach(([g,items])=>{
     const f=items.filter(hit); if(!f.length)return; n+=f.length;
@@ -1739,12 +1770,12 @@ function docListBody(q){
     h+=`<div class="dl-grp">${esc(g)}</div>`+f.map(x=>row(x,0)).join('');
   });
   return n?h:`<div class="dl-none">No document type matches “${esc(q)}”.<br>
-    Anything outside the OCR File List goes to <b>Non AI Scanning</b>.</div>`;
+    Anything outside the OCR File List goes to <b>Manual Upload</b>.</div>`;
 }
 function openDocList(){
   sm('Where does this document go?',
     `<input class="ant-input" id="dlq" style="width:100%" placeholder="Search a document type, e.g. payslip">
-     <div class="description-text" style="margin:8px 0 4px">${OCR_COUNT} types are read automatically by AI Scanning. Everything else goes to Non AI Scanning.</div>
+     <div class="description-text" style="margin:8px 0 4px">${OCR_COUNT} types are read automatically through the OCR Upload entry. Everything else goes to Manual Upload.</div>
      <div id="dlBody">${docListBody('')}</div>`,
     `<button class="ant-btn ant-btn-primary" data-cl="1">Close</button>`);
   const q=$('dlq'); if(q){q.focus();}
