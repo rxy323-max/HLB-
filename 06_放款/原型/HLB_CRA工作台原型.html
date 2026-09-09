@@ -831,7 +831,7 @@ function docCard(fn,rs,lb){
       ${lb?`<span class="dc-lb">${esc(lb)}</span>`:''}
       <span class="dc-s">${out?`${out} rule(s) not passed`:'no rule outstanding'}${
         rs.length>out?` \u00b7 ${rs.length-out} other rule(s) here`:''}${
-        moved?` \u00b7 ${moved} moved because a document it reads was replaced`:''}</span>
+        moved?` \u00b7 ${moved} moved`:''}</span>
       <span class="dc-a">${act}</span></div>
     <div class="dcard-b">${rs.map(rrow).join('')}</div></div>`;
 }
@@ -853,11 +853,10 @@ function ruleDetail(fl,pd,ul){
   return `<div class="pre" style="margin-bottom:12px"><span class="lb">REVALIDATION</span>
       All <b>${rTotal()}</b> rules were rerun after ${S.replaced.length} document(s) came back.
       <b>${foc.length}</b> need reading; the other <b>${rest.length}</b> keep their earlier conclusion.
-      ${cross.length?`<div style="color:var(--err);margin-top:4px">${cross.length} rule(s) moved on a document nobody replaced —
-        they read a replaced document too.</div>`:''}</div>
+      ${cross.length?`<div style="color:var(--err);margin-top:4px">${cross.length} rule(s) moved on a document nobody replaced.</div>`:''}</div>
     ${docs.map(([fn,g])=>docCard(fn,g,g.some(r=>r.chg)
       ?'Moved this round'
-      :'On a replaced document \u00b7 unchanged, worth re-reading')).join('')}
+      :'On a replaced document')).join('')}
     ${ul?`<div class="batchbar"><span>${ul} rule(s) not passed without a defect record</span>
       <button class="btn btn-sm" data-act="defall">Sync (${unlinkedFiles().length} document(s))</button></div>`:''}
     <div class="batchbar"><span>${rest.length} rule(s) unchanged this round</span>
@@ -915,8 +914,7 @@ function defBody(){
     <td class="mono" style="font-size:11px">${d.ver?esc(d.vd||'09-07-2026 16:41:06'):'<span class="muted">—</span>'}</td>
     <td class="act-col">${defAction(d,bound)}</td></tr>`;}).join('')}
   </tbody></table></div>
-  <div class="scrollnote">Scroll sideways for the rectification and verification
-    columns — the action stays pinned on the right.</div>`;
+  <div class="scrollnote">Scroll sideways for more columns.</div>`;
 }
 /* The one column that differs by desk. CRA closes the defect; Sales answers it,
    and the only answer is a document - so the action is the way into the File
@@ -1150,8 +1148,8 @@ function drawAdd(){
     <div class="dfield dfull"><label>CRA Remark</label>
       <textarea class="dta" id="aCr" maxlength="500" placeholder="Enter CRA Remark">${esc(a.cr)}</textarea>
       <div class="dcount"><span id="aCrN">${a.cr.length}</span> / 500</div></div>
-    <div class="dfield dfull"><span class="muted">This defect names no document type, so Sales
-      uploads the evidence straight to the file list — the OCR Upload entry is not offered for it.</span></div>
+    <div class="dfield dfull"><span class="muted">No document type \u2014 Sales uploads the evidence
+      straight to the file list.</span></div>
   </div>`;
   $('mF').innerHTML=`<button class="btn" data-act="mx">Cancel</button>
     <button class="btn btn-pri" data-act="doadd">OK</button>`;
@@ -1257,7 +1255,7 @@ function drawNext(){
   if(S.phase==='warn'){
     $('mB').innerHTML=`<div class="route warn">${I('alert')}
       <span><div class="t">${S.blocks.length} rule(s) not passed without a defect record</div>
-      <div class="d">Registering them as defects is your call — this check does not block submission.</div></span></div>
+      <div class="d">Registering them as defects does not block submission.</div></span></div>
       <div class="rsn"><div class="l">UNLINKED RULES</div>
         ${S.blocks.map(r=>`<div class="ri"><b class="mono">${r.id}</b><span>${esc(r.nm)} — ${esc(r.dc)}</span></div>`).join('')}</div>${step(1)}`;
     $('mF').innerHTML=`<button class="btn" data-act="backfix">Go back</button>

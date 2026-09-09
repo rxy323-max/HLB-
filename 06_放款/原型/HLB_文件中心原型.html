@@ -253,18 +253,14 @@ button:disabled{cursor:not-allowed}
 .rgrp-h{display:flex;align-items:center;gap:8px;padding:8px 11px;font-size:12px;font-weight:600;
   letter-spacing:.04em;border-bottom:1px solid var(--border-2)}
 .rgrp-t{color:var(--text)}
-.rgrp-tag{font-weight:400;font-size:10px;letter-spacing:.02em;border:1px solid;border-radius:2px;padding:0 5px}
 .rgrp-n{margin-left:auto;font-weight:400;font-size:11px;font-family:var(--mono);color:var(--text-3)}
 .rgrp-n.err{color:var(--error-text)}
-.rgrp-n2{padding:7px 11px;font-size:11.5px;line-height:1.55;color:var(--text-3);border-bottom:1px solid var(--border-2)}
 .rgrp-b{padding:10px 11px 2px}
 .rgrp.expert{border-color:var(--error-border)}
 .rgrp.expert .rgrp-h{background:var(--error-bg)}
-.rgrp.expert .rgrp-tag{border-color:var(--error-border);color:var(--error-text);background:#fff}
 .rgrp.qc{background:var(--fill-q)}
 .rgrp.qc .rgrp-h{background:var(--fill-alter);color:var(--text-2)}
 .rgrp.qc .rgrp-t{color:var(--text-2)}
-.rgrp.qc .rgrp-tag{border-color:var(--border);color:var(--text-3)}
 .rgrp.qc .alert-item{background:#fff;border-left-color:var(--border)}
 .rgrp.qc .alert-item .rid{background:var(--fill-alter);color:var(--text-3)}
 .rgrp.qc .alert-item .rn{color:var(--text-2);font-weight:500}
@@ -1087,7 +1083,7 @@ function renderFilter(){
         ${f?'<button class="ant-btn" data-allfiles="1">Show the whole case</button>':''}</span>`;
     return;
   }
-  if(S.subj==='deleted'){ $('filterBar').innerHTML=`<span class="foot-note">Deleted files are kept as records only. They cannot be previewed or restored.</span>`; return; }
+  if(S.subj==='deleted'){ $('filterBar').innerHTML=`<span class="foot-note">Record only \u2014 cannot be previewed or restored.</span>`; return; }
   const p=P(),n=S.sel.size;
   const types=[...new Set(live().filter(f=>inTab(f,S.tab)).map(f=>f.ty))].filter(t=>t!=='—');
   const sts=[['pending','Pending Classification'],['issue','Pending Action'],['done','Passed'],['skip','No Validation']];
@@ -1252,10 +1248,10 @@ function panel(f,p){
   }
   if(f.src==='system')
     h+=f.ao==='external'
-      ? `<div class="pnote info"><b>System archived \u00b7 External return</b><br>Returned from e-acceptance / biometric devices. Signature completeness and version are validated. Cannot be deleted.</div>`
-      : `<div class="pnote ok"><b>System archived \u00b7 System-generated</b><br>Generated from a template. Rule validation is skipped. Cannot be deleted.</div>`;
+      ? `<div class="pnote info"><b>System archived \u00b7 External return</b></div>`
+      : `<div class="pnote ok"><b>System archived \u00b7 System-generated</b></div>`;
   if(!f.cls){
-    if(f.low) h+=`<div class="pnote warn"><b>Low overall confidence \u00b7 file type may not match</b><br>Confirm the classification first \u2014 it determines which field template is applied.</div>`;
+    if(f.low) h+=`<div class="pnote warn"><b>Low overall confidence \u00b7 file type may not match</b><br>Confirm the classification first.</div>`;
     h+=`<div class="classify-box">
       <label>Category</label><select class="ant-select">${CATS(S.stage).map(c=>`<option ${c===f.cat?'selected':''}>${c}</option>`).join('')}</select>
       <label>File Type</label><select class="ant-select" id="clsTy">${TYPES.map(t=>`<option ${t===f.ty?'selected':''}>${t}</option>`).join('')}</select>
@@ -1271,13 +1267,9 @@ function panel(f,p){
   if(f.cls&&f.ch==='manual'){
     const scoped=viaDefect(f), o=mcRules(f).filter(r=>!MC.res[r.id]).length;
     h+=scoped
-      ? `<div class="pnote info"><b>Scoped to ${esc(f.ty)}</b><br>
-          Only the rules for the file type this defect names. Rules already concluded on other
-          documents are not repeated here \u2014 the Case-wide rerun is reported in the Workbench.</div>
+      ? `<div class="pnote info"><b>Scoped to ${esc(f.ty)}</b></div>
          <p class="panel-sect ${o?'err':''}">EXPERT RULES \u00b7 ${esc(f.ty)} \u00b7 ${o?o+' pending':'all reviewed'}</p>`
-      : `<div class="pnote"><b>${MC.rules.length} manual rule(s) for this case</b><br>
-          ${MC.caseTotal} total \u2212 ${MC.ocrHandled} handled by OCR = ${MC.rules.length}
-          (${MC.rules.filter(r=>r.routed).length} routed here from the Manual Upload entry)</div>
+      : `<div class="pnote"><b>${MC.rules.length} manual rule(s) for this case</b></div>
          <div class="passall"><span>Reviewed every rule on this page?</span>
            <button class="ant-btn ant-btn-sm" data-passall="1" ${p.rule?'':'disabled'}>Pass All (${o})</button></div>
          <p class="panel-sect ${o?'err':''}">EXPERT RULES \u00b7 ${o?o+' pending':'all reviewed'}</p>`;
@@ -1300,7 +1292,7 @@ function panel(f,p){
           <div class="ah"><span class="rid">${r.id}</span><span class="rn">${r.nm}</span>
             ${r.routed?'<span class="routed">ROUTED</span>':''}</div><div class="rd">${r.d}</div>`;
         if(res==='fail'&&r.def)
-          h+=`<div class="res keep${JUSTDEF===f.id?' just':''}">Defect logged \u00b7 result kept</div>`;
+          h+=`<div class="res keep${JUSTDEF===f.id?' just':''}">Defect logged</div>`;
         h+=`<div class="acts">
             <button class="ant-btn ant-btn-sm ${res==='pass'?'mc-on':''}" data-mc="pass" data-r="${r.id}" ${p.rule?'':'disabled'}>Pass</button>
             <button class="ant-btn ant-btn-sm ${res==='fail'?'mc-off':''}" data-mc="fail" data-r="${r.id}" ${p.rule?'':'disabled'}>Fail</button>
@@ -1317,22 +1309,14 @@ function panel(f,p){
        defect. OCR's self-checks say whether the document could be read; expert rules
        say whether the case is in order. Splitting them here is what stops a read
        problem from being sent to Sales as a document problem. */
-    const grps=[
-      {q:0,t:'EXPERT RULES',
-       tag:'Raises a defect',
-       n:'What the case owes. A failure here is Sales\u2019s to answer, so this is the only class a defect is made of.'},
-      {q:1,t:'OCR SELF-CHECK',
-       tag:'No defect',
-       n:'How the document scanned. The engine reporting on its own read \u2014 CRA settles it here and nothing is sent back to Sales.'}];
+    const grps=[{q:0,t:'EXPERT RULES'},{q:1,t:'OCR SELF-CHECK'}];
     grps.forEach(g=>{
     const idx=f.alerts.map((a,i)=>i).filter(i=>!!f.alerts[i].q===!!g.q);
     if(!idx.length) return;
     const o=idx.filter(i=>!f.alerts[i].res).length;
     h+=`<div class="rgrp ${g.q?'qc':'expert'}">
       <div class="rgrp-h"><span class="rgrp-t">${g.t}</span>
-        <span class="rgrp-tag">${g.tag}</span>
         <span class="rgrp-n ${o&&!g.q?'err':''}">${o?o+' pending':'all handled'}</span></div>
-      <div class="rgrp-n2">${g.n}</div>
       <div class="rgrp-b">`;
     idx.forEach(i=>{
       const a=f.alerts[i];
@@ -1340,7 +1324,7 @@ function panel(f,p){
       // The defect is logged and the alert stays. They answer different questions -
       // "is this document readable" and "who owes what" - so clearing one must not
       // clear the other. It is why OCR has to be able to save while an alert stands.
-      if(a.def) h+=`<div class="res keep${JUSTDEF===f.id?' just':''}">Defect logged \u00b7 alert kept as the evidence</div>`;
+      if(a.def) h+=`<div class="res keep${JUSTDEF===f.id?' just':''}">Defect logged</div>`;
       h+=a.res?`<div class="res">&#10003; ${a.res}</div>`
         :a.k==='e'
           ?`<div class="acts"><button class="ant-btn ant-btn-sm" data-al="pass" data-i="${i}" ${p.rule?'':'disabled'}>Pass</button>
@@ -1460,11 +1444,8 @@ function drawDefDlg(){
   const f=byId(DD.fid), ex=DD.ex&&DEFECTS.find(d=>d.no===DD.ex);
   sm(ex?'Update Defect':'Create Defect',
    `<div class="pnote info"><b>${esc(f.nm)}</b> · ${esc(f.ty)}<br>
-      One defect per document. It carries every rule still failing on this file:
-      <b>${DD.rules.length?DD.rules.map(esc).join(', '):'none — raised by judgement'}</b>.</div>
-    ${ex?`<div class="pnote warn">This document already has a defect.
-      Updating rewrites its type set from the latest rules and <b>appends</b> to the CRA remark —
-      nothing typed by hand is overwritten, and it stays the same defect.</div>`:''}
+      Rules still failing on this file: <b>${DD.rules.length?DD.rules.map(esc).join(', '):'none'}</b>.</div>
+    ${ex?`<div class="pnote warn">This document already has a defect. Updating appends to the CRA remark.</div>`:''}
     <label class="dlab">Defect Category</label>
     <select class="ant-select" id="ddCat" style="width:100%">
       ${DCATS.map(c=>`<option ${c===DD.cat?'selected':''}>${esc(c)}</option>`).join('')}</select>
@@ -1479,8 +1460,7 @@ function drawDefDlg(){
     </div>
     <label class="dlab">CRA Remark</label>
     <textarea class="ant-input" id="ddCr" style="width:100%;min-height:64px">${esc(DD.cr)}</textarea>
-    <div class="description-text" style="margin-top:8px">
-      The alert stays on this file after the defect is saved. Defect details are read in the CRA Workbench.</div>`,
+    <div class="description-text" style="margin-top:8px">Defect details are read in the CRA Workbench.</div>`,
    `<button class="ant-btn" data-cl="1">Cancel</button>
     <button class="ant-btn ant-btn-primary" data-dodef="1">${ex?'Update Defect':'Create Defect'}</button>`);
   if(DD.pick){const el=document.querySelector('.msel-p');
@@ -1618,23 +1598,19 @@ function drawNewUpload(){
     `<div class="pnote info">Defect <b>#${esc(d.no)}</b> · ${esc(defTypes(d))}<br>${esc(d.cr)}</div>
      <div class="lockrow"><span class="lk">Document</span>
        <select class="ant-select" disabled><option>Not linked to any document</option></select>
-       <span class="lkn">Raised by CRA by hand — there is no earlier version to supersede</span></div>
+       <span class="lkn">Raised by CRA by hand</span></div>
      <div class="upload-grid upload-grid--two" style="margin-top:12px">
        <div class="upload-card ai disabled"><div class="upload-card-header">
            <span class="ent-tag ai">OCR</span><span class="upload-card-title">OCR Upload</span>
            <span class="ant-tag">Unavailable</span></div>
          <div class="uploader-box dis"><span class="upload-icon">${I('upload')}</span>
-           <div class="upload-prompt">Not available for this defect</div>
-           <div class="upload-examples">This defect names no file type, so OCR has nothing to read against</div></div></div>
+           <div class="upload-prompt">Not available for this defect</div></div></div>
        <div class="upload-card manual"><div class="upload-card-header">
            <span class="ent-tag manual">MANUAL</span><span class="upload-card-title">Manual Upload</span></div>
          <div class="uploader-box non-ai"><span class="upload-icon">${I('fileText')}</span>
            <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
-           <div class="upload-examples">Lands in the file list · CRA reads it by eye</div></div></div>
-     </div>
-     <div class="description-text" style="margin-top:8px">
-       The document arrives with no rule attached. CRA verifies the defect in the
-       Workbench after looking at it — no rule is rerun, because none was ever broken.</div>`,
+           <div class="upload-examples">Lands in the file list</div></div></div>
+     </div>`,
     `<button class="ant-btn" data-cl="1">Cancel</button>
      <button class="ant-btn ant-btn-primary" data-donew="${esc(d.no)}">Simulate Upload</button>`);
 }
@@ -1660,13 +1636,12 @@ function drawReplace(){
     `<div class="pnote info">Defect <b>#${esc(d.no)}</b> \u00b7 ${esc(defTypes(d))}<br>${esc(d.cr)}</div>
      <div class="lockrow"><span class="lk">File Type</span>
        <select class="ant-select" disabled><option>${esc(f.ty)}</option></select>
-       <span class="lkn">Fixed by the defect \u2014 you are replacing this document, not adding one</span></div>
+       <span class="lkn">Fixed by the defect</span></div>
      ${f.pf?`<div class="pnote warn"><b>${esc(f.nm)}</b> is one of the file types OCR split out of
-       <b>${esc(f.pf)}</b>. Each split file carries its own rules and its own defect, so this upload
-       answers this one only \u2014 the other half is replaced separately.</div>`:''}
+       <b>${esc(f.pf)}</b>. This upload answers this one only.</div>`:''}
      <div class="vh"><div class="vh-h">Version chain</div>
-       <div class="vh-r"><b>v${f.ver}</b><span>${esc(f.up)} \u00b7 current \u2014 will be superseded, not modified</span></div>
-       <div class="vh-r cur"><b>v${f.ver+1}</b><span>your upload \u00b7 the old file stays in the list either way</span></div></div>
+       <div class="vh-r"><b>v${f.ver}</b><span>${esc(f.up)} \u00b7 current</span></div>
+       <div class="vh-r cur"><b>v${f.ver+1}</b><span>your upload</span></div></div>
      <div class="upload-grid upload-grid--two" style="margin-top:12px">
        <div class="upload-card ai"><div class="upload-card-header">
            <span class="ent-tag ai">OCR</span><span class="upload-card-title">OCR Upload</span></div>
@@ -1679,16 +1654,12 @@ function drawReplace(){
            <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
            <div class="upload-examples">Goes to Manual Check</div></div></div>
      </div>
-     <div class="description-text" style="margin-top:8px">
-       If AI reads a different document type than <b>${esc(f.ty)}</b>, it returns
-       <b>others</b> and extracts nothing \u2014 swap the file rather than expecting a fix.</div>
      <div class="ocpick">
        <span class="ocp-h">Simulated result of the re-check</span>
        <div class="ocp-row">${['a','b','c','d'].map(k=>
          `<button class="ocp ${S.oc===k?'on':''}" data-ocpick="${k}">${esc(OUTCOMES[k].nm)}</button>`).join('')}</div>
        <div class="ocp-d">${esc(OUTCOMES[S.oc].d)}</div>
-       <div class="ocp-n">In production the rules decide this. It sits here so all four
-         agreed outcomes can be walked through.</div>
+       <div class="ocp-n">Demo control \u2014 in production the rules decide this.</div>
      </div>`,
     `<button class="ant-btn" data-cl="1">Cancel</button>
      <button class="ant-btn" data-wrongf="${esc(d.no)}">Simulate Wrong File</button>
@@ -1700,11 +1671,9 @@ function wrongFile(no){
   smClose();
   sm('OCR Upload \u00b7 returned others',
     `<div class="pnote warn"><b>Classified as others \u2014 nothing extracted.</b><br>
-      The upload was read against <b>${esc(f.ty)}</b>, the type this defect names, and it did not match.
-      When classification conflicts with the target type, AI stops rather than guessing.</div>
-     <div class="pnote info">Nothing changed: <b>${esc(f.nm)}</b> is still at v${f.ver},
-      defect #${esc(d.no)} is still open, and the file you sent sits in the file list as <b>others</b>.
-      Swap it for the right document and upload again.</div>`,
+      The upload was read against <b>${esc(f.ty)}</b> and did not match.</div>
+     <div class="pnote info">Nothing changed: <b>${esc(f.nm)}</b> is still at v${f.ver} and
+      defect #${esc(d.no)} is still open. Upload the right document again.</div>`,
     `<button class="ant-btn" data-cl="1">Close</button>
      <button class="ant-btn ant-btn-primary" data-repl="${esc(d.no)}">Try again</button>`);
 }
@@ -1727,10 +1696,9 @@ function askDelete(ids){
   const rules=fs.reduce((n,f)=>n+f.alerts.length+MC.rules.filter(r=>r.file===f.nm).length,0);
   const defs=fs.map(f=>defForFile(f.id)).filter(Boolean);
   sm('Delete Files',
-    `<div class="pnote info"><b>${fs.length}</b> file(s) will be deleted.<br><br>Deleted files move to <b>Deleted</b> in the left rail, keeping the deleter, timestamp and reason. They are kept as records only and <b>cannot be restored</b>.</div>
+    `<div class="pnote info"><b>${fs.length}</b> file(s) will be deleted.<br><br>They move to <b>Deleted</b> in the left rail with the deleter, timestamp and reason, and <b>cannot be restored</b>.</div>
      <div class="pnote warn"><b>Deleted on both sides.</b><br>
-       ${subs} OCR subfile(s) and ${rules} rule conclusion(s) are removed with the file, so nothing
-       is left pointing at a document that no longer exists.
+       ${subs} OCR subfile(s) and ${rules} rule conclusion(s) are removed with the file.
        ${defs.length?`<br><b>Defect ${defs.map(d=>'#'+d.no).join(', ')}</b> ${defs.length>1?'lose':'loses'} the document
          ${defs.length>1?'they name':'it names'} — reopen ${defs.length>1?'them':'it'} against the replacement.`:''}</div>
      <label style="font-size:12px;color:var(--text-2)">Reason (optional)</label>
@@ -1746,7 +1714,7 @@ function submitRules(){
   if(!t.open){ msg(`Rule results submitted \u00b7 ${t.done}/${t.all} concluded`); return; }
   sm('Submit Rule Results',
     `<div class="pnote warn"><b>${t.open} rule(s) are still open.</b><br>
-       Submitting now records the conclusions you have made so far. The open rules stay open and can be concluded later.</div>
+       Submitting records the conclusions made so far; the open rules stay open.</div>
      <table><tr><th>Track</th><th>Concluded</th><th>Open</th><th>Where</th></tr>
       <tr><td>OCR</td><td>${t.od} / ${t.ot}</td><td>${t.ot-t.od}</td><td>Cross-Validation Results</td></tr>
       <tr><td>Manual</td><td>${t.md} / ${t.mt}</td><td>${t.mt-t.md}</td><td>Manual Check Results</td></tr></table>`,
@@ -1782,8 +1750,7 @@ function openDocList(){
 }
 function missing(){
   sm('Completeness Check',
-    `<div class="pnote info">The required list is computed at submission, once the vehicle type, guarantor arrangement and identity type are known.</div>
-     <div class="miss-group"><div class="gh"><span>Main Applicant</span><span style="color:var(--error-text)">2 missing</span></div>
+    `     <div class="miss-group"><div class="gh"><span>Main Applicant</span><span style="color:var(--error-text)">2 missing</span></div>
        <ul><li>Driving License \u2014 not uploaded</li><li>MyKad \u2014 uploaded but <b>type not confirmed</b> (mykad.png still pending in File List)</li></ul></div>
      <div class="miss-group"><div class="gh"><span>Guarantor 1</span><span style="color:var(--error-text)">1 missing</span></div>
        <ul><li>Guarantor EPF Statement \u2014 not uploaded</li></ul></div>`,
@@ -1893,11 +1860,8 @@ document.addEventListener('click',e=>{
     if(cd&&cd.st!=='closed'){
       sm('OCR Data Sync',
         `<div class="pnote warn"><b>Nothing is written back for this document.</b><br>
-          <b>${esc(cf.nm)}</b> still has defect <b>#${esc(cd.no)}</b> open
-          (${esc(defTypes(cd))}). Write-back takes the latest version of a document
-          <b>and</b> requires it to be defect-free — so these fields stay as they are.</div>
-         <div class="pnote info">The previous version is <b>not</b> used as a fallback.
-          Close defect #${esc(cd.no)} in the Workbench and the fields become available again.</div>`,
+          <b>${esc(cf.nm)}</b> still has defect <b>#${esc(cd.no)}</b> open (${esc(defTypes(cd))}).</div>
+         <div class="pnote info">Close defect #${esc(cd.no)} in the Workbench and the fields become available again.</div>`,
         `<button class="ant-btn ant-btn-primary" data-cl="1">Close</button>`);
       return;
     }
