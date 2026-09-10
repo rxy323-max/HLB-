@@ -1642,9 +1642,6 @@ button:disabled{cursor:not-allowed}
 .ant-tag-green{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
 .ant-tag-gold{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}
 .ant-tag-red{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text)}
-.ant-badge-count{display:inline-block;min-width:20px;height:20px;padding:0 6px;font-size:12px;line-height:20px;text-align:center;border-radius:10px;background:var(--fill-alter);color:var(--text-2);font-variant-numeric:tabular-nums}
-.ant-badge-count.on{background:var(--primary-bg);color:var(--primary-active)}
-.ant-badge-count.err{background:var(--error);color:#fff}
 
 /* ═══ demo bar ═══ */
 .demo{position:fixed;top:0;left:0;right:0;z-index:1200;background:#001529;color:rgba(255,255,255,.85);padding:7px 16px;display:flex;gap:12px;align-items:center;font-size:12px;flex-wrap:wrap;height:36px}
@@ -2572,8 +2569,6 @@ function rows(){
   if(S.fStatus) r=r.filter(f=>statusKey(f)===S.fStatus);
   return r;
 }
-const tabCount=t=>live().filter(f=>inTab(f,t)&&(S.subj==='all'||S.subj==='deleted'||f.sj===S.subj)).length;
-const tabIssues=t=>live().filter(f=>inTab(f,t)&&(S.subj==='all'||S.subj==='deleted'||f.sj===S.subj)&&expOpen(f)>0).length;
 
 /* ═══════ RENDER ═══════ */
 const $=i=>document.getElementById(i);
@@ -2697,13 +2692,8 @@ function renderTabs(){
     if(tabs3()) T.push({k:'mc',n:'Manual Check Results'});
   }
   if(!T.some(t=>t.k===S.tab)) S.tab='fl';
-  $('listTabs').innerHTML=T.map(t=>{
-    let n=0,err=0;
-    if(t.k!=='fl'){ n=tabCount(t.k); err=tabIssues(t.k); }
-    else n=tabCount(t.k);
-    return `<button data-tab="${t.k}" aria-pressed="${S.tab===t.k}">${t.n}
-      <span class="ant-badge-count ${err?'err':(S.tab===t.k?'on':'')}">${err||n}</span></button>`;
-  }).join('');
+  $('listTabs').innerHTML=T.map(t=>
+    `<button data-tab="${t.k}" aria-pressed="${S.tab===t.k}">${t.n}</button>`).join('');
 }
 
 function renderFilter(){
