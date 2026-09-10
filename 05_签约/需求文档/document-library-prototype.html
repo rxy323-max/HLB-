@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document Library — HLB LOAD$</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;background:#f0f2f5;color:#202124;display:flex;height:100vh;overflow:hidden;}
+
+/* ── Sidebar ── */
+.sidebar{width:56px;background:#1e2235;display:flex;flex-direction:column;align-items:center;padding:12px 0;flex-shrink:0;}
+.sb-logo{width:36px;height:36px;background:#e63946;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
+.sb-logo svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;}
+.sb-nav{display:flex;flex-direction:column;gap:4px;width:100%;}
+.sb-icon{height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#8892a4;border-left:3px solid transparent;}
+.sb-icon:hover,.sb-icon.active{color:#fff;background:#2d3348;border-left-color:#4f8ef7;}
+.sb-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.sb-bottom{margin-top:auto;}
+.sb-avatar{width:32px;height:32px;border-radius:50%;background:#4a5568;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:8px auto;}
+
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.topbar{background:#fff;border-bottom:1px solid #e8eaed;height:48px;display:flex;align-items:center;padding:0 20px;gap:8px;flex-shrink:0;}
+.bc-sep{color:#9aa0a6;}
+.bc-tag{background:#e8f0fe;color:#1967d2;padding:4px 10px;border-radius:4px;font-size:13px;font-weight:500;}
+.bc-cur{font-size:13px;color:#3c4043;}
+.content{flex:1;overflow-y:auto;padding:16px 20px;}
+
+/* ── Contract Header ── */
+.contract-hdr{background:#fff;border:1px solid #e8eaed;border-radius:8px;padding:14px 18px;margin-bottom:16px;}
+.contract-title-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.contract-num{font-size:16px;font-weight:700;}
+.info-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px 0;}
+.ig-item label{font-size:11px;color:#80868b;display:block;margin-bottom:2px;}
+.ig-item span{font-size:13px;font-weight:500;}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:500;}
+.bd-gray{background:#e8eaed;color:#5f6368;}
+.bd-green{background:#e6f4ea;color:#137333;}
+.bd-blue{background:#e8f0fe;color:#1967d2;}
+.bd-orange{background:#fef7e0;color:#b45309;}
+.bd-red{background:#fce8e6;color:#c5221f;}
+.bd-purple{background:#f3e8fd;color:#7c3aed;}
+
+/* ── Party Tabs ── */
+.party-tabs-wrap{background:#fff;border:1px solid #e8eaed;border-radius:8px 8px 0 0;border-bottom:none;overflow:hidden;}
+.party-tabs{display:flex;align-items:stretch;padding:0 16px;gap:0;border-bottom:1px solid #e8eaed;}
+.party-tab{padding:11px 16px;font-size:13px;cursor:pointer;color:#5f6368;border-bottom:3px solid transparent;display:flex;align-items:center;gap:8px;white-space:nowrap;transition:.15s;user-select:none;}
+.party-tab.active{color:#1967d2;border-bottom-color:#1967d2;font-weight:600;}
+.party-tab:hover:not(.active){color:#3c4043;background:#f8f9fa;}
+.party-tab-role{font-size:10px;color:#9aa0a6;font-weight:400;}
+.party-tab.active .party-tab-role{color:#4f86e8;}
+.party-tab-meta{display:flex;flex-direction:column;gap:1px;}
+
+/* ── Toolbar ── */
+.dl-toolbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #f1f3f4;background:#fff;flex-wrap:wrap;}
+.dl-toolbar-left{display:flex;align-items:center;gap:10px;flex:1;}
+.dl-toolbar-right{display:flex;align-items:center;gap:8px;}
+.lnk{color:#1967d2;font-size:12px;cursor:pointer;background:none;border:none;padding:0;font-family:inherit;}
+.lnk:hover{text-decoration:underline;}
+.lnk.disabled{color:#9aa0a6;pointer-events:none;}
+.party-info-strip{font-size:12px;color:#5f6368;}
+.party-info-strip strong{color:#202124;font-weight:600;}
+
+/* ── Document Table ── */
+.doc-table-wrap{background:#fff;border:1px solid #e8eaed;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+thead{background:#f8f9fa;}
+th{text-align:left;font-size:11px;font-weight:700;color:#5f6368;padding:9px 14px;border-bottom:2px solid #e8eaed;white-space:nowrap;letter-spacing:.3px;text-transform:uppercase;}
+td{padding:12px 14px;border-bottom:1px solid #f1f3f4;vertical-align:middle;font-size:13px;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafbfc;}
+.act-row{display:flex;gap:6px;align-items:center;}
+
+/* doc name cell */
+.doc-name-cell{display:flex;flex-direction:column;gap:3px;}
+.doc-name{font-size:13px;font-weight:500;color:#202124;}
+.doc-type-lbl{font-size:11px;color:#9aa0a6;}
+
+/* version cell */
+.ver-cell{display:flex;align-items:center;gap:6px;}
+.ver-num{font-size:13px;font-weight:700;color:#202124;}
+.ver-date{font-size:11px;color:#9aa0a6;}
+
+/* signed cell */
+.signed-cell{display:flex;flex-direction:column;gap:3px;}
+.signed-ver{font-size:13px;font-weight:600;color:#137333;}
+.signed-meta{font-size:11px;color:#9aa0a6;}
+
+/* status col */
+.status-dot-row{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;}
+.sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sdot-active{background:#1967d2;}
+.sdot-signed{background:#137333;}
+.sdot-stale{background:#f9ab00;}
+.sdot-archived{background:#dadce0;}
+.col-status-active{color:#1967d2;}
+.col-status-signed{color:#137333;}
+.col-status-stale{color:#b45309;}
+
+/* ── Refresh badge ── */
+.refresh-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#b45309;background:#fef7e0;border:1px solid #fde68a;border-radius:10px;padding:2px 8px;cursor:pointer;white-space:nowrap;}
+.refresh-badge:hover{background:#fde68a;}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 14px;border:1px solid transparent;border-radius:6px;font-size:13px;font-weight:500;line-height:1;cursor:pointer;transition:.15s;white-space:nowrap;}
+.btn-primary{background:#1967d2;color:#fff;border-color:#1967d2;}
+.btn-primary:hover{background:#1557b0;}
+.btn-primary:disabled{background:#e8eaed;color:#9aa0a6;border-color:#e8eaed;cursor:not-allowed;}
+.btn-secondary{background:#fff;color:#3c4043;border-color:#dadce0;}
+.btn-secondary:hover{background:#f8f9fa;}
+.btn-sm{height:28px;padding:0 10px;font-size:12px;}
+.btn-ghost{background:transparent;border:none;color:#1967d2;padding:0 6px;height:auto;font-size:12px;cursor:pointer;}
+.btn-ghost:hover{text-decoration:underline;}
+.btn-icon{width:28px;height:28px;padding:0;border:1px solid #dadce0;border-radius:5px;background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#5f6368;}
+.btn-icon:hover{background:#f8f9fa;border-color:#c4c7c9;color:#1967d2;}
+.btn-icon svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ── Modals ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.18);display:flex;flex-direction:column;max-height:90vh;}
+.modal-sm{width:440px;}
+.modal-lg{width:760px;max-width:95vw;}
+.modal-hdr{padding:14px 18px;border-bottom:1px solid #e8eaed;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-hdr h3{font-size:14px;font-weight:700;}
+.modal-sub{font-size:12px;color:#9aa0a6;margin-top:2px;}
+.modal-x{width:26px;height:26px;border:none;background:#f1f3f4;border-radius:4px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:#5f6368;}
+.modal-x:hover{background:#e8eaed;}
+.modal-body{padding:16px 18px;overflow-y:auto;flex:1;}
+.modal-ftr{padding:10px 18px;border-top:1px solid #e8eaed;display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;}
+
+/* ── History Timeline ── */
+.hist-meta-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:#f8f9fa;padding:12px 14px;border-radius:6px;margin-bottom:16px;border:1px solid #e8eaed;}
+.hm-item label{font-size:11px;color:#80868b;display:block;margin-bottom:2px;}
+.hm-item span{font-size:13px;font-weight:500;}
+
+.hist-timeline{display:flex;flex-direction:column;gap:0;}
+.ht-item{display:flex;gap:0;position:relative;}
+.ht-line-col{display:flex;flex-direction:column;align-items:center;width:36px;flex-shrink:0;}
+.ht-dot{width:12px;height:12px;border-radius:50%;border:2px solid;flex-shrink:0;z-index:1;margin-top:14px;}
+.ht-dot-template{background:#e8f0fe;border-color:#1967d2;}
+.ht-dot-signed{background:#e6f4ea;border-color:#137333;}
+.ht-dot-archived{background:#f1f3f4;border-color:#dadce0;}
+.ht-vline{flex:1;width:2px;background:#e8eaed;margin-top:0;}
+.ht-item:last-child .ht-vline{display:none;}
+.ht-card{flex:1;margin-bottom:12px;border:1px solid #e8eaed;border-radius:7px;overflow:hidden;}
+.ht-card-hdr{padding:10px 14px;display:flex;align-items:center;gap:10px;background:#f8f9fa;border-bottom:1px solid #f1f3f4;}
+.ht-card-hdr-template{background:#f6f9fe;border-bottom-color:#dbe6f8;}
+.ht-card-hdr-signed{background:#f0faf3;border-bottom-color:#c6e8cf;}
+.ht-ver{font-size:13px;font-weight:700;color:#202124;}
+.ht-type-badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;}
+.ht-type-template{background:#e8f0fe;color:#1967d2;}
+.ht-type-signed-ea{background:#e6f4ea;color:#137333;}
+.ht-type-signed-manual{background:#fef7e0;color:#b45309;}
+.ht-type-archived{background:#e8eaed;color:#5f6368;}
+.ht-card-body{padding:10px 14px;font-size:12px;color:#5f6368;}
+.ht-row{display:flex;gap:20px;flex-wrap:wrap;}
+.ht-col label{font-size:11px;color:#9aa0a6;display:block;margin-bottom:2px;}
+.ht-col span{font-size:12px;font-weight:500;color:#3c4043;}
+.ht-card-ftr{padding:8px 14px;border-top:1px solid #f1f3f4;display:flex;gap:8px;}
+
+/* ── Refresh modal ── */
+.refresh-info{background:#f8f9fa;border:1px solid #e8eaed;border-radius:6px;padding:12px 14px;margin-bottom:14px;font-size:13px;}
+.refresh-info table{width:auto;}
+.refresh-info td{padding:4px 10px 4px 0;border:none;font-size:12px;}
+.refresh-info td:first-child{color:#9aa0a6;white-space:nowrap;}
+.refresh-info td:last-child{font-weight:500;color:#202124;}
+.alert-warn{background:#fef7e0;border:1px solid #fde68a;border-radius:6px;padding:10px 14px;font-size:12px;color:#b45309;display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;}
+.alert-warn svg{width:15px;height:15px;fill:none;stroke:#b45309;stroke-width:2;flex-shrink:0;margin-top:1px;}
+.alert-info{background:#f6f9fe;border:1px solid #dbe6f8;border-radius:6px;padding:10px 14px;font-size:12px;color:#174ea6;display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;}
+.alert-info svg{width:15px;height:15px;fill:none;stroke:#1967d2;stroke-width:2;flex-shrink:0;margin-top:1px;}
+
+/* refresh-all banner */
+.stale-banner{background:#fef7e0;border:1px solid #fde68a;border-radius:6px;padding:9px 14px;font-size:12px;color:#92400e;display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.stale-banner-main{flex:1;}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:80px;right:24px;background:#202124;color:#fff;font-size:13px;padding:10px 16px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:300;transition:opacity .3s;pointer-events:none;}
+.toast.hidden{opacity:0;}
+
+/* ── Dev tool ── */
+.dev-tool{position:fixed;bottom:20px;right:20px;z-index:200;}
+.dev-fab{width:40px;height:40px;border-radius:50%;background:#1e2235;color:#fff;border:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.3);}
+.dev-panel{display:none;position:absolute;bottom:50px;right:0;background:#fff;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.2);padding:12px;width:260px;border:1px solid #e8eaed;max-height:70vh;overflow-y:auto;}
+.dev-panel.open{display:block;}
+.dev-title{font-size:11px;font-weight:700;color:#9aa0a6;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase;}
+.dev-btn{display:block;width:100%;text-align:left;padding:6px 10px;border:none;border-radius:5px;background:#f8f9fa;font-size:12px;color:#3c4043;cursor:pointer;margin-bottom:3px;}
+.dev-btn:hover{background:#e8f0fe;color:#1967d2;}
+.dev-sep{height:1px;background:#e8eaed;margin:8px 0;}
+.dev-group{font-size:10px;color:#9aa0a6;font-weight:600;margin:8px 0 4px;text-transform:uppercase;letter-spacing:.4px;}
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<div class="sidebar">
+  <div class="sb-logo"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+  <div class="sb-nav">
+    <div class="sb-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+    <div class="sb-icon active"><svg viewBox="0 0 24 24"><path d="M9 12h6M9 16h6M9 8h6M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg></div>
+    <div class="sb-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+  </div>
+  <div class="sb-bottom"><div class="sb-avatar">OP</div></div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+  <div class="topbar">
+    <span class="bc-tag">Contract</span>
+    <span class="bc-sep">›</span>
+    <span class="bc-cur">KRP/HP/2026/Y0010922</span>
+    <span class="bc-sep">›</span>
+    <span class="bc-cur" style="color:#1967d2;font-weight:500;">Document Library</span>
+  </div>
+  <div class="content">
+
+    <!-- Contract Header -->
+    <div class="contract-hdr">
+      <div class="contract-title-row">
+        <span class="contract-num">KRP/HP/2026/Y0010922</span>
+        <span class="badge bd-gray" id="caseStatusBadge">Completed</span>
+        <span class="badge bd-blue" id="eaStatusBadge" style="display:none;"></span>
+      </div>
+      <div class="info-grid">
+        <div class="ig-item"><label>CP No.</label><span>375/HP/2026/Y0010922</span></div>
+        <div class="ig-item"><label>Applicant</label><span>GGBOUND</span></div>
+        <div class="ig-item"><label>No. of Guarantors</label><span id="guarantorCountVal">1</span></div>
+        <div class="ig-item"><label>Acceptance Mode</label><span id="acceptanceModeVal">E-Acceptance</span></div>
+        <div class="ig-item"><label>Amendment</label><span id="amendmentVal">—</span></div>
+      </div>
+    </div>
+
+    <!-- Stale banner (shown when any doc is stale) -->
+    <div class="stale-banner" id="staleBanner" style="display:none;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <div class="stale-banner-main"><strong id="staleCount">0</strong> document(s) are outdated — case fields have changed since the last generation.</div>
+      <button class="btn btn-sm" style="background:#fff;border:1px solid #fde68a;color:#92400e;" onclick="refreshAllStale()">Refresh All Outdated</button>
+    </div>
+
+    <!-- Party Tabs + Doc Table -->
+    <div class="party-tabs-wrap">
+      <div class="party-tabs" id="partyTabs"></div>
+    </div>
+    <div class="doc-table-wrap">
+      <!-- toolbar -->
+      <div class="dl-toolbar">
+        <div class="dl-toolbar-left">
+          <span class="party-info-strip" id="partyInfoStrip"></span>
+        </div>
+        <div class="dl-toolbar-right">
+          <button class="btn btn-secondary btn-sm" onclick="refreshAllParty()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+            Refresh All
+          </button>
+        </div>
+      </div>
+      <!-- table -->
+      <table>
+        <thead>
+          <tr>
+            <th style="width:30%">Document</th>
+            <th>Template Version</th>
+            <th>Signed Version</th>
+            <th>Status</th>
+            <th>Last Updated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="docTableBody"></tbody>
+      </table>
+    </div>
+
+  </div><!-- content -->
+</div><!-- main -->
+
+<!-- ═══ MODAL: Document History ═══ -->
+<div class="modal-overlay" id="modalHistory">
+  <div class="modal modal-lg">
+    <div class="modal-hdr">
+      <div>
+        <h3 id="histDocName">Document History</h3>
+        <div class="modal-sub" id="histPartyName"></div>
+      </div>
+      <button class="modal-x" onclick="closeModal('modalHistory')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="hist-meta-row" id="histMetaRow"></div>
+      <div style="font-size:11px;font-weight:700;color:#9aa0a6;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;">Version Timeline</div>
+      <div class="hist-timeline" id="histTimeline"></div>
+    </div>
+    <div class="modal-ftr">
+      <div style="flex:1;font-size:11px;color:#9aa0a6;">
+        <span style="display:inline-flex;align-items:center;gap:5px;margin-right:12px;"><span style="width:10px;height:10px;border-radius:50%;background:#e8f0fe;border:2px solid #1967d2;display:inline-block;"></span> System Template</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;margin-right:12px;"><span style="width:10px;height:10px;border-radius:50%;background:#e6f4ea;border:2px solid #137333;display:inline-block;"></span> Signed Copy</span>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modalHistory')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Refresh Confirm ═══ -->
+<div class="modal-overlay" id="modalRefresh">
+  <div class="modal modal-sm">
+    <div class="modal-hdr">
+      <div>
+        <h3>Refresh Document</h3>
+        <div class="modal-sub" id="refreshModalSub"></div>
+      </div>
+      <button class="modal-x" onclick="closeModal('modalRefresh')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="refresh-info" id="refreshInfo"></div>
+      <div class="alert-warn">
+        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>A new template version will be generated. <strong>The previous version is preserved in History</strong> and is not overwritten. Any existing signed copy is not affected.</span>
+      </div>
+      <div class="alert-info">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>All case fields will be re-fetched from the system at the time of generation.</span>
+      </div>
+      <div id="refreshScopeNote" style="font-size:12px;color:#5f6368;"></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modalRefresh')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmRefresh()">Generate New Version</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Refresh All Confirm ═══ -->
+<div class="modal-overlay" id="modalRefreshAll">
+  <div class="modal modal-sm">
+    <div class="modal-hdr">
+      <h3 id="refreshAllTitle">Refresh All Documents</h3>
+      <button class="modal-x" onclick="closeModal('modalRefreshAll')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="refreshAllBody"></div>
+      <div class="alert-warn">
+        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>New template versions will be generated for all documents listed. Previous versions are preserved in History.</span>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modalRefreshAll')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmRefreshAll()">Generate All</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast hidden" id="toast"></div>
+
+<!-- ═══ DEV TOOL ═══ -->
+<div class="dev-tool">
+  <div class="dev-panel" id="devPanel">
+    <div class="dev-title">Scenarios — Doc Library</div>
+
+    <div class="dev-group">Party Setup</div>
+    <button class="dev-btn" onclick="applyScenario('p-only')">Primary only (no guarantor)</button>
+    <button class="dev-btn" onclick="applyScenario('p-1g')">Primary + 1 Guarantor</button>
+    <button class="dev-btn" onclick="applyScenario('p-3g')">Primary + 3 Guarantors</button>
+    <button class="dev-btn" onclick="applyScenario('p-5g')">Primary + 5 Guarantors (max)</button>
+
+    <div class="dev-sep"></div>
+    <div class="dev-group">Document State</div>
+    <button class="dev-btn" onclick="applyScenario('fresh')">All fresh — v1 template only</button>
+    <button class="dev-btn" onclick="applyScenario('after-ea')">After E-Acceptance signing</button>
+    <button class="dev-btn" onclick="applyScenario('after-manual')">After Manual signing</button>
+    <button class="dev-btn" onclick="applyScenario('stale')">Case fields changed — docs stale</button>
+    <button class="dev-btn" onclick="applyScenario('refreshed')">After manual refresh (v2 template)</button>
+
+    <div class="dev-sep"></div>
+    <div class="dev-group">Amendment (CILT)</div>
+    <button class="dev-btn" onclick="applyScenario('amendment-pending')">Amendment pending — v2 generated</button>
+    <button class="dev-btn" onclick="applyScenario('amendment-done')">Amendment confirmed — v2 signed</button>
+
+    <div class="dev-sep"></div>
+    <div class="dev-group">Edge Cases</div>
+    <button class="dev-btn" onclick="applyScenario('used-car')">Used car — Appendix 4 included</button>
+  </div>
+  <button class="dev-fab" onclick="document.getElementById('devPanel').classList.toggle('open')" title="Scenarios">⚙</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════
+
+// Document templates per role
+const DOC_DEFS = {
+  primary:   ['Product Disclosure Sheet','HP Agreement & T&C','HP Agreement Second Schedule'],
+  guarantor: ['HP Agreement & T&C','HP Agreement Second Schedule'],
+};
+
+// All possible parties (we slice to show active ones)
+const ALL_PARTIES = [
+  {id:'p',  name:'GGBOUND',                        ic:'601223-08-2432',  role:'Primary Borrower'},
+  {id:'g1', name:'MASLIZAWATI BINTI MOHAMAD',       ic:'601212-06-5923',  role:'Guarantor 1'},
+  {id:'g2', name:'AHMAD FADZILLAH BIN RAHMAN',      ic:'780314-05-1234',  role:'Guarantor 2'},
+  {id:'g3', name:'NUR HIDAYAH BINTI ZAINUDIN',      ic:'820907-10-2345',  role:'Guarantor 3'},
+  {id:'g4', name:'MOHD RIZAL BIN OTHMAN',           ic:'760521-08-3456',  role:'Guarantor 4'},
+  {id:'g5', name:'SITI RAHMAH BINTI HUSSAIN',       ic:'850113-14-4567',  role:'Guarantor 5'},
+];
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let PARTIES = [ALL_PARTIES[0], ALL_PARTIES[1]]; // default: primary + 1G
+
+// DL: partyId → docName → { versions: [{num, type, date, method, status, note}] }
+// types: 'template' | 'signed-ea' | 'signed-manual'
+// status: 'active' | 'stale' | 'archived'
+let DL = {};
+
+let UI = {
+  activeParty: 'p',
+  refreshTarget: null,   // {partyId, docName}
+  refreshAllScope: null, // 'party' | 'stale'
+};
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+function initDL() {
+  DL = {};
+  PARTIES.forEach(function(party) {
+    DL[party.id] = {};
+    var defs = party.id === 'p' ? DOC_DEFS.primary : DOC_DEFS.guarantor;
+    defs.forEach(function(dname) {
+      DL[party.id][dname] = {
+        versions: [
+          {num:'v1', type:'template', date:'2026-05-18 22:12', method:'Auto-generated on case approval', status:'active', note:''}
+        ]
+      };
+    });
+    // Used car: Appendix 4 for primary only
+    if (party.id === 'p' && UI.usedCar) {
+      DL['p']['Appendix 4'] = {
+        versions: [{num:'v1', type:'template', date:'2026-05-18 22:12', method:'Auto-generated on case approval', status:'active', note:''}]
+      };
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════
+function render() {
+  renderPartyTabs();
+  renderDocTable(UI.activeParty);
+  updateStaleBanner();
+  updateHeader();
+}
+
+function renderPartyTabs() {
+  var el = document.getElementById('partyTabs');
+  el.innerHTML = PARTIES.map(function(p) {
+    var active = p.id === UI.activeParty ? 'active' : '';
+    var staleCount = countStale(p.id);
+    var staleTag = staleCount > 0
+      ? '<span style="background:#fef7e0;color:#b45309;font-size:10px;font-weight:700;border-radius:9px;padding:1px 7px;">'+staleCount+' stale</span>'
+      : '';
+    return '<div class="party-tab '+active+'" onclick="switchParty(\''+p.id+'\')">'
+      +'<div class="party-tab-meta">'
+      +'<span>'+p.name+(staleTag?(' '+staleTag):'')+'</span>'
+      +'<span class="party-tab-role">'+p.role+' · '+p.ic+'</span>'
+      +'</div></div>';
+  }).join('');
+}
+
+function renderDocTable(partyId) {
+  var party = PARTIES.find(function(p){ return p.id === partyId; });
+  if (!party || !DL[partyId]) return;
+
+  // party info strip
+  document.getElementById('partyInfoStrip').innerHTML =
+    '<strong>'+party.name+'</strong>'
+    +' <span style="color:#dadce0;margin:0 6px;">|</span>'
+    +party.role
+    +' <span style="color:#dadce0;margin:0 6px;">|</span>'
+    +'IC: '+party.ic;
+
+  var docs = Object.keys(DL[partyId]);
+  var rows = docs.map(function(dname) {
+    var docData = DL[partyId][dname];
+    var versions = docData.versions;
+
+    // latest template version
+    var tmplVers = versions.filter(function(v){ return v.type === 'template'; });
+    var latestTmpl = tmplVers[tmplVers.length - 1];
+
+    // latest signed version
+    var signedVers = versions.filter(function(v){ return v.type === 'signed-ea' || v.type === 'signed-manual'; });
+    var latestSigned = signedVers.length ? signedVers[signedVers.length - 1] : null;
+
+    // status
+    var isStale = latestTmpl.status === 'stale';
+    var isSigned = latestSigned !== null;
+    var statusHtml = '';
+    if (isStale) {
+      statusHtml = '<div class="status-dot-row"><span class="sdot sdot-stale"></span><span class="col-status-stale">Outdated</span></div>';
+    } else if (isSigned) {
+      statusHtml = '<div class="status-dot-row"><span class="sdot sdot-signed"></span><span class="col-status-signed">Signed</span></div>';
+    } else {
+      statusHtml = '<div class="status-dot-row"><span class="sdot sdot-active"></span><span class="col-status-active">Active Template</span></div>';
+    }
+
+    // template cell
+    var tmplCell = '<div class="ver-cell">'
+      +'<span class="ver-num">'+latestTmpl.num+'</span>'
+      +(isStale ? '<span class="refresh-badge" onclick="openRefreshModal(\''+partyId+'\',\''+encodeURI(dname)+'\')">⟳ Outdated — Refresh</span>' : '')
+      +'</div>';
+
+    // signed cell
+    var signedCell = '';
+    if (latestSigned) {
+      var typeLabel = latestSigned.type === 'signed-ea' ? 'E-Acceptance' : 'Manual';
+      signedCell = '<div class="signed-cell">'
+        +'<span class="signed-ver">'+latestSigned.num+'</span>'
+        +'<span class="signed-meta">'+typeLabel+' · '+latestSigned.date+'</span>'
+        +'</div>';
+    } else {
+      signedCell = '<span style="color:#dadce0;font-size:12px;">—</span>';
+    }
+
+    // last updated
+    var allSorted = versions.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+    var lastDate = allSorted[0].date;
+
+    // actions
+    var enc = encodeURI(dname);
+    var actions = '<div class="act-row">'
+      +'<button class="btn btn-secondary btn-sm" onclick="viewDoc(\''+partyId+'\',\''+enc+'\')">View</button>'
+      +'<button class="btn btn-secondary btn-sm" onclick="downloadDoc(\''+partyId+'\',\''+enc+'\')">Download</button>'
+      +'<button class="btn-icon" title="Version History" onclick="openHistoryModal(\''+partyId+'\',\''+enc+'\')">'
+        +'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
+      +'</button>'
+      +'<button class="btn-icon" title="Refresh document" onclick="openRefreshModal(\''+partyId+'\',\''+enc+'\')">'
+        +'<svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>'
+      +'</button>'
+      +'</div>';
+
+    return '<tr>'
+      +'<td><div class="doc-name-cell"><span class="doc-name">'+dname+'</span><span class="doc-type-lbl">HP Loan Document</span></div></td>'
+      +'<td>'+tmplCell+'</td>'
+      +'<td>'+signedCell+'</td>'
+      +'<td>'+statusHtml+'</td>'
+      +'<td style="font-size:12px;color:#5f6368;">'+lastDate+'</td>'
+      +'<td>'+actions+'</td>'
+      +'</tr>';
+  }).join('');
+
+  document.getElementById('docTableBody').innerHTML = rows;
+}
+
+function updateStaleBanner() {
+  var total = 0;
+  PARTIES.forEach(function(p) {
+    total += countStale(p.id);
+  });
+  var banner = document.getElementById('staleBanner');
+  if (total > 0) {
+    banner.style.display = 'flex';
+    document.getElementById('staleCount').textContent = total;
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function updateHeader() {
+  document.getElementById('guarantorCountVal').textContent = PARTIES.length - 1;
+}
+
+function countStale(partyId) {
+  if (!DL[partyId]) return 0;
+  var cnt = 0;
+  Object.keys(DL[partyId]).forEach(function(dname) {
+    var tmplVers = DL[partyId][dname].versions.filter(function(v){ return v.type === 'template'; });
+    if (tmplVers.length && tmplVers[tmplVers.length-1].status === 'stale') cnt++;
+  });
+  return cnt;
+}
+
+// ══════════════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════════════
+function switchParty(pid) {
+  UI.activeParty = pid;
+  render();
+}
+
+function viewDoc(partyId, encName) {
+  var dname = decodeURI(encName);
+  showToast('Opening preview: ' + dname + ' — ' + getPartyName(partyId));
+}
+
+function downloadDoc(partyId, encName) {
+  var dname = decodeURI(encName);
+  showToast('Downloading: ' + dname + ' (latest template version)');
+}
+
+// ── History modal ──
+function openHistoryModal(partyId, encName) {
+  var dname = decodeURI(encName);
+  var party = PARTIES.find(function(p){ return p.id === partyId; });
+  var docData = DL[partyId][dname];
+  var versions = docData.versions;
+
+  // Header info
+  document.getElementById('histDocName').textContent = dname;
+  document.getElementById('histPartyName').textContent = party.name + ' · ' + party.role;
+
+  var tmplVers = versions.filter(function(v){ return v.type === 'template'; });
+  var signedVers = versions.filter(function(v){ return v.type !== 'template'; });
+  document.getElementById('histMetaRow').innerHTML =
+    '<div class="hm-item"><label>Document</label><span>'+dname+'</span></div>'
+    +'<div class="hm-item"><label>Party</label><span>'+party.name+'</span></div>'
+    +'<div class="hm-item"><label>Total Versions</label><span>'+tmplVers.length+' template · '+signedVers.length+' signed</span></div>';
+
+  // Timeline: reverse chronological (newest first)
+  var sorted = versions.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+  var html = sorted.map(function(v, i) {
+    var isLast = i === sorted.length - 1;
+    var dotClass = v.type === 'template' ? 'ht-dot-template' : 'ht-dot-signed';
+    var hdrClass = v.type === 'template' ? 'ht-card-hdr-template' : 'ht-card-hdr-signed';
+    var typeLabel = '';
+    var typeLabelClass = '';
+    if (v.type === 'template') { typeLabel = 'System Template'; typeLabelClass = 'ht-type-template'; }
+    else if (v.type === 'signed-ea') { typeLabel = 'Signed — E-Acceptance'; typeLabelClass = 'ht-type-signed-ea'; }
+    else { typeLabel = 'Signed — Manual'; typeLabelClass = 'ht-type-signed-manual'; }
+
+    var statusTag = '';
+    if (v.type === 'template') {
+      if (v.status === 'active') statusTag = '<span class="badge bd-blue" style="font-size:10px;">Current</span>';
+      else if (v.status === 'stale') statusTag = '<span class="badge bd-orange" style="font-size:10px;">Outdated</span>';
+      else statusTag = '<span class="badge bd-gray" style="font-size:10px;">Superseded</span>';
+    } else {
+      statusTag = '<span class="badge bd-green" style="font-size:10px;">Archived</span>';
+    }
+
+    var isNewest = i === 0;
+    return '<div class="ht-item">'
+      +'<div class="ht-line-col"><div class="ht-dot '+dotClass+'"></div>'+(isLast?'':'<div class="ht-vline"></div>')+'</div>'
+      +'<div class="ht-card">'
+        +'<div class="ht-card-hdr '+hdrClass+'">'
+          +'<span class="ht-ver">'+v.num+'</span>'
+          +'<span class="ht-type-badge '+typeLabelClass+'">'+typeLabel+'</span>'
+          +(isNewest && v.type === 'template' ? '<span class="badge bd-blue" style="font-size:10px;margin-left:4px;">Latest Template</span>' : '')
+          +statusTag
+          +'<span style="margin-left:auto;font-size:11px;color:#9aa0a6;">'+v.date+'</span>'
+        +'</div>'
+        +'<div class="ht-card-body">'
+          +'<div class="ht-row">'
+            +'<div class="ht-col"><label>Method</label><span>'+v.method+'</span></div>'
+            +(v.note ? '<div class="ht-col"><label>Note</label><span>'+v.note+'</span></div>' : '')
+          +'</div>'
+        +'</div>'
+        +'<div class="ht-card-ftr">'
+          +'<button class="btn btn-secondary btn-sm" onclick="viewVersionDoc()">View</button>'
+          +'<button class="btn btn-secondary btn-sm" onclick="downloadVersionDoc()">Download</button>'
+        +'</div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+
+  document.getElementById('histTimeline').innerHTML = html;
+  openModal('modalHistory');
+}
+
+function viewVersionDoc() { showToast('Opening document preview...'); }
+function downloadVersionDoc() { showToast('Downloading this version...'); }
+
+// ── Refresh modal ──
+function openRefreshModal(partyId, encName) {
+  var dname = decodeURI(encName);
+  UI.refreshTarget = {partyId: partyId, docName: dname};
+
+  var party = PARTIES.find(function(p){ return p.id === partyId; });
+  var docData = DL[partyId][dname];
+  var tmplVers = docData.versions.filter(function(v){ return v.type === 'template'; });
+  var curTmpl = tmplVers[tmplVers.length-1];
+  var nextNum = 'v' + (tmplVers.length + 1);
+  var signedVers = docData.versions.filter(function(v){ return v.type !== 'template'; });
+
+  document.getElementById('refreshModalSub').textContent = dname + ' · ' + party.name;
+  document.getElementById('refreshInfo').innerHTML =
+    '<table>'
+    +'<tr><td>Party</td><td><strong>'+party.name+'</strong> ('+party.role+')</td></tr>'
+    +'<tr><td>Document</td><td><strong>'+dname+'</strong></td></tr>'
+    +'<tr><td>Current version</td><td>'+curTmpl.num+' (generated '+curTmpl.date+')</td></tr>'
+    +'<tr><td>New version</td><td><strong>'+nextNum+'</strong></td></tr>'
+    +(signedVers.length ? '<tr><td>Existing signed copy</td><td>'+signedVers[signedVers.length-1].num+' — preserved, not affected</td></tr>' : '')
+    +'</table>';
+
+  document.getElementById('refreshScopeNote').textContent =
+    'This refresh applies to ' + party.name + '\'s copy of "' + dname + '" only. To refresh all documents for this party, use "Refresh All".';
+
+  openModal('modalRefresh');
+}
+
+function confirmRefresh() {
+  if (!UI.refreshTarget) return;
+  var pid = UI.refreshTarget.partyId;
+  var dname = UI.refreshTarget.docName;
+  var docData = DL[pid][dname];
+  var tmplVers = docData.versions.filter(function(v){ return v.type === 'template'; });
+
+  // Mark previous template versions as archived
+  docData.versions.forEach(function(v) {
+    if (v.type === 'template') v.status = 'archived';
+  });
+
+  // Add new template version
+  var nextNum = 'v' + (tmplVers.length + 1);
+  var now = getNow();
+  docData.versions.push({
+    num: nextNum,
+    type: 'template',
+    date: now,
+    method: 'Manual refresh by Officer OP',
+    status: 'active',
+    note: 'Re-fetched from system API'
+  });
+
+  closeModal('modalRefresh');
+  UI.refreshTarget = null;
+  render();
+  showToast('Document refreshed — ' + nextNum + ' generated successfully');
+}
+
+// ── Refresh All (current party) ──
+function refreshAllParty() {
+  UI.refreshAllScope = 'party';
+  var party = PARTIES.find(function(p){ return p.id === UI.activeParty; });
+  var docs = Object.keys(DL[UI.activeParty]);
+  document.getElementById('refreshAllTitle').textContent = 'Refresh All — ' + party.name;
+  document.getElementById('refreshAllBody').innerHTML =
+    '<div class="alert-info" style="margin-bottom:12px;">'
+      +'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+      +'<span>Refreshing <strong>'+docs.length+' document(s)</strong> for <strong>'+party.name+'</strong> ('+party.role+'). New template versions will be generated for all.</span>'
+    +'</div>'
+    +'<ul style="font-size:12px;color:#3c4043;padding-left:18px;line-height:2;">'
+      +docs.map(function(d){ return '<li>'+d+'</li>'; }).join('')
+    +'</ul>';
+  openModal('modalRefreshAll');
+}
+
+// ── Refresh All Stale ──
+function refreshAllStale() {
+  UI.refreshAllScope = 'stale';
+  var staleList = [];
+  PARTIES.forEach(function(p) {
+    Object.keys(DL[p.id]).forEach(function(dname) {
+      var tmplVers = DL[p.id][dname].versions.filter(function(v){ return v.type === 'template'; });
+      if (tmplVers.length && tmplVers[tmplVers.length-1].status === 'stale') {
+        staleList.push({pid: p.id, pname: p.name, dname: dname});
+      }
+    });
+  });
+  document.getElementById('refreshAllTitle').textContent = 'Refresh All Outdated Documents';
+  document.getElementById('refreshAllBody').innerHTML =
+    '<div class="alert-info" style="margin-bottom:12px;">'
+      +'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+      +'<span><strong>'+staleList.length+' outdated document(s)</strong> across all parties will be refreshed.</span>'
+    +'</div>'
+    +'<table style="width:100%;font-size:12px;border-collapse:collapse;">'
+    +'<thead><tr><th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e8eaed;color:#5f6368;">Party</th><th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e8eaed;color:#5f6368;">Document</th></tr></thead>'
+    +'<tbody>'
+    +staleList.map(function(item){
+      return '<tr><td style="padding:6px 8px;border-bottom:1px solid #f1f3f4;color:#3c4043;">'+item.pname+'</td><td style="padding:6px 8px;border-bottom:1px solid #f1f3f4;color:#3c4043;">'+item.dname+'</td></tr>';
+    }).join('')
+    +'</tbody></table>';
+  openModal('modalRefreshAll');
+}
+
+function confirmRefreshAll() {
+  var now = getNow();
+  var refreshed = 0;
+
+  if (UI.refreshAllScope === 'party') {
+    Object.keys(DL[UI.activeParty]).forEach(function(dname) {
+      addTemplateVersion(UI.activeParty, dname, now);
+      refreshed++;
+    });
+  } else {
+    PARTIES.forEach(function(p) {
+      Object.keys(DL[p.id]).forEach(function(dname) {
+        var tmplVers = DL[p.id][dname].versions.filter(function(v){ return v.type === 'template'; });
+        if (tmplVers.length && tmplVers[tmplVers.length-1].status === 'stale') {
+          addTemplateVersion(p.id, dname, now);
+          refreshed++;
+        }
+      });
+    });
+  }
+
+  closeModal('modalRefreshAll');
+  render();
+  showToast(refreshed + ' document(s) refreshed successfully');
+}
+
+function addTemplateVersion(pid, dname, date) {
+  var docData = DL[pid][dname];
+  var tmplVers = docData.versions.filter(function(v){ return v.type === 'template'; });
+  docData.versions.forEach(function(v) {
+    if (v.type === 'template') v.status = 'archived';
+  });
+  var nextNum = 'v' + (tmplVers.length + 1);
+  docData.versions.push({
+    num: nextNum, type: 'template', date: date,
+    method: 'Manual refresh by Officer OP', status: 'active', note: 'Re-fetched from system API'
+  });
+}
+
+// ══════════════════════════════════════════════
+//  SCENARIOS (Dev Tool)
+// ══════════════════════════════════════════════
+function applyScenario(sc) {
+  UI.usedCar = false;
+
+  // Party setup scenarios
+  if (sc === 'p-only') {
+    PARTIES = [ALL_PARTIES[0]];
+    initDL(); render(); return;
+  }
+  if (sc === 'p-1g') {
+    PARTIES = [ALL_PARTIES[0], ALL_PARTIES[1]];
+    initDL(); render(); return;
+  }
+  if (sc === 'p-3g') {
+    PARTIES = ALL_PARTIES.slice(0,4);
+    initDL(); render(); return;
+  }
+  if (sc === 'p-5g') {
+    PARTIES = ALL_PARTIES.slice(0,6);
+    initDL(); render(); return;
+  }
+
+  // Document state scenarios (keep current party setup)
+  if (sc === 'fresh') {
+    initDL(); render(); return;
+  }
+
+  if (sc === 'after-ea') {
+    initDL();
+    PARTIES.forEach(function(p) {
+      Object.keys(DL[p.id]).forEach(function(dname) {
+        DL[p.id][dname].versions.push({
+          num:'v1', type:'signed-ea', date:'2026-05-20 16:50',
+          method:'E-Acceptance via Biometric', status:'signed',
+          note:'Signed by customer at RIB Portal'
+        });
+      });
+    });
+    render(); return;
+  }
+
+  if (sc === 'after-manual') {
+    initDL();
+    PARTIES.forEach(function(p) {
+      Object.keys(DL[p.id]).forEach(function(dname) {
+        DL[p.id][dname].versions.push({
+          num:'v1', type:'signed-manual', date:'2026-05-20 17:30',
+          method:'Manual Acceptance — Physical Signature', status:'signed',
+          note:'Uploaded to Document Centre by Officer OP'
+        });
+      });
+    });
+    render(); return;
+  }
+
+  if (sc === 'stale') {
+    initDL();
+    PARTIES.forEach(function(p) {
+      Object.keys(DL[p.id]).forEach(function(dname) {
+        var tmplVers = DL[p.id][dname].versions.filter(function(v){ return v.type === 'template'; });
+        if (tmplVers.length) tmplVers[tmplVers.length-1].status = 'stale';
+      });
+    });
+    render(); return;
+  }
+
+  if (sc === 'refreshed') {
+    initDL();
+    var now = '2026-05-19 09:45';
+    PARTIES.forEach(function(p) {
+      Object.keys(DL[p.id]).forEach(function(dname) {
+        addTemplateVersion(p.id, dname, now);
+      });
+    });
+    render(); return;
+  }
+
+  if (sc === 'amendment-pending') {
+    initDL();
+    // After EA signing
+    PARTIES.forEach(function(p) {
+      Object.keys(DL[p.id]).forEach(function(dname) {
+        DL[p.id][dname].versions.push({
+          num:'v1', type:'signed-ea', date:'2026-05-20 16:50',
+          method:'E-Acceptance via Biometric', status:'signed', note:''
+        });
+      });
+    });
+    // Amendment triggers v2 template generation
+    var amdDate = '2026-05-22 10:05';
+    PARTIES.forEach(function(p) {
+      Object.keys(DL[p.id]).forEach(function(dname) {
+        DL[p.id][dname].versions.forEach(function(v) { if(v.type==='template') v.status='archived'; });
+        DL[p.id][dname].versions.push({
+          num:'v2', type:'template', date:amdDate,
+          method:'Auto-generated on CILT amendment approval', status:'active',
+          note:'Amendment: Loan amount RM 45,000 → RM 48,000'
+        });
+      });
+    });
+    document.getElementById('amendmentVal').textContent = 'CILT Pending';
+    document.getElementById('eaStatusBadge').textContent = 'Amendment Pending';
+    document.getElementById('eaStatusBadge').style.display = 'inline-flex';
+    render(); return;
+  }
+
+  if (sc === 'amendment-done') {
+    applyScenario('amendment-pending');
+    setTimeout(function() {
+      var signDate = '2026-05-22 14:30';
+      PARTIES.forEach(function(p) {
+        Object.keys(DL[p.id]).forEach(function(dname) {
+          DL[p.id][dname].versions.push({
+            num:'v2', type:'signed-ea', date:signDate,
+            method:'E-Acceptance — e-Tracker Remote Acceptance', status:'signed',
+            note:'Customer confirmed via e-Tracker'
+          });
+        });
+      });
+      document.getElementById('amendmentVal').textContent = 'CILT Confirmed';
+      document.getElementById('eaStatusBadge').textContent = 'Amendment Confirmed';
+      render();
+    }, 0);
+    return;
+  }
+
+  if (sc === 'used-car') {
+    UI.usedCar = true;
+    initDL();
+    render();
+    showToast('Appendix 4 added for used/reconditioned vehicle');
+    return;
+  }
+}
+
+// ══════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════
+function getPartyName(pid) {
+  var p = PARTIES.find(function(x){ return x.id === pid; });
+  return p ? p.name : pid;
+}
+
+function getNow() {
+  var d = new Date();
+  var pad = function(n){ return n < 10 ? '0'+n : ''+n; };
+  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+var toastTimer = null;
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.classList.add('hidden'); }, 2800);
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// ══════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════
+initDL();
+render();
+</script>
+</body>
+</html>
