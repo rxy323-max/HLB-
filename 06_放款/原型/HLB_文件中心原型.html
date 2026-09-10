@@ -347,6 +347,12 @@ button:disabled{cursor:not-allowed}
 /* Once the defect exists the primary action is spent. What is left is the record of
    it and a quiet way back in - so a blue button never turns into a different blue
    button under the cursor. The settled line fades in once, slowly enough to read. */
+.verline{display:flex;align-items:center;gap:9px;margin-top:12px;font-size:13px;color:var(--text);cursor:pointer}
+.verline.off{color:var(--text-4);cursor:not-allowed}
+.verline .mbx{width:16px;height:16px;border:1px solid #c9ced6;border-radius:3px;display:flex;
+  align-items:center;justify-content:center;font-size:11px;background:#fff;flex:none}
+.verline .mbx.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.verline.off .mbx{background:var(--fill-q);border-style:dashed}
 .lnk-def{border:0;background:transparent;color:var(--primary);font-family:inherit;
   font-size:11px;padding:0;margin-left:8px;cursor:pointer;text-decoration:underline}
 .lnk-def:hover{color:var(--primary-hover)}
@@ -921,6 +927,16 @@ const canUpload=()=>!!P().up && S.subj!=='all' && S.subj!=='deleted' && !!curSub
 const uploadLocked=()=>P().up==='scoped';
 /* A file is being read "through a defect" once it has been replaced and its defect
    is still on the books. That is what narrows the rule panel in round 2. */
+/* A defect may be verified once the document it names has nothing failing on it:
+   every expert rule concluded, none of them failed. Passing the rules and closing
+   the defect stay two separate acts - this only says when the second one is due. */
+function canVerify(f){
+  const d=defForFile(f.id);
+  if(!d||d.st==='closed') return false;
+  return f.ch==='manual'
+    ? mcRules(f).filter(r=>r.file===f.nm).every(r=>MC.res[r.id]==='pass')
+    : f.alerts.filter(a=>!a.q).every(a=>a.res&&!/^Failed/.test(a.res));
+}
 const viaDefect=f=>!!(f&&f.ver>1&&defForFile(f.id));
 // Round 2 shows only the rules of the file type the defect names.
 const mcRules=f=>viaDefect(f)?MC.rules.filter(r=>r.file===f.nm):MC.rules;
@@ -1345,11 +1361,11 @@ function panel(f,p){
          is still one defect, and CRA can raise it here before working through them. */
       const gf=live().find(x=>x.nm===fn), gd=gf&&defForFile(gf.id);
       h+=`<div class="mc-grp ${cur?'cur':''}">${fn}<span class="mc-sp"></span>
-        ${gf&&p.rule
-          ?(gd?`<span class="mc-done${JUSTDEF===gf.id?' just':''}">Defect logged${updLink(gf.id,'Update')}</span>`
-              :`<button class="ant-btn ant-btn-sm ant-btn-primary mc-def"
-                  data-mkdef="${esc(gf.id)}">Create Defect</button>`)
-          :''}</div>`;
+        ${gf&&gd?`<span class="mc-done${JUSTDEF===gf.id?' just':''}">${
+          gd.st==='closed'?'Defect closed':'Defect logged'}</span>`:''}
+        ${gf&&p.rule&&(!gd||gd.st!=='closed')
+          ?`<button class="ant-btn ant-btn-sm ${gd?'':'ant-btn-primary'} mc-def"
+              data-mkdef="${esc(gf.id)}">Sync Defect</button>`:''}</div>`;
       mcRules(f).filter(r=>r.file===fn).forEach(r=>{
         const res=MC.res[r.id], d=defForFile(f.id);
         h+=`<div class="alert-item ${res==='fail'?'machine':(res?'resolved':'eyeball')}">
@@ -1378,9 +1394,11 @@ function panel(f,p){
     /* The defect is made on the document, so the page offers exactly one way to
        raise it however many rules it broke - here, on the expert-rule header. */
     const gd=defForFile(f.id);
-    const ctl=(g.q||!p.rule)?''
-      :(gd?`<span class="mc-done${JUSTDEF===f.id?' just':''}">Defect logged${updLink(f.id,'Update')}</span>`
-          :`<button class="ant-btn ant-btn-sm ant-btn-primary" data-mkdef="${esc(f.id)}">Create Defect</button>`);
+    const ctl=g.q?''
+      :`${gd?`<span class="mc-done${JUSTDEF===f.id?' just':''}">${
+            gd.st==='closed'?'Defect closed':'Defect logged'}</span>`:''}${
+         p.rule&&(!gd||gd.st!=='closed')
+          ?`<button class="ant-btn ant-btn-sm ${gd?'':'ant-btn-primary'}" data-mkdef="${esc(f.id)}">Sync Defect</button>`:''}`;
     h+=`<div class="rgrp ${g.q?'qc':'expert'}">
       <div class="rgrp-h"><span class="rgrp-t">${g.t}</span>
         <span class="rgrp-n ${o&&!g.q?'err':''}">${o?o+' pending':'all handled'}</span>${ctl}</div>
@@ -1470,7 +1488,6 @@ function docBody(f){
 /* The document the defect was just raised on. Set for one redraw so the settled
    line can fade in rather than appear between two frames, then cleared. */
 let JUSTDEF=null;
-const updLink=(fid,lb)=>`<button class="lnk-def" data-mkdef="${esc(fid)}">${lb||'Update defect'}</button>`;
 let DD=null;   // the dialog's working copy
 function openDefDlg(fid,ai){
   const f=byId(fid); if(!f) return;
@@ -1483,7 +1500,7 @@ function openDefDlg(fid,ai){
   const rules=open.map(a=>a.id);
   const sug=[...new Set(rules.map(r=>(RULEMAP[r]||{}).ty).filter(Boolean))];
   const a=man?open[0]:f.alerts[+ai];
-  DD={fid,man,ex:ex?ex.no:null,
+  DD={fid,man,ex:ex?ex.no:null,canVer:canVerify(f),ver:canVerify(f)?1:0,
     cat:ex?ex.cat:((RULEMAP[(a||{}).id]||{}).cat||'OTHERS'),
     types:ex?ex.types.slice():(sug.length?sug:['Wrong document uploaded']),
     rules, cr:ex?'':open.map(x=>x.d).join(' · '), pick:0};
@@ -1495,11 +1512,11 @@ function keepDef(){
   if(c)DD.cat=c.value; if(r)DD.cr=r.value;
 }
 function drawDefDlg(){
-  const f=byId(DD.fid), ex=DD.ex&&DEFECTS.find(d=>d.no===DD.ex);
-  sm(ex?'Update Defect':'Create Defect',
+  const f=byId(DD.fid), ex=DD.ex&&DEFECTS.find(d=>d.no===DD.ex), ok=DD.canVer;
+  sm('Sync Defect',
    `<div class="pnote info"><b>${esc(f.nm)}</b> · ${esc(f.ty)}<br>
       Rules still failing on this file: <b>${DD.rules.length?DD.rules.map(esc).join(', '):'none'}</b>.</div>
-    ${ex?`<div class="pnote warn">This document already has a defect. Updating appends to the CRA remark.</div>`:''}
+    ${ex?`<div class="pnote warn">This document already has a defect. Syncing appends to the CRA remark.</div>`:''}
     <label class="dlab">Defect Category</label>
     <select class="ant-select" id="ddCat" style="width:100%">
       ${DCATS.map(c=>`<option ${c===DD.cat?'selected':''}>${esc(c)}</option>`).join('')}</select>
@@ -1514,9 +1531,12 @@ function drawDefDlg(){
     </div>
     <label class="dlab">CRA Remark</label>
     <textarea class="ant-input" id="ddCr" style="width:100%;min-height:64px">${esc(DD.cr)}</textarea>
+    ${ex?`<label class="verline ${ok?'':'off'}" ${ok?'data-dver="1"':''}>
+        <span class="mbx ${DD.ver?'on':''}">${DD.ver?'\u2713':''}</span>
+        <span>Verified \u2014 close this defect</span></label>`:''}
     <div class="description-text" style="margin-top:8px">Defect details are read in the CRA Workbench.</div>`,
    `<button class="ant-btn" data-cl="1">Cancel</button>
-    <button class="ant-btn ant-btn-primary" data-dodef="1">${ex?'Update Defect':'Create Defect'}</button>`);
+    <button class="ant-btn ant-btn-primary" data-dodef="1">Save</button>`);
   if(DD.pick){const el=document.querySelector('.msel-p');
     if(el)el.scrollIntoView({block:'nearest'});}
 }
@@ -1537,6 +1557,13 @@ function saveDef(){
   // The alert is marked as evidenced, never as resolved.
   if(DD.man) MC.rules.forEach(r=>{if(DD.rules.includes(r.id))r.def=no;});
   else f.alerts.forEach(a=>{if(!a.res&&!a.q)a.def=no;});
+  /* Passing the rules is the judgement; closing the defect is the bookkeeping.
+     They stay two acts - the tick is only offered once every rule on the file has
+     been concluded and none of them failed. */
+  const ver=DD.ex&&DD.canVer&&DD.ver;
+  if(ver&&d){ d.st='closed'; d.ver=1;
+    MC.rules.forEach(r=>{if(r.def===d.no)r.def=null;});
+    f.alerts.forEach(a=>{if(a.def===d.no)a.def=null;}); }
   JUSTDEF=f.id; smClose(); renderDt(); render(); JUSTDEF=null;
   /* The defect is raised here and read in the Workbench, so the two screens have to
      be looking at one ledger. In the combined build this event is what carries it
@@ -1544,7 +1571,9 @@ function saveDef(){
   document.dispatchEvent(new CustomEvent('defect:raised',{detail:{
     no,file:f.nm,cat,types:d?d.types.slice():DD.types.slice(),
     rules:DD.rules.slice(),cr:(d?d.cr:cr||f.nm),update:!!DD.ex}}));
-  msg(`Defect ${DD.ex?'updated':'logged'} \u00b7 alert kept \u00b7 read it in the CRA Workbench`);
+  if(ver) document.dispatchEvent(new CustomEvent('defect:verified',{detail:{no,file:f.nm}}));
+  msg(ver?`Defect verified and closed \u00b7 ${f.nm}`
+        :`Defect ${DD.ex?'updated':'logged'} \u00b7 alert kept \u00b7 read it in the CRA Workbench`);
 }
 
 /* The four agreed outcomes of a replacement. Which one fires is a demo choice, not
@@ -1893,7 +1922,7 @@ document.addEventListener('change',e=>{
 });
 
 document.addEventListener('click',e=>{
-  const t=e.target.closest('button,input[type=checkbox],[data-dty]'); if(!t) return;
+  const t=e.target.closest('button,input[type=checkbox],[data-dty],[data-dver]'); if(!t) return;
 
   if(t.dataset.railtoggle){S.railCollapsed=!S.railCollapsed;render();return;}
   if(t.dataset.view){setView(t.dataset.view);return;}
@@ -1912,6 +1941,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.dty){const v=t.dataset.dty,i=DD.types.indexOf(v);
     keepDef(); i>-1?DD.types.splice(i,1):DD.types.push(v);
     DD.pick=1; drawDefDlg();return;}
+  if(t.dataset.dver){keepDef();DD.ver=DD.ver?0:1;drawDefDlg();return;}
   if(t.dataset.dodef){saveDef();return;}
   if(t.dataset.passall){
     const f=byId(S.dt),n=mcRules(f).filter(r=>!MC.res[r.id]).length;

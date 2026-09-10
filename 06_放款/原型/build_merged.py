@@ -74,6 +74,11 @@ button,select,input,textarea{font-size:inherit;line-height:inherit;color:inherit
   document.addEventListener('ocr:state', function(e){
     parent.postMessage({ ocr: e.detail }, '*');
   });
+  /* CRA verified the defect in front of the document. The ledger has to hear it,
+     or the two screens disagree about what is still open. */
+  document.addEventListener('defect:verified', function(e){
+    parent.postMessage({ verified: e.detail }, '*');
+  });
   // marks which prototype this frame is, so the host can address it
   parent.postMessage({ hello: HERE }, '*');
   window.addEventListener('message', function(e){
@@ -195,6 +200,7 @@ html,body{height:100%%;margin:0;background:#0d1424}
     if (d.revalidated) { relay('wb', { revalidated: d.revalidated }); return; }
     if (d.uploaded) { relay('wb', { uploaded: d.uploaded }); return; }
     if (d.ocr) { relay('wb', { ocr: d.ocr }); return; }
+    if (d.verified) { relay('wb', { verified: d.verified }); return; }
     /* A desk opened the File Center on a defect. Remember the door so Back returns
        through it, and hand the view across rather than letting the File Center
        guess who is looking. */

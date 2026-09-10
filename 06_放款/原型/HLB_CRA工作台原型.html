@@ -852,9 +852,9 @@ function docCard(fn,rs,lb){
   const shown=d?rs.filter(bad):rs;
   const act=out
     ? (d?`<span class="tag tag-warn">Defect logged</span>
-          <button class="btn btn-sm" data-mkdef="${esc(fn)}">Update</button>
+          <button class="btn btn-sm" data-mkdef="${esc(fn)}">Sync Defect</button>
           <button class="btn btn-sm" data-go="def">View</button>`
-       :`<button class="btn btn-sm btn-pri" data-mkdef="${esc(fn)}">Create Defect</button>`)
+       :`<button class="btn btn-sm btn-pri" data-mkdef="${esc(fn)}">Sync Defect</button>`)
     : (d?`<span class="tag tag-warn">Defect logged</span>`
        :(eye?`<span class="tag tag-blue">Awaiting manual check</span>`
          :`<span class="tag tag-ok">Nothing outstanding</span>`));
@@ -1082,20 +1082,24 @@ function openM(cls,title,sub,warn){
 }
 function closeM(){$('mask').classList.add('hidden');S.dlg=null;}
 
-/* OCR Data Sync. A field may be pulled only from a document that is the latest
-   version and carries no open defect. If either fails the field is not written
-   back at all - it is never quietly filled from the superseded copy. The block
-   names the defect, because closing it is what brings the value back. */
+/* OCR Data Sync lists only what it can actually write: a field with an OCR value,
+   read from a document that carries no alert. A field with nothing extracted is not
+   shown at all - an empty row is not a choice. A document still carrying an alert
+   holds its fields back, and the row says which alert, because clearing it is what
+   brings the value back. */
+const docAlerts=fn=>RULES.filter(r=>r.file===fn&&!r.pass&&r.st!=='pending'&&r.st!=='eye');
 const blockedBy=f=>{ if(!f.doc)return null;
-  const d=defForFile(f.doc); return d&&!(d.rect&&d.ver)?d:null; };
-const syncable=f=>fState(f)!=='noocr'&&!blockedBy(f);
-const blockedFields=()=>FIELDS.filter(f=>fState(f)!=='noocr'&&blockedBy(f));
+  const al=docAlerts(f.doc); if(al.length) return {rule:al[0].id,n:al.length};
+  const d=defForFile(f.doc); return d&&!(d.rect&&d.ver)?{defect:d.no}:null; };
+const hasOcr=f=>!!(f.ocr||'').trim();
+const syncable=f=>hasOcr(f)&&!blockedBy(f);
+const blockedFields=()=>FIELDS.filter(f=>hasOcr(f)&&blockedBy(f));
 function openSync(){
   FIELDS.forEach(f=>{if(S.sync.sel[f.k]===undefined){const st=fState(f);S.sync.sel[f.k]=(st==='same'||st==='fill')?1:0;}});
   FIELDS.forEach(f=>{if(blockedBy(f))S.sync.sel[f.k]=0;});
   const nb=blockedFields().length;
-  S.dlg='sync'; openM('','OCR Data Sync','Comparing manual entry with detected document data.',
-    nb?`${nb} field(s) are held back: their document still has an open defect, so nothing is written back for it.`
+  S.dlg='sync'; openM('','OCR Data Sync','Fields read from documents that carry no alert.',
+    nb?`${nb} field(s) are held back: their document still carries an alert.`
       :'Selecting a checkbox means applying the OCR value to replace the current manual value.');
   drawSync();
 }
@@ -1103,23 +1107,22 @@ function drawSync(){
   const grps=[...new Set(FIELDS.map(f=>f.g))];
   let h='';
   grps.forEach(g=>{
+    if(!FIELDS.some(f=>f.g===g&&hasOcr(f))) return;   // nothing to list, no empty table
     const gf=FIELDS.filter(f=>f.g===g&&syncable(f));
     const all=gf.length&&gf.every(f=>S.sync.sel[f.k]);
     h+=`<div class="sync-g">${g}</div><div class="tw" style="border:0"><table class="syn">
       <thead><tr><th style="width:44px"><span class="bx ${all?'on':''}" data-gsel="${esc(g)}">${all?'✓':''}</span></th>
         <th style="width:210px">Field Name</th><th style="width:200px">Current (Manual)</th>
         <th>OCR Value</th><th style="width:100px;text-align:right">Status</th></tr></thead><tbody>`;
-    FIELDS.filter(f=>f.g===g).forEach(f=>{
+    // a field with nothing extracted is not listed at all
+    FIELDS.filter(f=>f.g===g&&hasOcr(f)).forEach(f=>{
       const st=fState(f),on=!!S.sync.sel[f.k],bl=blockedBy(f);
-      if(st==='noocr'){
-        h+=`<tr class="na"><td><span class="bx dis"></span></td><td>${esc(f.k)}</td>
-          <td>${(f.sys||'').trim()?esc(f.sys):'<span class="emptyv">(Empty)</span>'}</td>
-          <td><span class="emptyv">—</span></td><td style="text-align:right"><span class="st">NO OCR</span></td></tr>`;
-      }else if(bl){
+      if(bl){
         h+=`<tr class="na"><td><span class="bx dis"></span></td>
           <td>${esc(f.k)}<span class="sub-row" style="display:block">${esc(f.doc)}</span></td>
           <td>${(f.sys||'').trim()?esc(f.sys):'<span class="emptyv">(Empty)</span>'}</td>
-          <td><span class="emptyv">Held back — defect #${bl.no} is open on this document</span></td>
+          <td><span class="emptyv">${bl.rule?`Held back \u2014 ${esc(bl.rule)} not passed on this document`
+            :`Held back \u2014 defect #${esc(bl.defect)} is open on this document`}</span></td>
           <td style="text-align:right"><span class="st cf">BLOCKED</span></td></tr>`;
       }else{
         h+=`<tr class="${on?'sel':''}"><td><span class="bx ${on?'on':''}" data-sel="${esc(f.k)}">${on?'✓':''}</span></td>
@@ -1133,7 +1136,7 @@ function drawSync(){
   });
   const n=FIELDS.filter(f=>syncable(f)&&S.sync.sel[f.k]).length, nb=blockedFields().length;
   $('mB').innerHTML=h;
-  $('mF').innerHTML=`<span class="lf">${n} field(s) selected${nb?` · ${nb} held back by an open defect`:''}</span>
+  $('mF').innerHTML=`<span class="lf">${n} field(s) selected${nb?` \u00b7 ${nb} held back`:''}</span>
     <button class="btn" data-act="mx">Cancel</button>
     <button class="btn btn-pri" data-act="dosync">Apply</button>`;
 }
@@ -1458,6 +1461,15 @@ window.addEventListener('message',e=>{
     toast(`Defect #${d.uploaded.defect} answered · ${d.uploaded.file} uploaded without AI`);
   }
   if(d.ocr){ S.unread={waiting:d.ocr.waiting|0,stuck:d.ocr.stuck|0}; S.open.vsum=1; render(); }
+  /* Verified in front of the document, closed in the ledger. Rectified comes with
+     it: the document that answered the defect is the rectification. */
+  if(d.verified){
+    const x=DEFECTS.find(y=>y.no===String(d.verified.no)||y.file===d.verified.file);
+    if(x){ x.rect=1; x.ver=1; x.rd=x.rd||new Date().toTimeString().slice(0,5);
+      x.vd=new Date().toTimeString().slice(0,5); }
+    S.open.def=1; render();
+    toast(`Defect closed \u00b7 ${d.verified.file} verified`);
+  }
   if(d.revalidated){
     applyRound2([d.revalidated.file]);
     failFiles().forEach(fn=>{ mkDefect(fn,'System')||updDefect(fn); });
