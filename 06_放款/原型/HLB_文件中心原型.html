@@ -70,6 +70,7 @@ button:disabled{cursor:not-allowed}
 .ant-modal-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 .ant-modal-footer{padding:9px 16px;border-top:1px solid var(--border-2);flex:none;display:flex;align-items:center;gap:8px}
 
+.header-title{font-size:15px;font-weight:600;color:var(--text);padding:12px 0}
 .header-tabs{display:flex;gap:32px}
 .header-tabs button{background:transparent;border:0;padding:12px 0;font-size:14px;color:var(--text);position:relative}
 .header-tabs button[aria-pressed="true"]{color:var(--primary);font-weight:500}
@@ -475,10 +476,7 @@ button:disabled{cursor:not-allowed}
 
   <div class="ant-modal-header">
     <div class="ocr-modal-header">
-      <div class="header-tabs" id="stageTabs">
-        <button data-stage="app">Application Submission</button>
-        <button data-stage="dis">Disbursement</button>
-      </div>
+      <div class="header-title">File Center · Disbursement</div>
     </div>
   </div>
 
@@ -988,7 +986,6 @@ function render(){
   const door=S.cs==='draft'?'draft':(S.role==='sales'?'sales':'cra');
   [...$('viewSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===door));
   $('permHint').textContent=P().l;
-  [...$('stageTabs').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.stage===S.stage));
   renderRail(); renderUpload(); renderTabs(); renderFilter(); renderTable(); renderFooter();
 }
 
@@ -1920,10 +1917,9 @@ document.addEventListener('click',e=>{
     const f=byId(S.dt),n=mcRules(f).filter(r=>!MC.res[r.id]).length;
     mcRules(f).forEach(r=>{if(!MC.res[r.id])MC.res[r.id]='pass';});
     renderDt();render();msg(`${n} rule(s) passed in one action`);return;}
-  if(t.dataset.stage){S.stage=t.dataset.stage;S.tab='fl';S.subj='all';S.sel.clear();S.fType=S.fStatus='';render();return;}
-  if(t.dataset.tab){S.tab=t.dataset.tab;S.sel.clear();S.fType=S.fStatus='';if(S.subj==='deleted')S.subj='all';render();return;}
+  if(t.dataset.tab){S.tab=t.dataset.tab;S.sel.clear();S.fType=S.fStatus='';if(S.subj==='deleted')S.subj='primary';render();return;}
   if(t.dataset.subj){S.subj=t.dataset.subj;S.sel.clear();
-    if((S.subj==='all'||S.subj==='deleted')&&S.tab!=='fl'){S.tab='fl';S.fType=S.fStatus='';}
+    if(S.subj==='deleted'&&S.tab!=='fl'){S.tab='fl';S.fType=S.fStatus='';}
     render();return;}
   if(t.dataset.chk){const i=t.dataset.chk;S.sel.has(i)?S.sel.delete(i):S.sel.add(i);render();return;}
   if(t.dataset.open){openDt(t.dataset.open);return;}
