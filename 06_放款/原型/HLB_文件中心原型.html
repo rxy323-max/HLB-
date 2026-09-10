@@ -186,13 +186,6 @@ button:disabled{cursor:not-allowed}
 .upload-examples{font-size:12px;color:var(--text-3);margin-top:4px;line-height:1.5}
 .upload-section.disabled .uploader-box{opacity:.45;border-style:dashed;pointer-events:none}
 .upload-lock{border:1px dashed var(--warning-border);background:var(--warning-bg);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--warning-text);margin-bottom:9px;line-height:1.5}
-/* Files the engine has not returned. Without this the list looks complete. */
-.ocr-banner{display:flex;align-items:center;gap:9px;margin:0 16px 10px;padding:7px 11px;font-size:12.5px;
-  border:1px solid var(--primary-border);background:var(--primary-bg);color:var(--primary-active);border-radius:var(--r)}
-.ocr-banner.bad{border-color:var(--error-border);background:var(--error-bg);color:var(--error-text)}
-.ocr-banner.empty{display:none}
-.ocr-banner .ob-t{flex:1;min-width:0}
-.ocr-banner .i{width:14px;height:14px;flex:none}
 .ocr-acts{display:flex;gap:8px;margin:0 0 12px}
 .skip-note{font-size:11.5px;color:var(--text-3);margin-top:6px}
 
@@ -275,6 +268,16 @@ button:disabled{cursor:not-allowed}
 .rule-line.qc{color:var(--text-3)}
 .qmk{font-family:var(--mono);font-size:9.5px;border:1px solid var(--border-2);border-radius:2px;
   padding:0 3px;color:var(--text-3);vertical-align:1px}
+.hist-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.hist-tbl th{text-align:left;padding:7px 8px;background:var(--fill-alter);color:var(--text-2);font-weight:600}
+.hist-tbl td{padding:7px 8px;border-top:1px solid var(--border-2)}
+.val{font-weight:600;font-size:12.5px}
+.val.ok{color:var(--success-text)}
+.val.bad{color:var(--error-text)}
+.cnt-badge{display:inline-block;min-width:26px;padding:0 7px;height:22px;line-height:20px;text-align:center;
+  border-radius:var(--r-sm);font-size:12px;font-variant-numeric:tabular-nums;border:1px solid}
+.cnt-badge.ok{color:var(--success-text);border-color:var(--success-border);background:var(--success-bg)}
+.cnt-badge.bad{color:var(--error-text);border-color:var(--error-border);background:var(--error-bg)}
 .rule-line{font-size:12px;line-height:1.6}
 .rule-line.open{color:var(--error-text)} .rule-line.done{color:var(--success-text)}
 .empty-state{padding:48px;text-align:center;color:var(--text-3);font-size:14px}
@@ -309,8 +312,6 @@ button:disabled{cursor:not-allowed}
   border:1px solid var(--border-2);border-radius:var(--r-sm);padding:6px 10px;margin:14px 0 8px;
   display:flex;align-items:center;gap:8px}
 .mc-grp.cur{border-color:var(--primary-border);color:var(--primary-active)}
-.mc-cur{margin-left:auto;font-size:10.5px;font-family:var(--mono);background:var(--primary);color:#fff;
-  padding:1px 6px;border-radius:2px;font-weight:400}
 .routed{font-size:10px;font-family:var(--mono);color:var(--text-3);
   border:1px solid var(--border);border-radius:2px;padding:0 4px;margin-left:6px}
 .mc-seg{margin-left:auto;font-size:11px;color:var(--text-3)}
@@ -489,7 +490,6 @@ button:disabled{cursor:not-allowed}
         <div class="file-list-section">
           <div class="list-tabs" id="listTabs"></div>
           <div class="filter-bar" id="filterBar"></div>
-          <div class="ocr-banner empty" id="ocrBanner"></div>
           <div class="table-container">
             <table class="file-list-table"><thead id="thead"></thead><tbody id="tbody"></tbody></table>
             <div class="empty-state" id="emptyState" style="display:none">No files match the current filters.</div>
@@ -770,7 +770,7 @@ const ZONES={
 const CATS=s=>ZONES[s].map(z=>z[0]).concat(['Other Documents']);
 
 /* ═══════ STATE ═══════ */
-const S={role:'cra',cs:'review',stage:'dis',tab:'fl',subj:'all',sel:new Set(),dt:null,
+const S={role:'cra',cs:'review',stage:'dis',tab:'fl',subj:'primary',sel:new Set(),dt:null,
   fType:'',fStatus:'',railCollapsed:false,reval:0,
   // oc picks which of the four agreed round-2 outcomes a replacement produces.
   // In production the rules decide; here it is picked in the upload dialog itself,
@@ -901,11 +901,11 @@ function setView(view,def){
       DEFECTS.push({no:S.focus,fid:null,cat:def.cat||'OTHERS',rules:[],
         types:(def.types||[]).slice(),cr:def.cr||'',src:'User',st:'open',hist:[]});
     const ff=focusFile();
-    S.tab='fl'; S.subj=ff?ff.sj:'all';
+    S.tab='fl'; S.subj=ff?ff.sj:'primary';
   }else{
     S.role='cra'; S.focus=null;
     S.cs=DEFECTS.some(d=>d.st==='responded')?'recheck':'review';
-    S.tab='fl'; S.subj='all';
+    S.tab='fl'; S.subj='primary';
   }
   S.sel.clear(); S.dt=null; $('detail').classList.add('hidden'); smClose(); render();
   // Sales came in to answer one defect, so open that document straight away.
@@ -989,18 +989,7 @@ function render(){
   [...$('viewSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===door));
   $('permHint').textContent=P().l;
   [...$('stageTabs').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.stage===S.stage));
-  renderRail(); renderUpload(); renderTabs(); renderFilter(); renderBanner(); renderTable(); renderFooter();
-}
-/* The list can look complete while two documents were never read. This is the
-   line that says so, on every page of the File Center. */
-function renderBanner(){
-  const el=$('ocrBanner'); if(!el) return;
-  const w=live().filter(waiting).length, st=live().filter(stuck).length;
-  if(!(w+st)||S.subj==='deleted'||S.focus){el.className='ocr-banner empty';el.innerHTML='';return;}
-  el.className='ocr-banner'+(st?' bad':'');
-  el.innerHTML=`${I(st?'alert':'clock')}
-    <span class="ob-t">${w+st} file(s) have no OCR result${st?` \u00b7 <b>${st} not returned</b>`:''}${w?` \u00b7 ${w} still running`:''}</span>
-    <button class="ant-btn ant-btn-sm" data-act="unread">Show</button>`;
+  renderRail(); renderUpload(); renderTabs(); renderFilter(); renderTable(); renderFooter();
 }
 
 /* The rail holds three kinds of entry, and that is the structure worth showing:
@@ -1015,11 +1004,8 @@ function renderRail(){
   const col=S.railCollapsed, ct=S.tab;
   let h=`<div class="rail-h">
       <button class="rail-toggle" data-railtoggle="1" title="${col?'Expand':'Collapse'}">${col?'\u00bb':'\u00ab'}</button></div>`;
-  h+=`<button class="subj-item scope" data-subj="all" aria-pressed="${S.subj==='all'}" title="All Files">
-        <span class="mk ico">${I('grid')}</span>
-        <span class="r1"><span class="nm">All Files</span>
-          <span class="ct">${live().filter(f=>inTab(f,ct)).length}</span></span></button>
-      <div class="rail-div"></div>`;
+  /* One entry per role. The upload subject, the rule pages and the file list all
+     hang off it, so a scope that spans every role has nothing to hang on. */
   SUBJ[S.stage].forEach(s=>{
     const n=live().filter(f=>f.sj===s.id&&inTab(f,ct)).length;
     // FSD 2.7.4 records three mandatory-file scopes that are not aligned, so a
@@ -1176,6 +1162,41 @@ function renderTable(){
         <td><span class="description-text">Record only</span></td></tr>`;}).join('');
     return;
   }
+  /* Cross-Validation reads one question at a time: did this file pass, how many
+     alerts does it carry, and which rules are they. Upload time, size and source
+     belong to the ledger on the File List, not here. */
+  if(S.tab==='cv'){
+    $('thead').innerHTML=`<tr><th style="width:44px"></th><th style="width:190px">File Name</th>
+      <th style="width:110px">Subject</th><th style="width:150px">Category</th><th style="width:150px">File Type</th>
+      <th style="width:130px">File OCR Status</th><th style="width:96px">Alert Count</th>
+      <th>Alert rules</th><th style="width:110px">Action</th></tr>`;
+    $('tbody').innerHTML=r.map(f=>{
+      const o=expOpen(f), q=qcOpen(f);
+      const st=unread(f)?`<span class="val bad">${OCRST[f.ocrSt][0]}</span>`
+        :(o?'<span class="val bad">Validation Failed</span>'
+           :'<span class="val ok">Validation Succeeded</span>');
+      const lines=f.alerts.length
+        ? f.alerts.map(a=>`<div class="rule-line ${a.q?'qc':(a.res?'done':'open')}">${
+            a.q?'<span class="qmk">QC</span> ':(a.res?'&#10003; ':'')}${esc(a.id||a.nm)}</div>`).join('')
+        : '<span class="description-text">\u2014</span>';
+      return `<tr class="${S.sel.has(f.id)?'selected':''}" data-id="${f.id}">
+        <td><input type="checkbox" data-chk="${f.id}" ${S.sel.has(f.id)?'checked':''}></td>
+        <td class="filename-cell"><div class="filename-text">${esc(f.nm)}${f.ver>1
+            ?`<span class="ver-chip new">v${f.ver}</span>`:''}</div></td>
+        <td class="subject-cell">${subjNm(f)}</td>
+        <td class="description-text">${esc(f.cat)}</td>
+        <td class="description-text">${f.ty==='\u2014'?'Unclassified':esc(f.ty)}</td>
+        <td>${st}</td>
+        <td><span class="cnt-badge ${o?'bad':'ok'}">${o}</span></td>
+        <td>${lines}</td>
+        <td class="actions-cell">
+          <button class="action-btn" title="Download">${I('download')}</button>
+          <button class="action-btn edit-btn" data-open="${f.id}" title="Open">${I('edit')}</button>
+          <button class="action-btn" data-hist="${f.id}" title="Document history">${I('clock')}</button>
+        </td></tr>`;
+    }).join('');
+    return;
+  }
   const mc=S.tab==='mc', cv=S.tab==='cv', rule=cv||mc;
   $('thead').innerHTML=`<tr><th style="width:44px"></th><th style="width:200px">File Name</th><th style="width:112px">Subject</th><th style="width:150px">Category</th><th style="width:180px">File Type</th>
     ${rule?`<th style="width:250px">${mc?'Pending Rules':'Alert Rules'}</th>`
@@ -1317,8 +1338,7 @@ function panel(f,p){
     h+=scoped
       ? `<div class="pnote info"><b>Scoped to ${esc(f.ty)}</b></div>
          <p class="panel-sect ${o?'err':''}">EXPERT RULES \u00b7 ${esc(f.ty)} \u00b7 ${o?o+' pending':'all reviewed'}</p>`
-      : `<div class="pnote"><b>${MC.rules.length} manual rule(s) for this case</b></div>
-         <div class="passall"><span>Reviewed every rule on this page?</span>
+      : `<div class="passall"><span>Reviewed every rule on this page?</span>
            <button class="ant-btn ant-btn-sm" data-passall="1" ${p.rule?'':'disabled'}>Pass All (${o})</button></div>
          <p class="panel-sect ${o?'err':''}">EXPERT RULES \u00b7 ${o?o+' pending':'all reviewed'}</p>`;
     MCF(f).forEach(fn=>{
@@ -1328,7 +1348,6 @@ function panel(f,p){
          is still one defect, and CRA can raise it here before working through them. */
       const gf=live().find(x=>x.nm===fn), gd=gf&&defForFile(gf.id);
       h+=`<div class="mc-grp ${cur?'cur':''}">${fn}<span class="mc-sp"></span>
-        ${cur?'<span class="mc-cur">Previewing</span>':''}
         ${gf&&p.rule
           ?(gd?`<span class="mc-done${JUSTDEF===gf.id?' just':''}">Defect logged${updLink(gf.id,'Update')}</span>`
               :`<button class="ant-btn ant-btn-sm ant-btn-primary mc-def"
@@ -1344,10 +1363,7 @@ function panel(f,p){
         h+=`<div class="acts">
             <button class="ant-btn ant-btn-sm ${res==='pass'?'mc-on':''}" data-mc="pass" data-r="${r.id}" ${p.rule?'':'disabled'}>Pass</button>
             <button class="ant-btn ant-btn-sm ${res==='fail'?'mc-off':''}" data-mc="fail" data-r="${r.id}" ${p.rule?'':'disabled'}>Fail</button>
-            ${p.rule?'':'<span class="ro-note">CRA concludes this</span>'}
-            ${res==='fail'&&p.rule&&!r.def?`<button class="ant-btn ant-btn-sm ${d?'':'ant-btn-primary'}" data-mkdef="${esc(f.id)}" data-mr="${esc(r.id)}">
-              ${d?'Update Defect':'Create Defect'}</button>`:''}
-            ${res==='fail'&&p.rule&&r.def?updLink(f.id):''}</div>`;
+            ${p.rule?'':'<span class="ro-note">CRA concludes this</span>'}</div>`;
         h+=`</div>`;
       });
     });
@@ -1362,9 +1378,15 @@ function panel(f,p){
     const idx=f.alerts.map((a,i)=>i).filter(i=>!!f.alerts[i].q===!!g.q);
     if(!idx.length) return;
     const o=idx.filter(i=>!f.alerts[i].res).length;
+    /* The defect is made on the document, so the page offers exactly one way to
+       raise it however many rules it broke - here, on the expert-rule header. */
+    const gd=defForFile(f.id);
+    const ctl=(g.q||!p.rule)?''
+      :(gd?`<span class="mc-done${JUSTDEF===f.id?' just':''}">Defect logged${updLink(f.id,'Update')}</span>`
+          :`<button class="ant-btn ant-btn-sm ant-btn-primary" data-mkdef="${esc(f.id)}">Create Defect</button>`);
     h+=`<div class="rgrp ${g.q?'qc':'expert'}">
       <div class="rgrp-h"><span class="rgrp-t">${g.t}</span>
-        <span class="rgrp-n ${o&&!g.q?'err':''}">${o?o+' pending':'all handled'}</span></div>
+        <span class="rgrp-n ${o&&!g.q?'err':''}">${o?o+' pending':'all handled'}</span>${ctl}</div>
       <div class="rgrp-b">`;
     idx.forEach(i=>{
       const a=f.alerts[i];
@@ -1376,12 +1398,10 @@ function panel(f,p){
       h+=a.res?`<div class="res">&#10003; ${a.res}</div>`
         :a.k==='e'
           ?`<div class="acts"><button class="ant-btn ant-btn-sm" data-al="pass" data-i="${i}" ${p.rule?'':'disabled'}>Pass</button>
-            <button class="ant-btn ant-btn-sm ant-btn-dangerous" data-al="fail" data-i="${i}" ${p.rule?'':'disabled'}>Fail</button>
-            ${a.q?'':defBtn(f,i,p)}${a.def&&p.rule?updLink(f.id):''}</div>`
-          :`<div class="acts">${a.q?'':defBtn(f,i,p)}
+            <button class="ant-btn ant-btn-sm ant-btn-dangerous" data-al="fail" data-i="${i}" ${p.rule?'':'disabled'}>Fail</button></div>`
+          :`<div class="acts">
             <button class="ant-btn ant-btn-sm" data-al="just" data-i="${i}" ${p.rule?'':'disabled'}>Justification</button>
-            <button class="ant-btn ant-btn-sm" data-al="repl" data-i="${i}" ${p.rule?'':'disabled'}>Replace Document</button>
-            ${a.def&&p.rule?updLink(f.id):''}</div>`;
+            <button class="ant-btn ant-btn-sm" data-al="repl" data-i="${i}" ${p.rule?'':'disabled'}>Replace Document</button></div>`;
       h+=`</div>`;
     });
     h+=`</div></div>`;
@@ -1450,17 +1470,6 @@ function docBody(f){
    Defects are raised here, in front of the document, because this is the only place
    the evidence is. They are never read here: the File Center shows no defect list,
    no defect detail, no defect tab for CRA. One ledger, in the Workbench. */
-/* Three states, not one button with two labels. A rule the defect already covers
-   shows the record of it and nothing else - the way back in is the quiet link on
-   that record. A rule it does not cover still has something to ask for, so it keeps
-   a button; it is just no longer the primary act on the page. */
-function defBtn(f,i,p){
-  if(!p.rule) return '';
-  const a=f.alerts[+i]; if(a&&a.def) return '';
-  const d=defForFile(f.id);
-  return `<button class="ant-btn ant-btn-sm ${d?'':'ant-btn-primary'}" data-mkdef="${esc(f.id)}" data-ai="${i}">
-    ${d?'Update Defect':'Create Defect'}</button>`;
-}
 /* The document the defect was just raised on. Set for one redraw so the settled
    line can fade in rather than appear between two frames, then cleared. */
 let JUSTDEF=null;
@@ -1726,6 +1735,20 @@ function wrongFile(no){
      <button class="ant-btn ant-btn-primary" data-repl="${esc(d.no)}">Try again</button>`);
 }
 
+/* Every version this file has had, with the alerts each one carried. */
+function docHistory(fid){
+  const f=byId(fid); if(!f) return;
+  const rows=[...f.vers.map(v=>({ver:v.ver,up:v.up,by:v.by,rs:v.rs,n:v.alerts.length})),
+              {ver:f.ver,up:f.up,by:f.src==='system'?'System':'SalesOfficer1',rs:'current',n:f.alerts.length}];
+  sm('Document History',
+    `<div class="pnote info"><b>${esc(f.nm)}</b> \u00b7 ${esc(f.ty)}</div>
+     <table class="hist-tbl"><tr><th>Version</th><th>Uploaded</th><th>By</th><th>Note</th><th>Alerts</th></tr>
+     ${rows.map(v=>`<tr><td><b>v${v.ver}</b></td><td class="time-cell">${esc(v.up)}</td>
+       <td>${esc(v.by)}</td><td class="description-text">${esc(v.rs)}</td><td>${v.n}</td></tr>`).join('')}
+     </table>`,
+    `<button class="ant-btn ant-btn-primary" data-cl="1">Close</button>`);
+}
+
 /* ═══════ NO OCR RESULT ═══════
    Retry is the cheap answer, so it is offered first. Skip is the escape hatch:
    what is skipped is the reading, never the checking - the rules for the type
@@ -1880,6 +1903,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.ocpick){S.oc=t.dataset.ocpick;drawReplace();return;}
   if(t.dataset.allfiles){S.focus=null;S.tab='fl';render();
     msg('Showing every document on the case');return;}
+  if(t.dataset.hist){docHistory(t.dataset.hist);return;}
   if(t.dataset.ocr){t.dataset.ocr==='skip'?askSkipOcr(t.dataset.f):retryOcr(t.dataset.f);return;}
   if(t.dataset.doskip){doSkip();return;}
   if(t.dataset.repl){askReplace(t.dataset.repl);return;}
@@ -1911,9 +1935,6 @@ document.addEventListener('click',e=>{
     if(a==='toCRA'){S.cs='recheck';S.role='cra';render();
       msg('Case returned to CRA \u00b7 verify and close the defects in the Workbench');return;}
     if(a==='reset'){S.fType=S.fStatus='';render();return;}
-    if(a==='unread'){S.subj='all';S.tab='fl';S.fType='';
-      S.fStatus=live().some(stuck)?'stuck':'wait';render();
-      msg('Filtered to the files with no OCR result');return;}
     if(a==='refresh'){msg('Refreshed');return;}
     if(a==='del'){askDelete([...S.sel]);return;}
     if(a==='dl'){msg(`${n} file(s) downloaded`);return;}
