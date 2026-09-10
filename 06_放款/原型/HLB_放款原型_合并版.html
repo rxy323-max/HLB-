@@ -150,13 +150,14 @@ tbody tr:hover td{background:var(--alt)}
 .vs-top .st.ok{color:var(--ok)}.vs-top .st.warn{color:var(--warn)}.vs-top .st.wait{color:var(--primary-deep)}
 .vs-top .sd{font-size:12.5px;color:var(--ink-3);margin-top:2px}
 .vs-top .r{margin-left:auto;display:flex;gap:8px;align-items:center;flex:none}
-.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
-@media(max-width:1250px){.kpis{grid-template-columns:repeat(3,1fr)}}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:1250px){.kpis{grid-template-columns:repeat(2,1fr)}}
 .kp{border:1px solid var(--line);border-radius:var(--r-md);padding:11px 13px;background:var(--alt)}
 .kp .v{font-family:var(--mono);font-size:21px;font-weight:600;line-height:1.1;color:var(--ink)}
 .kp .v.ok{color:var(--ok)}.kp .v.err{color:var(--err)}
 .kp .k{font-size:11.5px;color:var(--ink-3);margin-top:4px}
-.kp .ks{display:block;font-size:10.5px;color:var(--warn);font-family:var(--mono);margin-top:2px}
+.kp .ks{display:block;font-size:10.5px;color:var(--ink-3);font-family:var(--mono);margin-top:2px}
+.kp .ks .e{color:var(--err)}.kp .ks .o{color:var(--ok)}.kp .ks .p{color:var(--primary-deep)}
 .rrow{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:8px}
 .rrow:last-child{margin-bottom:0}
 .rrow .n{flex:1;min-width:0;font-size:13px}
@@ -373,7 +374,7 @@ tbody tr:hover td{background:var(--alt)}
     <span class="who">
       <button class="btn btn-sm btn-pri tb-sync" data-act="sync" id="syncBtn"><span id="syncIc"></span> Sync from OCR</button>
       <span id="whoNm">crediosadmin</span><span>|</span><span class="clk" id="clk">59:29</span>
-      <button class="rf" id="rfBtn"></button></span>
+      <button class="rf" id="rfBtn" data-act="reload" title="Reload the page"></button></span>
   </div>
   <div class="body">
     <div class="icons" id="iconRail"></div>
@@ -467,7 +468,20 @@ const R0=[
  {id:'EB-STMP-1',nm:'Stamp duty receipt completeness',file:'2nd Schedule Part I.pdf',pass:1,dc:'SCH-014',dcat:'SECOND SCHEDULE PART I',dty:'Stamping incomplete'},
  {id:'P71',nm:'Puspakom inspection validity',file:'Puspakom B7.pdf',pass:1,dc:'USD-003',dcat:'USED CAR DOCS',dty:'Inspection expired'},
  {id:'D61',nm:'Seller IC vs invoice payee',file:'Seller IC.jpg',pass:1,dc:'DIR-002',dcat:'DIRECT CASE',dty:'Seller mismatch'},
- {id:'M81',nm:'Partnership mandate signatory',file:'Partnership Mandate.docx',pass:1,dc:'COM-005',dcat:'COMPANY DOCS',dty:'Signatory not authorised'},
+ /* The manual-check track: files that came in through the Manual Upload entry, so
+    no engine ever reads them and every rule on them is concluded by eye. mc marks
+    the track and mcSt is the state CRA left the rule in. Same rules and same file
+    names the File Center shows on its Manual Check page. */
+ {id:'M-11',mc:1,mcSt:'pend',nm:'LOSO amount matches the CED approval',file:'Letter of Setoff.docx',pass:0,
+  issue:'Against the CED conditional approval: FD pledge RM 100,000 \u00b7 3 years',dc:'COM-011',dcat:'COMPANY DOCS',dty:'Setoff amount mismatch'},
+ {id:'M-12',mc:1,mcSt:'pend',nm:'Witness signature complete',file:'Letter of Setoff.docx',pass:0,
+  issue:'Page 10 must carry an HLBB staff witness signature and date',dc:'COM-012',dcat:'COMPANY DOCS',dty:'Signature incomplete / not witnessed'},
+ {id:'M-21',mc:1,mcSt:'pend',nm:'Mandate date falls between application and disbursement',file:'Partnership Mandate.docx',pass:0,
+  issue:'Application date 19-08-2026 to today',dc:'COM-005',dcat:'COMPANY DOCS',dty:'Signatory not authorised'},
+ {id:'M-31',mc:1,mcSt:'pass',nm:'Resolution signatories appear in the SSM director list',file:'Company Resolution.docx',pass:1,
+  dc:'COM-021',dcat:'COMPANY DOCS',dty:'Signatory not authorised'},
+ {id:'M-32',mc:1,mcSt:'fail',nm:'Resolution bears the company seal',file:'Company Resolution.docx',pass:0,
+  issue:'The last page carries two director signatures but no company seal',dc:'COM-022',dcat:'COMPANY DOCS',dty:'Company seal missing'},
  {id:'N01',nm:'MyKad expiry',file:'NRIC.png',pass:1,dc:'CUS-004',dcat:'CUSTOMER INFO',dty:'MyKad expired'},
  {id:'V14',nm:'Vehicle model match',file:'Vehicle Invoice.pdf',pass:1,dc:'COL-011',dcat:'COLLATERAL',dty:'Model mismatch'},
  {id:'F23',nm:'Handling fee within cap',file:'2nd Schedule Part I.pdf',pass:1,dc:'FAC-012',dcat:'FACILITY',dty:'Handling fee exceeds cap'},
@@ -533,7 +547,7 @@ const FLAGS=[
 const DCATS=['AGREEMENT - MASTER','AGREEMENT - GUARANTOR','INSURANCE','INVOICE - VEHICLE',
  'SECOND SCHEDULE PART I','COLLATERAL','CUSTOMER INFO','FACILITY','GUARANTOR','OTHERS'];
 
-const UPLOADED=17, AGE_DAYS=12, AGE_CAP=90;
+const UPLOADED=25, AGE_DAYS=12, AGE_CAP=90;   // the File Center's file list for this case
 
 let RULES=[],FIELDS=[],CHECK=[],DEFECTS=[];
 const S={scn:'manual',stpSwitch:1,noGtee:0,open:{vsum:1,def:1,chk:0},expand:0,dlg:null,
@@ -561,7 +575,7 @@ const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 function reset(scn){
-  RULES=R0.map(r=>Object.assign({},r,{st:''}));
+  RULES=R0.map(r=>Object.assign({},r,{st:r.mcSt==='pend'?'eye':''}));
   FIELDS=F0.map(f=>Object.assign({},f));
   CHECK=CK0.map(c=>Object.assign({},c,{on:0}));
   DEFECTS=[];S.sync={sel:{}};S.route=null;S.busy=0;S.pullAt='';S.dseq=0;S.expand=0;
@@ -618,8 +632,22 @@ const CHGLB={cleared:'Cleared this round',newfail:'Newly failing',still:'Still f
 const rTotal=()=>RULES.length;
 const rPass=()=>RULES.filter(r=>r.pass).length;
 const rPend=()=>RULES.filter(r=>!r.pass&&r.st==='pending');
-const rFail=()=>RULES.filter(r=>!r.pass&&r.st!=='pending');
-const rSettled=()=>rTotal()-rPend().length;
+// waiting on an eye, not on the engine: not passed, not failed, still work to do
+const rEye=()=>RULES.filter(r=>r.st==='eye');
+const rFail=()=>RULES.filter(r=>!r.pass&&r.st!=='pending'&&r.st!=='eye');
+const rSettled=()=>rTotal()-rPend().length-rEye().length;
+/* The header counts files, not rules. A file is the unit of CRA's work - rules
+   and defects are what a file turns out to owe - so the numbers that guide the
+   next action are file counts, with the rule detail underneath them. */
+const filesOf=rs=>[...new Set(rs.map(r=>r.file))].length;
+function fileStats(){
+  const oc=RULES.filter(r=>!r.mc), mc=RULES.filter(r=>r.mc);
+  const bad=r=>!r.pass&&r.st!=='pending'&&r.st!=='eye';
+  return {exp:filesOf(RULES),
+    ocr:filesOf(oc), ocrFail:oc.filter(bad).length,
+    mc:filesOf(mc), mcPend:mc.filter(r=>r.st==='eye').length,
+    mcPass:mc.filter(r=>r.pass).length, mcFail:mc.filter(bad).length};
+}
 const rulesOK=()=>rFail().length===0&&rPend().length===0;
 /* The defect is anchored to the document, not to the rule. One document with five
    failing rules is one defect carrying five types - which is what CRA already does
@@ -788,11 +816,13 @@ function vsumBody(){
     <div class="k">${k}${sub?`<span class="ks">${sub}</span>`:''}</div></div>`;
   const un=S.unread.waiting+S.unread.stuck;
   // "All rules passed" is not true while a document in the case was never read
+  const F=fileStats(), eye=rEye().length;
   const st=ok&&un?`${un} file(s) have no OCR result`
-    :(ok?'All rules passed':(fl.length?`${fl.length} rule(s) failed`:`${pd.length} re-extracting`));
+    :(ok&&eye?`${eye} rule(s) awaiting manual check`
+    :(ok?'All rules passed':(fl.length?`${fl.length} rule(s) failed`:`${pd.length} re-extracting`)));
   return `<div class="vs-top">
       <span><div class="st ${ok&&un?'warn':(ok?'ok':(fl.length?'warn':'wait'))}">${st}</div>
-        <div class="sd">Rule opinions archived at ${S.archAt} in File Center${S.pullAt?` · Last refresh ${S.pullAt}`:''}</div></span>
+        <div class="sd">Rule opinions from File Center \u00b7 Last refreshed <b>${S.pullAt||S.archAt}</b></div></span>
       <span class="r">
         <button class="btn btn-sm" data-act="refresh" ${S.busy?'disabled':''}>${S.busy?'Refreshing…':I('refresh')+' Refresh Rules'}</button>
         <button class="btn btn-sm btn-pri" data-link="fc">Open File Center</button></span>
@@ -801,12 +831,14 @@ function vsumBody(){
       <span>${un} file(s) have no OCR result${S.unread.stuck?` \u00b7 ${S.unread.stuck} not returned by the engine`:''}${
         S.unread.waiting?` \u00b7 ${S.unread.waiting} still running`:''}</span></div>`:''}
     <div class="kpis">
-      ${kpi(`${ckMandOn()}/${ckMand().length}`,'Mandatory Docs',ckMandOn()>=ckMand().length?'ok':'err')}
-      ${kpi(UPLOADED,'Uploaded Files')}
-      ${kpi(rTotal(),'Total Rules')}
-      ${kpi(rSettled(),'Concluded','',pd.length?`${pd.length} in progress`:'')}
-      ${kpi(rPass(),'Passed','ok')}
-      ${kpi(fl.length,'Not Passed',fl.length?'err':'',ul?`${ul} without defect`:'')}
+      ${kpi(`${ckMandOn()}/${ckMand().length}`,'Mandatory Files',ckMandOn()>=ckMand().length?'ok':'err',
+        `${UPLOADED} uploaded in total`)}
+      ${kpi(F.exp,'Files Under Expert Rules','',
+        `${filesOf(fl)} to handle${ul?` \u00b7 ${ul} no defect`:''}`)}
+      ${kpi(F.ocr,'OCR Files','',
+        F.ocrFail?`<b class="e">${F.ocrFail}</b> rule(s) failed`:'no rule failed')}
+      ${kpi(F.mc,'Manual Check Files','',
+        `<b class="p">${F.mcPend}</b> pending \u00b7 <b class="o">${F.mcPass}</b> passed \u00b7 <b class="e">${F.mcFail}</b> failed`)}
     </div>
     <button class="btn btn-sm" data-act="expand">${S.expand?'Collapse detail':'View detail'}</button>
     ${S.expand?`<div style="margin-top:14px">${ruleDetail(fl,pd,ul)}</div>`:''}`;
@@ -821,7 +853,8 @@ function rrow(r){
         style="margin-left:6px;font-size:10px">${CHGLB[r.chg]}</span>`:''}
       <span class="s">${esc(r.file)}${r.xfile?` + ${esc(r.xfile)}`:''}${r.issue?' · '+esc(r.issue):''}</span></span>
     <span class="r">
-      <span class="tag ${r.pass?'tag-ok':(p?'tag-blue':'tag-err')}">${r.pass?'Passed':(p?'In progress':'Failed')}</span>
+      <span class="tag ${r.pass?'tag-ok':(r.st==='eye'?'tag-blue':(p?'tag-blue':'tag-err'))}">${
+      r.pass?'Passed':(r.st==='eye'?'Awaiting check':(p?'In progress':'Failed'))}</span>
     </span></div>`;
 }
 
@@ -841,26 +874,33 @@ function byDoc(rs){
 }
 function docCard(fn,rs,lb){
   const d=defForFile(fn);
-  const out=rs.filter(r=>!r.pass&&r.st!=='pending').length;
+  const bad=r=>!r.pass&&r.st!=='pending'&&r.st!=='eye';
+  const out=rs.filter(bad).length, eye=rs.filter(r=>r.st==='eye').length;
   const moved=rs.filter(r=>r.chg==='cross').length;
+  // Once the defect exists, what is left to read is what is still failing.
+  const shown=d?rs.filter(bad):rs;
   const act=out
     ? (d?`<span class="tag tag-warn">Defect logged</span>
           <button class="btn btn-sm" data-mkdef="${esc(fn)}">Update</button>
           <button class="btn btn-sm" data-go="def">View</button>`
        :`<button class="btn btn-sm btn-pri" data-mkdef="${esc(fn)}">Create Defect</button>`)
     : (d?`<span class="tag tag-warn">Defect logged</span>`
-       :`<span class="tag tag-ok">Nothing outstanding</span>`);
+       :(eye?`<span class="tag tag-blue">Awaiting manual check</span>`
+         :`<span class="tag tag-ok">Nothing outstanding</span>`));
   return `<div class="dcard ${out?'':'ok'}">
     <div class="dcard-h"><span class="dc-n">${I('file')}${esc(fn)}</span>
       ${lb?`<span class="dc-lb">${esc(lb)}</span>`:''}
-      <span class="dc-s">${out?`${out} rule(s) failed`:'no rule outstanding'}${
-        rs.length>out?` \u00b7 ${rs.length-out} other rule(s) here`:''}${
+      <span class="dc-s">${out?`${out} rule(s) failed`
+        :(eye?`${eye} rule(s) awaiting manual check`:'no rule outstanding')}${
+        d&&rs.length>out?` \u00b7 ${rs.length-out} other rule(s) not shown`
+        :(!d&&rs.length>out+eye?` \u00b7 ${rs.length-out-eye} other rule(s) here`:'')}${
         moved?` \u00b7 ${moved} moved`:''}</span>
       <span class="dc-a">${act}</span></div>
-    <div class="dcard-b">${rs.map(rrow).join('')}</div></div>`;
+    <div class="dcard-b">${shown.map(rrow).join('')}</div></div>`;
 }
 function ruleDetail(fl,pd,ul){
-  const open=[...fl,...pd];
+  // what needs handling: failing, re-extracting, or waiting on an eye
+  const open=[...fl,...pd,...rEye()];
   if(S.round===1)
     return (open.length?byDoc(open).map(([fn,rs])=>docCard(fn,rs)).join('')
                        :`<div class="muted">All ${rTotal()} rules passed.</div>`)
@@ -1313,6 +1353,10 @@ document.addEventListener('click',e=>{
   if(t.dataset.yn){const[k,v]=t.dataset.yn.split('|');S[k]=v;renderSide();return;}
   if(t.dataset.ck){const c=CHECK.find(x=>x.k===t.dataset.ck);c.on=c.on?0:1;render();return;}
 
+  /* Reloading the page is not a refresh of the rule results: the summary is a
+     snapshot taken from the File Center, and only Refresh Rules goes back for a
+     new one. */
+  if(t.dataset.act==='reload'){render();toast('Page reloaded \u00b7 rule results unchanged');return;}
   if(t.dataset.act==='refresh'){
     if(S.busy)return; S.busy=1;renderMain();
     setTimeout(()=>{S.busy=0;const m=pullRules();render();toast(m);},800); return;
@@ -1491,7 +1535,7 @@ initChrome(); reset('manual'); render();
     var why = bar.querySelector('.why');
     if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
   }
-  if (why0()) why0().textContent = 'Prototype build ' + '2026-09-09';
+  if (why0()) why0().textContent = 'Prototype build ' + '2026-09-10';
   function why0(){ return bar && bar.querySelector('.why'); }
 
   function go(to){ parent.postMessage({ nav: to }, '*'); }
@@ -3623,7 +3667,7 @@ render();
     var why = bar.querySelector('.why');
     if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
   }
-  if (why0()) why0().textContent = 'Prototype build ' + '2026-09-09';
+  if (why0()) why0().textContent = 'Prototype build ' + '2026-09-10';
   function why0(){ return bar && bar.querySelector('.why'); }
 
   function go(to){ parent.postMessage({ nav: to }, '*'); }
