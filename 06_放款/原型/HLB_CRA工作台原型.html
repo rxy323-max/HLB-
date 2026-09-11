@@ -127,6 +127,8 @@ tbody tr:hover td{background:var(--alt)}
 .kp .v{font-family:var(--mono);font-size:21px;font-weight:600;line-height:1.1;color:var(--ink)}
 .kp .v.ok{color:var(--ok)}.kp .v.err{color:var(--err)}
 .kp .k{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+.kp .mark{display:inline-block;padding:0 7px;border-radius:9px;border:1px solid var(--line);color:var(--ink-3);font-size:10px}
+.kp .mark.on{border-color:var(--primary-border);background:var(--primary-bg);color:var(--primary-deep)}
 .kp .ks{display:block;font-size:10.5px;color:var(--ink-3);font-family:var(--mono);margin-top:2px}
 .kp .ks .e{color:var(--err)}.kp .ks .o{color:var(--ok)}.kp .ks .p{color:var(--primary-deep)}
 .rrow{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:8px}
@@ -343,7 +345,6 @@ tbody tr:hover td{background:var(--alt)}
     <span class="tbtn" id="tb1">CRA To Do List</span>
     <span class="tbtn on">Disbursement:BKI/HP/2026/Y0063327</span>
     <span class="who">
-      <button class="btn btn-sm btn-pri tb-sync" data-act="sync" id="syncBtn"><span id="syncIc"></span> Sync from OCR</button>
       <span id="whoNm">crediosadmin</span><span>|</span><span class="clk" id="clk">59:29</span>
       <button class="rf" id="rfBtn" data-act="reload" title="Reload the page"></button></span>
   </div>
@@ -760,23 +761,18 @@ function renderRail(){
   NAVFOR().forEach(([g,items])=>{
     h+=`<h6>${g}</h6>`;
     items.forEach(([k,nm,kind])=>{
-      let c='';
-      if(kind==='v') c=`<span class="n ${rulesOK()?'ok':'err'}">${rulesOK()?I('check'):rFail().length}</span>`;
-      if(kind==='d') c=`<span class="n ${DEFECTS.length?'err':''}">${DEFECTS.length}</span>`;
-      if(kind==='c') c=`<span class="n ${ckMandOn()===ckMand().length?'ok':''}">${ckOn()}/${CHECK.length}</span>`;
-      h+=`<button data-go="${k}" class="${S.nav===k?'on':''}"><span>${nm}</span>${c}</button>`;
+      h+=`<button data-go="${k}" class="${S.nav===k?'on':''}"><span>${nm}</span></button>`;
     });
   });
   h+=`</div><div class="linkcard"><a data-link="fc">Attachment</a><a>CRA Report</a><a class="off">E-acceptance</a></div>`;
   $('rail').innerHTML=h;
 }
 
-function mod(k,icon,title,body,right,badge,isnew){
+function mod(k,icon,title,body,right){
   const o=!!S.open[k];
   return `<div class="mod ${body?'':'stub'}" id="m-${k}">
     <div class="mod-h" role="button" tabindex="0" data-tog="${k}">
       <span class="car">${o?I('down'):I('right')}</span><span class="mi">${icon}</span><span class="mt">${title}</span>
-      ${isnew?'<span class="new">NEW</span>':''}${badge||''}
       <span class="mr">${right||''}</span></div>
     ${o&&body?`<div class="mod-b">${body}</div>`:''}</div>`;
 }
@@ -785,27 +781,22 @@ function vsumBody(){
   const fl=rFail(),pd=rPend(),ok=rulesOK(),ul=unlinked().length;
   const kpi=(v,k,cls,sub)=>`<div class="kp"><div class="v ${cls||''}">${v}</div>
     <div class="k">${k}${sub?`<span class="ks">${sub}</span>`:''}</div></div>`;
-  const un=S.unread.waiting+S.unread.stuck;
-  // "All rules passed" is not true while a document in the case was never read
   const F=fileStats(), eye=rEye().length;
-  const st=ok&&un?`${un} file(s) have no OCR result`
-    :(ok&&eye?`${eye} rule(s) awaiting manual check`
-    :(ok?'All rules passed':(fl.length?`${fl.length} rule(s) failed`:`${pd.length} re-extracting`)));
+  // Expert-rule validation either has more to conclude or it is done. That is the
+  // mark on the second box - it says there is something in the File Center to read,
+  // without putting another count on the page.
+  const working=pd.length+eye>0;
   return `<div class="vs-top">
-      <span><div class="st ${ok&&un?'warn':(ok?'ok':(fl.length?'warn':'wait'))}">${st}</div>
-        <div class="sd">Rule opinions from File Center \u00b7 Last refreshed <b>${S.pullAt||S.archAt}</b></div></span>
+      <span><div class="sd">Rule opinions from File Center \u00b7 Last refreshed <b>${S.pullAt||S.archAt}</b></div></span>
       <span class="r">
         <button class="btn btn-sm" data-act="refresh" ${S.busy?'disabled':''}>${S.busy?'Refreshing…':I('refresh')+' Refresh Rules'}</button>
         <button class="btn btn-sm btn-pri" data-link="fc">Open File Center</button></span>
     </div>
-    ${un?`<div class="batchbar top${S.unread.stuck?' bad':''}">
-      <span>${un} file(s) have no OCR result${S.unread.stuck?` \u00b7 ${S.unread.stuck} not returned by the engine`:''}${
-        S.unread.waiting?` \u00b7 ${S.unread.waiting} still running`:''}</span></div>`:''}
     <div class="kpis">
       ${kpi(`${ckMandOn()}/${ckMand().length}`,'Mandatory Files',ckMandOn()>=ckMand().length?'ok':'err',
         `${UPLOADED} uploaded in total`)}
       ${kpi(F.exp,'Files Under Expert Rules','',
-        `${filesOf(fl)} to handle${ul?` \u00b7 ${ul} no defect`:''}`)}
+        `<span class="mark ${working?'on':''}">${working?'Validating':'Validated'}</span>`)}
       ${kpi(F.ocr,'OCR Files','',
         F.ocrFail?`<b class="e">${F.ocrFail}</b> rule(s) failed`:'no rule failed')}
       ${kpi(F.mc,'Manual Check Files','',
@@ -998,14 +989,11 @@ function renderMain(){
     h+=`<div class="seclabel">${g}</div>`;
     items.forEach(([k,nm])=>{
       if(k==='vsum'){
-        const b=rulesOK()?`<span class="badge ok">✓</span>`:`<span class="badge err">${rFail().length}</span>`;
-        h+=mod(k,I('checkCircle'),'Verification Summary',vsumBody(),'',b,1);
+        h+=mod(k,I('checkCircle'),'Verification Summary',vsumBody());
       }else if(k==='def'){
-        h+=mod(k,I('alert'),'Defect List',defBody(),'',
-          DEFECTS.length?`<span class="badge err">${DEFECTS.length}</span>`:'');
+        h+=mod(k,I('alert'),'Defect List',defBody());
       }else if(k==='chk'){
-        h+=mod(k,I('checkSquare'),'File Check List',chkBody(),'',
-          ckMandOn()<ckMand().length?`<span class="badge err">${ckMand().length-ckMandOn()}</span>`:`<span class="badge ok">✓</span>`);
+        h+=mod(k,I('checkSquare'),'File Check List',chkBody());
       }else{
         const map={fis:'Collateral Info',fac:'Facility Information',dealer:'Seller Info',hirer:'Hirer Info'};
         const grp={fis:['Collateral Info','Insurance Info'],fac:'Facility Info',dealer:'Seller Info',hirer:'Hirer Info'}[k];
@@ -1066,6 +1054,7 @@ function renderFoot(){
   if(!ok) left.push('Select CRA Completed to submit');
   const note=S.route?(S.route.ok?'Disbursement triggered via STP':'Routed to Authorizer'):left.join(' · ');
   $('foot').innerHTML=`<select><option>-Select-</option><option>Reassign</option><option>Hold</option></select>
+    <button class="btn btn-sm" data-act="sync" id="syncBtn">${I('sync')} Sync from OCR</button>
     <span class="fn">${note}</span>
     <span class="r"><button class="btn">Save</button><button class="btn">Exit Application</button>
       <button class="btn">To CRA Defect</button><button class="btn">To Sales Defect</button>
@@ -1434,7 +1423,6 @@ function setDesk(w){
 
 function initChrome(){
   $('brand').innerHTML=I('diamond');
-  $('syncIc').innerHTML=I('sync');
   $('rfBtn').innerHTML=I('refresh');
   const rail=['grid','fileText','table','list','chart','checkSquare','book','docs'];
   $('iconRail').innerHTML=rail.map((n,i)=>`<i class="${i===0?'on':''}">${I(n)}</i>`).join('')
