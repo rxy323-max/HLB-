@@ -253,8 +253,7 @@ button:disabled{cursor:not-allowed}
 .rgrp-h{display:flex;align-items:center;gap:8px;padding:8px 11px;font-size:12px;font-weight:600;
   letter-spacing:.04em;border-bottom:1px solid var(--border-2)}
 .rgrp-t{color:var(--text)}
-.rgrp-n{margin-left:auto;font-weight:400;font-size:11px;font-family:var(--mono);color:var(--text-3)}
-.rgrp-n.err{color:var(--error-text)}
+.rgrp-sp{flex:1}
 .rgrp-b{padding:10px 11px 2px}
 .rgrp.expert{border-color:var(--error-border)}
 .rgrp.expert .rgrp-h{background:var(--error-bg)}
@@ -303,9 +302,9 @@ button:disabled{cursor:not-allowed}
 .detail-header .t{font-size:16px;font-weight:600}
 .detail-header .bc{font-size:12px;color:var(--text-3)}
 .detail-header .r{margin-left:auto;display:flex;gap:8px;align-items:center}
-/* Half and half: the rules are the work, the document is the evidence, and
-   neither reads well squeezed into a column. */
-.detail-body{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:0}
+/* The rules are the work and the document is the evidence, so the split leans to
+   the rules without starving the page. */
+.detail-body{flex:1;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);min-height:0}
 @media(max-width:900px){.detail-body{grid-template-columns:1fr;overflow-y:auto}}
 .detail-panel{border-right:1px solid var(--border-2);background:var(--bg);overflow-y:auto;padding:16px}
 .detail-viewer{background:#eceef1;overflow:auto;padding:24px;display:flex;flex-direction:column;align-items:center}
@@ -417,7 +416,6 @@ button:disabled{cursor:not-allowed}
 .field-row .k{color:var(--text-2)}
 .field-row .v{font-family:var(--mono);font-size:12px;text-align:right;word-break:break-all}
 .field-row .c{font-family:var(--mono);font-size:11px;min-width:36px;text-align:right}
-.confidence-high{color:var(--success-text)} .confidence-low{color:var(--error-text)}
 .field-group{font-size:11px;color:var(--text-3);background:var(--fill-alter);padding:5px 8px;margin-top:8px;font-family:var(--mono)}
 .classify-box{border:1px solid var(--border-2);border-radius:var(--r);padding:14px;background:var(--fill-alter);margin-bottom:14px}
 .classify-box label{display:block;font-size:12px;color:var(--text-2);margin:10px 0 4px}
@@ -484,7 +482,10 @@ button:disabled{cursor:not-allowed}
 
   <div class="ant-modal-header">
     <div class="ocr-modal-header">
-      <div class="header-title">File Center · Disbursement</div>
+      <div class="header-tabs" id="stageTabs">
+        <button data-stage="app">Application Submission</button>
+        <button data-stage="dis">Disbursement</button>
+      </div>
     </div>
   </div>
 
@@ -1004,6 +1005,7 @@ function render(){
   const door=S.cs==='draft'?'draft':(S.role==='sales'?'sales':'cra');
   [...$('viewSeg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===door));
   $('permHint').textContent=P().l;
+  [...$('stageTabs').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.stage===S.stage));
   renderRail(); renderUpload(); renderTabs(); renderFilter(); renderTable(); renderFooter();
 }
 
@@ -1389,7 +1391,6 @@ function panel(f,p){
     grps.forEach(g=>{
     const idx=f.alerts.map((a,i)=>i).filter(i=>!!f.alerts[i].q===!!g.q);
     if(!idx.length) return;
-    const o=idx.filter(i=>!f.alerts[i].res).length;
     /* The defect is made on the document, so the page offers exactly one way to
        raise it however many rules it broke - here, on the expert-rule header. */
     const gd=defForFile(f.id);
@@ -1399,8 +1400,7 @@ function panel(f,p){
          p.rule&&(!gd||gd.st!=='closed')
           ?`<button class="ant-btn ant-btn-sm ${gd?'':'ant-btn-primary'}" data-mkdef="${esc(f.id)}">Sync Defect</button>`:''}`;
     h+=`<div class="rgrp ${g.q?'qc':'expert'}">
-      <div class="rgrp-h"><span class="rgrp-t">${g.t}</span>
-        <span class="rgrp-n ${o&&!g.q?'err':''}">${o?o+' pending':'all handled'}</span>${ctl}</div>
+      <div class="rgrp-h"><span class="rgrp-t">${g.t}</span><span class="rgrp-sp"></span>${ctl}</div>
       <div class="rgrp-b">`;
     idx.forEach(i=>{
       const a=f.alerts[i];
@@ -1426,8 +1426,7 @@ function panel(f,p){
   if(f.fields.length){
     h+=`<p class="panel-sect">FIELDS</p>`;
     f.fields.forEach(x=>{h+=x.g?`<div class="field-group">${x.g}</div>`
-      :`<div class="field-row"><span class="k">${x.n}</span><span class="v">${x.v}</span>
-         <span class="c ${x.c>=90?'confidence-high':'confidence-low'}">${x.c}%</span></div>`;});
+      :`<div class="field-row"><span class="k">${x.n}</span><span class="v">${x.v}</span></div>`;});
   }
   return h;
 }
@@ -1946,6 +1945,7 @@ document.addEventListener('click',e=>{
     const f=byId(S.dt),n=mcRules(f).filter(r=>!MC.res[r.id]).length;
     mcRules(f).forEach(r=>{if(!MC.res[r.id])MC.res[r.id]='pass';});
     renderDt();render();msg(`${n} rule(s) passed in one action`);return;}
+  if(t.dataset.stage){S.stage=t.dataset.stage;S.tab='fl';S.subj='primary';S.sel.clear();S.fType=S.fStatus='';render();return;}
   if(t.dataset.tab){S.tab=t.dataset.tab;S.sel.clear();S.fType=S.fStatus='';if(S.subj==='deleted')S.subj='primary';render();return;}
   if(t.dataset.subj){S.subj=t.dataset.subj;S.sel.clear();
     if(S.subj==='deleted'&&S.tab!=='fl'){S.tab='fl';S.fType=S.fStatus='';}
