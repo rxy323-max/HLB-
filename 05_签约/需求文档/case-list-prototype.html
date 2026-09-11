@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Application Inquiry — HLB LOAD$</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;background:#f5f6fa;color:#202124;}
+
+/* ── Top nav ── */
+.topnav{background:#fff;border-bottom:1px solid #e0e0e0;height:44px;display:flex;align-items:center;padding:0 24px;gap:0;position:sticky;top:0;z-index:50;}
+.topnav-tabs{display:flex;height:100%;align-items:stretch;}
+.tn-tab{padding:0 20px;display:flex;align-items:center;font-size:13px;color:#5f6368;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:.15s;user-select:none;}
+.tn-tab:hover{color:#202124;background:#f8f9fa;}
+.tn-tab.active{color:#1967d2;border-bottom-color:#1967d2;font-weight:600;}
+.tn-tab.pill{background:#1967d2;color:#fff;border-radius:6px;padding:0 14px;margin:8px 4px;border-bottom:none;font-weight:600;height:28px;}
+.tn-tab.pill:hover{background:#1557b0;}
+.tn-tab.pill-outline{border:1px solid #dadce0;border-radius:6px;padding:0 14px;margin:8px 4px;border-bottom:none;height:28px;color:#3c4043;}
+.tn-tab.pill-outline:hover{background:#f8f9fa;}
+.tn-right{margin-left:auto;font-size:12px;color:#9aa0a6;display:flex;align-items:center;gap:12px;}
+
+/* ── Page body ── */
+.page-body{padding:0 24px 24px;}
+
+/* ── Search & Filter ── */
+.sf-panel{background:#fff;border:1px solid #e0e0e0;border-radius:8px;margin:16px 0 12px;overflow:hidden;}
+.sf-toggle{display:flex;align-items:center;gap:8px;padding:10px 16px;cursor:pointer;user-select:none;font-size:13px;font-weight:600;color:#3c4043;border-bottom:1px solid #e0e0e0;}
+.sf-toggle svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;transition:transform .2s;}
+.sf-toggle.collapsed svg{transform:rotate(-90deg);}
+.sf-body{padding:16px 16px 12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px 20px;}
+.sf-body.hidden{display:none;}
+.sf-row{display:flex;align-items:center;gap:10px;}
+.sf-label{font-size:12px;color:#5f6368;white-space:nowrap;width:130px;flex-shrink:0;text-align:right;}
+.sf-inp{border:1px solid #dadce0;border-radius:4px;padding:6px 10px;font-size:13px;color:#3c4043;flex:1;outline:none;height:34px;}
+.sf-inp:focus{border-color:#1967d2;}
+.sf-sel{border:1px solid #dadce0;border-radius:4px;padding:6px 10px;font-size:13px;color:#3c4043;flex:1;height:34px;background:#fff;cursor:pointer;}
+.sf-date-range{display:flex;align-items:center;gap:6px;flex:1;}
+.sf-date-range .sf-inp{flex:1;}
+.sf-date-sep{color:#9aa0a6;flex-shrink:0;}
+.sf-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;padding-top:4px;border-top:1px solid #f1f3f4;margin-top:4px;}
+
+/* ── Case tabs ── */
+.case-tabs-row{display:flex;align-items:center;margin-bottom:12px;gap:0;}
+.case-tabs{display:flex;border-bottom:2px solid #e0e0e0;flex:1;}
+.ct{padding:9px 16px;font-size:13px;color:#5f6368;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:.15s;user-select:none;}
+.ct:hover{color:#3c4043;}
+.ct.active{color:#1967d2;border-bottom-color:#1967d2;font-weight:600;}
+.ct-btns{display:flex;gap:6px;margin-left:auto;padding-bottom:2px;}
+
+/* ── Table toolbar ── */
+.table-toolbar{display:flex;align-items:center;justify-content:flex-end;margin-bottom:8px;}
+.btn-reassign{border:1px solid #dadce0;border-radius:5px;background:#f8f9fa;color:#9aa0a6;font-size:13px;padding:5px 14px;cursor:not-allowed;}
+
+/* ── Main Table ── */
+.table-wrap{background:#fff;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+thead{background:#f8f9fa;}
+th{text-align:left;font-size:12px;font-weight:700;color:#5f6368;padding:10px 14px;border-bottom:2px solid #e0e0e0;white-space:nowrap;user-select:none;}
+th .sort-ico{display:inline-flex;flex-direction:column;gap:1px;vertical-align:middle;margin-left:4px;opacity:.5;}
+th .sort-ico span{width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;}
+th .sort-ico .up{border-bottom:4px solid #5f6368;}
+th .sort-ico .dn{border-top:4px solid #5f6368;}
+td{padding:12px 14px;border-bottom:1px solid #f1f3f4;vertical-align:middle;font-size:13px;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafbfc;}
+
+/* status badges */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:500;white-space:nowrap;}
+.bd-green{background:#e6f4ea;color:#137333;}
+.bd-blue{background:#e8f0fe;color:#1967d2;}
+.bd-orange{background:#fef7e0;color:#b45309;}
+.bd-gray{background:#f1f3f4;color:#5f6368;}
+.bd-red{background:#fce8e6;color:#c5221f;}
+.bd-outline{border:1px solid #dadce0;color:#5f6368;background:#fff;}
+
+/* sub-status column */
+.sub-status{display:flex;flex-direction:column;gap:5px;}
+.sub-row{display:flex;align-items:center;gap:6px;font-size:12px;}
+.sub-lbl{color:#9aa0a6;width:84px;flex-shrink:0;}
+.sub-val-dash{color:#c0c4c9;}
+
+/* applicant cell */
+.applicant-cell{display:flex;flex-direction:column;gap:3px;}
+.ap-name{font-size:13px;font-weight:500;}
+.ap-ic{font-size:11px;color:#9aa0a6;}
+
+/* vehicle cell */
+.vehicle-cell{display:flex;flex-direction:column;gap:2px;}
+.vh-dealer{font-size:12px;color:#3c4043;}
+.vh-type{font-size:11px;color:#9aa0a6;}
+
+/* loan cell */
+.loan-cell{display:flex;flex-direction:column;gap:2px;}
+.loan-amt{font-size:13px;font-weight:600;}
+.loan-sub{font-size:11px;color:#9aa0a6;}
+
+/* branch cell */
+.branch-cell{display:flex;flex-direction:column;gap:2px;font-size:12px;}
+.br-code{font-weight:600;}
+.br-id{color:#9aa0a6;}
+.br-name{color:#3c4043;}
+
+/* action cell */
+.action-cell{display:flex;align-items:center;gap:8px;position:relative;}
+.act-edit{color:#1967d2;font-size:13px;cursor:pointer;background:none;border:none;font-family:inherit;padding:0;}
+.act-edit:hover{text-decoration:underline;}
+.act-dots{width:28px;height:28px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#5f6368;font-size:16px;flex-shrink:0;}
+.act-dots:hover{background:#f8f9fa;border-color:#bbb;}
+
+/* dropdown */
+.dropdown{position:absolute;right:0;top:32px;background:#fff;border:1px solid #e0e0e0;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:200;min-width:140px;overflow:hidden;display:none;}
+.dropdown.open{display:block;}
+.dd-item{padding:9px 16px;font-size:13px;color:#1967d2;cursor:pointer;display:block;white-space:nowrap;}
+.dd-item:hover{background:#f0f5ff;}
+.dd-item.muted{color:#9aa0a6;cursor:default;}
+
+/* ── Pagination ── */
+.pagination{display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:14px 16px;background:#fff;border-top:1px solid #f1f3f4;border-radius:0 0 8px 8px;}
+.pg-btn{width:28px;height:28px;border:1px solid #e0e0e0;border-radius:4px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:#5f6368;}
+.pg-btn:hover:not(:disabled){background:#f8f9fa;}
+.pg-btn:disabled{opacity:.4;cursor:default;}
+.pg-cur{width:28px;height:28px;border:1px solid #1967d2;border-radius:4px;background:#e8f0fe;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#1967d2;}
+.pg-num{width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#5f6368;cursor:pointer;border:1px solid transparent;}
+.pg-num:hover{border-color:#e0e0e0;background:#f8f9fa;}
+.pg-sel{border:1px solid #e0e0e0;border-radius:4px;padding:3px 6px;font-size:12px;color:#3c4043;background:#fff;cursor:pointer;}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;height:32px;padding:0 16px;border:1px solid transparent;border-radius:5px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;gap:5px;}
+.btn-primary{background:#1967d2;color:#fff;border-color:#1967d2;}
+.btn-primary:hover{background:#1557b0;}
+.btn-secondary{background:#fff;color:#3c4043;border-color:#dadce0;}
+.btn-secondary:hover{background:#f8f9fa;}
+.btn-sm{height:28px;padding:0 12px;font-size:12px;}
+.btn-plus{background:#1967d2;color:#fff;border-color:#1967d2;font-weight:600;}
+.btn-plus:hover{background:#1557b0;}
+</style>
+</head>
+<body>
+
+<!-- ── Top Navigation ── -->
+<div class="topnav">
+  <div class="topnav-tabs">
+    <div class="tn-tab">User Management</div>
+    <div class="tn-tab">Application Inquiry</div>
+    <div class="tn-tab active">To-Do-List</div>
+  </div>
+  <div class="tn-right">
+    V1.2.0 &nbsp;|&nbsp; crediosadmin2 &nbsp;|&nbsp; 59:57
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9aa0a6" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.66 0 3-4.03 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4.03-3-9s1.34-9 3-9"/></svg>
+  </div>
+</div>
+
+<div class="page-body">
+
+  <!-- ── Search & Filter ── -->
+  <div class="sf-panel">
+    <div class="sf-toggle" id="sfToggle" onclick="toggleSF()">
+      <svg id="sfCaret" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      Search &amp; Filter
+    </div>
+    <div class="sf-body" id="sfBody">
+      <div class="sf-row">
+        <span class="sf-label">Search Field:</span>
+        <select class="sf-sel" style="width:130px;flex:none;">
+          <option>App Ref No</option>
+          <option>Applicant Name</option>
+          <option>IC No</option>
+        </select>
+        <input class="sf-inp" type="text" placeholder="Search applications..." style="flex:1;">
+      </div>
+      <div class="sf-row">
+        <span class="sf-label">Application status:</span>
+        <select class="sf-sel"><option>Pending Application</option><option>Approved</option><option>All</option></select>
+      </div>
+      <div class="sf-row">
+        <span class="sf-label">Branch:</span>
+        <input class="sf-inp" type="text" placeholder="Search branch">
+      </div>
+      <div class="sf-row">
+        <span class="sf-label">ALC:</span>
+        <select class="sf-sel"><option value="">Select</option></select>
+      </div>
+      <div class="sf-row">
+        <span class="sf-label">Officer ID/Name:</span>
+        <input class="sf-inp" type="text" placeholder="Enter Officer ID/Name">
+      </div>
+      <div class="sf-row">
+        <span class="sf-label">Manager ID/Name:</span>
+        <input class="sf-inp" type="text" placeholder="Search Manager ID/Name">
+      </div>
+      <div class="sf-row">
+        <span class="sf-label">Loan Amount/Financing:</span>
+        <div class="sf-date-range">
+          <input class="sf-inp" type="text" placeholder="Min">
+          <span class="sf-date-sep">-</span>
+          <input class="sf-inp" type="text" placeholder="Max">
+        </div>
+      </div>
+      <div class="sf-row">
+        <span class="sf-label">Application Date:</span>
+        <div class="sf-date-range">
+          <input class="sf-inp" type="text" placeholder="start date">
+          <span class="sf-date-sep">→</span>
+          <input class="sf-inp" type="text" placeholder="end date">
+        </div>
+      </div>
+      <div class="sf-row">
+        <span class="sf-label">Disbursed Date:</span>
+        <div class="sf-date-range">
+          <input class="sf-inp" type="text" placeholder="start date">
+          <span class="sf-date-sep">→</span>
+          <input class="sf-inp" type="text" placeholder="end date">
+        </div>
+      </div>
+      <div class="sf-row">
+        <span class="sf-label">Dealer:</span>
+        <select class="sf-sel"><option value="">Select dealer code/name</option></select>
+      </div>
+      <div class="sf-row">
+        <span class="sf-label">E-Consent:</span>
+        <select class="sf-sel"><option value="">Select status</option><option>Approved</option><option>Pending</option></select>
+      </div>
+      <div class="sf-row">
+        <span class="sf-label">Acceptance:</span>
+        <select class="sf-sel"><option value="">Select status</option><option>Pending</option><option>Completed</option></select>
+      </div>
+      <div class="sf-actions">
+        <button class="btn btn-secondary btn-sm">Reset</button>
+        <button class="btn btn-primary btn-sm">Search</button>
+        <button class="btn btn-plus btn-sm">+ New Application</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Case Tabs ── -->
+  <div class="case-tabs-row">
+    <div class="case-tabs">
+      <div class="ct active">All Cases</div>
+      <div class="ct">New Cases</div>
+      <div class="ct">Rework Cases</div>
+      <div class="ct">All Valid Cases</div>
+      <div class="ct">Cancel/Reject</div>
+      <div class="ct">Disbursed</div>
+    </div>
+    <div class="ct-btns">
+      <button class="btn btn-primary btn-sm">To-Do-List</button>
+      <button class="btn btn-secondary btn-sm">Back-Up-List</button>
+    </div>
+  </div>
+
+  <!-- ── Table ── -->
+  <div class="table-toolbar">
+    <button class="btn-reassign">Reassignment</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36px;"><input type="checkbox"></th>
+          <th>App Ref No <span class="sort-ico"><span class="up"></span><span class="dn"></span></span></th>
+          <th>App. Date <span class="sort-ico"><span class="up"></span><span class="dn"></span></span></th>
+          <th>Status <span class="sort-ico"><span class="up"></span><span class="dn"></span></span></th>
+          <th style="text-align:center;">e-consent<br>acceptance<br>e-hakmilk</th>
+          <th>Applicant</th>
+          <th>Vehicle</th>
+          <th>Loan amount</th>
+          <th>Branch/Officer <span class="sort-ico"><span class="up"></span><span class="dn"></span></span></th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- ── Row 1: Consent approved, Acceptance not started ── -->
+        <tr>
+          <td><input type="checkbox"></td>
+          <td style="font-size:13px;font-weight:500;color:#1967d2;cursor:pointer;" onclick="goContract('KRP/HP/2026/Y0010922')">KRP/HP/2026/Y0010922</td>
+          <td style="font-size:12px;color:#5f6368;">25-07-2026<br>14:29:49</td>
+          <td>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              <span class="badge bd-green">Approved</span>
+              <span class="badge bd-outline" style="font-size:11px;">From CED</span>
+            </div>
+          </td>
+          <td>
+            <div class="sub-status">
+              <div class="sub-row"><span class="sub-lbl">Consent:</span><span class="badge bd-green" style="font-size:11px;padding:2px 8px;">APPROVED</span></div>
+              <div class="sub-row"><span class="sub-lbl">Acceptance:</span><span class="sub-val-dash">—</span></div>
+              <div class="sub-row"><span class="sub-lbl">E-hakmilk:</span><span class="sub-val-dash">—</span></div>
+            </div>
+          </td>
+          <td>
+            <div class="applicant-cell">
+              <span class="ap-name">GGBOUND</span>
+              <span class="ap-ic">601223-08-2432</span>
+            </div>
+          </td>
+          <td>
+            <div class="vehicle-cell">
+              <span class="vh-dealer">SYARIKAT JL MOTORS SDN BHD</span>
+              <span class="vh-type">[N] AD</span>
+            </div>
+          </td>
+          <td>
+            <div class="loan-cell">
+              <span class="loan-amt">RM 50,000</span>
+              <span class="loan-sub">Pur. Price: RM 80,000</span>
+            </div>
+          </td>
+          <td>
+            <div class="branch-cell">
+              <span class="br-code">H29</span>
+              <span class="br-id">crediosadmin2</span>
+              <span class="br-name">CrediOSAdmin2 (crediosadmin2)</span>
+            </div>
+          </td>
+          <td>
+            <div class="action-cell" id="ac1">
+              <button class="act-edit">Edit</button>
+              <button class="act-dots" onclick="toggleDD('dd1',event)">⋮</button>
+              <div class="dropdown" id="dd1">
+                <a class="dd-item" onclick="goContract('KRP/HP/2026/Y0010922')">Contract</a>
+                <a class="dd-item" onclick="goStatusLog();closeAllDD()">Status Log</a>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- ── Row 2: Consent approved, E-Acceptance Pending ── -->
+        <tr>
+          <td><input type="checkbox"></td>
+          <td style="font-size:13px;font-weight:500;color:#1967d2;cursor:pointer;" onclick="goContract('TTI/HP/2026/Y0275723')">TTI/HP/2026/Y0275723</td>
+          <td style="font-size:12px;color:#5f6368;">21-07-2026<br>17:20:20</td>
+          <td>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              <span class="badge bd-green">Approved</span>
+              <span class="badge bd-outline" style="font-size:11px;">From CED</span>
+            </div>
+          </td>
+          <td>
+            <div class="sub-status">
+              <div class="sub-row"><span class="sub-lbl">Consent:</span><span class="badge bd-green" style="font-size:11px;padding:2px 8px;">APPROVED</span></div>
+              <div class="sub-row"><span class="sub-lbl">Acceptance:</span><span class="badge bd-orange" style="font-size:11px;padding:2px 8px;">E-Acceptance: Pending</span></div>
+              <div class="sub-row"><span class="sub-lbl">E-hakmilk:</span><span class="sub-val-dash">—</span></div>
+            </div>
+          </td>
+          <td>
+            <div class="applicant-cell">
+              <span class="ap-name">LIUYU</span>
+              <span class="ap-ic">030926-11-2425</span>
+            </div>
+          </td>
+          <td>
+            <div class="vehicle-cell">
+              <span class="vh-dealer">SYARIKAT JL MOTORS SDN BHD</span>
+              <span class="vh-type">[N] AD</span>
+            </div>
+          </td>
+          <td>
+            <div class="loan-cell">
+              <span class="loan-amt">RM 50,000</span>
+              <span class="loan-sub">Pur. Price: RM 80,000</span>
+            </div>
+          </td>
+          <td>
+            <div class="branch-cell">
+              <span class="br-code">H29</span>
+              <span class="br-id">crediosadmin2</span>
+              <span class="br-name">CrediOSAdmin2 (crediosadmin2)</span>
+            </div>
+          </td>
+          <td>
+            <div class="action-cell" id="ac2">
+              <button class="act-edit">Edit</button>
+              <button class="act-dots" onclick="toggleDD('dd2',event)">⋮</button>
+              <div class="dropdown" id="dd2">
+                <a class="dd-item" onclick="goContract('TTI/HP/2026/Y0275723')">Contract</a>
+                <a class="dd-item" onclick="goStatusLog();closeAllDD()">Status Log</a>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- ── Row 3: Consent approved, Manual Completed ── -->
+        <tr>
+          <td><input type="checkbox"></td>
+          <td style="font-size:13px;font-weight:500;color:#1967d2;cursor:pointer;" onclick="goContract('BKI/HP/2026/Y0064039')">BKI/HP/2026/Y0064039</td>
+          <td style="font-size:12px;color:#5f6368;">27-08-2026<br>18:06:55</td>
+          <td>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              <span class="badge bd-green">Approved</span>
+              <span class="badge bd-outline" style="font-size:11px;">From CED</span>
+            </div>
+          </td>
+          <td>
+            <div class="sub-status">
+              <div class="sub-row"><span class="sub-lbl">Consent:</span><span class="badge bd-green" style="font-size:11px;padding:2px 8px;">APPROVED</span></div>
+              <div class="sub-row"><span class="sub-lbl">Acceptance:</span><span class="badge bd-green" style="font-size:11px;padding:2px 8px;">Manual: Completed</span></div>
+              <div class="sub-row"><span class="sub-lbl">E-hakmilk:</span><span class="sub-val-dash">—</span></div>
+            </div>
+          </td>
+          <td>
+            <div class="applicant-cell">
+              <span class="ap-name">MASLIZAWATI BINTI MOHAMAD</span>
+              <span class="ap-ic">821001-04-8214</span>
+            </div>
+          </td>
+          <td>
+            <div class="vehicle-cell">
+              <span class="vh-dealer">SYARIKAT JL MOTORS SDN BHD</span>
+              <span class="vh-type">[N] AD</span>
+            </div>
+          </td>
+          <td>
+            <div class="loan-cell">
+              <span class="loan-amt">RM 30,000</span>
+              <span class="loan-sub">Pur. Price: RM 50,000</span>
+            </div>
+          </td>
+          <td>
+            <div class="branch-cell">
+              <span class="br-code">H29</span>
+              <span class="br-id">yongliu</span>
+              <span class="br-name">yongliu (yongliu)</span>
+            </div>
+          </td>
+          <td>
+            <div class="action-cell" id="ac3">
+              <button class="act-edit">Edit</button>
+              <button class="act-dots" onclick="toggleDD('dd3',event)">⋮</button>
+              <div class="dropdown" id="dd3">
+                <a class="dd-item" onclick="goContract('BKI/HP/2026/Y0064039')">Contract</a>
+                <a class="dd-item" onclick="goStatusLog();closeAllDD()">Status Log</a>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <button class="pg-btn" disabled>‹</button>
+      <div class="pg-cur">1</div>
+      <div class="pg-num">2</div>
+      <div class="pg-num">3</div>
+      <div class="pg-num">4</div>
+      <button class="pg-btn">›</button>
+      <select class="pg-sel">
+        <option>10 / page</option>
+        <option>20 / page</option>
+        <option>50 / page</option>
+      </select>
+    </div>
+  </div>
+
+</div><!-- page-body -->
+
+<!-- ── Status Log modal (placeholder) ── -->
+<div id="modalSL" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:10px;padding:24px;width:440px;box-shadow:0 8px 40px rgba(0,0,0,.2);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <span style="font-size:15px;font-weight:700;">Status Log</span>
+      <button onclick="document.getElementById('modalSL').style.display='none'" style="border:none;background:#f1f3f4;border-radius:4px;width:28px;height:28px;cursor:pointer;font-size:14px;">✕</button>
+    </div>
+    <div style="font-size:13px;color:#5f6368;line-height:1.8;">
+      <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #f1f3f4;"><span style="width:160px;color:#9aa0a6;">Pending Application</span><span>25-07-2026 14:29:49</span></div>
+      <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #f1f3f4;"><span style="width:160px;color:#9aa0a6;">Approved</span><span>26-07-2026 09:15:00</span></div>
+      <div style="display:flex;gap:12px;padding:8px 0;"><span style="width:160px;color:#9aa0a6;">E-Consent Approved</span><span>26-07-2026 10:00:00</span></div>
+    </div>
+    <div style="text-align:right;margin-top:16px;">
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modalSL').style.display='none'">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Search & Filter toggle ──
+function toggleSF() {
+  var body = document.getElementById('sfBody');
+  var caret = document.getElementById('sfCaret');
+  var toggle = document.getElementById('sfToggle');
+  var isOpen = !body.classList.contains('hidden');
+  if (isOpen) {
+    body.classList.add('hidden');
+    toggle.classList.add('collapsed');
+  } else {
+    body.classList.remove('hidden');
+    toggle.classList.remove('collapsed');
+  }
+}
+
+// ── Case tabs ──
+document.querySelectorAll('.ct').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.ct').forEach(function(t){ t.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+
+// ── Dropdown ──
+function toggleDD(id, e) {
+  e.stopPropagation();
+  var dd = document.getElementById(id);
+  var isOpen = dd.classList.contains('open');
+  closeAllDD();
+  if (!isOpen) dd.classList.add('open');
+}
+
+function closeAllDD() {
+  document.querySelectorAll('.dropdown').forEach(function(d){ d.classList.remove('open'); });
+}
+
+document.addEventListener('click', closeAllDD);
+
+// ── Navigation ──
+function goContract(refNo) {
+  closeAllDD();
+  // Navigate to the e-acceptance prototype
+  window.location.href = 'e-acceptance-prototype.html?ref=' + encodeURIComponent(refNo);
+}
+
+function goStatusLog() {
+  document.getElementById('modalSL').style.display = 'flex';
+}
+</script>
+</body>
+</html>
