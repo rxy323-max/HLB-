@@ -358,11 +358,9 @@ button:disabled{cursor:not-allowed}
   font-size:11px;padding:0;margin-left:8px;cursor:pointer;text-decoration:underline}
 .lnk-def:hover{color:var(--primary-hover)}
 .acts .lnk-def{align-self:center;margin-left:2px}
-.mc-grp .mc-done{flex:none;font-size:11px;font-weight:400;color:var(--warning-text);
-  background:var(--warning-bg);border:1px solid var(--warning-border);
-  border-radius:var(--r-sm);padding:1px 7px}
-.mc-grp .mc-done .lnk-def{margin-left:6px}
-@keyframes defsettle{from{background:var(--primary-bg);border-color:var(--primary-border)}}
+/* A defect on this document is a fact worth stating, not an alarm worth a badge. */
+.mc-done{flex:none;font-size:11px;font-weight:400;color:var(--text-3);white-space:nowrap}
+@keyframes defsettle{from{color:var(--primary-active)}}
 .res.keep.just,.mc-done.just{animation:defsettle 1.6s ease-out}
 @media(prefers-reduced-motion:reduce){.res.keep.just,.mc-done.just{animation:none}}
 .passall{display:flex;align-items:center;gap:10px;justify-content:space-between;

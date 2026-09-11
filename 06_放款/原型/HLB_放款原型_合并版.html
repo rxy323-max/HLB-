@@ -181,6 +181,8 @@ tbody tr:hover td{background:var(--alt)}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dcard-h .dc-lb{font-size:10.5px;font-family:var(--mono);color:var(--primary-deep);
   background:var(--primary-bg);border:1px solid var(--primary-border);border-radius:3px;padding:0 6px}
+/* a defect on this document is a fact worth stating, not an alarm worth a badge */
+.dcard-h .dc-note{font-size:11.5px;color:var(--ink-3);flex:none;white-space:nowrap}
 .dcard-h .dc-a{display:flex;gap:8px;align-items:center;flex:none}
 .dcard-b{padding:8px 12px 2px}
 .dcard-b .rrow{border:0;border-top:1px solid var(--line-2);border-radius:0;margin:0;padding:9px 0}
@@ -871,11 +873,11 @@ function docCard(fn,rs,lb){
   // Once the defect exists, what is left to read is what is still failing.
   const shown=d?rs.filter(bad):rs;
   const act=out
-    ? (d?`<span class="tag tag-warn">Defect logged</span>
+    ? (d?`<span class="dc-note">Defect logged</span>
           <button class="btn btn-sm" data-mkdef="${esc(fn)}">Sync Defect</button>
           <button class="btn btn-sm" data-go="def">View</button>`
        :`<button class="btn btn-sm btn-pri" data-mkdef="${esc(fn)}">Sync Defect</button>`)
-    : (d?`<span class="tag tag-warn">Defect logged</span>`
+    : (d?`<span class="dc-note">Defect logged</span>`
        :(eye?`<span class="tag tag-blue">Awaiting manual check</span>`
          :`<span class="tag tag-ok">Nothing outstanding</span>`));
   return `<div class="dcard ${out?'':'ok'}">
@@ -1076,12 +1078,10 @@ function renderFoot(){
           title="${left?'Answer every defect first':'Return the case to CRA'}">Return To CRA</button></span>`;
     return;
   }
-  const ok=canNext(),left=[];
-  if(fMissing().length) left.push(`${fMissing().length} required field(s) empty`);
-  if(ckMandOn()<ckMand().length) left.push(`${ckMand().length-ckMandOn()} mandatory doc(s) unchecked`);
-  if(unlinked().length) left.push(`${unlinked().length} failed rule(s) without a defect`);
-  if(!ok) left.push('Select CRA Completed to submit');
-  const note=S.route?(S.route.ok?'Disbursement triggered via STP':'Routed to Authorizer'):left.join(' · ');
+  const ok=canNext();
+  // the outcome of a submission is worth a line; a running tally of what is not
+  // done yet is not - the modules above already say it
+  const note=S.route?(S.route.ok?'Disbursement triggered via STP':'Routed to Authorizer'):'';
   $('foot').innerHTML=`<select><option>-Select-</option><option>Reassign</option><option>Hold</option></select>
     <button class="btn btn-sm" data-act="sync" id="syncBtn">${I('sync')} Sync from OCR</button>
     <span class="fn">${note}</span>
@@ -1961,11 +1961,9 @@ button:disabled{cursor:not-allowed}
   font-size:11px;padding:0;margin-left:8px;cursor:pointer;text-decoration:underline}
 .lnk-def:hover{color:var(--primary-hover)}
 .acts .lnk-def{align-self:center;margin-left:2px}
-.mc-grp .mc-done{flex:none;font-size:11px;font-weight:400;color:var(--warning-text);
-  background:var(--warning-bg);border:1px solid var(--warning-border);
-  border-radius:var(--r-sm);padding:1px 7px}
-.mc-grp .mc-done .lnk-def{margin-left:6px}
-@keyframes defsettle{from{background:var(--primary-bg);border-color:var(--primary-border)}}
+/* A defect on this document is a fact worth stating, not an alarm worth a badge. */
+.mc-done{flex:none;font-size:11px;font-weight:400;color:var(--text-3);white-space:nowrap}
+@keyframes defsettle{from{color:var(--primary-active)}}
 .res.keep.just,.mc-done.just{animation:defsettle 1.6s ease-out}
 @media(prefers-reduced-motion:reduce){.res.keep.just,.mc-done.just{animation:none}}
 .passall{display:flex;align-items:center;gap:10px;justify-content:space-between;
