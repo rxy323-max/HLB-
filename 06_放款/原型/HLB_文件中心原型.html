@@ -337,6 +337,22 @@ button:disabled{cursor:not-allowed}
 .alert-item .rn{font-weight:600;font-size:13px}
 .alert-item .rd{font-size:12px;color:var(--text-2);margin-bottom:10px;line-height:1.6}
 .alert-item .acts{display:flex;gap:6px;flex-wrap:wrap}
+/* the engine's verdict rides on the row; it is context, not a control */
+.alert-item .eng{margin-left:auto;font-size:10.5px;font-family:var(--mono);white-space:nowrap}
+.alert-item .eng.ok{color:var(--text-3)}
+.alert-item .eng.bad{color:var(--error-text)}
+.alert-item.okrule{border-left-color:var(--border)}
+.erbx{width:15px;height:15px;border:1px solid #c9ced6;border-radius:3px;display:inline-flex;
+  align-items:center;justify-content:center;font-size:10px;background:#fff;cursor:pointer;flex:none}
+.erbx.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.alert-item .ovr{font-size:10px;color:var(--warning-text);font-family:var(--mono)}
+.whyline{font-size:11.5px;color:var(--text-3);margin-top:4px;padding-left:2px}
+.prog{font-size:11px;font-family:var(--mono);color:var(--text-3);margin-left:10px}
+.foldrow{display:flex;align-items:center;gap:8px;margin:10px 0 8px;padding-top:9px;
+  border-top:1px solid var(--border-2)}
+.foldbtn{border:0;background:transparent;font-size:12px;font-weight:600;color:var(--text-2);
+  cursor:pointer;padding:0}
+.foldsel{font-size:11.5px;color:var(--text-3);margin-right:auto}
 .alert-item .res{font-size:12px;color:var(--success-text);font-family:var(--mono)}
 .ro-note{font-size:11px;color:var(--text-3);align-self:center}
 .alert-item .acts .mc-on{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text);font-weight:600}
@@ -716,6 +732,36 @@ const MC={
 };
 const MC_FILES=()=>[...new Set(MC.rules.map(r=>r.file))];
 
+/* What the engine concluded as PASSED. An engine verdict is not a conclusion - CRA
+   still has to look at each one and say so - so these join the same list as the
+   alerts, marked ok:1 so the row can show what the engine thought. The value the
+   engine read travels with the rule: without it "confirm" has nothing to confirm. */
+const PASSED={
+ d1:[['S51','2nd Schedule fully signed','Hirer, guarantor and witness blocks present on pages 1-2'],
+     ['F22','Monthly instalment reconciliation','1,166.67 \u00d7 84 = 98,000.00, matches balance payable'],
+     ['EB-STMP-1','Stamp duty receipt completeness','Stamp certificate attached, RM 10.00, dated 20-08-2026']],
+ d2:[['B41','Biometric result matched','E-acceptance returned MATCHED for 900101-10-5123']],
+ d5:[['A156','Hirer name matches the NRIC','TAN WEI MING = TAN WEI MING']],
+ d6:[['B42','Biometric within validity','Captured 19-08-2026, inside the 30-day window']],
+ d9:[['A153','Guarantee agreement date alignment','Signed 12-08-2026, same day as the HP Agreement']],
+ d10:[['G31','Guarantor NRIC match','820304-10-5566 = application form'],
+      ['G32','Guarantor is not the hirer','820304-10-5566 \u2260 900101-10-5123']],
+ d15:[['F21','Down payment ratio','40,000.00 / 128,000.00 = 31.3%, at or above the 10% floor'],
+      ['V14','Vehicle model match','PERODUA ALZA 1.5 AV = application form']],
+ d16:[['V11','Chassis no. cross-document match','WDF9073122A123456 = VOC, invoice and application'],
+      ['V12','Engine no. match','OM642920C123456 = VOC and invoice']],
+ d17:[['V13','Road tax validity','Expires 19-08-2027, later than the disbursement date']],
+ d18:[['I34','Policy period covers the tenure','18-08-2026 to 18-08-2027, covers the first instalment']],
+ d19:[['P71','Puspakom inspection validity','Inspected 05-08-2026, inside 6 months']],
+ d20:[['D62','Seller account details complete','Maybank 5141 2233 4455, name matches the invoice']],
+ d21:[['D61','Seller IC vs invoice payee','690712-08-6611 = HP216 payee']]
+};
+Object.keys(PASSED).forEach(id=>{
+  const f=DATA.dis.find(x=>x.id===id); if(!f) return;
+  PASSED[id].forEach(([i,n,d])=>f.alerts.push({id:i,nm:n,d,k:'p',ok:1}));
+});
+
+
 /* A Case has one rule set. It splits into two tracks only by how each rule gets
    concluded - by the engine (Cross Validation) or by eye (Manual Check). So the
    footer reports both tracks on both pages, and submission is a single Case-level
@@ -776,6 +822,7 @@ const CATS=s=>ZONES[s].map(z=>z[0]).concat(['Other Documents']);
 
 /* ═══════ STATE ═══════ */
 const S={role:'cra',cs:'review',stage:'dis',tab:'fl',subj:'primary',sel:new Set(),dt:null,
+  erSel:new Set(),erFold:1,
   fType:'',fStatus:'',railCollapsed:false,reval:0,
   // oc picks which of the four agreed round-2 outcomes a replacement produces.
   // In production the rules decide; here it is picked in the upload dialog itself,
@@ -963,9 +1010,15 @@ function inTab(f,t){
    Expert rules say whether the case is in order - they are what a defect is made
    of. OCR self-checks say whether the document could be read; they are the
    engine reporting on itself, and nothing about them is Sales's to fix. */
+/* Every expert rule on an OCR file needs a conclusion from CRA, including the ones
+   the engine passed: the engine's verdict is a starting point, not a decision. */
+const EA=f=>f.alerts.filter(a=>!a.q);                 // expert rules on this file
+const engFail=a=>!a.ok;                               // the engine flagged it
 const expOpen=f=>f.ch==='manual'
   ? MC.rules.filter(r=>r.file===f.nm&&!MC.res[r.id]).length
-  : f.alerts.filter(a=>!a.res&&!a.q).length;
+  : EA(f).filter(a=>!a.res).length;
+const alertsOn=f=>EA(f).filter(engFail).length;       // what the engine flagged
+const failedOn=f=>EA(f).filter(a=>/^Failed/.test(a.res||'')).length;
 const qcOpen=f=>f.ch==='manual'?0:f.alerts.filter(a=>!a.res&&a.q).length;
 function openCount(f){ return expOpen(f)+qcOpen(f); }
 function statusKey(f){
@@ -1147,8 +1200,9 @@ function statusCell(f){
     +(q?'<span class="ant-tag ant-tag-green">Rules Passed</span> '+qt:'')+sk;
   if(S.role==='sales') return '<span class="ant-tag ant-tag-blue">In Review</span>'+sk;
   if(f.ch==='manual') return `<span class="ant-tag ant-tag-gold">Manual Check ${o}</span>`+sk;
-  const e=f.alerts.filter(a=>!a.res&&!a.q).every(a=>a.k==='e');
-  return `<span class="ant-tag ${e?'ant-tag-gold':'ant-tag-red'}">${e?'Manual Check ':'Alert '}${o}</span> `+qt;
+  const al=EA(f).filter(a=>!a.res&&engFail(a)).length;
+  return (al?`<span class="ant-tag ant-tag-red">Alert ${al}</span> `
+            :`<span class="ant-tag ant-tag-gold">Review ${o}</span> `)+qt+sk;
 }
 
 /* The way to answer a defect sits on the document it names, in the list where
@@ -1183,12 +1237,13 @@ function renderTable(){
       <th style="width:130px">File OCR Status</th><th style="width:96px">Alert Count</th>
       <th>Alert rules</th><th style="width:110px">Action</th></tr>`;
     $('tbody').innerHTML=r.map(f=>{
-      const o=expOpen(f), q=qcOpen(f);
+      const o=alertsOn(f), q=qcOpen(f);
       const st=unread(f)?`<span class="val bad">${OCRST[f.ocrSt][0]}</span>`
         :(o?'<span class="val bad">Validation Failed</span>'
            :'<span class="val ok">Validation Succeeded</span>');
-      const lines=f.alerts.length
-        ? f.alerts.map(a=>`<div class="rule-line ${a.q?'qc':(a.res?'done':'open')}">${
+      const shown=f.alerts.filter(a=>a.q||engFail(a));
+      const lines=shown.length
+        ? shown.map(a=>`<div class="rule-line ${a.q?'qc':(a.res?'done':'open')}">${
             a.q?'<span class="qmk">QC</span> ':(a.res?'&#10003; ':'')}${esc(a.id||a.nm)}</div>`).join('')
         : '<span class="description-text">\u2014</span>';
       return `<tr class="${S.sel.has(f.id)?'selected':''}" data-id="${f.id}">
@@ -1286,7 +1341,7 @@ function renderFooter(){
 }
 
 /* ═══════ DETAIL ═══════ */
-function openDt(i){S.dt=i;$('detail').classList.remove('hidden');renderDt();}
+function openDt(i){S.dt=i;S.erSel.clear();S.erFold=1;$('detail').classList.remove('hidden');renderDt();}
 function closeDt(){S.dt=null;$('detail').classList.add('hidden');render();}
 const dtList=()=>rows();
 
@@ -1381,43 +1436,81 @@ function panel(f,p){
     });
   }
   if(f.cls&&f.ch==='ocr'&&f.alerts.length){
-    /* Two kinds of rule live in the same engine and only one of them may become a
-       defect. OCR's self-checks say whether the document could be read; expert rules
-       say whether the case is in order. Splitting them here is what stops a read
-       problem from being sent to Sales as a document problem. */
-    const grps=[{q:0,t:'EXPERT RULES'},{q:1,t:'OCR SELF-CHECK'}];
-    grps.forEach(g=>{
-    const idx=f.alerts.map((a,i)=>i).filter(i=>!!f.alerts[i].q===!!g.q);
-    if(!idx.length) return;
-    /* The defect is made on the document, so the page offers exactly one way to
-       raise it however many rules it broke - here, on the expert-rule header. */
+    /* Every expert rule gets the same row and the same two buttons, whether the
+       engine passed it or flagged it. What differs is only what the engine thought,
+       shown on the row, and what it costs to disagree: concluding against the engine
+       asks for a reason. The rules the engine passed fold away as a block so the
+       page stays readable - folding is not a different interaction, it is a fold. */
+    const idxAll=f.alerts.map((a,i)=>i);
+    const exp=idxAll.filter(i=>!f.alerts[i].q);
+    const qc=idxAll.filter(i=>f.alerts[i].q);
+    const flagged=exp.filter(i=>engFail(f.alerts[i]));
+    const passed=exp.filter(i=>!engFail(f.alerts[i]));
+    const done=exp.filter(i=>f.alerts[i].res).length;
+    const open=exp.length-done;
     const gd=defForFile(f.id);
-    const ctl=g.q?''
-      :`${gd?`<span class="mc-done${JUSTDEF===f.id?' just':''}">${
-            gd.st==='closed'?'Defect closed':'Defect logged'}</span>`:''}${
-         p.rule&&(!gd||gd.st!=='closed')
-          ?`<button class="ant-btn ant-btn-sm ${gd?'':'ant-btn-primary'}" data-mkdef="${esc(f.id)}">Sync Defect</button>`:''}`;
-    h+=`<div class="rgrp ${g.q?'qc':'expert'}">
-      <div class="rgrp-h"><span class="rgrp-t">${g.t}</span><span class="rgrp-sp"></span>${ctl}</div>
+    const ctl=`${gd?`<span class="mc-done${JUSTDEF===f.id?' just':''}">${
+          gd.st==='closed'?'Defect closed':'Defect logged'}</span>`:''}${
+       p.rule&&(!gd||gd.st!=='closed')
+        ?`<button class="ant-btn ant-btn-sm ${gd?'':'ant-btn-primary'}" data-mkdef="${esc(f.id)}">Sync Defect</button>`:''}`;
+
+    const row=i=>{
+      const a=f.alerts[i], sel=S.erSel.has(i);
+      const eng=engFail(a)?'<span class="eng bad">OCR: not passed</span>'
+                          :'<span class="eng ok">OCR: passed</span>';
+      let r=`<div class="alert-item ${a.res?'resolved':(engFail(a)?'machine':'okrule')}">
+        <div class="ah">${p.rule&&!a.res?`<span class="erbx ${sel?'on':''}" data-erchk="${i}">${sel?'\u2713':''}</span>`:''}
+          <span class="rid">${esc(a.id)}</span><span class="rn">${esc(a.nm)}</span>${eng}</div>
+        <div class="rd">${esc(a.d)}</div>`;
+      if(a.def) r+=`<div class="res keep${JUSTDEF===f.id?' just':''}">Defect logged</div>`;
+      if(a.res){
+        r+=`<div class="res ${/^Failed/.test(a.res)?'bad':''}">${/^Failed/.test(a.res)?'\u2715':'\u2713'} ${esc(a.res)}${
+          a.ovr?' <span class="ovr">overridden</span>':''}${a.bulk?' <span class="ovr">in bulk</span>':''}</div>`;
+        if(a.why) r+=`<div class="whyline">${esc(a.why)}</div>`;
+      }else{
+        r+=`<div class="acts">
+          <button class="ant-btn ant-btn-sm" data-al="pass" data-i="${i}" ${p.rule?'':'disabled'}>Pass</button>
+          <button class="ant-btn ant-btn-sm ant-btn-dangerous" data-al="fail" data-i="${i}" ${p.rule?'':'disabled'}>Fail</button>
+          ${engFail(a)&&a.k!=='e'?`<button class="ant-btn ant-btn-sm" data-al="repl" data-i="${i}" ${p.rule?'':'disabled'}>Replace Document</button>`:''}
+          ${p.rule?'':'<span class="ro-note">CRA concludes this</span>'}</div>`;
+      }
+      return r+`</div>`;
+    };
+
+    h+=`<div class="rgrp expert">
+      <div class="rgrp-h"><span class="rgrp-t">EXPERT RULES</span>
+        <span class="prog">${done} / ${exp.length} concluded</span>
+        <span class="rgrp-sp"></span>${ctl}</div>
       <div class="rgrp-b">`;
-    idx.forEach(i=>{
-      const a=f.alerts[i];
-      h+=`<div class="alert-item ${a.res?'resolved':(a.k==='e'?'eyeball':'machine')}"><div class="ah"><span class="rid">${a.id}</span><span class="rn">${a.nm}</span></div><div class="rd">${a.d}</div>`;
-      // The defect is logged and the alert stays. They answer different questions -
-      // "is this document readable" and "who owes what" - so clearing one must not
-      // clear the other. It is why OCR has to be able to save while an alert stands.
-      if(a.def) h+=`<div class="res keep${JUSTDEF===f.id?' just':''}">Defect logged</div>`;
-      h+=a.res?`<div class="res">&#10003; ${a.res}</div>`
-        :a.k==='e'
-          ?`<div class="acts"><button class="ant-btn ant-btn-sm" data-al="pass" data-i="${i}" ${p.rule?'':'disabled'}>Pass</button>
-            <button class="ant-btn ant-btn-sm ant-btn-dangerous" data-al="fail" data-i="${i}" ${p.rule?'':'disabled'}>Fail</button></div>`
+    flagged.forEach(i=>{h+=row(i);});
+    if(passed.length){
+      const openPassed=passed.filter(i=>!f.alerts[i].res);
+      const allSel=openPassed.length&&openPassed.every(i=>S.erSel.has(i));
+      h+=`<div class="foldrow">
+        <button class="foldbtn" data-fold="1">${S.erFold?'\u25b8':'\u25be'} Passed by OCR (${passed.length})</button>
+        ${!S.erFold&&openPassed.length&&p.rule
+          ?`<span class="erbx ${allSel?'on':''}" data-erall="1">${allSel?'\u2713':''}</span>
+            <span class="foldsel">Select all</span>
+            <button class="ant-btn ant-btn-sm" data-erbulk="1" ${S.erSel.size?'':'disabled'}>Pass selected (${S.erSel.size})</button>`
+          :''}</div>`;
+      if(!S.erFold) passed.forEach(i=>{h+=row(i);});
+    }
+    h+=`</div></div>`;
+
+    if(qc.length){
+      h+=`<div class="rgrp qc"><div class="rgrp-h"><span class="rgrp-t">OCR SELF-CHECK</span></div>
+        <div class="rgrp-b">`;
+      qc.forEach(i=>{const a=f.alerts[i];
+        h+=`<div class="alert-item ${a.res?'resolved':'machine'}">
+          <div class="ah"><span class="rid">${esc(a.id)}</span><span class="rn">${esc(a.nm)}</span></div>
+          <div class="rd">${esc(a.d)}</div>`;
+        h+=a.res?`<div class="res">&#10003; ${esc(a.res)}</div>`
           :`<div class="acts">
             <button class="ant-btn ant-btn-sm" data-al="just" data-i="${i}" ${p.rule?'':'disabled'}>Justification</button>
             <button class="ant-btn ant-btn-sm" data-al="repl" data-i="${i}" ${p.rule?'':'disabled'}>Replace Document</button></div>`;
-      h+=`</div>`;
-    });
-    h+=`</div></div>`;
-    });
+        h+=`</div>`;});
+      h+=`</div></div>`;
+    }
   }
   if(f.cls&&f.ch==='ocr'&&!f.alerts.length&&f.src!=='system')
     h+=`<div class="pnote ok"><b>All rules passed</b></div>`;
@@ -1771,6 +1864,35 @@ function docHistory(fid){
     `<button class="ant-btn ant-btn-primary" data-cl="1">Close</button>`);
 }
 
+/* One conclusion on one rule. by: 'one' when it was concluded on its own row,
+   'bulk' when it came with a block confirmation; ovr when it contradicts the engine.
+   The three are different kinds of evidence and the record has to tell them apart. */
+function concludeRule(f,i,k,why){
+  const a=f.alerts[i]; if(!a) return;
+  a.res=(k==='pass'?'Passed':'Failed \u00b7 returned to Sales')+' \u00b7 '+roleNm();
+  a.ovr=((k==='pass')===!engFail(a))?0:1; a.bulk=0; a.why=why||'';
+  S.erSel.delete(i); renderDt(); render();
+}
+let WHY=null;
+function askWhy(fid,i,k){
+  const f=byId(fid), a=f.alerts[i]; if(!a) return;
+  WHY={fid,i,k};
+  sm(k==='pass'?'Pass against the OCR result':'Fail against the OCR result',
+   `<div class="pnote warn"><b>${esc(a.id)}</b> ${esc(a.nm)}<br>
+      OCR concluded <b>${engFail(a)?'not passed':'passed'}</b> \u00b7 ${esc(a.d)}</div>
+    <label class="dlab">Reason</label>
+    <textarea class="ant-input" id="whyTx" style="width:100%;min-height:70px"
+      placeholder="Why the document supports the other conclusion"></textarea>`,
+   `<button class="ant-btn" data-cl="1">Cancel</button>
+    <button class="ant-btn ant-btn-primary" data-dowhy="1">Confirm ${k==='pass'?'Pass':'Fail'}</button>`);
+}
+function saveWhy(){
+  const t=($('whyTx').value||'').trim();
+  if(!t){msg('A reason is required to conclude against the OCR result');return;}
+  const f=byId(WHY.fid); smClose(); concludeRule(f,WHY.i,WHY.k,t);
+  msg('Conclusion recorded against the OCR result');
+}
+
 /* ═══════ NO OCR RESULT ═══════
    Retry is the cheap answer, so it is offered first. Skip is the escape hatch:
    what is skipped is the reading, never the checking - the rules for the type
@@ -1918,7 +2040,7 @@ document.addEventListener('change',e=>{
 });
 
 document.addEventListener('click',e=>{
-  const t=e.target.closest('button,input[type=checkbox],[data-dty],[data-dver]'); if(!t) return;
+  const t=e.target.closest('button,input[type=checkbox],[data-dty],[data-dver],[data-erchk],[data-erall]'); if(!t) return;
 
   if(t.dataset.railtoggle){S.railCollapsed=!S.railCollapsed;render();return;}
   if(t.dataset.view){setView(t.dataset.view);return;}
@@ -2033,10 +2155,32 @@ document.addEventListener('click',e=>{
     renderDt();render();return;
   }
   if(t.dataset.al){
-    const f=byId(S.dt),a=f.alerts[+t.dataset.i],k=t.dataset.al;
-    a.res={pass:'Passed',fail:'Failed \u00b7 returned to Sales',just:'Justification recorded',repl:'Replace Document requested'}[k]+' \u00b7 '+roleNm();
+    const f=byId(S.dt),i=+t.dataset.i,a=f.alerts[i],k=t.dataset.al;
+    /* Agreeing with the engine is one click. Disagreeing with it is a judgement, so
+       it asks why - and the answer is what the record carries afterwards. */
+    if(!a.q&&(k==='pass'||k==='fail')){
+      const agrees = (k==='pass')===!engFail(a);
+      if(agrees){ concludeRule(f,i,k,''); return; }
+      askWhy(f.id,i,k); return;
+    }
+    a.res={just:'Justification recorded',repl:'Replace Document requested'}[k]+' \u00b7 '+roleNm();
     renderDt();render();return;
   }
+  if(t.dataset.erchk){const i=+t.dataset.erchk;
+    S.erSel.has(i)?S.erSel.delete(i):S.erSel.add(i); renderDt(); return;}
+  if(t.dataset.erall){
+    const f=byId(S.dt);
+    const opn=f.alerts.map((a,i)=>i).filter(i=>!f.alerts[i].q&&!engFail(f.alerts[i])&&!f.alerts[i].res);
+    opn.every(i=>S.erSel.has(i))?opn.forEach(i=>S.erSel.delete(i)):opn.forEach(i=>S.erSel.add(i));
+    renderDt(); return;}
+  if(t.dataset.erbulk){
+    const f=byId(S.dt), n=S.erSel.size;
+    [...S.erSel].forEach(i=>{const a=f.alerts[i];
+      if(a&&!a.res){a.res='Passed \u00b7 '+roleNm(); a.bulk=1; a.ovr=engFail(a)?1:0;}});
+    S.erSel.clear(); renderDt(); render();
+    msg(`${n} rule(s) confirmed \u00b7 recorded as a bulk confirmation`); return;}
+  if(t.dataset.fold){S.erFold=S.erFold?0:1; if(S.erFold)S.erSel.clear(); renderDt(); return;}
+  if(t.dataset.dowhy){saveWhy();return;}
   if(t.dataset.mc){
     const r=MC.rules.find(x=>x.id===t.dataset.r), k=t.dataset.mc;
     if(MC.res[r.id]===k) delete MC.res[r.id]; else MC.res[r.id]=k;
