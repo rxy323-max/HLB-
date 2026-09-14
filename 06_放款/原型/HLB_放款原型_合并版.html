@@ -1945,9 +1945,6 @@ button:disabled{cursor:not-allowed}
 .alert-item .eng.ok{color:var(--text-3)}
 .alert-item .eng.bad{color:var(--error-text)}
 .alert-item.okrule{border-left-color:var(--border)}
-.erbx{width:15px;height:15px;border:1px solid #c9ced6;border-radius:3px;display:inline-flex;
-  align-items:center;justify-content:center;font-size:10px;background:#fff;cursor:pointer;flex:none}
-.erbx.on{background:var(--primary);border-color:var(--primary);color:#fff}
 .alert-item .ovr{font-size:10px;color:var(--warning-text);font-family:var(--mono)}
 .whyline{font-size:11.5px;color:var(--text-3);margin-top:4px;padding-left:2px}
 .prog{font-size:11px;font-family:var(--mono);color:var(--text-3);margin-left:10px}
@@ -1955,8 +1952,9 @@ button:disabled{cursor:not-allowed}
   border-top:1px solid var(--border-2)}
 .foldbtn{border:0;background:transparent;font-size:12px;font-weight:600;color:var(--text-2);
   cursor:pointer;padding:0}
-.foldsel{font-size:11.5px;color:var(--text-3);margin-right:auto}
+.foldsel{flex:1}
 .alert-item .res{font-size:12px;color:var(--success-text);font-family:var(--mono)}
+.alert-item .res.bad{color:var(--error-text)}
 .ro-note{font-size:11px;color:var(--text-3);align-self:center}
 .alert-item .acts .mc-on{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text);font-weight:600}
 .alert-item .acts .mc-off{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text);font-weight:600}
@@ -2425,7 +2423,7 @@ const CATS=s=>ZONES[s].map(z=>z[0]).concat(['Other Documents']);
 
 /* ═══════ STATE ═══════ */
 const S={role:'cra',cs:'review',stage:'dis',tab:'fl',subj:'primary',sel:new Set(),dt:null,
-  erSel:new Set(),erFold:1,
+  erFold:1,
   fType:'',fStatus:'',railCollapsed:false,reval:0,
   // oc picks which of the four agreed round-2 outcomes a replacement produces.
   // In production the rules decide; here it is picked in the upload dialog itself,
@@ -2586,7 +2584,7 @@ function canVerify(f){
   if(!d||d.st==='closed') return false;
   return f.ch==='manual'
     ? mcRules(f).filter(r=>r.file===f.nm).every(r=>MC.res[r.id]==='pass')
-    : f.alerts.filter(a=>!a.q).every(a=>a.res&&!/^Failed/.test(a.res));
+    : EA(f).every(a=>a.res&&!isFail(a));
 }
 const viaDefect=f=>!!(f&&f.ver>1&&defForFile(f.id));
 // Round 2 shows only the rules of the file type the defect names.
@@ -2621,7 +2619,8 @@ const expOpen=f=>f.ch==='manual'
   ? MC.rules.filter(r=>r.file===f.nm&&!MC.res[r.id]).length
   : EA(f).filter(a=>!a.res).length;
 const alertsOn=f=>EA(f).filter(engFail).length;       // what the engine flagged
-const failedOn=f=>EA(f).filter(a=>/^Failed/.test(a.res||'')).length;
+const isFail=a=>a.res==='Not passed';
+const failedOn=f=>EA(f).filter(isFail).length;
 const qcOpen=f=>f.ch==='manual'?0:f.alerts.filter(a=>!a.res&&a.q).length;
 function openCount(f){ return expOpen(f)+qcOpen(f); }
 function statusKey(f){
@@ -2944,7 +2943,7 @@ function renderFooter(){
 }
 
 /* ═══════ DETAIL ═══════ */
-function openDt(i){S.dt=i;S.erSel.clear();S.erFold=1;$('detail').classList.remove('hidden');renderDt();}
+function openDt(i){S.dt=i;S.erFold=1;$('detail').classList.remove('hidden');renderDt();}
 function closeDt(){S.dt=null;$('detail').classList.add('hidden');render();}
 const dtList=()=>rows();
 
@@ -3057,25 +3056,28 @@ function panel(f,p){
        p.rule&&(!gd||gd.st!=='closed')
         ?`<button class="ant-btn ant-btn-sm ${gd?'':'ant-btn-primary'}" data-mkdef="${esc(f.id)}">Sync Defect</button>`:''}`;
 
+    /* One act per rule: review it. Reviewing takes the engine's verdict as the
+       conclusion, which is the normal case and costs one click. Disagreeing is the
+       exception, so it sits beside it as a quiet link and asks for a reason. */
     const row=i=>{
-      const a=f.alerts[i], sel=S.erSel.has(i);
+      const a=f.alerts[i];
       const eng=engFail(a)?'<span class="eng bad">OCR: not passed</span>'
                           :'<span class="eng ok">OCR: passed</span>';
-      let r=`<div class="alert-item ${a.res?'resolved':(engFail(a)?'machine':'okrule')}">
-        <div class="ah">${p.rule&&!a.res?`<span class="erbx ${sel?'on':''}" data-erchk="${i}">${sel?'\u2713':''}</span>`:''}
-          <span class="rid">${esc(a.id)}</span><span class="rn">${esc(a.nm)}</span>${eng}</div>
+      let r=`<div class="alert-item ${a.res?(isFail(a)?'machine':'okrule'):(engFail(a)?'machine':'okrule')}">
+        <div class="ah"><span class="rid">${esc(a.id)}</span><span class="rn">${esc(a.nm)}</span>${eng}</div>
         <div class="rd">${esc(a.d)}</div>`;
       if(a.def) r+=`<div class="res keep${JUSTDEF===f.id?' just':''}">Defect logged</div>`;
       if(a.res){
-        r+=`<div class="res ${/^Failed/.test(a.res)?'bad':''}">${/^Failed/.test(a.res)?'\u2715':'\u2713'} ${esc(a.res)}${
-          a.ovr?' <span class="ovr">overridden</span>':''}${a.bulk?' <span class="ovr">in bulk</span>':''}</div>`;
+        r+=`<div class="res ${isFail(a)?'bad':''}">${isFail(a)?'\u2715':'\u2713'} ${esc(a.res)}${
+          a.ovr?' <span class="ovr">against the OCR result</span>':''}${
+          p.rule?` <button class="lnk-def" data-reopen="${i}">Change</button>`:''}</div>`;
         if(a.why) r+=`<div class="whyline">${esc(a.why)}</div>`;
-      }else{
+      }else if(p.rule){
         r+=`<div class="acts">
-          <button class="ant-btn ant-btn-sm" data-al="pass" data-i="${i}" ${p.rule?'':'disabled'}>Pass</button>
-          <button class="ant-btn ant-btn-sm ant-btn-dangerous" data-al="fail" data-i="${i}" ${p.rule?'':'disabled'}>Fail</button>
-          ${engFail(a)&&a.k!=='e'?`<button class="ant-btn ant-btn-sm" data-al="repl" data-i="${i}" ${p.rule?'':'disabled'}>Replace Document</button>`:''}
-          ${p.rule?'':'<span class="ro-note">CRA concludes this</span>'}</div>`;
+          <button class="ant-btn ant-btn-sm ant-btn-primary" data-al="ok" data-i="${i}">Reviewed</button>
+          <button class="lnk-def" data-al="flip" data-i="${i}">Mark as ${engFail(a)?'passed':'not passed'}</button></div>`;
+      }else{
+        r+=`<div class="acts"><span class="ro-note">CRA concludes this</span></div>`;
       }
       return r+`</div>`;
     };
@@ -3088,13 +3090,11 @@ function panel(f,p){
     flagged.forEach(i=>{h+=row(i);});
     if(passed.length){
       const openPassed=passed.filter(i=>!f.alerts[i].res);
-      const allSel=openPassed.length&&openPassed.every(i=>S.erSel.has(i));
       h+=`<div class="foldrow">
         <button class="foldbtn" data-fold="1">${S.erFold?'\u25b8':'\u25be'} Passed by OCR (${passed.length})</button>
+        <span class="foldsel"></span>
         ${!S.erFold&&openPassed.length&&p.rule
-          ?`<span class="erbx ${allSel?'on':''}" data-erall="1">${allSel?'\u2713':''}</span>
-            <span class="foldsel">Select all</span>
-            <button class="ant-btn ant-btn-sm" data-erbulk="1" ${S.erSel.size?'':'disabled'}>Pass selected (${S.erSel.size})</button>`
+          ?`<button class="ant-btn ant-btn-sm" data-erbulk="1">Reviewed all (${openPassed.length})</button>`
           :''}</div>`;
       if(!S.erFold) passed.forEach(i=>{h+=row(i);});
     }
@@ -3188,7 +3188,7 @@ function openDefDlg(fid,ai){
   // Manual Check concludes by eye rather than by engine, but the unit is the same.
   const man=f.ch==='manual';
   const open=man?mcRules(f).filter(r=>r.file===f.nm&&MC.res[r.id]==='fail')
-                :f.alerts.filter(a=>!a.res&&!a.q);   // OCR self-checks never become defects
+                :EA(f).filter(a=>isFail(a)||!a.res);  // OCR self-checks never become defects
   const rules=open.map(a=>a.id);
   const sug=[...new Set(rules.map(r=>(RULEMAP[r]||{}).ty).filter(Boolean))];
   const a=man?open[0]:f.alerts[+ai];
@@ -3248,7 +3248,7 @@ function saveDef(){
   }
   // The alert is marked as evidenced, never as resolved.
   if(DD.man) MC.rules.forEach(r=>{if(DD.rules.includes(r.id))r.def=no;});
-  else f.alerts.forEach(a=>{if(!a.res&&!a.q)a.def=no;});
+  else EA(f).forEach(a=>{if(isFail(a)||!a.res)a.def=no;});
   /* Passing the rules is the judgement; closing the defect is the bookkeeping.
      They stay two acts - the tick is only offered once every rule on the file has
      been concluded and none of them failed. */
@@ -3470,30 +3470,30 @@ function docHistory(fid){
 /* One conclusion on one rule. by: 'one' when it was concluded on its own row,
    'bulk' when it came with a block confirmation; ovr when it contradicts the engine.
    The three are different kinds of evidence and the record has to tell them apart. */
-function concludeRule(f,i,k,why){
+function concludeRule(f,i,k,why,bulk){
   const a=f.alerts[i]; if(!a) return;
-  a.res=(k==='pass'?'Passed':'Failed \u00b7 returned to Sales')+' \u00b7 '+roleNm();
-  a.ovr=((k==='pass')===!engFail(a))?0:1; a.bulk=0; a.why=why||'';
-  S.erSel.delete(i); renderDt(); render();
+  a.res=k==='pass'?'Passed':'Not passed';
+  a.ovr=((k==='pass')===!engFail(a))?0:1; a.bulk=bulk?1:0; a.by=roleNm(); a.why=why||'';
+  if(!bulk){ renderDt(); render(); }
 }
 let WHY=null;
 function askWhy(fid,i,k){
   const f=byId(fid), a=f.alerts[i]; if(!a) return;
   WHY={fid,i,k};
-  sm(k==='pass'?'Pass against the OCR result':'Fail against the OCR result',
+  sm(k==='pass'?'Mark as passed':'Mark as not passed',
    `<div class="pnote warn"><b>${esc(a.id)}</b> ${esc(a.nm)}<br>
       OCR concluded <b>${engFail(a)?'not passed':'passed'}</b> \u00b7 ${esc(a.d)}</div>
     <label class="dlab">Reason</label>
     <textarea class="ant-input" id="whyTx" style="width:100%;min-height:70px"
       placeholder="Why the document supports the other conclusion"></textarea>`,
    `<button class="ant-btn" data-cl="1">Cancel</button>
-    <button class="ant-btn ant-btn-primary" data-dowhy="1">Confirm ${k==='pass'?'Pass':'Fail'}</button>`);
+    <button class="ant-btn ant-btn-primary" data-dowhy="1">Confirm</button>`);
 }
 function saveWhy(){
   const t=($('whyTx').value||'').trim();
   if(!t){msg('A reason is required to conclude against the OCR result');return;}
-  const f=byId(WHY.fid); smClose(); concludeRule(f,WHY.i,WHY.k,t);
-  msg('Conclusion recorded against the OCR result');
+  const f=byId(WHY.fid); smClose(); concludeRule(f,WHY.i,WHY.k,t,0);
+  msg('Recorded against the OCR result');
 }
 
 /* ═══════ NO OCR RESULT ═══════
@@ -3643,7 +3643,7 @@ document.addEventListener('change',e=>{
 });
 
 document.addEventListener('click',e=>{
-  const t=e.target.closest('button,input[type=checkbox],[data-dty],[data-dver],[data-erchk],[data-erall]'); if(!t) return;
+  const t=e.target.closest('button,input[type=checkbox],[data-dty],[data-dver]'); if(!t) return;
 
   if(t.dataset.railtoggle){S.railCollapsed=!S.railCollapsed;render();return;}
   if(t.dataset.view){setView(t.dataset.view);return;}
@@ -3759,30 +3759,19 @@ document.addEventListener('click',e=>{
   }
   if(t.dataset.al){
     const f=byId(S.dt),i=+t.dataset.i,a=f.alerts[i],k=t.dataset.al;
-    /* Agreeing with the engine is one click. Disagreeing with it is a judgement, so
-       it asks why - and the answer is what the record carries afterwards. */
-    if(!a.q&&(k==='pass'||k==='fail')){
-      const agrees = (k==='pass')===!engFail(a);
-      if(agrees){ concludeRule(f,i,k,''); return; }
-      askWhy(f.id,i,k); return;
-    }
-    a.res={just:'Justification recorded',repl:'Replace Document requested'}[k]+' \u00b7 '+roleNm();
+    if(k==='ok'){ concludeRule(f,i,engFail(a)?'fail':'pass','',0); return; }
+    if(k==='flip'){ askWhy(f.id,i,engFail(a)?'pass':'fail'); return; }
+    a.res={just:'Justification recorded',repl:'Replace Document requested'}[k];
     renderDt();render();return;
   }
-  if(t.dataset.erchk){const i=+t.dataset.erchk;
-    S.erSel.has(i)?S.erSel.delete(i):S.erSel.add(i); renderDt(); return;}
-  if(t.dataset.erall){
+  if(t.dataset.reopen){const f=byId(S.dt),a=f.alerts[+t.dataset.reopen];
+    if(a){a.res=null;a.ovr=0;a.bulk=0;a.why='';} renderDt();render();return;}
+  if(t.dataset.erbulk){
     const f=byId(S.dt);
     const opn=f.alerts.map((a,i)=>i).filter(i=>!f.alerts[i].q&&!engFail(f.alerts[i])&&!f.alerts[i].res);
-    opn.every(i=>S.erSel.has(i))?opn.forEach(i=>S.erSel.delete(i)):opn.forEach(i=>S.erSel.add(i));
-    renderDt(); return;}
-  if(t.dataset.erbulk){
-    const f=byId(S.dt), n=S.erSel.size;
-    [...S.erSel].forEach(i=>{const a=f.alerts[i];
-      if(a&&!a.res){a.res='Passed \u00b7 '+roleNm(); a.bulk=1; a.ovr=engFail(a)?1:0;}});
-    S.erSel.clear(); renderDt(); render();
-    msg(`${n} rule(s) confirmed \u00b7 recorded as a bulk confirmation`); return;}
-  if(t.dataset.fold){S.erFold=S.erFold?0:1; if(S.erFold)S.erSel.clear(); renderDt(); return;}
+    opn.forEach(i=>concludeRule(f,i,'pass','',1));
+    renderDt(); render(); msg(`${opn.length} rule(s) reviewed`); return;}
+  if(t.dataset.fold){S.erFold=S.erFold?0:1; renderDt(); return;}
   if(t.dataset.dowhy){saveWhy();return;}
   if(t.dataset.mc){
     const r=MC.rules.find(x=>x.id===t.dataset.r), k=t.dataset.mc;
