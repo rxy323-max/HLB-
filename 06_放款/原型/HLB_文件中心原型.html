@@ -640,10 +640,9 @@ app:[
    del:{by:'SalesOfficer1',at:'18/08/26 09:12',rs:'Customer resubmitted the latest month'}})
 ],
 dis:[
- F({id:'d1',sj:'case',nm:'2nd Schedule Part I.pdf',cat:'CRA HP Agreement',ty:'2nd Schedule Part I',tyc:'(1-2)',pages:2,doc:'invoice',sz:'5.39 MB',
-   alerts:[{id:'S52',k:'m',nm:'Arithmetic check failed \u00b7 Balance originally payable',d:'Cash price less deposit + freight + registration + insurance + total term charges = 98,000.00; document states 96,500.00'}],
-   fields:[{g:'loan_terms'},{n:'cash_price_less_deposit',v:'88,000.00',c:99},{n:'freight',v:'1,200.00',c:98},
-           {n:'balance_originally_payable',v:'96,500.00',c:99},{n:'total_term_charges',v:'8,800.00',c:97}]}),
+ /* Outside the OCR File List: nothing is extracted and every rule on it is
+    concluded by eye on the Manual Check page. */
+ F({id:'d1',sj:'case',nm:'2nd Schedule Part I.pdf',cat:'CRA HP Agreement',ty:'2nd Schedule Part I',pages:2,doc:'invoice',ch:'manual',sz:'5.39 MB'}),
  F({id:'d2',sj:'case',nm:'HP Agreement (Signed).pdf',cat:'CRA HP Agreement',ty:'HP Agreement (E-Acceptance)',tyc:'(1-8)',pages:8,src:'system',ao:'external',sz:'1.47 MB',
    alerts:[{id:'Eyeball Check',k:'e',nm:'Hirer signature and witness completeness',d:'Confirm visually that every page carries the hirer initials and the last page carries the witness signature and date'}],
    fields:[{n:'template_version',v:'HP17NEWREV052025E',c:99},{n:'hirer_date',v:'12-08-2026',c:98}]}),
@@ -651,30 +650,26 @@ dis:[
    desc:'System-generated, no validation',fields:[{n:'application_date',v:'19-08-2026',c:100}]}),
  F({id:'d4',sj:'primary',nm:'NRIC.png',cat:'CRA Applicant Identity',ty:'Other Documents',tyc:'(1-1)',cls:0,doc:'card',low:1,sz:'2.03 MB',
    desc:'DocType classification failed',fields:[{n:'—',v:'Pending classification',c:0}]}),
- F({id:'d5',sj:'primary',nm:'HP Agreement.pdf',cat:'CRA HP Agreement',ty:'HP Agreement',tyc:'(1-8)',pages:8,sz:'1.47 MB',
-   alerts:[{id:'A155',k:'m',nm:'More than 5 days since the signing date',d:'Hirer date 12-08-2026, today 19-08-2026, exceeds the 5-day parameter'},
-           {id:'A157',k:'m',nm:'Witness date missing on the last page',d:'No witness date extracted from page 8'},
-           {id:'OCR-Q17',k:'m',q:1,nm:'Page 3 was skewed before extraction',d:'Page 3 was de-skewed by 6°; field confidence on that page stays below 90%'}],
-   fields:[{n:'hirer_date',v:'12-08-2026',c:99},{n:'witness_date',v:'12-08-2026',c:98},{n:'moa_date',v:'12-08-2026',c:97}]}),
- F({id:'d6',sj:'primary',nm:'Biometric Result.pdf',cat:'CRA Applicant Identity',ty:'Biometric Result',src:'system',ao:'external',sz:'9.47 MB',
-   fields:[{n:'match_result',v:'MATCHED',c:100},{n:'verified_at',v:'12-08-2026 14:22',c:100}]}),
+ F({id:'d5',sj:'primary',nm:'HP Agreement.pdf',cat:'CRA HP Agreement',ty:'HP Agreement',pages:8,ch:'manual',sz:'1.47 MB'}),
+ F({id:'d6',sj:'primary',nm:'Biometric Result.pdf',cat:'CRA Applicant Identity',ty:'Biometric Result',src:'system',ao:'external',ch:'manual',sz:'9.47 MB'}),
  F({id:'d7',sj:'primary',nm:'Letter of Setoff.docx',cat:'Other Documents',ty:'LOSO',ch:'manual',sz:'0.18 MB',mix:1,
    checks:[{id:'M-11',nm:'LOSO amount matches the CED approval',d:'Against the CED conditional approval: FD pledge RM 100,000 \u00b7 3 years',pg:3},
            {id:'M-12',nm:'Witness signature complete',d:'Page 10 must carry an HLBB staff witness signature and date',pg:10}]}),
  F({id:'d8',sj:'primary',nm:'Partnership Mandate.docx',cat:'Other Documents',ty:'Partnership Mandate',ch:'manual',sz:'0.14 MB',
    checks:[{id:'M-21',nm:'Mandate date falls between application and disbursement',d:'Application date 19-08-2026 to today',pg:1}]}),
  F({id:'d9',sj:'g1',nm:'HP Guarantee Agreement.pdf',cat:'CRA HP Agreement',ty:'Guarantee Agreement',tyc:'(1-4)',pages:4,sz:'1.02 MB',
-   alerts:[{id:'A153',k:'m',nm:'HPGA date differs from the MOA date',d:'HPGA 14-08-2026 ≠ HP Agreement MOA 12-08-2026'}],
+   alerts:[{id:'A153',k:'m',nm:'HPGA date differs from the MOA date',d:'HPGA 14-08-2026 ≠ HP Agreement MOA 12-08-2026'},
+           {id:'EB-GTE-1',k:'e',nm:'Guarantor signature & witness completeness',d:'Confirm visually that page 4 carries the guarantor signature and the witness date'}],
    fields:[{n:'hpga_date',v:'14-08-2026',c:99},{n:'template_version',v:'HP26 REV052020',c:98}]}),
  F({id:'d10',sj:'g1',nm:'Guarantor NRIC.jpg',cat:'CRA Applicant Identity',ty:'MyKad',doc:'card',sz:'0.44 MB',fields:[{n:'id_no',v:'820304105566',c:99}]}),
  F({id:'d11',sj:'g2',nm:'G2 MyKad.jpg',cat:'CRA Applicant Identity',ty:'MyKad',doc:'card',sz:'0.39 MB',fields:[{n:'id_no',v:'880912065544',c:98}]}),
  F({id:'d12',sj:'g2',nm:'G2 Payslip.pdf',cat:'Applicant Income',ty:'Payslip',doc:'statement',sz:'0.77 MB',fields:[{n:'employer',v:'Sime Darby Bhd',c:97}]}),
  F({id:'d13',sj:'g2',nm:'G2 Guarantee Agreement.pdf',cat:'CRA HP Agreement',ty:'Guarantee Agreement',pages:4,sz:'1.01 MB',fields:[{n:'hpga_date',v:'14-08-2026',c:98}]}),
  F({id:'d14',sj:'g2',nm:'G2 Waiver Appendix III.pdf',cat:'CRA HP Agreement',ty:'Guarantor Waiver',sz:'0.33 MB',fields:[{n:'appendix',v:'III',c:99}]}),
- F({id:'d15',sj:'vehicle',nm:'Vehicle Invoice.pdf',cat:'CRA Vehicle Related',ty:'Vehicle Invoice',doc:'invoice',sz:'0.53 MB',
-   alerts:[{id:'I67',k:'m',nm:'Invoice date outside application-to-delivery window',d:'Invoice date 02-07-2026 is earlier than Application date 19-08-2026'}],
-   fields:[{n:'invoice_date',v:'02-07-2026',c:94},{n:'deposit_date',v:'15-08-2026',c:97},{n:'otr_price',v:'128,000.00',c:99}]}),
- F({id:'d16',sj:'vehicle',nm:'VOC.pdf',cat:'CRA Vehicle Related',ty:'VOC',sz:'0.61 MB',fields:[{n:'registration_no',v:'WXY 4471',c:99}]}),
+ F({id:'d15',sj:'vehicle',nm:'Vehicle Invoice.pdf',cat:'CRA Vehicle Related',ty:'Vehicle Invoice',doc:'invoice',ch:'manual',sz:'0.53 MB'}),
+ F({id:'d16',sj:'vehicle',nm:'VOC.pdf',cat:'CRA Vehicle Related',ty:'VOC',sz:'0.61 MB',
+   fields:[{g:'collateral'},{n:'registration_no',v:'WXY 4471',c:99},{n:'chassis_no',v:'WDF9073122A123456',c:98},
+           {n:'engine_no',v:'OM642920C123456',c:97},{n:'make_model',v:'PERODUA ALZA 1.5 AV',c:99}]}),
  F({id:'d17',sj:'vehicle',nm:'Road Tax Disc.jpg',cat:'CRA Vehicle Related',ty:'Road Tax Disc',doc:'card',sz:'0.29 MB',fields:[{n:'roadtax_start',v:'20-08-2026',c:97}]}),
  F({id:'d18',sj:'vehicle',nm:'Insurance Cover Note.pdf',cat:'CRA Vehicle Related',ty:'Insurance Cover Note',sz:'1.37 MB',
    alerts:[{id:'I33',k:'m',nm:'Sum insured insufficient',d:'Sum insured 98,000.00 < max(OTR \u00d7 0.8 = 102,400.00, loan + interest)'}],
@@ -715,16 +710,26 @@ dis:[
    Count is derived: case total minus rules handled by OCR. routed=1 marks a rule that
    OCR would normally handle, routed to manual because the file came in via the Manual Upload entry. */
 const MC={
-  // The Case has 25 expert rules in total, the same number the CRA Workbench
-  // header summary reports. 19 are handled by OCR, the remaining 6 by eye.
-  caseTotal:25, ocrHandled:19,
   rules:[
     {id:'M-11',nm:'LOSO amount matches the CED approval',d:'Against the CED conditional approval: FD pledge RM 100,000 \u00b7 3 years',file:'Letter of Setoff.docx',pg:3},
     {id:'M-12',nm:'Witness signature complete',d:'Page 10 must carry an HLBB staff witness signature and date',file:'Letter of Setoff.docx',pg:10},
     {id:'M-21',nm:'Mandate date falls between application and disbursement',d:'Application date 19-08-2026 to today',file:'Partnership Mandate.docx',pg:1},
     {id:'M-31',nm:'Resolution signatories appear in the SSM director list',d:'Against the SSM Search director list',file:'Company Resolution.docx',pg:2},
     {id:'M-32',nm:'Resolution bears the company seal',d:'The last page must carry the company seal and two director signatures',file:'Company Resolution.docx',pg:2},
-    {id:'V13',nm:'Road tax validity covers the disbursement date',d:'The road tax expiry must be later than the disbursement date',file:'Road Tax (Manual).jpg',pg:1,routed:1}
+    {id:'V13',nm:'Road tax validity covers the disbursement date',d:'The road tax expiry must be later than the disbursement date',file:'Road Tax (Manual).jpg',pg:1,routed:1},
+    /* These four documents are outside the OCR File List, so the engine never reads
+       them. Every expert rule on them is concluded by eye, here. */
+    {id:'S52',nm:'Balance originally payable reconciles',d:'Cash price less deposit + freight + registration + insurance + total term charges = 98,000.00; document states 96,500.00',file:'2nd Schedule Part I.pdf',pg:2},
+    {id:'S51',nm:'2nd Schedule fully signed',d:'Hirer, guarantor and witness blocks present on pages 1-2',file:'2nd Schedule Part I.pdf',pg:1},
+    {id:'F22',nm:'Monthly instalment reconciliation',d:'1,166.67 \u00d7 84 must equal the balance payable',file:'2nd Schedule Part I.pdf',pg:1},
+    {id:'EB-STMP-1',nm:'Stamp duty receipt completeness',d:'Stamp certificate attached, RM 10.00, dated 20-08-2026',file:'2nd Schedule Part I.pdf',pg:2},
+    {id:'A155',nm:'More than 5 days since the signing date',d:'Hirer date 12-08-2026, today 19-08-2026, exceeds the 5-day parameter',file:'HP Agreement.pdf',pg:1},
+    {id:'A157',nm:'Witness date missing on the last page',d:'No witness date on page 8',file:'HP Agreement.pdf',pg:8},
+    {id:'A156',nm:'Hirer name matches the NRIC',d:'TAN WEI MING on page 1 against the MyKad',file:'HP Agreement.pdf',pg:1},
+    {id:'B41',nm:'Biometric result matched',d:'E-acceptance returned MATCHED for 900101-10-5123',file:'Biometric Result.pdf',pg:1},
+    {id:'I67',nm:'Invoice date outside application-to-delivery window',d:'Invoice date 02-07-2026 is earlier than Application date 19-08-2026',file:'Vehicle Invoice.pdf',pg:1},
+    {id:'F21',nm:'Down payment ratio',d:'40,000.00 / 128,000.00 = 31.3%, at or above the 10% floor',file:'Vehicle Invoice.pdf',pg:1},
+    {id:'V14',nm:'Vehicle model match',d:'PERODUA ALZA 1.5 AV against the application form',file:'Vehicle Invoice.pdf',pg:1}
   ],
   res:{}
 };
@@ -735,25 +740,21 @@ const MC_FILES=()=>[...new Set(MC.rules.map(r=>r.file))];
    alerts, marked ok:1 so the row can show what the engine thought. The value the
    engine read travels with the rule: without it "confirm" has nothing to confirm. */
 const PASSED={
- d1:[['S51','2nd Schedule fully signed','Hirer, guarantor and witness blocks present on pages 1-2'],
-     ['F22','Monthly instalment reconciliation','1,166.67 \u00d7 84 = 98,000.00, matches balance payable'],
-     ['EB-STMP-1','Stamp duty receipt completeness','Stamp certificate attached, RM 10.00, dated 20-08-2026']],
- d2:[['B41','Biometric result matched','E-acceptance returned MATCHED for 900101-10-5123']],
- d5:[['A156','Hirer name matches the NRIC','TAN WEI MING = TAN WEI MING']],
- d6:[['B42','Biometric within validity','Captured 19-08-2026, inside the 30-day window']],
- d9:[['A153','Guarantee agreement date alignment','Signed 12-08-2026, same day as the HP Agreement']],
+ d9:[['A154','Guarantee agreement template version','HP26 REV052020, current at the signing date']],
  d10:[['G31','Guarantor NRIC match','820304-10-5566 = application form'],
       ['G32','Guarantor is not the hirer','820304-10-5566 \u2260 900101-10-5123']],
- d15:[['F21','Down payment ratio','40,000.00 / 128,000.00 = 31.3%, at or above the 10% floor'],
-      ['V14','Vehicle model match','PERODUA ALZA 1.5 AV = application form']],
  d16:[['V11','Chassis no. cross-document match','WDF9073122A123456 = VOC, invoice and application'],
-      ['V12','Engine no. match','OM642920C123456 = VOC and invoice']],
+      ['V12','Engine no. match','OM642920C123456 = VOC and invoice'],
+      ['V14','Vehicle model match','PERODUA ALZA 1.5 AV = application form']],
  d17:[['V13','Road tax validity','Expires 19-08-2027, later than the disbursement date']],
- d18:[['I34','Policy period covers the tenure','18-08-2026 to 18-08-2027, covers the first instalment']],
+ d18:[['I34','Policy period covers the tenure','18-08-2026 to 18-08-2027, covers the first instalment'],
+      ['I35','Insurer is on the panel list','ALLIANZ GENERAL, panel code AG-014']],
  d19:[['P71','Puspakom inspection validity','Inspected 05-08-2026, inside 6 months']],
- d20:[['D62','Seller account details complete','Maybank 5141 2233 4455, name matches the invoice']],
+ d20:[['D62','Seller account details complete','Maybank 5141 2233 4455, name matches the invoice'],
+      ['D64','Invoice price matches the facility','128,000.00 = OTR price on the application']],
  d21:[['D61','Seller IC vs invoice payee','690712-08-6611 = HP216 payee']]
 };
+
 Object.keys(PASSED).forEach(id=>{
   const f=DATA.dis.find(x=>x.id===id); if(!f) return;
   PASSED[id].forEach(([i,n,d])=>f.alerts.push({id:i,nm:n,d,k:'p',ok:1}));
@@ -768,11 +769,12 @@ Object.keys(PASSED).forEach(id=>{
    every file in the Case (FSD 2.8.3), manual marking is immediate. They therefore
    must not share a lock - only the moment of submission is shared. */
 const ocrAlerts=()=>live().filter(f=>f.ch==='ocr'&&f.cls).flatMap(f=>f.alerts);
-const ocrOpen=()=>ocrAlerts().filter(a=>!a.res).length;
+const ocrExp=()=>ocrAlerts().filter(a=>!a.q);
 const mcDone=()=>MC.rules.filter(r=>MC.res[r.id]).length;
+/* Both tracks are counted from the rules themselves: every expert rule on an OCR
+   file needs a conclusion from CRA, and so does every rule on the manual side. */
 function trackState(){
-  // OCR concludes most of its rules by itself; only the alerting ones wait on CRA.
-  const ot=MC.ocrHandled, od=ot-ocrOpen();
+  const ot=ocrExp().length, od=ocrExp().filter(a=>a.res).length;
   const mt=MC.rules.length, md=mcDone();
   return {ot,od,mt,md,open:(ot-od)+(mt-md),all:ot+mt,done:od+md};
 }
@@ -789,15 +791,19 @@ const DOCLIST=[
   ['Income',              ['Payslip','EPF Statement','Form B','Form BE','EA Form','EC Form',
                            'Notice of Assessment','Bank Statement','Commission Statement']],
   ['Application & Vehicle',['HP Application Form','CRA Form','VSO','VOC','Form 8','JK69',
-                           'Vehicle Invoice','Road Tax Disc','Puspakom B7','Insurance Cover Note',
+                           'Road Tax Disc','Puspakom B7','Insurance Cover Note',
                            'Delivery Order']],
-  ['Agreement',           ['HP Agreement','HP Agreement (Islamic)','Guarantee Agreement',
-                           '2nd Schedule Part I','2nd Schedule Part II','Guarantor Waiver',
-                           'Appendix I–V','Letter of Undertaking']],
+  ['Agreement',           ['Guarantee Agreement','Guarantor Waiver',
+                           'Appendix I\u2013V','Letter of Undertaking']],
   ['Seller',              ['Seller Invoice','Seller IC','HP216 Seller Invoice','Information on Seller']],
-  ['System-generated',    ['Application Form','Biometric Result']]
+  ['System-generated',    ['Application Form']]
 ];
+
 const MANUAL_DOCS=[
+  /* Outside the OCR File List, so the engine never reads them: every expert rule on
+     these is concluded by eye on the Manual Check page. */
+  ['Agreement & schedule',['HP Agreement','HP Agreement (Islamic)','2nd Schedule Part I',
+                            '2nd Schedule Part II','Vehicle Invoice','Biometric Result']],
   ['Statutory & corporate',['Letter of Setoff (LOSO)','Partnership Mandate','Company Resolution',
                             'SSM Search','Board Resolution','Trust Deed','Power of Attorney',
                             'Statutory Declaration']],
@@ -863,6 +869,8 @@ const P=()=>PERM[S.role+'|'+S.cs];
 const DEF0=[
  {no:'1',fid:'d18',cat:'INSURANCE',rules:['I33'],types:['Insurance sum insured insufficient'],
   cr:'Sum insured 98,000.00 is below the required 102,400.00',src:'System',st:'open',hist:[]},
+ /* Raised on documents the engine never reads: the rule was concluded by eye on the
+    Manual Check page, and the defect is made the same way. */
  {no:'2',fid:'d5',cat:'AGREEMENT - MASTER',rules:['A155','A157'],
   types:['Hirer and/or witnessed wrongly dated','Signature incomplete / not witnessed'],
   cr:'Hirer date 12-08-2026 exceeds the 5-day parameter · no witness date on page 8',src:'System',st:'open',hist:[]},
@@ -1120,7 +1128,7 @@ function renderUpload(){
           <div class="upload-prompt">Drag &amp; drop, or <span class="browse-link">browse</span></div>
           <div class="upload-examples">PDF, JPG, JPEG, PNG</div></div>
         <div class="type-hint">
-          ${['MyKad','Payslip','HP Agreement','Vehicle Invoice','Insurance Cover Note']
+          ${['MyKad','Payslip','VOC','Road Tax Disc','Insurance Cover Note']
             .map(t=>`<span class="tchip">${t}</span>`).join('')}
           <button class="tmore" data-act="doclist">+${OCR_COUNT-5} more</button>
         </div>
@@ -1679,9 +1687,9 @@ const OUTCOMES={
  d:{nm:'d \u00b7 partly solved, new rule hit',d:'One rule clears, one stands, another appears. Same handling as c.'}
 };
 // A rule that reads this document and one other. Replacing either can move it.
-const XRULE={id:'S53',nm:'Balance payable reconciles with the HP Agreement',
-  d:'Balance originally payable no longer reconciles against the replaced agreement (98,000.00 vs 96,500.00)',
-  a:'d5',b:'d1'};
+const XRULE={id:'D63',nm:'Insured value reconciles with the seller invoice',
+  d:'Sum insured on the replaced cover note no longer reconciles with the invoice price (102,400.00 vs 128,000.00)',
+  a:'d18',b:'d20'};
 
 function replaceDoc(no){
   const d=DEFECTS.find(x=>x.no===no), f=d&&defFile(d); if(!f) return;
