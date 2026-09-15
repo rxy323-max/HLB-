@@ -1,0 +1,16 @@
+flowchart TD
+  A[Sales 上传文件<br/>OCR 入口 / 非 OCR 入口] --> B{是否已确定文件类型}
+  B -- 否 --> B1[仅存档于 File List<br/>不参与规则校验]
+  B -- 是 --> C[提交校验 · 全案重跑]
+  C --> D[Cross Validation<br/>OCR 文件]
+  C --> E[Manual Check<br/>非 OCR 文件]
+  D --> F[CRA 复核规则结论]
+  E --> F
+  F --> G{是否仍有未解决的<br/>专家规则失败}
+  G -- 是 --> H[在文件中心创建缺陷<br/>按文件维度 · 告警保留]
+  H --> I[打回 Sales]
+  I --> J[Sales 定向重传<br/>文件类型由缺陷锁定]
+  J --> K[Sales 标记 Rectified<br/>提交回 CRA]
+  K --> C
+  G -- 否 --> L[维护放款信息<br/>点击 Next]
+  L --> M[STP 资格判定<br/>四道闸门 · 见图 D]

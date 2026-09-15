@@ -1,0 +1,466 @@
+<title>需求文档冲突台账</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#f6f7f9; --surface:#ffffff; --surface-2:#fafbfc;
+  --ink:#171b24; --ink-2:#4c5464; --ink-3:#828b9c; --ink-4:#aab1be;
+  --line:#e4e7ed; --line-2:#eef0f4;
+  --accent:#1677ff; --accent-soft:#eaf2ff; --accent-line:#bcd7ff;
+  --hi:#c0392f; --hi-soft:#fdf0ee; --hi-line:#f2c9c2;
+  --md:#b0761a; --md-soft:#fdf6e8; --md-line:#f0dcb4;
+  --lo:#4a7c3f; --lo-soft:#f0f7ee; --lo-line:#cbe2c4;
+  --sans:'IBM Plex Sans','PingFang SC','Hiragino Sans GB','Microsoft YaHei',system-ui,sans-serif;
+  --serif:'Newsreader','PingFang SC','Hiragino Sans GB','Microsoft YaHei',Georgia,serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#101319; --surface:#171b23; --surface-2:#1b202a;
+    --ink:#e7eaf0; --ink-2:#aeb6c4; --ink-3:#7d8695; --ink-4:#5d6675;
+    --line:#272d38; --line-2:#212733;
+    --accent:#5aa2ff; --accent-soft:#16233a; --accent-line:#2c4468;
+    --hi:#f08b7e; --hi-soft:#2a1a19; --hi-line:#4d2c28;
+    --md:#e0b567; --md-soft:#271f13; --md-line:#4a3a1f;
+    --lo:#8fc47f; --lo-soft:#182317; --lo-line:#2d4429;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#101319; --surface:#171b23; --surface-2:#1b202a;
+  --ink:#e7eaf0; --ink-2:#aeb6c4; --ink-3:#7d8695; --ink-4:#5d6675;
+  --line:#272d38; --line-2:#212733;
+  --accent:#5aa2ff; --accent-soft:#16233a; --accent-line:#2c4468;
+  --hi:#f08b7e; --hi-soft:#2a1a19; --hi-line:#4d2c28;
+  --md:#e0b567; --md-soft:#271f13; --md-line:#4a3a1f;
+  --lo:#8fc47f; --lo-soft:#182317; --lo-line:#2d4429;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:15px;line-height:1.72;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px 80px}
+
+.mast{padding:64px 0 34px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:20px}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(30px,4.4vw,45px);line-height:1.16;
+  margin:0 0 16px;letter-spacing:-.01em;text-wrap:balance}
+.standfirst{font-size:16.5px;color:var(--ink-2);max-width:63ch;margin:0}
+.srcline{margin-top:24px;font-family:var(--mono);font-size:12px;color:var(--ink-3);
+  display:flex;flex-wrap:wrap;gap:6px 20px}
+
+.tally{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:34px 0 8px}
+.tally div{background:var(--surface);padding:15px 18px 16px}
+.tally .n{font-family:var(--serif);font-size:31px;line-height:1.05;font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em;display:block}
+.tally .n.hi{color:var(--hi)} .tally .n.md{color:var(--md)} .tally .n.lo{color:var(--lo)}
+.tally .l{font-size:12.5px;line-height:1.45;color:var(--ink-3);margin-top:6px}
+.readnote{font-size:13.5px;color:var(--ink-3);margin:18px 0 0;max-width:72ch}
+
+.sec{margin-top:58px}
+.sec > h2{font-family:var(--serif);font-weight:500;font-size:25px;margin:0 0 5px;letter-spacing:-.01em}
+.sec > .sub{font-size:13.5px;color:var(--ink-3);margin:0 0 24px;max-width:72ch}
+
+.f{background:var(--surface);border:1px solid var(--line);border-radius:9px;
+  margin-bottom:18px;overflow:hidden;scroll-margin-top:20px}
+.f-h{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:start;
+  padding:17px 20px 15px;border-bottom:1px solid var(--line-2)}
+.f-h h3{margin:0;font-size:16.5px;font-weight:600;line-height:1.45;letter-spacing:-.005em}
+.f-h .num{font-family:var(--mono);font-size:11.5px;color:var(--ink-4);display:block;margin-bottom:5px}
+.f-h .meta{display:flex;align-items:center;gap:7px;flex:none;padding-top:2px}
+.state{font-size:11px;font-family:var(--mono);letter-spacing:.04em;padding:1px 7px;border-radius:3px;
+  border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.state.open{border-color:var(--line);background:var(--surface-2);color:var(--ink-3)}
+.sv{font-family:var(--mono);font-size:10px;letter-spacing:.08em;padding:1px 6px;border-radius:3px;flex:none;
+  border:1px solid}
+.sv.hi{color:var(--hi);background:var(--hi-soft);border-color:var(--hi-line)}
+.sv.md{color:var(--md);background:var(--md-soft);border-color:var(--md-line)}
+.sv.lo{color:var(--lo);background:var(--lo-soft);border-color:var(--lo-line)}
+
+.f-b{padding:18px 20px 20px}
+.clash{border-left:3px solid var(--line);margin:0 0 18px}
+.f.hi .clash{border-left-color:var(--hi)}
+.f.md .clash{border-left-color:var(--md)}
+.f.lo .clash{border-left-color:var(--lo)}
+.q{display:grid;grid-template-columns:66px minmax(0,1fr);gap:12px;padding:9px 0 9px 15px;align-items:baseline}
+.q + .q{border-top:1px dashed var(--line)}
+.q .ref{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);letter-spacing:.02em;white-space:nowrap}
+.q .txt{font-size:14px;color:var(--ink-2);line-height:1.62}
+.q .txt em{font-style:normal;color:var(--ink);font-weight:500;
+  background:linear-gradient(transparent 62%,var(--accent-soft) 62%);padding:0 1px}
+
+/* v2 → FSD reversal: two stances, opposed */
+.flip{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:7px;overflow:hidden;margin:0 0 16px}
+.flip > div{background:var(--surface);padding:13px 15px}
+.flip .side{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.flip .old .side{color:var(--ink-4)}
+.flip .new .side{color:var(--accent)}
+.flip .old{background:var(--surface-2)}
+.flip .body{font-size:13.5px;line-height:1.62;color:var(--ink-2)}
+.flip .old .body{text-decoration:line-through;text-decoration-color:var(--ink-4);
+  text-decoration-thickness:1px;color:var(--ink-3)}
+.flip .new .body b{color:var(--ink);font-weight:600}
+@media(max-width:640px){.flip{grid-template-columns:1fr}}
+
+.row{display:grid;grid-template-columns:66px minmax(0,1fr);gap:12px;padding:8px 0}
+.row .k{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);letter-spacing:.02em;padding-top:2px}
+.row .v{font-size:14.5px;color:var(--ink-2);line-height:1.68}
+.row .v b{color:var(--ink);font-weight:600}
+.row.rec .v{color:var(--ink)}
+.row.rec{border-top:1px solid var(--line-2);margin-top:4px;padding-top:13px}
+code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);border:1px solid var(--line-2);
+  padding:.5px 4.5px;border-radius:3px;color:var(--ink-2)}
+
+.solved{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden;margin-top:6px}
+.solved div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:baseline;
+  padding:11px 18px;font-size:14px}
+.solved div + div{border-top:1px solid var(--line-2)}
+.solved .where{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);white-space:nowrap}
+
+.close{margin-top:56px;border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;background:var(--surface);padding:20px 22px}
+.close h2{margin:0 0 8px;font-size:16px;font-weight:600}
+.close p{margin:0 0 10px;font-size:14.5px;color:var(--ink-2);max-width:72ch}
+.close p:last-child{margin-bottom:0}
+
+@media(max-width:640px){
+  .wrap{padding:0 18px 60px}
+  .q,.row{grid-template-columns:minmax(0,1fr);gap:3px}
+  .q{padding-left:14px}
+  .f-h{grid-template-columns:minmax(0,1fr)}
+  .solved div{grid-template-columns:minmax(0,1fr)}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="eyebrow">HLB LOAD$ · Batch 3 放款 · FSD 评审</div>
+  <h1>需求文档冲突台账</h1>
+  <p class="standfirst">按 <code>HP_FSD_Batch3</code> 重做了一遍。这版 FSD 把 v2 的四条规则<b>反过来写了</b>——这是最危险的部分，团队若还在按 v2 做，方向是错的。另有 8 处 FSD 内部打架、5 处悬而未决。上一版台账里的 6 条已被 FSD 解决。</p>
+  <div class="srcline">
+    <span>来源：HP FSD Batch3 Disbursement</span>
+    <span>比对：v2 需求文档 + 当前两个原型</span>
+    <span>2026-08-30</span>
+  </div>
+</header>
+
+<div class="tally">
+  <div><div class="n hi">4</div><div class="l">FSD 推翻 v2</div></div>
+  <div><div class="n md">8</div><div class="l">FSD 内部矛盾</div></div>
+  <div><div class="n lo">5</div><div class="l">悬而未决</div></div>
+  <div><div class="n">6</div><div class="l">已被 FSD 解决</div></div>
+  <div><div class="n">7</div><div class="l">原型已跟着改</div></div>
+</div>
+<p class="readnote">「原型已跟着改」是我按 FSD 直接调整过的，两个原型都已更新并测过。「悬而未决」包含 FSD 自己标注 To Be Confirmed 的项，以及从 v2 一路带到 FSD 仍然没有写清的项。</p>
+
+<!-- ═════════ 反转 ═════════ -->
+<section class="sec">
+  <h2>一、FSD 推翻了 v2</h2>
+  <p class="sub">这四条不是措辞差异，是规则方向相反。按 v2 实现的部分需要回头改。原型已按 FSD 调整。</p>
+
+  <article class="f hi" id="r1">
+    <div class="f-h">
+      <div><span class="num">反转 R1</span><h3>删除担保人时，他的文件是留着还是一起删</h3></div>
+      <div class="meta"><span class="state">原型已改</span><span class="sv hi">高</span></div>
+    </div>
+    <div class="f-b">
+      <div class="flip">
+        <div class="old"><div class="side">v2 · A.3.3</div>
+          <div class="body">担保人被删除，文件中心中该担保人对应的文件不会被自动覆盖或删除，须由人工主动删除</div></div>
+        <div class="new"><div class="side">FSD · 2.7.3</div>
+          <div class="body">系统<b>提示 Sales</b>：该担保人名下所有文件将<b>一并自动移出在用清单</b>，转入 Deleted Files，删除记录留档</div></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">v2 要求「孤儿文件」留在原地等人工处理，FSD 要求系统自动清理。两者对应的界面完全不同：前者需要一个已删担保人的残留入口，后者不需要。</span></div>
+      <div class="row rec"><span class="k">已改</span><span class="v">原型删掉了那个置灰的「Guarantor 2 · removed from application」入口，改为该担保人的四份文件自动进入 Deleted 列表，删除原因写「Guarantor removed from application」。</span></div>
+    </div>
+  </article>
+
+  <article class="f hi" id="r2">
+    <div class="f-h">
+      <div><span class="num">反转 R2</span><h3>已删除的文件能不能恢复</h3></div>
+      <div class="meta"><span class="state">原型已改</span><span class="sv hi">高</span></div>
+    </div>
+    <div class="f-b">
+      <div class="flip">
+        <div class="old"><div class="side">v2 · A.6 / 原型</div>
+          <div class="body">删除后的文件进入「已删除」列表，保留删除人、时间与原因，随时可恢复</div></div>
+        <div class="new"><div class="side">FSD · 2.7.7</div>
+          <div class="body">已删除文件<b>不可预览</b>，且<b>不可恢复</b>（cannot be restored）</div></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">删除从可逆操作变成不可逆操作。原型此前的 Restore 按钮按 FSD 是不该存在的。</span></div>
+      <div class="row rec"><span class="k">已改</span><span class="v">移除 Restore 按钮与恢复逻辑，Deleted 列表的操作列改为「Record only」，删除确认弹框和左栏说明都改成「保留记录，不可恢复」。</span></div>
+    </div>
+  </article>
+
+  <article class="f hi" id="r3">
+    <div class="f-h">
+      <div><span class="num">反转 R3</span><h3>系统文书挂在 Case 下，还是挂在角色下</h3></div>
+      <div class="meta"><span class="state">原型已改</span><span class="sv hi">高</span></div>
+    </div>
+    <div class="f-b">
+      <div class="flip">
+        <div class="old"><div class="side">v2 · A.4</div>
+          <div class="body">系统文书归属于 Case 级别，不并入其他角色入口</div></div>
+        <div class="new"><div class="side">FSD · 2.7.5</div>
+          <div class="body">系统文书<b>归属于对应主体</b>，应<b>包含在主借人 / 担保人 / 卖家的各自入口下</b>，创建人记为 System</div></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">你上一轮说「抽屉里不该有 Case 入口」是对的，而且 FSD 比这更进一步——不只是没有 Case 入口，系统文书本身就应该归到具体角色下。我之前给它们保留了一个 Case 标签，那是按 v2 A.4 做的，现在是错的。</span></div>
+      <div class="row rec"><span class="k">已改</span><span class="v">2nd Schedule、HP Agreement 已签署、Application Form 三份系统文书归入主借人，Subject 列显示 Main Applicant，Source 列仍为 System。</span></div>
+    </div>
+  </article>
+
+  <article class="f md" id="r4">
+    <div class="f-h">
+      <div><span class="num">反转 R4</span><h3>案件打回后，Sales 能不能改 CRA 已标记的规则结果</h3></div>
+      <div class="meta"><span class="state">原型符合</span><span class="sv md">中</span></div>
+    </div>
+    <div class="f-b">
+      <div class="flip">
+        <div class="old"><div class="side">v2 · A.15</div>
+          <div class="body">Sales 对 CRA 已标记的规则结果同样拥有编辑权限，并非只读；若不认同 CRA 的判断，可自行改回 Justification / 通过</div></div>
+        <div class="new"><div class="side">FSD · 2.9</div>
+          <div class="body">Sales 可访问 File List；对 Cross Validation 与 Manual Check Results 页面<b>不得进行任何操作</b>，因此<b>不能</b>处理或修改 CRA 已标记的规则结果</div></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">v2 把 Sales 写成规则结果的共同处置人，FSD 把它收回成纯只读。这条同时影响权限矩阵和「打回—整改」的闭环设计：按 FSD，Sales 整改只有两个动作——重传文件、在 Defect List 勾 Rectified。</span></div>
+      <div class="row rec"><span class="k">现状</span><span class="v">原型放款阶段的 Sales 权限本来就是<code>up:1, cls:0, rule:0</code>，与 FSD 一致，不用改。<b>但申请阶段的 Sales 仍是可处置的</b>——那部分不在这份 FSD 范围内，需要确认是否同步收紧。</span></div>
+    </div>
+  </article>
+</section>
+
+<!-- ═════════ FSD 内部矛盾 ═════════ -->
+<section class="sec">
+  <h2>二、FSD 内部矛盾</h2>
+  <p class="sub">同一份文档里前后打架，或表述会被实现成相反的东西。</p>
+
+  <article class="f hi" id="c1">
+    <div class="f-h">
+      <div><span class="num">冲突 C1</span><h3>提交按钮到底卡不卡：3.10.8 说卡，3.11.2 说不卡</h3></div>
+      <div class="meta"><span class="state open">待决策</span><span class="sv hi">高</span></div>
+    </div>
+    <div class="f-b">
+      <div class="clash">
+        <div class="q"><span class="ref">3.10.8</span><span class="txt">CRA 提交放款信息时须通过 a–e 五项勾稽校验，「<em>The submit button is only enabled if all validation passes</em>」</span></div>
+        <div class="q"><span class="ref">3.11.2</span><span class="txt">「<em>Clicking Next shall not be hard-blocked</em> solely because unresolved Defects or unconfirmed rule items still exist」</span></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">这是同一个页面右下角的同一个提交动作。两条可以调和——3.11.2 说的是「不因未处理的规则和缺陷而卡」，3.10.8 说的是数据勾稽——但<b>文档没有一处说明这是两类不同的门</b>。开发很可能二选一实现：要么把勾稽也放行，要么把规则也拦住。</span></div>
+      <div class="row rec"><span class="k">建议</span><span class="v">把 Next 的启用条件写成一句话：<b>CRA Completed 已勾选，且 3.10.8 的 a–e 勾稽全部通过</b>；未处理的规则与未登记的缺陷只提示、不拦截。</span></div>
+      <div class="row"><span class="k">现状</span><span class="v">原型目前只做了 CRA Completed 这道门。3.10.8 的 a–e 勾稽需要 Approved Loan Amount、Handling Fee、GST、IBG / Transfer / Suspense / Advise 等字段，超出当前原型的数据模型，<b>没有实现</b>。要不要补，看你。</span></div>
+    </div>
+  </article>
+
+  <article class="f hi" id="c2">
+    <div class="f-h">
+      <div><span class="num">冲突 C2</span><h3>必要文件清单有三个口径，FSD 自己承认它们对不齐</h3></div>
+      <div class="meta"><span class="state open">待决策</span><span class="sv hi">高</span></div>
+    </div>
+    <div class="f-b">
+      <div class="clash">
+        <div class="q"><span class="ref">2.7.4</span><span class="txt">系统里有三套与必要文件相关的清单口径：Sales 实际上传的文件、按 Document Type 触发的校验规则、CRA 的 Mandatory File Checklist——「<em>these scopes are not fully aligned</em>」</span></div>
+        <div class="q"><span class="ref">3.9.2</span><span class="txt">头部摘要须展示「the number of <em>mandatory files required</em> for the Case and the number of files already uploaded」——但没说取哪个口径</span></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">头部摘要的「必要文件数 / 已上传数」这个分母到底是谁，直接决定 CRA 看到的完成度是否可信。三个口径给出三个不同的分母。FSD 自己也说「Ideally, scope (a) and scope (c) should be aligned」——但没有说这次改不改。</span></div>
+      <div class="row rec"><span class="k">建议</span><span class="v">明确摘要以 <b>CRA Mandatory File Checklist（scope c）</b>为准，并把参数表 <code>18.20</code> 定为唯一来源。若本期不做对齐，至少要在摘要上标注口径，否则数字会被当成事实。</span></div>
+    </div>
+  </article>
+
+  <article class="f md" id="c3">
+    <div class="f-h">
+      <div><span class="num">冲突 C3</span><h3>误删担保人的后果是不可逆的，但提示里没写</h3></div>
+      <div class="meta"><span class="state open">待决策</span><span class="sv md">中</span></div>
+    </div>
+    <div class="f-b">
+      <div class="clash">
+        <div class="q"><span class="ref">2.7.3</span><span class="txt">删除担保人时，「the system shall <em>prompt Sales</em> that all files associated with the guarantor will also be automatically deleted」</span></div>
+        <div class="q"><span class="ref">2.7.7</span><span class="txt">已删除文件「cannot be previewed; and <em>cannot be restored</em>」</span></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">两条单独看都成立，合起来是：Sales 误删一个担保人，那批文件<b>永久回不来</b>，只能让客户重新提供。2.7.3 只说要「提示」，没说这个提示必须讲明不可逆。</span></div>
+      <div class="row rec"><span class="k">建议</span><span class="v">提示文案写明后果与数量，例如「将同时删除该担保人名下 4 份文件，删除后<b>无法恢复</b>，需重新上传」。这是一句文案，但少了它就是一个数据丢失事故。</span></div>
+    </div>
+  </article>
+
+  <article class="f md" id="c4">
+    <div class="f-h">
+      <div><span class="num">冲突 C4</span><h3>STP 条件清单在三处给出三个口径，且明说不封闭</h3></div>
+      <div class="meta"><span class="state open">待决策</span><span class="sv md">中</span></div>
+    </div>
+    <div class="f-b">
+      <div class="clash">
+        <div class="q"><span class="ref">4.1.1</span><span class="txt">列出 <em>a–h 共 8 条</em>业务场景限制（h 为 90 天三级判断）</span></div>
+        <div class="q"><span class="ref">4.1.2</span><span class="txt">决策表列出 <em>4 步</em>：①场景适合 ②必要文件与信息齐备 ③未解决 Defect 为 0 ④STP 开关 ON</span></div>
+        <div class="q"><span class="ref">3.11.3</span><span class="txt">STP 资格「shall include, <em>but is not limited to</em>」开关已开 + 未解决 Defect 为 0</span></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">4.1.1 的 8 条是「场景限制」，4.1.2 的 ②③④ 是另外三道门，两者不是同一层。而 <code>not limited to</code> 意味着清单不封闭——测试无从写起，业务也无法确认。v2 当时说 9 条，和这两处都对不上。</span></div>
+      <div class="row rec"><span class="k">建议</span><span class="v">出一张封闭的编号表，把「场景限制」和「放行门」分成两组列全，去掉 <code>not limited to</code>。这是 STP 最核心的规则，目前没有一处能当依据。</span></div>
+    </div>
+  </article>
+
+  <article class="f md" id="c5">
+    <div class="f-h">
+      <div><span class="num">冲突 C5</span><h3>STP 资格既说可以提前判断并在页面提示，又说只在 Next 时判断</h3></div>
+      <div class="meta"><span class="state">原型已定案</span><span class="sv md">中</span></div>
+    </div>
+    <div class="f-b">
+      <div class="clash">
+        <div class="q"><span class="ref">4.1.2 ①</span><span class="txt">「the system <em>may perform a preliminary assessment in advance and provide the corresponding indication on the page</em>」</span></div>
+        <div class="q"><span class="ref">4.1.2 ③</span><span class="txt">「for system extensibility, the current design is that the final STP routing decision shall <em>only be made after CRA... clicks Next</em>」</span></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">v2 里就有这个矛盾，FSD 原样保留了。两句都在，开发会同时做一个常驻的 STP 资格提示条和一个提交时判断；两者一旦不一致，提示就成了噪音。</span></div>
+      <div class="row rec"><span class="k">建议</span><span class="v">删掉「and provide the corresponding indication on the page」。原型<b>只做提交时判断</b>，页面上没有任何常驻 STP 提示。</span></div>
+    </div>
+  </article>
+
+  <article class="f md" id="c6">
+    <div class="f-h">
+      <div><span class="num">冲突 C6</span><h3>Defect 解耦的通则，与它自己的方法 ③ 表面冲突</h3></div>
+      <div class="meta"><span class="state">原型已实现</span><span class="sv md">中</span></div>
+    </div>
+    <div class="f-b">
+      <div class="clash">
+        <div class="q"><span class="ref">3.9.7 通则</span><span class="txt">「<em>Neither function shall automatically create, overwrite, or delete</em> any records in the Defect List」</span></div>
+        <div class="q"><span class="ref">3.9.7 ③</span><span class="txt">Synchronize System Defects 会为失败规则创建 Defect，并<em>删除</em>那些对应规则已转为 Passed 的 System 来源记录</span></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">实质上不矛盾——通则约束的是 Refresh 与 Sync from OCR 两个功能的<b>副作用</b>，③ 是用户主动点的独立按钮。但通则的措辞太绝对，容易被读成「任何情况下都不删」，从而把 ③ 实现成只增不删。</span></div>
+      <div class="row rec"><span class="k">建议</span><span class="v">通则补一句「③ 除外，且仅在用户主动触发时生效」。<br>顺带一提：v2 的 A.10.2 在这里是真矛盾（刷新会清空 System 记录），<b>FSD 已经修好了</b>——现在刷新完全不碰 Defect，删除只发生在方法 ③。</span></div>
+      <div class="row"><span class="k">现状</span><span class="v">原型已按 ③ 实现：Defect List 区域新增「Sync System Defects」按钮，补建缺失的、清掉规则已通过的 System 记录，User 来源一条不动。</span></div>
+    </div>
+  </article>
+
+  <article class="f lo" id="c7">
+    <div class="f-h">
+      <div><span class="num">冲突 C7</span><h3>「强制处理时序」与刷新机制互相排斥</h3></div>
+      <div class="meta"><span class="state open">待决策</span><span class="sv lo">低</span></div>
+    </div>
+    <div class="f-b">
+      <div class="clash">
+        <div class="q"><span class="ref">3.9.1</span><span class="txt">CRA「shall follow the <em>required processing sequence</em>」：先进文件中心复核，再回工作台</span></div>
+        <div class="q"><span class="ref">3.9.2</span><span class="txt">同一经手人未发生流转时不自动刷新，用户<em>可手动点击</em>「Refresh Rule Results」取最新结果</span></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">既然设计了手动刷新，说明来回切换是常态。把 <code>required sequence</code> 实现成强制拦截（没进过文件中心就禁用工作台）会堵死常态操作。</span></div>
+      <div class="row rec"><span class="k">建议</span><span class="v">改为「推荐顺序」，并写明不做强制校验。</span></div>
+    </div>
+  </article>
+
+  <article class="f lo" id="c8">
+    <div class="f-h">
+      <div><span class="num">冲突 C8</span><h3>交叉引用指向一个不存在的章节</h3></div>
+      <div class="meta"><span class="state open">待决策</span><span class="sv lo">低</span></div>
+    </div>
+    <div class="f-b">
+      <div class="clash">
+        <div class="q"><span class="ref">4.1.2</span><span class="txt">「Refer to <em>Section 3.9.9</em> for details」</span></div>
+        <div class="q"><span class="ref">目录</span><span class="txt">3.9 下只到 <em>3.9.8</em>；Next 按钮与提交时序在 <em>3.11</em></span></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">小问题，但 STP 的时序说明正是靠这条引用串起来的，读者会在 3.9 里翻不到。</span></div>
+      <div class="row rec"><span class="k">建议</span><span class="v">改为 3.11。</span></div>
+    </div>
+  </article>
+</section>
+
+<!-- ═════════ 悬而未决 ═════════ -->
+<section class="sec">
+  <h2>三、悬而未决</h2>
+  <p class="sub">FSD 自己标注为待确认的，以及从 v2 一路带过来仍然没有写清的。</p>
+
+  <article class="f hi" id="o1">
+    <div class="f-h">
+      <div><span class="num">未决 O1</span><h3>全量重跑规则时，人工的豁免与合格标记保不保留</h3></div>
+      <div class="meta"><span class="state open">待决策</span><span class="sv hi">高</span></div>
+    </div>
+    <div class="f-b">
+      <div class="clash">
+        <div class="q"><span class="ref">2.8.3</span><span class="txt">任一文件变化即对全 Case 重跑全部规则；「the system shall <em>retain only the latest validation result</em>. Historical validation snapshots will not be retained」</span></div>
+        <div class="q"><span class="ref">3.9.5</span><span class="txt">Justification 与手工标记 Passed，是 CRA 对校验结果的<em>人工覆盖</em>，处理后计入 Passed</span></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">这条从 v2 带到 FSD，<b>仍然没有任何一句</b>说明重跑之后人工的豁免与合格标记是保留还是清空。它直接决定 CRA 的返工量：若清空，每替换一份文件就要把几十条已处置的规则重做一遍。这是整份台账里最要紧的一条。</span></div>
+      <div class="row rec"><span class="k">建议</span><span class="v">明确二选一。我的倾向：<b>人工处置意见按规则 ID 保留，仅当该规则关联的文件被替换时才失效</b>——既不丢工作量，也不会让豁免盖在一份已经换掉的文件上。写进 2.8.3。</span></div>
+    </div>
+  </article>
+
+  <article class="f md" id="o2">
+    <div class="f-h">
+      <div><span class="num">未决 O2</span><h3>未勾 Full Maintenance 的 STP 案件走到哪一步停</h3></div>
+      <div class="meta"><span class="state open">FSD 标注 TBC</span><span class="sv md">中</span></div>
+    </div>
+    <div class="f-b">
+      <div class="clash">
+        <div class="q"><span class="ref">4.2</span><span class="txt">「<em>To Be Confirmed</em>：need to confirm whether Cases without the Full Maintenance Indicator selected should stop after the disbursement step and then be routed to Post Maintenance」</span></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">影响 STP 直通的终点在哪。原型的 STP 完成提示目前只说「触发放款接口」，没有区分这两种落点。</span></div>
+      <div class="row rec"><span class="k">建议</span><span class="v">确认后我把两种落点做进 Next 的结果提示，让演示时能讲清「直通到底」和「直通到放款后转 Post Maintenance」的差别。</span></div>
+    </div>
+  </article>
+
+  <article class="f md" id="o3">
+    <div class="f-h">
+      <div><span class="num">未决 O3</span><h3>规则附录仍缺 OCR 规则 ID 与 Severity 两列</h3></div>
+      <div class="meta"><span class="state open">排期前置</span><span class="sv md">中</span></div>
+    </div>
+    <div class="f-b">
+      <div class="clash">
+        <div class="q"><span class="ref">3.9.7</span><span class="txt">三种创建方式的去重「shall determine whether a rule has already been associated with a Defect record based on the <em>configured Rule-to-Defect Mapping</em>」</span></div>
+        <div class="q"><span class="ref">规则附录</span><span class="txt">signoff version 现有列中<em>没有 OCR 规则 ID，也没有 Severity</em></span></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">映射表是三种 Defect 创建方式和 3.11.2 提交前校验的<b>共同基础</b>。列不补齐，这四个功能都没有依据。附录已签署，补列要走变更。</span></div>
+      <div class="row rec"><span class="k">建议</span><span class="v">尽早启动变更，补 <code>OCR_RULE_ID</code> 与 <code>SEVERITY</code>。Severity 虽然 FSD 正文没提，但没有它就无法区分「必须拦截」和「提示即可」的规则——目前原型对所有失败规则一视同仁。</span></div>
+    </div>
+  </article>
+
+  <article class="f lo" id="o4">
+    <div class="f-h">
+      <div><span class="num">未决 O4</span><h3>30 天 instinct 的触发细节还没给</h3></div>
+      <div class="meta"><span class="state open">等 Risk team</span><span class="sv lo">低</span></div>
+    </div>
+    <div class="f-b">
+      <div class="clash">
+        <div class="q"><span class="ref">2.3</span><span class="txt">「<em>Waiting for Risk team to provide details on the 30-day instinct</em>」</span></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">不影响文件中心与工作台两个原型，但会影响 lodgment 触发的时机判断。</span></div>
+      <div class="row rec"><span class="k">建议</span><span class="v">跟进 Risk team，明确它与 4.1.1(h) 那套 90 天三级判断是否有交集。</span></div>
+    </div>
+  </article>
+
+  <article class="f lo" id="o5">
+    <div class="f-h">
+      <div><span class="num">未决 O5</span><h3>申请阶段的 Sales 规则处置权限是否同步收紧</h3></div>
+      <div class="meta"><span class="state open">待决策</span><span class="sv lo">低</span></div>
+    </div>
+    <div class="f-b">
+      <div class="clash">
+        <div class="q"><span class="ref">FSD 2.9</span><span class="txt">放款阶段 Sales 对规则页面<em>不得进行任何操作</em>——但这份 FSD 只覆盖 Disbursement</span></div>
+        <div class="q"><span class="ref">原型</span><span class="txt">申请阶段 Sales 仍是<em>上传 + 确认分类 + 处置规则</em>三项全开</span></div>
+      </div>
+      <div class="row"><span class="k">影响</span><span class="v">申请阶段 Sales 既是提交人又是校验人，这在放款阶段已经被 FSD 明确否掉了。申请阶段是否保留这个设定，需要单独确认——它不在这份 FSD 的范围内。</span></div>
+      <div class="row rec"><span class="k">建议</span><span class="v">确认申请阶段的定位。若同步收紧，原型的 <code>sales|app</code> 权限要从 <code>rule:1</code> 改为 <code>rule:0</code>。</span></div>
+    </div>
+  </article>
+</section>
+
+<!-- ═════════ 已解决 ═════════ -->
+<section class="sec">
+  <h2>四、上一版台账里已被 FSD 解决的</h2>
+  <p class="sub">这六条不用再讨论，FSD 已经写清楚了。</p>
+  <div class="solved">
+    <div><span>非 OCR 文件的定义与它后续动作互斥 —— 改写为「默认不经 AI 引擎处理、不做 AI 分类与提取」，不再说「不进行校验」</span><span class="where">2.7.1 b</span></div>
+    <div><span>Others 文件的去向 —— 无 Document Type 的文件不做规则校验、不进 Manual Check，仅留在 File List 供存储与预览</span><span class="where">2.7.6 / 2.8.2 / 3.9.4</span></div>
+    <div><span>刷新到底碰不碰 Defect —— 通则明确 Refresh 与 Sync from OCR 都不创建、不覆盖、不删除 Defect</span><span class="where">3.9.7</span></div>
+    <div><span>提交前校验的比对口径 —— 明确按 Rule-to-Defect Mapping 统计「当前失败且尚未关联任何 Defect」的规则数，与创建来源无关</span><span class="where">3.11.2</span></div>
+    <div><span>三层判断里悬空的「文件判断」层 —— FSD 没有沿用这张表，问题自然消失</span><span class="where">—</span></div>
+    <div><span>Defect Team 在未分配案件上的权限 —— 流转清单已明确含 Defect Team 的收发两端</span><span class="where">3.9.2</span></div>
+  </div>
+</section>
+
+<div class="close">
+  <h2>建议的处理顺序</h2>
+  <p><b>先同步给开发的 4 条反转</b>：R1–R4。这些不是待讨论项，是 FSD 已经定稿、但与 v2 相反的规则。若有人还在按 v2 做担保人删除或文件恢复，越早说越好。</p>
+  <p><b>需要你决策的 3 条</b>：<b>O1</b>（重跑保不保留人工意见）仍然最重要，从 v2 悬到 FSD 还是没写；<b>C1</b>（提交按钮两道门）会直接改 Next 的实现，我目前只做了 CRA Completed 一道；<b>C2</b>（必要文件三个口径）决定头部摘要那个分母可不可信。</p>
+  <p><b>排期前置 1 条</b>：<b>O3</b> 附录补两列，卡着三种 Defect 创建方式和提交前校验。</p>
+  <p>其余 C3–C8、O2、O4、O5 是文案与边界补充，可以并到下一版一次性处理。</p>
+</div>
+
+</div>

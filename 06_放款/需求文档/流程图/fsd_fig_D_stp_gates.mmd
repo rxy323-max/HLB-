@@ -1,0 +1,10 @@
+flowchart TD
+  A[CRA 点击 Next] --> G1{① 案件场景是否适合 STP}
+  G1 -- 否 --> X1[转人工维护<br/>Disbursement Information Maintenance]
+  G1 -- 是 --> G2{② 必备文件与必填信息是否齐全}
+  G2 -- 否 --> X2[转 CRA Authorizer 人工授权]
+  G2 -- 是 --> G3{③ 未解决缺陷数是否为 0}
+  G3 -- 否 --> X2
+  G3 -- 是 --> G4{④ STP 开关是否为 ON}
+  G4 -- 否 --> X2
+  G4 -- 是 --> Y[跳过 Authorizer<br/>直接触发放款接口]

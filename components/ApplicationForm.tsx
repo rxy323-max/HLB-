@@ -530,7 +530,7 @@ export default function ApplicationForm() {
         ];
       });
       // E (Partnership): auto-add all natural-person partners as guarantors
-      if (isPartnership) {
+      if (isE) {
         setGuarantors(prev => {
           const existingIds = new Set(prev.map(g => g.id));
           const newGuars = directors
