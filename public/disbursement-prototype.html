@@ -1535,7 +1535,7 @@ initChrome(); reset('manual'); render();
     var why = bar.querySelector('.why');
     if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
   }
-  if (why0()) why0().textContent = 'Prototype build ' + '2026-09-14';
+  if (why0()) why0().textContent = 'Prototype build ' + '2026-09-15';
   function why0(){ return bar && bar.querySelector('.why'); }
 
   function go(to){ parent.postMessage({ nav: to }, '*'); }
@@ -2598,12 +2598,17 @@ const OCRST={queued:['OCR Queued','ant-tag-blue'],running:['OCR Running','ant-ta
 const waiting=f=>f.ocrSt==='queued'||f.ocrSt==='running';
 const stuck=f=>f.ocrSt==='failed'||f.ocrSt==='timeout';
 const unread=f=>waiting(f)||stuck(f);
+/* The document types the engine reads. A file outside this list never goes through
+   cross validation, so putting it on that page only invites the question of what its
+   result means. */
+const OCRTYPES=new Set(DOCLIST.reduce((a,g)=>a.concat(g[1]),[]));
+const ocrRead=f=>f.ch==='ocr'&&OCRTYPES.has(f.ty)&&!(f.src==='system'&&f.ao==='internal');
 function inTab(f,t){
   if(t==='fl') return true;
   // a file with no OCR result belongs on the OCR page - that is where it is missed
   if(t==='cv'&&unread(f)) return true;
   if(!f.cls) return false;
-  if(t==='cv') return f.ch==='ocr';
+  if(t==='cv') return ocrRead(f);
   if(t==='mc') return f.ch==='manual' && MC_FILES().includes(f.nm);
   return false;
 }
@@ -3093,7 +3098,7 @@ function panel(f,p){
       h+=`<div class="foldrow">
         <button class="foldbtn" data-fold="1">${S.erFold?'\u25b8':'\u25be'} Passed by OCR (${passed.length})</button>
         <span class="foldsel"></span>
-        ${!S.erFold&&openPassed.length&&p.rule
+        ${!S.erFold&&openPassed.length>1&&p.rule
           ?`<button class="ant-btn ant-btn-sm" data-erbulk="1">Reviewed all (${openPassed.length})</button>`
           :''}</div>`;
       if(!S.erFold) passed.forEach(i=>{h+=row(i);});
@@ -3839,7 +3844,7 @@ render();
     var why = bar.querySelector('.why');
     if (why) bar.insertBefore(nav, why); else bar.appendChild(nav);
   }
-  if (why0()) why0().textContent = 'Prototype build ' + '2026-09-14';
+  if (why0()) why0().textContent = 'Prototype build ' + '2026-09-15';
   function why0(){ return bar && bar.querySelector('.why'); }
 
   function go(to){ parent.postMessage({ nav: to }, '*'); }
